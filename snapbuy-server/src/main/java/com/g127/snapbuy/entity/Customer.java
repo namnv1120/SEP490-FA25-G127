@@ -2,29 +2,31 @@ package com.g127.snapbuy.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "customers")
 public class Customer {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    String id;
 
     @Column(name = "name")
-    private String name;
+    String name;
 
     @Column(name = "email", unique = true)
-    private String email;
+    String email;
 
     @Column(name = "phone")
-    private String phone;
+    String phone;
 
     @Column(name = "address")
-    private String address;
+    String address;
 
 
 }

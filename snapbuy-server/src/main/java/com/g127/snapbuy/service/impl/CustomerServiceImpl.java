@@ -15,41 +15,42 @@ import java.util.List;
 @Service
 public class CustomerServiceImpl implements CustomerService {
     private CustomerRepository customerRepository;
+    private CustomerMapper customerMapper;
 
     @Override
     public CustomerDto createCustomer(CustomerDto customerDto) {
-        Customer customer = CustomerMapper.toEntity(customerDto);
-        return CustomerMapper.toDto(customerRepository.save(customer));
+        Customer customer = customerMapper.toEntity(customerDto);
+        return customerMapper.toDto(customerRepository.save(customer));
     }
 
     @Override
     public List<CustomerDto> getAllCustomers() {
         return customerRepository.findAll()
                 .stream()
-                .map(CustomerMapper::toDto)
+                .map(customerMapper::toDto)
                 .toList();
     }
 
     @Override
-    public CustomerDto getCustomerById(Long id) {
+    public CustomerDto getCustomerById(String id) {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
-        return CustomerMapper.toDto(customer);
+        return customerMapper.toDto(customer);
     }
 
     @Override
-    public CustomerDto updateCustomer(Long id, CustomerDto customerDto) {
+    public CustomerDto updateCustomer(String id, CustomerDto customerDto) {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
         customer.setName(customerDto.getName());
         customer.setEmail(customerDto.getEmail());
         customer.setPhone(customerDto.getPhone());
         customer.setAddress(customerDto.getAddress());
-        return CustomerMapper.toDto(customerRepository.save(customer));
+        return customerMapper.toDto(customerRepository.save(customer));
     }
 
     @Override
-    public void deleteCustomer(Long id) {
+    public void deleteCustomer(String id) {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
         customerRepository.deleteById(id);
