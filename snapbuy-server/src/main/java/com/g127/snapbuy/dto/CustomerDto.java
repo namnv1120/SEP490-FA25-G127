@@ -4,41 +4,60 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-@AllArgsConstructor
-@NoArgsConstructor
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.UUID;
+
 @Getter
 @Setter
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CustomerDto {
+    private UUID customerId;
 
-    String id;
+    @NotBlank(message = "Customer code is required")
+    @Size(max = 20, message = "Customer code must not exceed 20 characters")
+    private String customerCode;
 
-    @NotBlank(message = "Tên không được để trống")
-    @Size(min = 2, max = 50, message = "Tên phải có từ 2 đến 50 ký tự")
-    @Pattern(
-            regexp = "^[\\p{L} .'-]+$",
-            message = "Tên chỉ được chứa chữ cái, khoảng trắng và ký tự hợp lệ"
-    )
-    String name;
+    @NotBlank(message = "Full name is required")
+    @Size(max = 100, message = "Full name must not exceed 100 characters")
+    private String fullName;
 
-    @NotBlank(message = "Email không được để trống")
-    @Pattern(
-            regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
-            message = "Email không hợp lệ (vd: abc@gmail.com)"
-    )
-    String email;
+    @Email(message = "Invalid email format")
+    @Size(max = 100, message = "Email must not exceed 100 characters")
+    private String email;
 
-    @NotBlank(message = "Số điện thoại không được để trống")
-    @Pattern(
-            regexp = "^(0[0-9]{9,10})$",
-            message = "Số điện thoại phải bắt đầu bằng 0 và có 10-11 chữ số"
-    )
-    String phone;
+    @Pattern(regexp = "^[0-9]{9,15}$", message = "Phone must be between 9 and 15 digits")
+    private String phone;
 
-    @Size(max = 200, message = "Địa chỉ tối đa 200 ký tự")
-    @Pattern(
-            regexp = "^[\\p{L}0-9 ,.-/]*$",
-            message = "Địa chỉ chỉ được chứa chữ cái, số và ký tự ,.-/"
-    )
-    String address;
+    private String address;
+
+    @Size(max = 50, message = "City must not exceed 50 characters")
+    private String city;
+
+    @Size(max = 50, message = "District must not exceed 50 characters")
+    private String district;
+
+    @Size(max = 50, message = "Ward must not exceed 50 characters")
+    private String ward;
+
+    @PastOrPresent(message = "Date of birth must be in the past or today")
+    private LocalDate dateOfBirth;
+
+    @Pattern(regexp = "Male|Female|Other", message = "Gender must be Male, Female or Other")
+    private String gender;
+
+    @Pattern(regexp = "Individual|Business", message = "Customer type must be Individual or Business")
+    private String customerType;
+
+    @Size(max = 20, message = "Tax code must not exceed 20 characters")
+    private String taxCode;
+
+    @DecimalMin(value = "0.0", inclusive = true, message = "Credit limit must be greater or equal to 0")
+    @Digits(integer = 15, fraction = 2, message = "Credit limit format is invalid")
+    private BigDecimal creditLimit;
+
+    @Pattern(regexp = "Active|Inactive", message = "Status must be Active or Inactive")
+    private String status;
 }

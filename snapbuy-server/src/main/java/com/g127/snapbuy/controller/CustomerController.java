@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @AllArgsConstructor
 @RestController
@@ -28,18 +29,18 @@ public class CustomerController {
     }
 
     @GetMapping("{id}")
-    public ResponseEntity<CustomerDto> getCustomerById(@PathVariable("id") String id) {
+    public ResponseEntity<CustomerDto> getCustomerById(@PathVariable("id") UUID id) {
         return ResponseEntity.ok(customerService.getCustomerById(id));
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<CustomerDto> updateCustomer(@PathVariable("id") String id
+    public ResponseEntity<CustomerDto> updateCustomer(@PathVariable("id") UUID id
             , @Valid @RequestBody CustomerDto customerDto) {
         return ResponseEntity.ok(customerService.updateCustomer(id, customerDto));
     }
 
     @DeleteMapping("{id}")
-    public ResponseEntity<String> deleteCustomer(@PathVariable("id") String id) {
+    public ResponseEntity<String> deleteCustomer(@PathVariable("id") UUID id) {
         customerService.deleteCustomer(id);
         return ResponseEntity.ok("Customer deleted");
     }
