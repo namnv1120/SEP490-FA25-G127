@@ -1,50 +1,55 @@
 import React from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
+import "../styles/dashboard.css";
 
 function Dashboard() {
   return (
     <div className="container mt-4">
       <h3 className="fw-bold">Welcome, Admin</h3>
-      <p className="text-muted">You have <span className="text-danger fw-bold">200+</span> Orders today</p>
+      <p className="text-muted">
+        You have <span className="text-danger fw-bold">200+</span> Orders today
+      </p>
 
-      {/* Cards */}
-      <div className="row g-4 mt-3">
-        <div className="col-md-3">
-          <div className="card shadow-sm text-white" style={{ backgroundColor: "#f77f00" }}>
+      <div className="row g-3">
+        {/* Total Sales */}
+        <div className="col-md-3 col-sm-6">
+          <div className="card stat-card sales">
             <div className="card-body">
-              <h6 className="fw-semibold">Total Sales</h6>
+              <h6>Total Sales</h6>
               <h4>$48,988,078</h4>
-              <small className="text-light">+22% vs Last Month</small>
+              <p className="small">+22% vs Last Month</p>
             </div>
           </div>
         </div>
 
-        <div className="col-md-3">
-          <div className="card shadow-sm text-white" style={{ backgroundColor: "#003049" }}>
+        {/* Total Sales Return */}
+        <div className="col-md-3 col-sm-6">
+          <div className="card stat-card sales-return">
             <div className="card-body">
-              <h6 className="fw-semibold">Total Sales Return</h6>
+              <h6>Total Sales Return</h6>
               <h4>$16,478,145</h4>
-              <small className="text-light">-22% vs Last Month</small>
+              <p className="small">-22% vs Last Month</p>
             </div>
           </div>
         </div>
 
-        <div className="col-md-3">
-          <div className="card shadow-sm text-white" style={{ backgroundColor: "#2a9d8f" }}>
+        {/* Total Purchase */}
+        <div className="col-md-3 col-sm-6">
+          <div className="card stat-card purchase">
             <div className="card-body">
-              <h6 className="fw-semibold">Total Purchase</h6>
+              <h6>Total Purchase</h6>
               <h4>$24,145,789</h4>
-              <small className="text-light">+22% vs Last Month</small>
+              <p className="small">+22% vs Last Month</p>
             </div>
           </div>
         </div>
 
-        <div className="col-md-3">
-          <div className="card shadow-sm text-white" style={{ backgroundColor: "#1d4ed8" }}>
+        {/* Total Purchase Return */}
+        <div className="col-md-3 col-sm-6">
+          <div className="card stat-card purchase-return">
             <div className="card-body">
-              <h6 className="fw-semibold">Total Purchase Return</h6>
+              <h6>Total Purchase Return</h6>
               <h4>$18,458,747</h4>
-              <small className="text-light">+22% vs Last Month</small>
+              <p className="small">+22% vs Last Month</p>
             </div>
           </div>
         </div>
