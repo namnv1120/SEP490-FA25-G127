@@ -3,7 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./custom.css";
 import Dashboard from "./pages/Dashboard";
 import RolesPermissions from "./pages/usermanagement/rolespermissions";
-import Users from "./pages/usermanagement/users"; // import component Users
+import Users from "./pages/usermanagement/users";
+import Profile from "./pages/usermanagement/profile";
 import AppNavbar from "./components/layout/Navbar";
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/roles-permissions" element={<RolesPermissions />} />
           <Route path="/users" element={<Users />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<div>404 - Page Not Found</div>} />
         </Routes>
       </div>
