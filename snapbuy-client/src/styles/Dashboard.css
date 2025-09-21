@@ -1,0 +1,39 @@
+.stat-card {
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.stat-card h6 {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.stat-card h4 {
+  font-size: 22px;
+  font-weight: bold;
+  margin: 5px 0;
+}
+
+.stat-card p {
+  font-size: 12px;
+  margin: 0;
+}
+
+/* Màu riêng từng card */
+.stat-card.sales {
+  background-color: #ff9f43; /* cam */
+}
+
+.stat-card.sales-return {
+  background-color: #162447; /* xanh navy đậm */
+}
+
+.stat-card.purchase {
+  background-color: #28a745; /* xanh lá */
+}
+
+.stat-card.purchase-return {
+  background-color: #007bff; /* xanh dương */
+}
