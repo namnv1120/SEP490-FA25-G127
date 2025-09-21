@@ -1,5 +1,5 @@
 import { Tooltip } from "primereact/tooltip";
-import { Link } from "react-router-dom"; // Thêm import Link
+import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { setToggleHeader } from "../../core/redux/sidebarSlice";
 

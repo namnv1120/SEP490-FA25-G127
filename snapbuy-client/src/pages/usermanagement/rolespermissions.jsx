@@ -2,18 +2,46 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import AddRole from "../../core/modals/usermanagement/addrole";
 import EditRole from "../../core/modals/usermanagement/editrole";
-import { all_routes } from "../../routes/all_routes";
+import DeleteModal from "../../components/delete-modal";
 import PrimeDataTable from "../../components/data-table";
-import { rolesList } from "../../core/json/roles-permission-data";
+import { all_routes } from "../../routes/all_routes";
 import SearchFromApi from "../../components/data-table/search";
 import TableTopHead from "../../components/table-top-head";
-import DeleteModal from "../../components/delete-modal";
 
 const RolesPermissions = () => {
-  const [listData, setListData] = useState(rolesList);
+  // Dữ liệu cứng ví dụ
+  const sampleRoles = [
+    {
+      id: 1,
+      role: "Admin",
+      createdDate: "2025-09-01",
+      status: "Active",
+    },
+    {
+      id: 2,
+      role: "Manager",
+      createdDate: "2025-08-15",
+      status: "Inactive",
+    },
+    {
+      id: 3,
+      role: "Editor",
+      createdDate: "2025-07-20",
+      status: "Active",
+    },
+    {
+      id: 4,
+      role: "Viewer",
+      createdDate: "2025-06-10",
+      status: "Active",
+    },
+  ];
+
+  const [listData, setListData] = useState(sampleRoles);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(sampleRoles.length);
   const [rows, setRows] = useState(10);
-  const [searchQuery, setSearchQuery] = useState(undefined);
+  const [searchQuery, setSearchQuery] = useState();
 
   const columns = [
     {
@@ -37,7 +65,7 @@ const RolesPermissions = () => {
       field: "status",
       key: "status",
       body: (row) => (
-        <span className="badge badge-success d-inline-flex align-items-center badge-xs">
+        <span className={`badge d-inline-flex align-items-center badge-xs ${row.status === "Active" ? "badge-success" : "badge-danger"}`}>
           <i className="ti ti-point-filled me-1"></i>
           {row.status}
         </span>
@@ -48,10 +76,10 @@ const RolesPermissions = () => {
       field: "actions",
       key: "actions",
       sortable: false,
-      body: () => (
+      body: (_row) => (
         <div className="action-icon d-inline-flex">
-          <Link 
-            to="{all_routes.rolesPermissions}"
+          <Link
+            to={all_routes.permissions}
             className="me-2 d-flex align-items-center p-2 border rounded"
           >
             <i className="ti ti-shield"></i>
@@ -79,6 +107,10 @@ const RolesPermissions = () => {
 
   const handleSearch = (value) => {
     setSearchQuery(value);
+    const filtered = sampleRoles.filter((item) =>
+      item.role.toLowerCase().includes(value.toLowerCase())
+    );
+    setListData(filtered);
   };
 
   return (
@@ -106,14 +138,9 @@ const RolesPermissions = () => {
             </div>
           </div>
 
-          {/* /roles list */}
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <SearchFromApi
-                callback={handleSearch}
-                rows={rows}
-                setRows={setRows}
-              />
+              <SearchFromApi callback={handleSearch} rows={rows} setRows={setRows} />
               <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
                 <div className="dropdown me-2">
                   <Link
@@ -142,18 +169,17 @@ const RolesPermissions = () => {
             <div className="card-body p-0">
               <div className="table-responsive">
                 <PrimeDataTable
-                  columns={columns}
+                  column={columns}
                   data={listData}
                   rows={rows}
                   setRows={setRows}
                   currentPage={currentPage}
                   setCurrentPage={setCurrentPage}
-                  totalRecords={listData.length}
+                  totalRecords={totalRecords}
                 />
               </div>
             </div>
           </div>
-          {/* /roles list */}
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Tooltip } from "primereact/tooltip";
-// import { pdf, excel } from "../../utils/imagepath";
+import { pdf, excel } from "../../utils/imagepath";
 
 const TooltipIcons = () => {
   return (

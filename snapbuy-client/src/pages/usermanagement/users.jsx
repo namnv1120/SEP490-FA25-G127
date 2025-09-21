@@ -1,14 +1,13 @@
 import { Link } from "react-router-dom";
 import AddUsers from "../../core/modals/usermanagement/addusers";
-import EditUser from "../../core/modals/usermanagement/editusers";
+import EditUser from "../../core/modals/usermanagement/edituser";
 
 import TooltipIcons from "../../components/tooltip-content/tooltipIcons";
 import RefreshIcon from "../../components/tooltip-content/refresh";
 import CollapesIcon from "../../components/tooltip-content/collapes";
+import Table from "../../core/pagination/datatable";
 
 const Users = () => {
-  const dataSource = userlisadata;
-
   const columns = [
     {
       title: "User Name",
@@ -25,6 +24,7 @@ const Users = () => {
       ),
       sorter: (a, b) => a.username.length - b.username.length,
     },
+
     {
       title: "Phone",
       dataIndex: "phone",
@@ -74,7 +74,10 @@ const Users = () => {
         <div className="action-table-data">
           <div className="edit-delete-action">
             <Link className="me-2 p-2" to="#">
-              <i data-feather="eye" className="feather feather-eye action-eye"></i>
+              <i
+                data-feather="eye"
+                className="feather feather-eye action-eye"
+              ></i>
             </Link>
             <Link
               className="me-2 p-2"
@@ -84,13 +87,13 @@ const Users = () => {
             >
               <i data-feather="edit" className="feather-edit"></i>
             </Link>
-            <Link
-              className="confirm-text p-2"
-              to="#"
-              data-bs-toggle="modal"
-              data-bs-target="#delete-modal"
-            >
-              <i data-feather="trash-2" className="feather-trash-2"></i>
+            <Link className="confirm-text p-2" to="#">
+              <i
+                data-feather="trash-2"
+                className="feather-trash-2"
+                data-bs-toggle="modal"
+                data-bs-target="#delete-modal"
+              ></i>
             </Link>
           </div>
         </div>
@@ -127,7 +130,6 @@ const Users = () => {
             </div>
           </div>
 
-          {/* /user list */}
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
               <div className="search-set"></div>
@@ -158,18 +160,14 @@ const Users = () => {
 
             <div className="card-body">
               <div className="table-responsive">
-                <Table columns={columns} dataSource={dataSource} />
+                <Table columns={columns} dataSource={[]} />
               </div>
             </div>
           </div>
-          {/* /user list */}
         </div>
       </div>
-
       <AddUsers />
       <EditUser />
-
-      {/* Delete Modal */}
       <div className="modal fade" id="delete-modal">
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
@@ -179,7 +177,9 @@ const Users = () => {
                   <i className="ti ti-trash fs-24 text-danger" />
                 </span>
                 <h4 className="fs-20 fw-bold mb-2 mt-1">Delete User</h4>
-                <p className="mb-0 fs-16">Are you sure you want to delete user?</p>
+                <p className="mb-0 fs-16">
+                  Are you sure you want to delete user?
+                </p>
                 <div className="modal-footer-btn mt-3 d-flex justify-content-center">
                   <button
                     type="button"

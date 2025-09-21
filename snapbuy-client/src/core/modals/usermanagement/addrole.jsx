@@ -1,7 +1,10 @@
+import { useState } from "react";
+
 const AddRole = () => {
+  const [status, setStatus] = useState(true);
+
   return (
     <>
-      {/* Add Role */}
       <div className="modal fade" id="add-units">
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
@@ -27,7 +30,11 @@ const AddRole = () => {
                 <div className="d-flex align-items-center justify-content-between">
                   <label className="form-label">Status</label>
                   <label className="switch">
-                    <input type="checkbox" checked />
+                    <input
+                      type="checkbox"
+                      checked={status}
+                      onChange={(e) => setStatus(e.target.checked)}
+                    />
                     <span className="slider round" />
                   </label>
                 </div>
@@ -52,7 +59,6 @@ const AddRole = () => {
           </div>
         </div>
       </div>
-      {/* /Add Role */}
     </>
   );
 };
