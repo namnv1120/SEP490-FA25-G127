@@ -1,7 +1,18 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Navbar() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // 👉 Xóa dữ liệu login (nếu có, ví dụ localStorage / sessionStorage)
+    // localStorage.removeItem("user");
+    // sessionStorage.clear();
+
+    // 👉 Điều hướng về trang Login
+    navigate("/login");
+  };
+
   return (
     <nav className="navbar navbar-expand-lg shadow-sm px-3">
       <div className="container-fluid d-flex justify-content-between align-items-center">
@@ -111,9 +122,10 @@ function Navbar() {
                 <hr className="dropdown-divider" />
               </li>
               <li>
-                <Link className="dropdown-item text-danger" to="/logout">
+                {/* Dùng button thay vì Link */}
+                <button className="dropdown-item text-danger" onClick={handleLogout}>
                   Log out
-                </Link>
+                </button>
               </li>
             </ul>
           </div>
