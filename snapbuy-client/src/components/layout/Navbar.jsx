@@ -1,120 +1,74 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import "../../styles/Navbar.css";
 
-function Navbar() {
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    // 👉 Xóa dữ liệu login (nếu có, ví dụ localStorage / sessionStorage)
-    // localStorage.removeItem("user");
-    // sessionStorage.clear();
-
-    // 👉 Điều hướng về trang Login
-    navigate("/login");
-  };
-
+export default function Navbar() {
   return (
-    <nav className="navbar navbar-expand-lg shadow-sm px-3">
-      <div className="container-fluid d-flex justify-content-between align-items-center">
+    <header className="site-navbar bg-white shadow-sm">
+      <div className="container-fluid d-flex align-items-center justify-content-between py-2">
         {/* Logo + Search */}
         <div className="d-flex align-items-center">
-          <Link className="navbar-brand d-flex align-items-center me-3" to="/">
+          <Link to="/" className="d-flex align-items-center me-3 logo">
             <img
               src="/logo.png"
-              alt="SnapBuy"
-              style={{ height: 35, marginRight: 8 }}
+              alt="Snapbuy"
+              style={{ height: 36, marginRight: 8 }}
             />
-            <span className="fw-bold text-primary fs-5">
-              Snap<span className="text-warning">Buy</span>
+            <span style={{ fontWeight: 700, color: "#0b5ed7" }}>
+              Snap<span style={{ color: "#ff9f43" }}>Buy</span>
             </span>
           </Link>
 
-          {/* Search box */}
-          <div className="input-group d-none d-md-flex" style={{ width: 260 }}>
+          <div
+            className="input-group search-box d-none d-md-flex"
+            style={{ width: 360 }}
+          >
             <input
               type="text"
-              className="form-control border border-secondary"
+              className="form-control form-control-sm"
               placeholder="Search..."
             />
-            <button className="btn btn-outline-secondary">
+            <button className="btn btn-outline-secondary btn-sm">
               <i className="bi bi-search"></i>
             </button>
           </div>
         </div>
 
-        {/* Toggle button for mobile */}
-        <button
-          className="navbar-toggler ms-2"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
-
-        {/* Menu */}
-        <div
-          className="collapse navbar-collapse justify-content-center"
-          id="navbarNav"
-        >
-          <ul className="navbar-nav gap-3">
-            <li className="nav-item">
-              <Link className="nav-link fw-semibold" to="/">
-                Dashboard
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link fw-semibold" to="/product">
-                Product
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link fw-semibold" to="/supplier">
-                Supplier
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link fw-semibold" to="/user">
-                User
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        {/* Right section */}
-        <div className="d-flex align-items-center">
-          {/* Dropdown chọn shop */}
+        {/* Top-right controls */}
+        <div className="d-flex align-items-center gap-2">
           <select
-            className="form-select form-select-sm me-3 border-primary text-primary fw-semibold"
+            className="form-select form-select-sm me-2"
             style={{ width: 140 }}
           >
             <option>Freshmart</option>
             <option>Shop A</option>
-            <option>Shop B</option>
           </select>
 
-          {/* Buttons */}
-          <button className="btn btn-warning fw-bold text-white me-2">
-            <i className="bi bi-plus-circle me-1" /> Add New
+          <button className="btn btn-warning btn-sm fw-bold d-flex align-items-center">
+            <i className="bi bi-plus-circle me-1"></i> Add New
           </button>
 
-          <button className="btn btn-dark fw-bold text-white me-3">
-            <i className="bi bi-laptop me-1" /> POS
+          <button className="btn btn-dark btn-sm fw-bold d-flex align-items-center ms-2">
+            <i className="bi bi-laptop me-1"></i> POS
           </button>
 
-          {/* User dropdown */}
-          <div className="dropdown">
+          <button className="btn btn-outline-secondary btn-sm ms-2">
+            <i className="bi bi-bell"></i>
+          </button>
+          <button className="btn btn-outline-secondary btn-sm">
+            <i className="bi bi-gear"></i>
+          </button>
+
+          <div className="dropdown ms-2">
             <button
-              className="btn btn-outline-dark dropdown-toggle"
-              id="userMenu"
+              className="btn btn-outline-dark btn-sm dropdown-toggle"
               data-bs-toggle="dropdown"
-              aria-expanded="false"
             >
               <i className="bi bi-person-fill"></i>
             </button>
-            <ul className="dropdown-menu dropdown-menu-end shadow">
+            <ul className="dropdown-menu dropdown-menu-end">
               <li>
-                <Link className="dropdown-item" to="/profile">
+                <Link to="/profile" className="dropdown-item">
                   User Profile
                 </Link>
               </li>
@@ -122,17 +76,52 @@ function Navbar() {
                 <hr className="dropdown-divider" />
               </li>
               <li>
-                {/* Dùng button thay vì Link */}
-                <button className="dropdown-item text-danger" onClick={handleLogout}>
+                <Link to="/logout" className="dropdown-item text-danger">
                   Log out
-                </button>
+                </Link>
               </li>
             </ul>
           </div>
         </div>
       </div>
-    </nav>
+
+      {/* Hàng menu thứ 2 */}
+      <nav className="main-nav d-flex align-items-center gap-3 px-3 py-1">
+        <Link to="/dashboard" className="nav-link small">
+          Dashboard
+        </Link>
+        <Link to="/product" className="nav-link small">
+          Product
+        </Link>
+        <Link to="/supplier" className="nav-link small">
+          Supplier
+        </Link>
+        <Link to="/reports" className="nav-link small">
+          Reports
+        </Link>
+        <Link to="/settings" className="nav-link small">
+          Settings
+        </Link>
+
+        {/* More dropdown */}
+        <div className="dropdown">
+          <span className="nav-link small dropdown-toggle" role="button">
+            More
+          </span>
+          <ul className="dropdown-menu">
+            <li>
+              <Link to="/customers" className="dropdown-item">
+                Customer
+              </Link>
+            </li>
+            <li>
+              <Link to="/user" className="dropdown-item">
+                User
+              </Link>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </header>
   );
 }
-
-export default Navbar;

@@ -40,7 +40,7 @@ function Login() {
     console.log("Login thành công với: ", formData);
 
     // ✅ Điều hướng sang Dashboard
-    navigate("/dashboard");
+    navigate("/home");
   };
 
   return (
