@@ -1,47 +1,59 @@
 package com.g127.snapbuy.controller;
 
-import com.g127.snapbuy.dto.CustomerDto;
+import com.g127.snapbuy.dto.ApiResponse;
+import com.g127.snapbuy.dto.request.CustomerCreateRequest;
+import com.g127.snapbuy.dto.request.CustomerUpdateRequest;
+import com.g127.snapbuy.dto.response.CustomerResponse;
 import com.g127.snapbuy.service.CustomerService;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
-@AllArgsConstructor
 @RestController
 @RequestMapping("/api/customers")
+@RequiredArgsConstructor
 public class CustomerController {
-    private CustomerService customerService;
+    private final CustomerService customerService;
 
     @PostMapping
-    public ResponseEntity<CustomerDto> createCustomer(@Valid @RequestBody CustomerDto customerDto) {
-        return new ResponseEntity<>(customerService.createCustomer(customerDto)
-                , HttpStatus.CREATED);
+    public ApiResponse<CustomerResponse> createCustomer(@RequestBody @Valid CustomerCreateRequest request) {
+        ApiResponse<CustomerResponse> response = new ApiResponse<>();
+        response.setResult(customerService.createCustomer(request));
+        return response;
     }
 
     @GetMapping
-    public ResponseEntity<List<CustomerDto>> getAllCustomers() {
-        return ResponseEntity.ok(customerService.getAllCustomers());
+    public ApiResponse<List<CustomerResponse>> getAllCustomers() {
+        ApiResponse<List<CustomerResponse>> response = new ApiResponse<>();
+        response.setResult(customerService.getAllCustomers());
+        return response;
     }
 
     @GetMapping("{id}")
-    public ResponseEntity<CustomerDto> getCustomerById(@PathVariable("id") UUID id) {
-        return ResponseEntity.ok(customerService.getCustomerById(id));
+    public ApiResponse<CustomerResponse> getCustomerById(@PathVariable("id") UUID id) {
+        ApiResponse<CustomerResponse> response = new ApiResponse<>();
+        response.setResult(customerService.getCustomerById(id));
+        return response;
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<CustomerDto> updateCustomer(@PathVariable("id") UUID id
-            , @Valid @RequestBody CustomerDto customerDto) {
-        return ResponseEntity.ok(customerService.updateCustomer(id, customerDto));
+    public ApiResponse<CustomerResponse> updateCustomer(
+            @PathVariable("id") UUID id,
+            @Valid @RequestBody CustomerUpdateRequest request) {
+        ApiResponse<CustomerResponse> response = new ApiResponse<>();
+        response.setResult(customerService.updateCustomer(id, request));
+        return response;
     }
 
     @DeleteMapping("{id}")
-    public ResponseEntity<String> deleteCustomer(@PathVariable("id") UUID id) {
+    public ApiResponse<String> deleteCustomer(@PathVariable("id") UUID id) {
         customerService.deleteCustomer(id);
-        return ResponseEntity.ok("Customer deleted");
+        ApiResponse<String> response = new ApiResponse<>();
+        response.setResult("Customer with id " + id + " has been deleted successfully.");
+        return response;
     }
+
 }
