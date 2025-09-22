@@ -1,0 +1,28 @@
+.mainmenu-navbar {
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 14px;
+}
+
+.mainmenu-links .nav-link,
+.mainmenu-links .dropdown-toggle {
+  color: #333 !important;
+  font-weight: 500;
+  padding: 8px 12px !important;
+}
+
+.mainmenu-links .nav-link:hover,
+.mainmenu-links .dropdown-toggle:hover {
+  color: #ff6600 !important; /* màu cam hover */
+  background-color: #f8f9fa !important;
+  border-radius: 6px;
+}
+
+.mainmenu-links .dropdown-menu {
+  font-size: 14px;
+}
+
+.mainmenu-links i {
+  font-size: 15px;
+  vertical-align: middle;
+}

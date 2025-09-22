@@ -1,0 +1,114 @@
+/* global page */
+body { font-family: "Inter", "Helvetica Neue", Arial, sans-serif; }
+
+/* Top header */
+.top-header { border-bottom: 1px solid #eee; }
+.top-header .search-input { border-radius: 10px; padding: 10px 12px; }
+.top-header .btn-add-header { background: linear-gradient(180deg,#ff9a1a,#ff7a00); border:none; color:#fff; }
+.top-header .icon-round { width:34px; height:34px; border-radius:8px; background:#f2f3f5; }
+
+/* page container */
+.customers-page { background: #f6f8fa; min-height: calc(100vh - 72px); }
+
+/* page title */
+.page-title { margin:0; font-weight:700; font-size:1.25rem; }
+
+/* card table */
+.customers-card {
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(22,31,63,0.06);
+  border: 1px solid #eef1f4;
+}
+
+/* avatar (grey square) */
+.avatar {
+  width: 44px; height: 44px; border-radius: 8px;
+  background-size: cover; background-position: center;
+  background-color: #e9ecef;
+  display:inline-block;
+}
+
+/* add button on page */
+.btn-add {
+  background: linear-gradient(180deg,#ff9a1a,#ff7a00);
+  border: none; color: #fff; padding: 8px 14px; border-radius: 8px; font-weight:600;
+}
+
+/* export button */
+.export-btn { border-radius: 8px; }
+
+/* table header style */
+.table thead th {
+  background: transparent;
+  border-bottom: none;
+  font-weight:600;
+}
+
+/* row separator */
+.table tbody tr { border-bottom: 1px solid #f1f3f5; }
+
+/* muted email text */
+.table td.text-muted { color: #7b8794; }
+
+/* badges */
+.badge.bg-success { background-color: #2ecc71 !important; color: #fff; padding: .45rem .6rem; border-radius: 6px; }
+.badge.bg-danger { background-color: #ff6b6b !important; color: #fff; padding:.45rem .6rem; border-radius:6px; }
+
+/* action buttons (square) */
+.action-btn {
+  width:36px; height:36px; padding:0; display:inline-flex; align-items:center; justify-content:center;
+  border-radius:8px; border:1px solid #e9ecef;
+}
+
+/* bottom pagination highlight */
+.customers-card .btn-warning { background-color:#ff8a00; border-color:#ff8a00; color:#fff; }
+
+/* floating gear */
+.floating-gear {
+  position: fixed; right: 18px; top: 50%;
+  transform: translateY(-50%);
+  width:48px; height:48px; border-radius:50%;
+  background: linear-gradient(180deg,#ff9a1a,#ff7a00); display:flex; align-items:center; justify-content:center;
+  color:#fff; font-weight:700; box-shadow: 0 8px 20px rgba(255,138,0,0.2);
+}
+
+/* responsive */
+@media (max-width: 768px) {
+  .top-header .brand-text { display:none; }
+  .top-header .search-input { display:none; }
+  .customers-page { padding:12px; }
+  .avatar { width:36px; height:36px; }
+}
+.page-title {
+  font-weight: 600;
+}
+
+.btn-add {
+  color: #fff;
+  font-weight: 500;
+}
+
+.export-btn {
+  border: 1px solid #ddd;
+}
+
+.customer-table table {
+  background: #fff;
+}
+
+.floating-gear {
+  position: fixed;
+  right: 20px;
+  bottom: 100px;
+  background: #ff8c00;
+  color: #fff;
+  font-size: 20px;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+}
