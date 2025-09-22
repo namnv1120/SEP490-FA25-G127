@@ -1,7 +1,6 @@
 package com.g127.snapbuy.dto;
 
 import lombok.*;
-
 import java.util.List;
 
 @Data
