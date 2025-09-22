@@ -13,7 +13,11 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import Customer from "./pages/Customer";
 
-// Dummy pages (placeholder)
+// Thêm import Product
+import Product from "./inventory/Product"; 
+
+import Category from "./inventory/category";
+// Dummy pages
 const Billers = () => <h2>Billers Page</h2>;
 const Suppliers = () => <h2>Suppliers Page</h2>;
 const Stores = () => <h2>Stores Page</h2>;
@@ -32,7 +36,36 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/customers" element={<Customer />} />
 
-        {/* New pages */}
+        {/* Thêm route cho Product */}
+        <Route
+          path="/product"
+          element={
+            <>
+              <AppNavbar />
+              <div className="d-flex">
+                <div className="flex-grow-1 p-3">
+                  <Product />
+                </div>
+              </div>
+            </>
+          }
+        />
+
+        <Route
+          path="/category"
+          element={
+            <>
+              <AppNavbar />
+              <div className="d-flex">
+                <div className="flex-grow-1 p-3">
+                  <Category />
+                </div>
+              </div>
+            </>
+          }
+        />
+
+        {/* Các route khác */}
         <Route path="/billers" element={<Billers />} />
         <Route path="/suppliers" element={<Suppliers />} />
         <Route path="/stores" element={<Stores />} />

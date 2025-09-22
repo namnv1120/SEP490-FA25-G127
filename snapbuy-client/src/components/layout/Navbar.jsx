@@ -90,9 +90,24 @@ export default function Navbar() {
         <Link to="/dashboard" className="nav-link small">
           Dashboard
         </Link>
-        <Link to="/product" className="nav-link small">
-          Product
-        </Link>
+              {/* Inventory dropdown */}
+        <div className="dropdown">
+          <span className="nav-link small dropdown-toggle" role="button">
+            Inventory
+          </span>
+          <ul className="dropdown-menu">
+            <li>
+              <Link to="/product" className="dropdown-item">
+                Product
+              </Link>
+            </li>
+            <li>
+              <Link to="/category" className="dropdown-item">
+                Category
+              </Link>
+            </li>
+          </ul>
+        </div>
         <Link to="/supplier" className="nav-link small">
           Supplier
         </Link>
