@@ -6,7 +6,10 @@ import DeleteModal from "../../components/delete-modal";
 import PrimeDataTable from "../../components/data-table";
 import { all_routes } from "../../routes/all_routes";
 import SearchFromApi from "../../components/data-table/search";
-import TableTopHead from "../../components/table-top-head";
+
+import TooltipIcons from "../../components/tooltip-content/tooltipIcons";
+import RefreshIcon from "../../components/tooltip-content/refresh";
+import CollapesIcon from "../../components/tooltip-content/collapes";
 
 const RolesPermissions = () => {
   // Dữ liệu cứng ví dụ
@@ -120,11 +123,15 @@ const RolesPermissions = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Roles & Permission</h4>
+                <h4>Roles & Permissions</h4>
                 <h6>Manage your roles</h6>
               </div>
             </div>
-            <TableTopHead />
+            <ul className="table-top-head">
+              <TooltipIcons />
+              <RefreshIcon />
+              <CollapesIcon />
+            </ul>
             <div className="page-btn">
               <Link
                 to="#"
@@ -140,7 +147,7 @@ const RolesPermissions = () => {
 
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <SearchFromApi callback={handleSearch} rows={rows} setRows={setRows} />
+              <SearchFromApi callback={handleSearch} rows={rows} setRows={setRows} className="ms-3" />
               <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
                 <div className="dropdown me-2">
                   <Link

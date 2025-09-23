@@ -1,75 +1,71 @@
 import { useState } from "react";
-import { Table } from "antd";
+import { Table, Pagination, Select } from "antd";
 
 const Datatable = ({ props, columns, dataSource }) => {
-  const [, setSearchText] = useState("");
-  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [filteredDataSource, setFilteredDataSource] = useState(dataSource);
+  const [pageSize, setPageSize] = useState(10);
+  const [current, setCurrent] = useState(1);
 
-  const onSelectChange = (newSelectedRowKeys) => {
-    setSelectedRowKeys(newSelectedRowKeys);
-  };
-
-  const handleSearch = (value) => {
-    setSearchText(value);
-    const filteredData = dataSource.filter((record) =>
-      Object.values(record).some((field) =>
-        String(field).toLowerCase().includes(value.toLowerCase())
-      )
-    );
-    setFilteredDataSource(filteredData);
-  };
-
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: onSelectChange,
-  };
+  // Tính toán dữ liệu theo trang
+  const startIndex = (current - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedData = dataSource.slice(startIndex, endIndex);
 
   return (
     <>
-      <div className="search-set table-search-set">
-        <div className="search-input">
-          <a href="#" className="btn btn-searchset">
-            <i className="ti ti-search fs-14 feather-search" />
-          </a>
-          <div id="DataTables_Table_0_filter" className="dataTables_filter">
-            <label>
-              <input
-                type="search"
-                onChange={(e) => handleSearch(e.target.value)}
-                className="form-control form-control-sm"
-                placeholder="Search"
-                aria-controls="DataTables_Table_0"
-              />
-            </label>
-          </div>
-        </div>
-      </div>
-
       <Table
         key={props}
         className="table datanew dataTable no-footer"
-        rowSelection={rowSelection}
         columns={columns}
-        dataSource={filteredDataSource}
+        dataSource={paginatedData}
         rowKey={(record) => record.id}
-        pagination={{
-          locale: { items_per_page: "" },
-          nextIcon: (
-            <span>
-              <i className="fa fa-angle-right" />
-            </span>
-          ),
-          prevIcon: (
-            <span>
-              <i className="fa fa-angle-left" />
-            </span>
-          ),
-          defaultPageSize: 10,
-          showSizeChanger: true,
-          pageSizeOptions: ["10", "20", "30"],
-        }}
+        pagination={false} // tắt pagination mặc định
       />
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginTop: 16,
+        }}
+      >
+        {/* Bên trái: Row Per Page */}
+        <div>
+          Row Per Page{" "}
+          <Select
+            value={pageSize}
+            onChange={(value) => {
+              setPageSize(value);
+              setCurrent(1);
+            }}
+            style={{ width: 80, margin: "0 8px" }}
+            options={[
+              { value: 10, label: "10" },
+              { value: 20, label: "20" },
+              { value: 30, label: "30" },
+            ]}
+          />{" "}
+          Entries
+        </div>
+
+        {/* Bên phải: Pagination */}
+        <Pagination
+          current={current}
+          pageSize={pageSize}
+          total={dataSource.length}
+          onChange={(page) => setCurrent(page)}
+          showSizeChanger={false} // bỏ combo mặc định của AntD
+          itemRender={(page, type, originalElement) => {
+            if (type === "prev") {
+              return <span>{"<"}</span>;
+            }
+            if (type === "next") {
+              return <span>{">"}</span>;
+            }
+            return originalElement;
+          }}
+        />
+      </div>
     </>
   );
 };

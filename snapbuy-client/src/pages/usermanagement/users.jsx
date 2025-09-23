@@ -8,6 +8,54 @@ import CollapesIcon from "../../components/tooltip-content/collapes";
 import Table from "../../core/pagination/datatable";
 
 const Users = () => {
+  const sampleUsers = [
+    {
+      key: "1",
+      username: "Henry Bryant",
+      phone: "+12498345785",
+      email: "henry@example.com",
+      role: "Admin",
+      status: "Active",
+      img: "/path/to/henry.jpg",
+    },
+    {
+      key: "2",
+      username: "Jenny Ellis",
+      phone: "+13178964582",
+      email: "jenny@example.com",
+      role: "Manager",
+      status: "Active",
+      img: "/path/to/jenny.jpg",
+    },
+    {
+      key: "3",
+      username: "Leon Baxter",
+      phone: "+12796183487",
+      email: "leon@example.com",
+      role: "Salesman",
+      status: "Active",
+      img: "/path/to/leon.jpg",
+    },
+    {
+      key: "4",
+      username: "Karen Flores",
+      phone: "+17538647943",
+      email: "karen@example.com",
+      role: "Supervisor",
+      status: "Active",
+      img: "/path/to/karen.jpg",
+    },
+    {
+      key: "5",
+      username: "Michael Dawson",
+      phone: "+11576348795",
+      email: "michael@example.com",
+      role: "Store Keeper",
+      status: "Active",
+      img: "/path/to/michael.jpg",
+    },
+  ];
+
   const columns = [
     {
       title: "User Name",
@@ -22,28 +70,22 @@ const Users = () => {
           </div>
         </span>
       ),
-      sorter: (a, b) => a.username.length - b.username.length,
+      sorter: (a, b) => a.username.localeCompare(b.username),
     },
-
     {
       title: "Phone",
       dataIndex: "phone",
-      sorter: (a, b) => a.phone.length - b.phone.length,
+      sorter: (a, b) => a.phone.localeCompare(b.phone),
     },
     {
       title: "Email",
       dataIndex: "email",
-      sorter: (a, b) => a.email.length - b.email.length,
+      sorter: (a, b) => a.email.localeCompare(b.email),
     },
     {
       title: "Role",
       dataIndex: "role",
-      sorter: (a, b) => a.role.length - b.role.length,
-    },
-    {
-      title: "Created On",
-      dataIndex: "createdon",
-      sorter: (a, b) => a.createdon.length - b.createdon.length,
+      sorter: (a, b) => a.role.localeCompare(b.role),
     },
     {
       title: "Status",
@@ -64,7 +106,7 @@ const Users = () => {
           )}
         </div>
       ),
-      sorter: (a, b) => a.status.length - b.status.length,
+      sorter: (a, b) => a.status.localeCompare(b.status),
     },
     {
       title: "Actions",
@@ -74,10 +116,7 @@ const Users = () => {
         <div className="action-table-data">
           <div className="edit-delete-action">
             <Link className="me-2 p-2" to="#">
-              <i
-                data-feather="eye"
-                className="feather feather-eye action-eye"
-              ></i>
+              <i data-feather="eye" className="feather feather-eye action-eye"></i>
             </Link>
             <Link
               className="me-2 p-2"
@@ -160,7 +199,7 @@ const Users = () => {
 
             <div className="card-body">
               <div className="table-responsive">
-                <Table columns={columns} dataSource={[]} />
+                <Table columns={columns} dataSource={sampleUsers} />
               </div>
             </div>
           </div>

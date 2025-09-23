@@ -1,16 +1,14 @@
-/* Tổng layout */
 .app-layout {
   min-height: 100vh;
-  background-color: #f8f9fa; /* nền xám nhạt cho toàn trang */
+  background-color: #f8f9fa;
+  display: flex;
 }
 
-/* Sidebar */
 .sidebar {
-  background-color: #1e1e2d; /* đen xanh đậm như mẫu */
+  background-color: #1e1e2d;
   color: #fff;
-  min-width: 220px;
-  max-width: 220px;
-  min-height: 100vh; /* luôn full màn hình */
+  width: 220px;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -18,11 +16,10 @@
 .sidebar h2 {
   font-size: 20px;
   font-weight: 700;
-  margin-bottom: 20px;
+  margin: 20px 0;
   text-align: center;
 }
 
-/* Link trong sidebar */
 .sidebar .nav-link {
   color: #b5b5c3;
   padding: 10px 15px;
@@ -34,29 +31,28 @@
   color: #fff;
 }
 
-/* Navbar */
-.navbar {
-  border-bottom: 1px solid #eaeaea;
-  background-color: #fff !important;
-  padding: 10px 20px;
-}
-
-/* Nội dung chính */
 .main-content {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
 }
 
-.page-content {
-  background-color: #f8f9fa;
-  flex-grow: 1;
-  min-height: calc(100vh - 60px); /* trừ navbar */
+.navbar {
+  border-bottom: 1px solid #eaeaea;
+  background-color: #fff !important;
+  padding: 10px 20px;
 }
-.main-content {
+
+.page-content {
+  flex-grow: 1;
+  background-color: #f8f9fa;
+  padding: 20px;
+  min-height: calc(100vh - 60px);
+}
+
+.centered-page {
   display: flex;
-  justify-content: center;   /* căn giữa theo chiều ngang */
-  align-items: center;       /* căn giữa theo chiều dọc */
-  min-height: 100vh;         /* full chiều cao màn hình */
-  background: #f8f9fa;       /* màu nền giống demo */
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 60px);
 }
