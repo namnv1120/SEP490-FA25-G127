@@ -17,14 +17,15 @@ import java.util.UUID;
 public class Category {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "category_id", updatable = false, nullable = false)
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @Column(name = "category_id", columnDefinition = "uniqueidentifier")
     private UUID categoryId;
 
     @Column(name = "category_name", nullable = false, length = 100)
     private String categoryName;
 
-    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "description", columnDefinition = "nvarchar(max)")
     private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -41,14 +42,13 @@ public class Category {
     private LocalDateTime updatedAt;
 
     @PrePersist
-    protected void onCreate() {
+    public void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
-    protected void onUpdate() {
+    public void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
 }
-

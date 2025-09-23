@@ -52,7 +52,7 @@ public class CustomerController {
     public ApiResponse<String> deleteCustomer(@PathVariable("id") UUID id) {
         customerService.deleteCustomer(id);
         ApiResponse<String> response = new ApiResponse<>();
-        response.setResult("Customer with id " + id + " has been deleted successfully.");
+        response.setResult("Customer deleted");
         return response;
     }
 

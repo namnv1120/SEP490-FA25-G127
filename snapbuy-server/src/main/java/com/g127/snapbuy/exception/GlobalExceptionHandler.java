@@ -2,6 +2,7 @@ package com.g127.snapbuy.exception;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.g127.snapbuy.dto.ApiResponse;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Arrays;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
@@ -28,7 +30,7 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiResponse<?>> handleRuntimeException(Exception ex) {
         ApiResponse<?> response = ApiResponse.builder()
                 .code(9999)
-                .message("Internal server error: " + ex.getMessage())
+                .message(ex.getMessage())
                 .build();
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -38,7 +40,7 @@ public class GlobalExceptionHandler {
         String message = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .map(err -> err.getDefaultMessage())
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
                 .collect(Collectors.joining("; "));
         ApiResponse<?> response = ApiResponse.builder()
                 .code(4000)
@@ -53,16 +55,20 @@ public class GlobalExceptionHandler {
         String message = "Invalid request format";
 
         if (ex.getCause() instanceof InvalidFormatException invalidFormat) {
-            if (invalidFormat.getTargetType().isEnum()) {
+            if (invalidFormat.getTargetType() == UUID.class) {
+                message = "ParentId must be a valid UUID";
+            } else if (invalidFormat.getTargetType().isEnum()) {
                 message = "Invalid value for field. Accepted values: " +
                         Arrays.toString(invalidFormat.getTargetType().getEnumConstants());
             }
         }
+
         ApiResponse<?> response = ApiResponse.builder()
                 .code(4000)
                 .message(message)
                 .build();
         return ResponseEntity.badRequest().body(response);
     }
+
 
 }
