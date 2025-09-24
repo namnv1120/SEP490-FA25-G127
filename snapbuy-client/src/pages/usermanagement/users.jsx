@@ -164,7 +164,7 @@ const Users = () => {
                 data-bs-target="#add-units"
               >
                 <i className="ti ti-circle-plus me-1"></i>
-                Add New User
+                Add User
               </Link>
             </div>
           </div>
