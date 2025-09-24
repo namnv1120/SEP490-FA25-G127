@@ -1,6 +1,7 @@
 import React from "react";
 import "../styles/Category.css";
 import { FaFilePdf, FaFileExcel, FaEdit, FaTrash } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 
 
@@ -61,28 +62,39 @@ export default function Category() {
               <td>
                 <span className="status active">{c.status}</span>
               </td>
-              <td className="actions">
-                <button className="btn-icon edit"><FaEdit /></button>
-                <button className="btn-icon delete"><FaTrash /></button>
-              </td>
+             <td className="actions">
+            <Link to={`/category/edit/${c.slug}`} className="btn-icon edit">
+              <FaEdit />
+            </Link>
+            <Link to={`/category/delete/${c.slug}`} className="btn-icon delete">
+              <FaTrash />
+            </Link>
+          </td>
+
             </tr>
           ))}
         </tbody>
       </table>
 
-      <div className="footer">
+          <div className="footer">
+      <div className="footer-left">
         <span>Row Per Page</span>
         <select>
           <option>10</option>
           <option>20</option>
         </select>
         <span>Entries</span>
-        <div className="pagination">
-          <button>{"<<"}</button>
-          <button className="active">1</button>
-          <button>{">>"}</button>
-        </div>
+      </div>
+
+      <div className="pagination">
+        <button>{"<<"}</button>
+        <button className="active">1</button>
+        <button>{"2"}</button>
+        <button>{">>"}</button>
       </div>
     </div>
+    </div>
+
+
   );
 }

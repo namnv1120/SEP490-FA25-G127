@@ -15,11 +15,16 @@ import Customer from "./pages/Customer";
 
 // Thêm import Product
 import Product from "./inventory/Product"; 
-
 import Category from "./inventory/category";
+import Suppliers from "./people/SuppliersList"; 
+import EditCategory from "./inventory/EditCategory";
+import DeleteCategory from "./inventory/DeleteCategory";
+
+// Import SupplierList component
+
 // Dummy pages
 const Billers = () => <h2>Billers Page</h2>;
-const Suppliers = () => <h2>Suppliers Page</h2>;
+const SupplierList = () => <h2>Suppliers Page</h2>;
 const Stores = () => <h2>Stores Page</h2>;
 const Warehouses = () => <h2>Warehouses Page</h2>;
 const UserManagement = () => <h2>User Management Page</h2>;
@@ -59,6 +64,47 @@ function App() {
               <div className="d-flex">
                 <div className="flex-grow-1 p-3">
                   <Category />
+                </div>
+              </div>
+            </>
+          }
+        />
+
+              <Route
+          path="/supplier"
+          element={
+            <>
+              <AppNavbar />
+              <div className="d-flex">
+                <div className="flex-grow-1 p-3">
+                  <Suppliers />
+                </div>
+              </div>
+            </>
+          }
+        />
+        <Route
+          path="/category/edit/:slug"
+          element={
+            <>
+              <AppNavbar />
+              <div className="d-flex">
+                <div className="flex-grow-1 p-3">
+                  <EditCategory />
+                </div>
+              </div>
+            </>
+          }
+        />
+
+        <Route
+          path="/category/delete/:slug"
+          element={
+            <>
+              <AppNavbar />
+              <div className="d-flex">
+                <div className="flex-grow-1 p-3">
+                  <DeleteCategory />
                 </div>
               </div>
             </>

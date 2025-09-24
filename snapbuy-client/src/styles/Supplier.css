@@ -1,0 +1,78 @@
+/* SupplierList.css */
+.supplier-container {
+  padding: 20px;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #fff8f0;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.add-button {
+  background-color: #ff7a00;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.add-button:hover {
+  background-color: #e06600;
+}
+
+.filter {
+  margin: 20px 0;
+}
+
+.filter label {
+  margin-right: 8px;
+  font-weight: bold;
+  color: #ff7a00;
+}
+
+.filter select {
+  padding: 6px;
+  border: 1px solid #ff7a00;
+  border-radius: 4px;
+}
+
+.supplier-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  box-shadow: 0 0 8px rgba(255, 122, 0, 0.2);
+}
+
+.supplier-table th,
+.supplier-table td {
+  border: 1px solid #ffd2b3;
+  padding: 12px;
+  text-align: left;
+}
+
+.supplier-table th {
+  background-color: #ffe0cc;
+  color: #ff7a00;
+}
+
+.edit-btn,
+.delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  margin-right: 8px;
+}
+
+.edit-btn:hover {
+  color: #ff7a00;
+}
+
+.delete-btn:hover {
+  color: #d10000;
+}
