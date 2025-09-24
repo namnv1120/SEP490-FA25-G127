@@ -1,6 +1,8 @@
 package com.g127.snapbuy.service.impl;
 
-import com.g127.snapbuy.dto.*;
+import com.g127.snapbuy.dto.request.ForgotPasswordRequest;
+import com.g127.snapbuy.dto.request.ResetPasswordRequest;
+import com.g127.snapbuy.dto.request.VerifyOtpRequest;
 import com.g127.snapbuy.entity.User;
 import com.g127.snapbuy.exception.ResourceNotFoundException;
 import com.g127.snapbuy.repository.UserRepository;
@@ -11,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.time.format.DateTimeFormatter;
+
 
 import java.time.OffsetDateTime;
 import java.util.Random;
@@ -24,6 +28,9 @@ public class ForgotPasswordServiceImpl implements ForgotPasswordService {
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
     private final OtpStore otpStore;
+    private static final DateTimeFormatter OTP_EXPIRY_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
 
     private static final int EXPIRE_MINUTES = 2;
     private static final int RESEND_GAP_SECONDS = 30;
@@ -48,7 +55,7 @@ public class ForgotPasswordServiceImpl implements ForgotPasswordService {
         String subject = "[SnapBuy] Mã xác nhận đặt lại mật khẩu";
         String content = "Xin chào " + user.getFullName() + ",\n\n"
                 + "Mã xác nhận của bạn là: " + code + "\n"
-                + "Mã có hiệu lực đến: " + expiresAt + "\n\n"
+                + "Mã có hiệu lực đến: " + expiresAt.format(OTP_EXPIRY_FORMATTER) + "\n\n"
                 + "Nếu không phải bạn yêu cầu, vui lòng bỏ qua email này.";
         mailService.send(email, subject, content);
 

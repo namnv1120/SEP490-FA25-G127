@@ -1,6 +1,9 @@
 package com.g127.snapbuy.controller;
 
-import com.g127.snapbuy.dto.*;
+import com.g127.snapbuy.dto.request.ForgotPasswordRequest;
+import com.g127.snapbuy.dto.request.ResetPasswordRequest;
+import com.g127.snapbuy.dto.request.VerifyOtpRequest;
+import com.g127.snapbuy.dto.response.ApiResponse;
 import com.g127.snapbuy.service.ForgotPasswordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

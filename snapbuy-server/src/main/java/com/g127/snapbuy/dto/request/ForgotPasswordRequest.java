@@ -1,4 +1,4 @@
-package com.g127.snapbuy.dto;
+package com.g127.snapbuy.dto.request;
 import lombok.Data;
 
 @Data
