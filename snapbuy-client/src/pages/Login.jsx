@@ -38,8 +38,6 @@ function Login() {
 
     setError("");
     console.log("Login thành công với: ", formData);
-
-    // ✅ Điều hướng sang Dashboard
     navigate("/home");
   };
 
@@ -72,8 +70,6 @@ function Login() {
             Login
           </button>
         </form>
-
-        {/* 👇 Các link điều hướng */}
         <div className="switch-link mt-3">
           <span onClick={() => navigate("/register")}>Register</span>
         </div>

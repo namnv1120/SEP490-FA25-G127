@@ -18,21 +18,15 @@ function Register() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // Check input
     if (!formData.username || !formData.email || !formData.password) {
       setError("Vui lòng nhập đầy đủ thông tin!");
       return;
     }
 
     setError("");
-
-    // Điều hướng sang Login và truyền data
     navigate("/login", {
       state: { userData: formData, message: "Đăng ký thành công!" },
     });
-
-    // Reset form
     setFormData({
       username: "",
       email: "",
@@ -44,8 +38,6 @@ function Register() {
     <div className="auth-page">
       <div className="auth-container">
         <h3>Register</h3>
-
-        {/* Thông báo lỗi */}
         {error && <div className="text-danger mb-2">{error}</div>}
 
         <form onSubmit={handleSubmit}>

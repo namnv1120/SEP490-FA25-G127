@@ -3,7 +3,7 @@ import { Container, Row, Col, Button } from "react-bootstrap";
 import TopHeader from "../components/layout/TopHeader";
 import CustomerTable from "../components/customers/CustomerTable";
 import AddEditCustomerModal from "../components/customers/AddEditCustomerModal";
-import MainMenu from "../components/layout/MainMenu"; // 🔥 thêm dòng này
+import MainMenu from "../components/layout/MainMenu";
 import "../styles/Customers.css";
 
 const initialCustomers = [
@@ -94,7 +94,7 @@ export default function Customers() {
   return (
     <>
       <TopHeader />
-      <MainMenu /> {/* 🔥 thêm menu hàng 2 */}
+      <MainMenu />
       <Container fluid className="customers-page p-4">
         <Row className="mb-3 align-items-center">
           <Col>
@@ -136,7 +136,6 @@ export default function Customers() {
           onUpdate={handleUpdate}
         />
       </Container>
-      {/* right floating orange gear like image */}
       <div className="floating-gear">⚙</div>
     </>
   );

@@ -6,11 +6,10 @@ export default function Navbar() {
   return (
     <header className="site-navbar bg-white shadow-sm">
       <div className="container-fluid d-flex align-items-center justify-content-between py-2">
-        {/* Logo + Search */}
         <div className="d-flex align-items-center">
           <Link to="/" className="d-flex align-items-center me-3 logo">
             <img
-              src="/logo.png"
+              src="../src/assets/logo.png"
               alt="Snapbuy"
               style={{ height: 36, marginRight: 8 }}
             />
@@ -33,8 +32,6 @@ export default function Navbar() {
             </button>
           </div>
         </div>
-
-        {/* Top-right controls */}
         <div className="d-flex align-items-center gap-2">
           <select
             className="form-select form-select-sm me-2"
@@ -84,8 +81,6 @@ export default function Navbar() {
           </div>
         </div>
       </div>
-
-      {/* Hàng menu thứ 2 */}
       <nav className="main-nav d-flex align-items-center gap-3 px-3 py-1">
         <Link to="/dashboard" className="nav-link small">
           Dashboard
@@ -102,8 +97,6 @@ export default function Navbar() {
         <Link to="/settings" className="nav-link small">
           Settings
         </Link>
-
-        {/* More dropdown */}
         <div className="dropdown">
           <span className="nav-link small dropdown-toggle" role="button">
             More

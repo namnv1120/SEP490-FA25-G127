@@ -6,11 +6,9 @@ export default function TopHeader() {
   return (
     <Navbar bg="white" expand="lg" className="top-header shadow-sm py-2">
       <Container fluid className="align-items-center">
-        {/* logo left */}
         <Navbar.Brand className="d-flex align-items-center gap-2">
           <div className="brand-logo">
             {" "}
-            {/* simple svg / placeholder */}
             <div
               style={{
                 width: 36,
@@ -32,8 +30,6 @@ export default function TopHeader() {
             <small className="text-muted ms-1">POS</small>
           </div>
         </Navbar.Brand>
-
-        {/* search */}
         <Form className="mx-3 flex-grow-1 d-none d-md-flex">
           <Form.Control placeholder="Search" className="search-input" />
         </Form>
@@ -48,7 +44,6 @@ export default function TopHeader() {
           <Button variant="dark" size="sm">
             POS
           </Button>
-          {/* small icons placeholders */}
           <div className="d-none d-md-flex align-items-center gap-2 ms-2">
             <div className="icon-round"></div>
             <div className="icon-round"></div>

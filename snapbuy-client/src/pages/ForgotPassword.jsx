@@ -15,8 +15,6 @@ function ForgotPassword() {
       setMessage("Vui lòng nhập email!");
       return;
     }
-
-    // ✅ Tạm thời hiển thị thông báo (sau này bạn gọi API gửi mail reset password)
     setMessage(`Một liên kết đặt lại mật khẩu đã được gửi tới: ${email}`);
     setEmail("");
   };
