@@ -30,8 +30,8 @@ public class CustomerServiceImpl implements CustomerService {
             throw new AppException(ErrorCode.EMAIL_EXISTED);
         }
         Customer customer = customerMapper.toEntity(request);
-        customer.setCreatedAt(LocalDateTime.now());
-        customer.setUpdatedAt(LocalDateTime.now());
+        customer.setCreatedDate(LocalDateTime.now());
+        customer.setUpdatedDate(LocalDateTime.now());
         String code = "CUST-" + System.currentTimeMillis();
         customer.setCustomerCode(code);
         return customerMapper.toResponse(customerRepository.save(customer));
@@ -57,7 +57,7 @@ public class CustomerServiceImpl implements CustomerService {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
         customerMapper.updateFromDto(request, customer);
-        customer.setUpdatedAt(LocalDateTime.now());
+        customer.setUpdatedDate(LocalDateTime.now());
         return customerMapper.toResponse(customerRepository.save(customer));
     }
 

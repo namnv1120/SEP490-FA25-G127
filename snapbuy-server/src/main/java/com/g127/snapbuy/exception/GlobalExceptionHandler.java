@@ -16,8 +16,9 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
     @ExceptionHandler(AppException.class)
-    ResponseEntity<ApiResponse<?>> handleAppException(AppException ex) {
+    public ResponseEntity<ApiResponse<?>> handleAppException(AppException ex) {
         ErrorCode errorCode = ex.getErrorCode();
         ApiResponse<?> response = ApiResponse.builder()
                 .code(errorCode.getCode())
@@ -27,7 +28,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    ResponseEntity<ApiResponse<?>> handleRuntimeException(Exception ex) {
+    public ResponseEntity<ApiResponse<?>> handleRuntimeException(Exception ex) {
         ApiResponse<?> response = ApiResponse.builder()
                 .code(9999)
                 .message(ex.getMessage())
@@ -36,7 +37,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    ResponseEntity<ApiResponse<?>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiResponse<?>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -51,24 +52,22 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    ResponseEntity<ApiResponse<?>> handleJsonParseExceptions(HttpMessageNotReadableException ex) {
+    public ResponseEntity<ApiResponse<?>> handleJsonParseExceptions(HttpMessageNotReadableException ex) {
         String message = "Invalid request format";
 
         if (ex.getCause() instanceof InvalidFormatException invalidFormat) {
-            if (invalidFormat.getTargetType() == UUID.class) {
-                message = "ParentId must be a valid UUID";
-            } else if (invalidFormat.getTargetType().isEnum()) {
+            if (invalidFormat.getTargetType().isEnum()) {
                 message = "Invalid value for field. Accepted values: " +
                         Arrays.toString(invalidFormat.getTargetType().getEnumConstants());
+            } else if (invalidFormat.getTargetType() == UUID.class) {
+                message = "UUID format error. Please provide a valid UUID.";
             }
         }
 
         ApiResponse<?> response = ApiResponse.builder()
-                .code(4000)
+                .code(4001)
                 .message(message)
                 .build();
         return ResponseEntity.badRequest().body(response);
     }
-
-
 }

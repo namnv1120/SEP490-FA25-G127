@@ -1,101 +1,84 @@
 package com.g127.snapbuy.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import org.hibernate.annotations.GenericGenerator;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "customers")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Customer {
 
     @Id
-    @GeneratedValue(generator = "UUID")
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-    @Column(name = "customer_id")
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "customer_id", columnDefinition = "uniqueidentifier")
     private UUID customerId;
 
-    @Column(name = "customer_code", unique = true, nullable = false, length = 20)
+    @Column(name = "customer_code", unique = true)
     private String customerCode;
 
-    @Column(name = "full_name", nullable = false, length = 100)
+    @Column(name = "first_name", nullable = false)
+    private String firstName;
+
+    @Column(name = "last_name", nullable = false)
+    private String lastName;
+
+    @Transient
     private String fullName;
 
-    @Column(name = "email", unique = true, length = 100)
+    @Column(name = "email", unique = true)
     private String email;
 
-    @Column(name = "phone", length = 15)
+    @Column(name = "phone")
     private String phone;
-
-    @Column(name = "address", columnDefinition = "NVARCHAR(MAX)")
-    private String address;
-
-    @Column(name = "city", length = 50)
-    private String city;
-
-    @Column(name = "district", length = 50)
-    private String district;
-
-    @Column(name = "ward", length = 50)
-    private String ward;
 
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "gender", length = 20)
+    @Column(name = "gender")
     private Gender gender;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "customer_type", length = 20)
-    @Builder.Default
-    private CustomerType customerType = CustomerType.Individual;
+    @Column(name = "address")
+    private String address;
 
-    @Column(name = "tax_code", length = 20)
-    private String taxCode;
+    @Column(name = "city")
+    private String city;
 
-    @Column(name = "credit_limit", precision = 15, scale = 2)
-    @Builder.Default
-    private BigDecimal creditLimit = BigDecimal.ZERO;
+    @Column(name = "district")
+    private String district;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 20)
-    @Builder.Default
-    private CustomerStatus status = CustomerStatus.Active;
+    @Column(name = "ward")
+    private String ward;
 
-    @Column(name = "created_at")
-    @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "active")
+    private boolean active = true;
 
-    @Column(name = "updated_at")
-    @Builder.Default
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    @Column(name = "created_date", updatable = false)
+    private LocalDateTime createdDate;
 
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
+    @Column(name = "updated_date")
+    private LocalDateTime updatedDate;
+
+    public String getFullName() {
+        return this.firstName + " " + this.lastName;
     }
 
     public enum Gender {
-        Male, Female, Other
+        Male,
+        Female,
+        Other
     }
 
-    public enum CustomerType {
-        Individual, Business
-    }
-
-    public enum CustomerStatus {
-        Active, Inactive
-    }
 }

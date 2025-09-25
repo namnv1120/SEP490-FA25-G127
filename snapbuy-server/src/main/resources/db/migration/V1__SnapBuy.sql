@@ -1,10 +1,30 @@
+CREATE DATABASE SnapBuy;
+GO
+
+USE SnapBuy;
+GO
+
+CREATE TABLE accounts
+(
+    account_id    UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    full_name     NVARCHAR(100)        NOT NULL,
+    username      NVARCHAR(50) UNIQUE  NOT NULL,
+    password_hash NVARCHAR(255)        NOT NULL,
+    email         NVARCHAR(100) UNIQUE NOT NULL,
+    phone         NVARCHAR(15)         NULL,
+    avatar_url    NVARCHAR(500)        NULL,
+    active        BIT                          DEFAULT 1,
+    created_date  DATETIME2                    DEFAULT GETDATE(),
+    updated_date  DATETIME2                    DEFAULT GETDATE(),
+);
+
 CREATE TABLE categories
 (
     category_id        UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     category_name      NVARCHAR(100)    NOT NULL,
     [description]      NVARCHAR(MAX),
     parent_category_id UNIQUEIDENTIFIER NULL,
-    is_active          BIT                          DEFAULT 1,
+    active             BIT                          DEFAULT 1,
     created_date       DATETIME2                    DEFAULT GETDATE(),
     updated_date       DATETIME2                    DEFAULT GETDATE(),
 
@@ -21,7 +41,7 @@ CREATE TABLE suppliers
     [address]      NVARCHAR(100),
     city           NVARCHAR(50),
     tax_code       NVARCHAR(20),
-    is_active      BIT                          DEFAULT 1,
+    active         BIT                          DEFAULT 1,
     created_date   DATETIME2                    DEFAULT GETDATE(),
     updated_date   DATETIME2                    DEFAULT GETDATE()
 );
@@ -38,7 +58,7 @@ CREATE TABLE products
     [weight]      DECIMAL(8, 3),
     dimensions    NVARCHAR(50),
     image_url     NVARCHAR(500),
-    is_active     BIT                          DEFAULT 1,
+    active        BIT                          DEFAULT 1,
     created_date  DATETIME2                    DEFAULT GETDATE(),
     updated_date  DATETIME2                    DEFAULT GETDATE(),
 
@@ -77,6 +97,7 @@ CREATE TABLE inventory_transaction
 (
     transaction_id   UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     product_id       UNIQUEIDENTIFIER NOT NULL,
+    account_id       UNIQUEIDENTIFIER NOT NULL,
     transaction_type NVARCHAR(20)     NOT NULL,
     quantity         INT              NOT NULL,
     unit_price       DECIMAL(18, 2),
@@ -86,6 +107,7 @@ CREATE TABLE inventory_transaction
     transaction_date DATETIME2                    DEFAULT GETDATE(),
     created_by       NVARCHAR(100),
 
+    FOREIGN KEY (account_id) REFERENCES accounts (account_id),
     FOREIGN KEY (product_id) REFERENCES products (product_id)
 );
 
@@ -99,27 +121,14 @@ CREATE TABLE customers
     email         NVARCHAR(100) UNIQUE,
     phone         NVARCHAR(20),
     date_of_birth DATE,
-    gender        NCHAR(1), -- M, F, O
+    gender        NVARCHAR(6),
     [address]     NVARCHAR(500),
     city          NVARCHAR(50),
     district      NVARCHAR(50),
     ward          NVARCHAR(50),
-    is_active     BIT                          DEFAULT 1,
+    active        BIT                          DEFAULT 1,
     created_date  DATETIME2                    DEFAULT GETDATE(),
     updated_date  DATETIME2                    DEFAULT GETDATE()
-);
-
-CREATE TABLE accounts
-(
-    account_id    UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    username      NVARCHAR(50) UNIQUE  NOT NULL,
-    password_hash NVARCHAR(255)        NOT NULL,
-    email         NVARCHAR(100) UNIQUE NOT NULL,
-    phone         NVARCHAR(15)         NULL,
-    avatar_url    NVARCHAR(500)        NULL,
-    is_active     BIT                          DEFAULT 1,
-    created_date  DATETIME2                    DEFAULT GETDATE(),
-    updated_date  DATETIME2                    DEFAULT GETDATE(),
 );
 
 CREATE TABLE roles
@@ -127,7 +136,7 @@ CREATE TABLE roles
     role_id       UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     role_name     NVARCHAR(50) NOT NULL,
     [description] NVARCHAR(MAX),
-    is_active     BIT                          DEFAULT 1,
+    active        BIT                          DEFAULT 1,
     created_date  DATETIME2                    DEFAULT GETDATE()
 );
 
@@ -146,8 +155,8 @@ CREATE TABLE [permissions]
     permission_id     UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     [permission_name] NVARCHAR(50) NOT NULL,
     [description]     NVARCHAR(200),
-    module            NVARCHAR(50),
-    is_active         BIT                          DEFAULT 1
+    module            NVARCHAR(50), -- PRODUCT, ORDER, CUSTOMER, REPORT
+    active            BIT                          DEFAULT 1
 );
 
 CREATE TABLE role_permission
@@ -165,10 +174,11 @@ CREATE TABLE orders
     order_id        UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     order_number    NVARCHAR(20) UNIQUE NOT NULL,
     customer_id     UNIQUEIDENTIFIER    NOT NULL,
+    account_id      UNIQUEIDENTIFIER    NOT NULL,
     order_date      DATETIME2                    DEFAULT GETDATE(),
     required_date   DATETIME2,
-    order_status    NVARCHAR(20)                 DEFAULT 'PENDING',
-    payment_status  NVARCHAR(20)                 DEFAULT 'UNPAID',
+    order_status    NVARCHAR(20)                 DEFAULT 'PENDING', -- PENDING, CONFIRMED, COMPLETED, CANCELLED
+    payment_status  NVARCHAR(20)                 DEFAULT 'UNPAID',  -- UNPAID, PARTIAL, PAID, REFUNDED
     total_amount    DECIMAL(18, 2)      NOT NULL DEFAULT 0,
     discount_amount DECIMAL(18, 2)               DEFAULT 0,
     tax_amount      DECIMAL(18, 2)               DEFAULT 0,
@@ -177,6 +187,7 @@ CREATE TABLE orders
     created_date    DATETIME2                    DEFAULT GETDATE(),
     updated_date    DATETIME2                    DEFAULT GETDATE(),
 
+    FOREIGN KEY (account_id) REFERENCES accounts (account_id),
     FOREIGN KEY (customer_id) REFERENCES customers (customer_id)
 );
 
@@ -198,10 +209,10 @@ CREATE TABLE payments
 (
     payment_id            UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     order_id              UNIQUEIDENTIFIER NOT NULL,
-    payment_method        NVARCHAR(30)     NOT NULL,
+    payment_method        NVARCHAR(30)     NOT NULL,                      -- CASH, CARD, BANK_TRANSFER, E_WALLET
     payment_date          DATETIME2                    DEFAULT GETDATE(),
     amount                DECIMAL(18, 2)   NOT NULL,
-    payment_status        NVARCHAR(20)                 DEFAULT 'PENDING',
+    payment_status        NVARCHAR(20)                 DEFAULT 'PENDING', -- PENDING, SUCCESS, FAILED, CANCELLED
     transaction_reference NVARCHAR(100),
     notes                 NVARCHAR(500),
     created_date          DATETIME2                    DEFAULT GETDATE(),
@@ -214,10 +225,11 @@ CREATE TABLE purchase_order
     purchase_order_id     UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     purchase_order_number NVARCHAR(20) UNIQUE NOT NULL,
     supplier_id           UNIQUEIDENTIFIER    NOT NULL,
+    account_id            UNIQUEIDENTIFIER    NOT NULL,
     order_date            DATETIME2                    DEFAULT GETDATE(),
     required_date         DATETIME2,
     received_date         DATETIME2,
-    status                NVARCHAR(20)                 DEFAULT 'PENDING',
+    [status]              NVARCHAR(20)                 DEFAULT 'PENDING', -- PENDING, APPROVED, RECEIVED, CANCELLED
     total_amount          DECIMAL(18, 2)      NOT NULL DEFAULT 0,
     tax_amount            DECIMAL(18, 2)               DEFAULT 0,
     notes                 NVARCHAR(500),
@@ -225,7 +237,8 @@ CREATE TABLE purchase_order
     created_date          DATETIME2                    DEFAULT GETDATE(),
     updated_date          DATETIME2                    DEFAULT GETDATE(),
 
-    FOREIGN KEY (supplier_id) REFERENCES suppliers (supplier_id)
+    FOREIGN KEY (supplier_id) REFERENCES suppliers (supplier_id),
+    FOREIGN KEY (account_id) REFERENCES accounts (account_id)
 );
 
 CREATE TABLE purchase_order_detail
@@ -247,11 +260,11 @@ CREATE TABLE promotions
     promotion_id   UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     promotion_name NVARCHAR(200)  NOT NULL,
     [description]  NVARCHAR(500),
-    discount_type  NVARCHAR(20)   NOT NULL,
+    discount_type  NVARCHAR(20)   NOT NULL, -- PERCENT, FIXED
     discount_value DECIMAL(18, 2) NOT NULL,
     [start_date]   DATETIME2      NOT NULL,
     end_date       DATETIME2      NOT NULL,
-    is_active      BIT                          DEFAULT 1,
+    active         BIT                          DEFAULT 1,
     created_date   DATETIME2                    DEFAULT GETDATE()
 );
 
@@ -279,7 +292,7 @@ CREATE INDEX ix_account_username ON accounts (username);
 CREATE INDEX ix_inventory_transaction_product_id ON inventory_transaction (product_id);
 
 
-INSERT INTO roles (role_name, [description], is_active)
+INSERT INTO roles (role_name, [description], active)
 VALUES (N'Admin', N'System Administrator - Full access rights', 1),
        (N'Shop Owner', N'Shop Owner - Manages all business operations', 1),
        (N'Warehouse Staff', N'Warehouse Staff - Manages inventory receipts and issues', 1),
@@ -287,7 +300,7 @@ VALUES (N'Admin', N'System Administrator - Full access rights', 1),
 GO
 
 
-INSERT INTO [permissions] ([permission_name], [description], module, is_active)
+INSERT INTO [permissions] ([permission_name], [description], module, active)
 VALUES
 -- Product Management
 (N'VIEW_PRODUCT', N'View product list', N'PRODUCT', 1),
