@@ -1,35 +1,37 @@
 package com.g127.snapbuy.config;
 
-import com.g127.snapbuy.entity.User;
-import com.g127.snapbuy.entity.UserRole;
-import com.g127.snapbuy.repository.UserRepository;
+import com.g127.snapbuy.entity.Account;
+import com.g127.snapbuy.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
-
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User u = userRepository.findWithRolesByUsername(username)
+        Account acc = accountRepository
+                .findByUsernameWithRolesAndPermissions(username)   // <— dùng fetch-join
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-        var authorities = (u.getUserRoles()==null ? java.util.List.<String>of()
-                : u.getUserRoles().stream()
-                .map(UserRole::getRole)
-                .map(r -> r.getRoleName())
-                .collect(Collectors.toList()));
+        // Spring Security dùng chuẩn ROLE_xxx cho hasRole("xxx")
+        String[] authorities = acc.getRoles().stream()
+                .map(r -> {
+                    String roleName = r.getRoleName();
+                    return roleName.startsWith("ROLE_") ? roleName : "ROLE_" + roleName;
+                })
+                .toArray(String[]::new);
 
         return org.springframework.security.core.userdetails.User
-                .withUsername(u.getUsername())
-                .password(u.getPassword())
-                .authorities(authorities.toArray(String[]::new))
+                .withUsername(acc.getUsername())
+                .password(acc.getPasswordHash())
+                .authorities(authorities)
+                .accountLocked(Boolean.FALSE.equals(acc.getIsActive()))
+                .disabled(Boolean.FALSE.equals(acc.getIsActive()))
                 .build();
     }
 }

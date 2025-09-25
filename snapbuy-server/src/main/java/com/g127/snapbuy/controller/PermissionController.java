@@ -7,7 +7,6 @@ import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 @RestController
@@ -23,10 +22,9 @@ public class PermissionController {
         Permission p = new Permission();
         p.setPermissionId(UUID.randomUUID());
         p.setPermissionName(req.getPermissionName());
-        p.setResource(req.getResource());
-        p.setAction(req.getAction());
         p.setDescription(req.getDescription());
-        p.setCreatedAt(LocalDateTime.now());
+        p.setModule(req.getModule());
+        p.setIsActive(req.getIsActive() == null ? Boolean.TRUE : req.getIsActive());
         return ResponseEntity.status(HttpStatus.CREATED).body(permissionRepository.save(p));
     }
 
@@ -50,9 +48,9 @@ public class PermissionController {
         Permission p = permissionRepository.findById(permissionId)
                 .orElseThrow(() -> new NoSuchElementException("Permission not found"));
         if (req.getPermissionName() != null) p.setPermissionName(req.getPermissionName());
-        if (req.getResource() != null) p.setResource(req.getResource());
-        if (req.getAction() != null) p.setAction(req.getAction());
         if (req.getDescription() != null) p.setDescription(req.getDescription());
+        if (req.getModule() != null) p.setModule(req.getModule());
+        if (req.getIsActive() != null) p.setIsActive(req.getIsActive());
         return ResponseEntity.ok(permissionRepository.save(p));
     }
 

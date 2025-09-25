@@ -2,35 +2,31 @@ package com.g127.snapbuy.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
+import org.hibernate.annotations.GenericGenerator;
+
 import java.util.UUID;
 
 @Entity
 @Table(name = "permissions")
-@Data @NoArgsConstructor @AllArgsConstructor
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor @Builder
 public class Permission {
+
     @Id
-    @Column(name = "permission_id")
+    @GeneratedValue(generator = "uuid2")
+    @GenericGenerator(name = "uuid2", strategy = "org.hibernate.id.UUIDGenerator")
+    @Column(name = "permission_id", columnDefinition = "uniqueidentifier")
     private UUID permissionId;
 
-    @Column(name = "permission_name", unique = true, nullable = false, length = 100)
+    @Column(name = "permission_name", nullable = false, length = 50)
     private String permissionName;
 
-    @Column(name = "resource", length = 50)
-    private String resource;
-
-    @Column(name = "action", length = 50)
-    private String action;
-
-    @Column(name = "description")
+    @Column(length = 200)
     private String description;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(length = 50)
+    private String module;
 
-    @PrePersist
-    public void prePersist() {
-        if (permissionId == null) permissionId = UUID.randomUUID();
-        if (createdAt == null) createdAt = LocalDateTime.now();
-    }
+    @Column(name = "is_active")
+    private Boolean isActive = true;
 }
