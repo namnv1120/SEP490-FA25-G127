@@ -7,17 +7,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Lưu OTP trong bộ nhớ với TTL.
- */
 @Component
 public class OtpStore {
 
     public static class OtpRecord {
         public final String code;
         public final OffsetDateTime expiresAt;
-        public int attempts;            // đếm số lần nhập
-        public OffsetDateTime lastSent; // chống spam gửi lại
+        public int attempts;
+        public OffsetDateTime lastSent;
 
         public OtpRecord(String code, OffsetDateTime expiresAt, OffsetDateTime lastSent) {
             this.code = code;
@@ -27,7 +24,6 @@ public class OtpStore {
         }
     }
 
-    // key = email (lowercase)
     private final Map<String, OtpRecord> store = new ConcurrentHashMap<>();
 
     public void put(String email, String code, OffsetDateTime expiresAt) {
@@ -37,7 +33,6 @@ public class OtpStore {
     public OtpRecord get(String email) {
         var rec = store.get(normalize(email));
         if (rec == null) return null;
-        // auto-expire
         if (OffsetDateTime.now().isAfter(rec.expiresAt)) {
             store.remove(normalize(email));
             return null;

@@ -2,52 +2,39 @@ package com.g127.snapbuy.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
-import java.util.Set;
-import java.util.UUID;
+import org.hibernate.annotations.GenericGenerator;
+
+import java.util.*;
 
 @Entity
 @Table(name = "roles")
 @Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor @AllArgsConstructor @Builder
 public class Role {
-
     @Id
-    @Column(name = "role_id")
+    @GeneratedValue(generator = "uuid2")
+    @GenericGenerator(name = "uuid2", strategy = "org.hibernate.id.UUIDGenerator")
+    @Column(name = "role_id", columnDefinition = "uniqueidentifier")
     private UUID roleId;
 
-    @Column(name = "role_name", nullable = false, unique = true, length = 50)
+    @Column(name = "role_name", nullable = false, length = 50)
     private String roleName;
 
-    @Column(name = "display_name", nullable = false, length = 100)
-    private String displayName;
-
-    @Column(name = "description")
+    @Column(columnDefinition = "nvarchar(max)")
     private String description;
 
-    // 'Active' / 'Inactive'
-    @Column(name = "status", length = 20)
-    private String status;
+    @Column(name = "active")
+    private Boolean isActive = true;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    @Column(name = "created_date")
+    private Date createdDate;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @OneToMany(mappedBy = "role", fetch = FetchType.LAZY)
-    private Set<UserRole> userRoles;
-
-    @PrePersist
-    public void prePersist() {
-        if (roleId == null) roleId = UUID.randomUUID();
-        if (status == null) status = "Active";
-        if (createdAt == null) createdAt = LocalDateTime.now();
-        if (updatedAt == null) updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "role_permission",
+            joinColumns = @JoinColumn(name = "role_id"),
+            inverseJoinColumns = @JoinColumn(name = "permission_id")
+    )
+    private Set<Permission> permissions = new HashSet<>();
 }
+

@@ -42,14 +42,12 @@ public class SecurityConfig {
     ) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(c -> {}) // enable CORS
+                .cors(c -> {})
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/auth/forgot-password/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/users/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/customers/**").hasAnyRole("USER","ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/customers/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/accounts").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -92,7 +90,6 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder(10);
     }
 
-    // EntryPoint trả JSON khi 401
     @Bean
     public AuthenticationEntryPoint jwtAuthenticationEntryPoint() {
         return (req, res, ex) -> {
