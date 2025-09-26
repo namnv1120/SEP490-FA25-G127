@@ -1,54 +1,43 @@
 package com.g127.snapbuy.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.GenericGenerator;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Entity
-@Table(name = "categories")
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Entity
+@Table(name = "categories")
 public class Category {
 
     @Id
-    @GeneratedValue(generator = "UUID")
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "category_id", columnDefinition = "uniqueidentifier")
     private UUID categoryId;
 
     @Column(name = "category_name", nullable = false, length = 100)
     private String categoryName;
 
-    @Column(name = "description", columnDefinition = "nvarchar(max)")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_id")
-    private Category parent;
+    @Column(name = "parent_category_id")
+    private UUID parentCategoryId;
 
-    @Column(name = "status", length = 20)
-    private String status = "Active";
+    @Column(name = "active", nullable = false)
+    private Boolean active = true;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_date", nullable = false)
+    private LocalDateTime createdDate = LocalDateTime.now();
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "updated_date", nullable = false)
+    private LocalDateTime updatedDate = LocalDateTime.now();
 
-    @PrePersist
-    public void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    public void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
 }

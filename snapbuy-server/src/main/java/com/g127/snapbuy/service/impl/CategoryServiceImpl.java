@@ -29,14 +29,16 @@ public class CategoryServiceImpl implements CategoryService {
         if (categoryRepository.existsByCategoryName(request.getCategoryName())) {
             throw new AppException(ErrorCode.NAME_EXISTED);
         }
-        Category category = categoryMapper.toEntity(request);
-        if (request.getParentId() != null) {
-            Category parent = categoryRepository.findById(request.getParentId())
-                    .orElseThrow(() -> new AppException(ErrorCode.PARENT_NOT_FOUND));
-            category.setParent(parent);
+
+        if (request.getParentCategoryId() != null) {
+            if (!categoryRepository.existsById(request.getParentCategoryId())) {
+                throw new AppException(ErrorCode.PARENT_NOT_FOUND);
+            }
         }
-        category.setCreatedAt(LocalDateTime.now());
-        category.setUpdatedAt(LocalDateTime.now());
+
+        Category category = categoryMapper.toEntity(request);
+        category.setCreatedDate(LocalDateTime.now());
+        category.setUpdatedDate(LocalDateTime.now());
         categoryRepository.save(category);
         return categoryMapper.toResponse(category);
     }
@@ -60,19 +62,20 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryResponse updateCategory(UUID id, CategoryUpdateRequest request) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+
         if (categoryRepository.existsByCategoryName(request.getCategoryName())
                 && !category.getCategoryName().equals(request.getCategoryName())) {
             throw new AppException(ErrorCode.NAME_EXISTED);
         }
-        categoryMapper.updateEntity(category, request);
-        if (request.getParentId() != null) {
-            Category parent = categoryRepository.findById(request.getParentId())
-                    .orElseThrow(() -> new AppException(ErrorCode.PARENT_NOT_FOUND));
-            category.setParent(parent);
-        } else {
-            category.setParent(null);
+
+        if (request.getParentCategoryId() != null) {
+            if (!categoryRepository.existsById(request.getParentCategoryId())) {
+                throw new AppException(ErrorCode.PARENT_NOT_FOUND);
+            }
         }
-        category.setUpdatedAt(LocalDateTime.now());
+
+        categoryMapper.updateEntity(category, request);
+        category.setUpdatedDate(LocalDateTime.now());
         return categoryMapper.toResponse(categoryRepository.save(category));
     }
 

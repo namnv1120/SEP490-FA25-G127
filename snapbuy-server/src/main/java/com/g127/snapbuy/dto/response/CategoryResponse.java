@@ -9,12 +9,13 @@ import java.util.UUID;
 @Getter
 @Setter
 public class CategoryResponse {
+
     private UUID categoryId;
     private String categoryName;
     private String description;
-    private UUID parentId;
-    private String status;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private UUID parentCategoryId;
+    private Boolean active;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
 }
 

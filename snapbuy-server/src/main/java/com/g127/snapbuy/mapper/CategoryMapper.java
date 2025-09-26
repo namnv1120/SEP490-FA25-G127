@@ -10,18 +10,14 @@ import org.mapstruct.*;
 public interface CategoryMapper {
 
     @Mapping(target = "categoryId", ignore = true)
-    @Mapping(target = "parent", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "createdDate", ignore = true)
+    @Mapping(target = "updatedDate", ignore = true)
     Category toEntity(CategoryCreateRequest request);
 
     @Mapping(target = "categoryId", ignore = true)
-    @Mapping(target = "parent", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "createdDate", ignore = true)
+    @Mapping(target = "updatedDate", ignore = true)
     void updateEntity(@MappingTarget Category entity, CategoryUpdateRequest request);
 
-
-    @Mapping(source = "parent.categoryId", target = "parentId")
     CategoryResponse toResponse(Category entity);
 }

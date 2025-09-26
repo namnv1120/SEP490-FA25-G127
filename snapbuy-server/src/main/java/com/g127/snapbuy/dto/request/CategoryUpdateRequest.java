@@ -1,37 +1,26 @@
 package com.g127.snapbuy.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.AssertTrue;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 import java.util.UUID;
+import java.time.LocalDateTime;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@Data
 public class CategoryUpdateRequest {
 
-    @NotBlank(message = "Category name must not be blank")
-    @Size(max = 100, message = "Category name must be at most 100 characters")
+    @Size(min = 3, max = 100, message = "Category name must be between 3 and 100 characters.")
     private String categoryName;
 
-    @Size(max = 4000, message = "Description must be at most 4000 characters")
+    @Size(max = 1000, message = "Description must not exceed 1000 characters.")
     private String description;
 
-    private UUID parentId;
+    private UUID parentCategoryId;
 
-    @Pattern(regexp = "Active|Inactive", message = "Status must be 'Active' or 'Inactive'")
-    private String status;
+    @NotNull(message = "Active status cannot be null.")
+    private Boolean active = true;
 
+    @NotNull(message = "Updated date cannot be null.")
+    private LocalDateTime updatedDate;
 }
+
