@@ -1,55 +1,88 @@
 import React from "react";
-import { Navbar, Container, Form, Button, Nav } from "react-bootstrap";
-import { FiPlusSquare } from "react-icons/fi";
+import {
+  Navbar,
+  Container,
+  Form,
+  FormControl,
+  Button,
+  Dropdown,
+} from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+import "../../styles/Navbar.css";
 
-export default function TopHeader() {
+const TopHeader = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Xóa token, session... nếu bạn có
+    // localStorage.removeItem("token");
+
+    navigate("/login"); // chuyển hướng về login
+  };
+
   return (
-    <Navbar bg="white" expand="lg" className="top-header shadow-sm py-2">
-      <Container fluid className="align-items-center">
-        <Navbar.Brand className="d-flex align-items-center gap-2">
-          <div className="brand-logo">
-            {" "}
-            <div
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                background: "#ff8a00",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#fff",
-                fontWeight: 700,
-              }}
-            >
-              D
-            </div>
-          </div>
-          <div className="d-none d-md-block brand-text">
-            <span style={{ fontWeight: 700, fontSize: 18 }}>Dreams</span>
-            <small className="text-muted ms-1">POS</small>
-          </div>
+    <Navbar bg="light" expand="lg" className="shadow-sm border-bottom">
+      <Container fluid>
+        {/* Logo */}
+        <Navbar.Brand href="/home" className="fw-bold text-primary">
+          <img src="/logo.png" alt="Logo" height="30" className="me-2" />
+          SnapBuy
         </Navbar.Brand>
-        <Form className="mx-3 flex-grow-1 d-none d-md-flex">
-          <Form.Control placeholder="Search" className="search-input" />
+
+        {/* Ô search */}
+        <Form className="d-flex mx-auto w-50">
+          <FormControl type="search" placeholder="Search..." className="me-2" />
+          <Button variant="outline-primary">Search</Button>
         </Form>
 
-        <Nav className="ms-auto align-items-center gap-2">
-          <Button variant="outline-secondary" size="sm">
-            Freshmart ▾
-          </Button>
-          <Button variant="warning" className="btn-add-header" size="sm">
-            <FiPlusSquare /> Add New
+        {/* Nút chức năng */}
+        <div className="d-flex align-items-center gap-2">
+          <select className="form-select form-select-sm">
+            <option>Freshmart</option>
+            <option>Shop A</option>
+          </select>
+
+          <Button
+            variant="warning"
+            size="sm"
+            className="fw-bold text-white px-3"
+          >
+            + Add New
           </Button>
           <Button variant="dark" size="sm">
             POS
           </Button>
-          <div className="d-none d-md-flex align-items-center gap-2 ms-2">
-            <div className="icon-round"></div>
-            <div className="icon-round"></div>
-          </div>
-        </Nav>
+          <Button variant="light" size="sm">
+            <i className="bi bi-bell"></i>
+          </Button>
+          <Button variant="light" size="sm">
+            <i className="bi bi-gear"></i>
+          </Button>
+
+          {/* User Avatar Dropdown */}
+          <Dropdown align="end">
+            <Dropdown.Toggle
+              variant="light"
+              size="sm"
+              className="d-flex align-items-center"
+            >
+              <i className="bi bi-person-circle fs-5"></i>
+            </Dropdown.Toggle>
+
+            <Dropdown.Menu>
+              <Dropdown.Item onClick={() => navigate("/profile")}>
+                User Profile
+              </Dropdown.Item>
+              <Dropdown.Divider />
+              <Dropdown.Item onClick={handleLogout} className="text-danger">
+                Log out
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+        </div>
       </Container>
     </Navbar>
   );
-}
+};
+
+export default TopHeader;

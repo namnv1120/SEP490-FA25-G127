@@ -7,11 +7,11 @@ import {
 } from "react-router-dom";
 import "./custom.css";
 import DashboardHome from "./pages/DashboardHome";
-import AppNavbar from "./components/layout/Navbar";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import Customer from "./pages/Customer";
+import Layout from "./components/layout/Layout"; // 👉 thêm Layout
 
 // Dummy pages (placeholder)
 const Billers = () => <h2>Billers Page</h2>;
@@ -26,32 +26,83 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Auth routes */}
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/customers" element={<Customer />} />
 
-        {/* New pages */}
-        <Route path="/billers" element={<Billers />} />
-        <Route path="/suppliers" element={<Suppliers />} />
-        <Route path="/stores" element={<Stores />} />
-        <Route path="/warehouses" element={<Warehouses />} />
-        <Route path="/user-management" element={<UserManagement />} />
-        <Route path="/docs" element={<Docs />} />
-        <Route path="/changelog" element={<Changelog />} />
-
+        {/* Protected routes dùng chung Layout */}
         <Route
           path="/home"
           element={
-            <>
-              <AppNavbar />
-              <div className="d-flex">
-                <div className="flex-grow-1 p-3">
-                  <DashboardHome />
-                </div>
-              </div>
-            </>
+            <Layout>
+              <DashboardHome />
+            </Layout>
+          }
+        />
+        <Route
+          path="/customers"
+          element={
+            <Layout>
+              <Customer />
+            </Layout>
+          }
+        />
+        <Route
+          path="/billers"
+          element={
+            <Layout>
+              <Billers />
+            </Layout>
+          }
+        />
+        <Route
+          path="/suppliers"
+          element={
+            <Layout>
+              <Suppliers />
+            </Layout>
+          }
+        />
+        <Route
+          path="/stores"
+          element={
+            <Layout>
+              <Stores />
+            </Layout>
+          }
+        />
+        <Route
+          path="/warehouses"
+          element={
+            <Layout>
+              <Warehouses />
+            </Layout>
+          }
+        />
+        <Route
+          path="/user-management"
+          element={
+            <Layout>
+              <UserManagement />
+            </Layout>
+          }
+        />
+        <Route
+          path="/docs"
+          element={
+            <Layout>
+              <Docs />
+            </Layout>
+          }
+        />
+        <Route
+          path="/changelog"
+          element={
+            <Layout>
+              <Changelog />
+            </Layout>
           }
         />
       </Routes>
