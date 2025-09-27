@@ -1,67 +1,50 @@
 package com.g127.snapbuy.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.GenericGenerator;
-
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Data
+@NoArgsConstructor
 @Entity
 @Table(name = "suppliers")
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class Supplier {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "supplier_id", updatable = false, nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "supplier_id", columnDefinition = "uniqueidentifier")
     private UUID supplierId;
-
-    @Column(name = "supplier_code", nullable = false, unique = true, length = 20)
-    private String supplierCode;
 
     @Column(name = "supplier_name", nullable = false, length = 100)
     private String supplierName;
 
-    @Column(name = "contact_person", length = 100)
+    @Column(name = "contact_person", length = 50)
     private String contactPerson;
+
+    @Column(name = "phone", length = 20)
+    private String phone;
 
     @Column(name = "email", length = 100)
     private String email;
 
-    @Column(name = "phone", length = 15)
-    private String phone;
-
-    @Column(name = "address", columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "address", length = 100)
     private String address;
+
+    @Column(name = "city", length = 50)
+    private String city;
 
     @Column(name = "tax_code", length = 20)
     private String taxCode;
 
-    @Column(name = "payment_terms")
-    private Integer paymentTerms = 30;
+    @Column(name = "active", nullable = false)
+    private Boolean active = true;
 
-    @Column(name = "status", length = 20)
-    private String status = "Active";
+    @Column(name = "created_date", nullable = false)
+    private LocalDateTime createdDate = LocalDateTime.now();
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
+    @Column(name = "updated_date", nullable = false)
+    private LocalDateTime updatedDate = LocalDateTime.now();
 }
+
