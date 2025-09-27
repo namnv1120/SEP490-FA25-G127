@@ -8,10 +8,11 @@ import com.g127.snapbuy.dto.response.ApiResponse;
 import com.g127.snapbuy.dto.response.AuthenticationResponse;
 import com.g127.snapbuy.dto.response.IntrospectResponse;
 import com.g127.snapbuy.service.AuthenticationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -22,32 +23,33 @@ public class AuthenticationController {
 
     @PostMapping("/token")
     public ResponseEntity<ApiResponse<AuthenticationResponse>> authenticate(
-            @RequestBody AuthenticationRequest req) {
+            @RequestBody @Valid AuthenticationRequest req) {
         try {
             return ResponseEntity.ok(ApiResponse.ok(authenticationService.authenticate(req)));
         } catch (AuthenticationException ex) {
             return ResponseEntity.status(401).body(
                     ApiResponse.<AuthenticationResponse>builder()
                             .code("UNAUTHENTICATED")
-                            .message("Authentication failed")
+                            .message("Invalid username or password")
                             .result(null)
                             .build()
             );
         }
     }
 
+
     @PostMapping("/introspect")
     public ResponseEntity<ApiResponse<IntrospectResponse>> introspect(
-            @RequestBody IntrospectRequest req) {
+            @RequestBody @Valid IntrospectRequest req) {
         return ResponseEntity.ok(ApiResponse.ok(authenticationService.introspect(req)));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<AuthenticationResponse>> refresh(
-            @RequestBody RefreshRequest req) {
+            @RequestBody @Valid RefreshRequest req) {
         try {
             return ResponseEntity.ok(ApiResponse.ok(authenticationService.refreshToken(req)));
-        } catch (AuthenticationException ex) { 
+        } catch (AuthenticationException ex) {
             return ResponseEntity.status(401).body(
                     ApiResponse.<AuthenticationResponse>builder()
                             .code("UNAUTHENTICATED")
@@ -60,7 +62,17 @@ public class AuthenticationController {
 
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(@RequestBody LogoutRequest req) {
-        authenticationService.logout(req);
-        return ResponseEntity.ok(ApiResponse.ok(null));
+        try {
+            authenticationService.logout(req);
+            return ResponseEntity.ok(ApiResponse.ok(null));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(
+                    ApiResponse.<Void>builder()
+                            .code("TOKEN_REVOKED")
+                            .message(e.getMessage())
+                            .build()
+            );
+        }
     }
+
 }

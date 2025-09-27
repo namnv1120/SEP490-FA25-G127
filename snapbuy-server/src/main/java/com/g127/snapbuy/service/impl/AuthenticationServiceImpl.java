@@ -8,13 +8,16 @@ import com.g127.snapbuy.dto.request.RefreshRequest;
 import com.g127.snapbuy.dto.response.AuthenticationResponse;
 import com.g127.snapbuy.dto.response.IntrospectResponse;
 import com.g127.snapbuy.service.AuthenticationService;
+import com.g127.snapbuy.service.TokenBlacklistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +25,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest req) {
@@ -60,7 +64,26 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
+
     @Override
     public void logout(LogoutRequest req) {
+        String raw = req.getToken();
+        if (raw == null || raw.isBlank()) return;
+
+        String token = raw.startsWith("Bearer ") ? raw.substring(7) : raw;
+
+        try {
+            String jti = jwtUtil.extractJti(token);
+
+            if (tokenBlacklistService.isBlacklisted(jti)) {
+                throw new IllegalArgumentException("Token already revoked");
+            }
+
+            long expMs = jwtUtil.extractExpiration(token).getTime();
+            tokenBlacklistService.blacklist(jti, expMs);
+        } catch (Exception ignored) {
+        }
     }
+
+
 }

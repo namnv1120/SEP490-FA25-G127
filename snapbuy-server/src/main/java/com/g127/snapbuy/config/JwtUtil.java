@@ -1,16 +1,13 @@
 package com.g127.snapbuy.config;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
-import java.util.Date;
-import java.util.function.Function;
+import java.util.*;
 
 @Component
 public class JwtUtil {
@@ -25,7 +22,11 @@ public class JwtUtil {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    public <T> T extractClaim(String token, Function<Claims, T> resolver) {
+    public String extractJti(String token) {
+        return extractClaim(token, Claims::getId);
+    }
+
+    public <T> T extractClaim(String token, java.util.function.Function<Claims, T> resolver) {
         final Claims claims = extractAllClaims(token);
         return resolver.apply(claims);
     }
@@ -48,11 +49,15 @@ public class JwtUtil {
     }
 
     public String generateToken(UserDetails userDetails) {
+        String jti = UUID.randomUUID().toString();
+        Date now = new Date(System.currentTimeMillis());
+        Date exp = new Date(System.currentTimeMillis() + 1000 * 60 * 60); // 1h
         return Jwts.builder()
+                .setId(jti)
                 .setSubject(userDetails.getUsername())
                 .claim("roles", userDetails.getAuthorities())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1h
+                .setIssuedAt(now)
+                .setExpiration(exp)
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

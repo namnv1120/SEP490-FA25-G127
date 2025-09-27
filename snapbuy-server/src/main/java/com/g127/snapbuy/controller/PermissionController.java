@@ -17,7 +17,7 @@ public class PermissionController {
     private final PermissionRepository permissionRepository;
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Permission> create(@RequestBody Permission req) {
         Permission p = new Permission();
         p.setPermissionId(UUID.randomUUID());
@@ -29,13 +29,13 @@ public class PermissionController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<List<Permission>> list() {
         return ResponseEntity.ok(permissionRepository.findAll());
     }
 
     @GetMapping("/{permissionId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Permission> get(@PathVariable UUID permissionId) {
         Permission p = permissionRepository.findById(permissionId)
                 .orElseThrow(() -> new NoSuchElementException("Permission not found"));
@@ -43,7 +43,7 @@ public class PermissionController {
     }
 
     @PutMapping("/{permissionId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Permission> update(@PathVariable UUID permissionId, @RequestBody Permission req) {
         Permission p = permissionRepository.findById(permissionId)
                 .orElseThrow(() -> new NoSuchElementException("Permission not found"));
@@ -55,7 +55,7 @@ public class PermissionController {
     }
 
     @DeleteMapping("/{permissionId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Void> delete(@PathVariable UUID permissionId) {
         permissionRepository.deleteById(permissionId);
         return ResponseEntity.noContent().build();
