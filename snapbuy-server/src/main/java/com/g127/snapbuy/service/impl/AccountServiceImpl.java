@@ -1,16 +1,17 @@
 package com.g127.snapbuy.service.impl;
 
-import com.g127.snapbuy.dto.AccountDto;
+import com.g127.snapbuy.dto.request.AccountCreateRequest;
+import com.g127.snapbuy.dto.request.AccountUpdateRequest;
+import com.g127.snapbuy.dto.request.ChangePasswordRequest;
+import com.g127.snapbuy.dto.response.AccountResponse;
 import com.g127.snapbuy.entity.Account;
 import com.g127.snapbuy.entity.Role;
-import com.g127.snapbuy.exception.ResourceNotFoundException;
 import com.g127.snapbuy.mapper.AccountMapper;
 import com.g127.snapbuy.repository.AccountRepository;
 import com.g127.snapbuy.repository.RoleRepository;
 import com.g127.snapbuy.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.g127.snapbuy.dto.request.ChangePasswordRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -30,71 +32,32 @@ public class AccountServiceImpl implements AccountService {
     private final AccountMapper accountMapper;
     private final PasswordEncoder passwordEncoder;
 
-
     @Override
-    public AccountDto createAccount(AccountDto dto) {
-
-        if (dto.getPassword() == null || dto.getConfirmPassword() == null
-                || !dto.getPassword().equals(dto.getConfirmPassword())) {
-            throw new IllegalArgumentException("Confirm password does not match");
-        }
-
-        if (accountRepository.existsByUsername(dto.getUsername())) {
-            throw new IllegalArgumentException("Username already exists");
-        }
-        if (accountRepository.existsByEmailIgnoreCase(dto.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
-        }
-        if (dto.getPhone() != null && !dto.getPhone().isBlank()
-                && accountRepository.existsByPhone(dto.getPhone())) {
-            throw new IllegalArgumentException("Phone already exists");
-        }
-
-        Account account = accountMapper.toEntity(dto);
-        if (account.getAccountId() == null) {
-            account.setAccountId(java.util.UUID.randomUUID());
-        }
-        account.setFullName(dto.getFullName());
-        account.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
-
-        try {
-            account = accountRepository.save(account);
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            throw new IllegalArgumentException("Duplicate or invalid data");
-        }
-
-        Role defaultRole = roleRepository.findByRoleName("Sales Staff")
-                .orElseThrow(() -> new ResourceNotFoundException("Default role not found"));
-        account.getRoles().add(defaultRole);
-        accountRepository.save(account);
-
-        return accountMapper.toDto(account);
+    @PreAuthorize("hasRole('Admin')")
+    public AccountResponse createAccount(AccountCreateRequest req) {
+        return createWithSingleRole(req, "Shop Owner");
     }
 
-
-
     @Override
-    public AccountDto getMyInfo() {
+    public AccountResponse getMyInfo() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Account acc = accountRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
-        return accountMapper.toDto(acc);
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+        return accountMapper.toResponse(acc);
     }
 
     @Override
     @PostAuthorize("returnObject.username == authentication.name")
-    public AccountDto updateAccount(UUID accountId, AccountDto dto) {
+    public AccountResponse updateAccount(UUID accountId, AccountUpdateRequest req) {
         Account acc = accountRepository.findById(accountId)
-                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
-        if (dto.getEmail() != null) acc.setEmail(dto.getEmail());
-        if (dto.getPhone() != null) acc.setPhone(dto.getPhone());
-        if (dto.getAvatarUrl() != null) acc.setAvatarUrl(dto.getAvatarUrl());
-        if (dto.getPassword() != null && !dto.getPassword().isBlank())
-            acc.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
+        accountMapper.updateAccount(acc, req);
+        if (req.getPassword() != null && !req.getPassword().isBlank()) {
+            acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+        }
 
-        acc = accountRepository.save(acc);
-        return accountMapper.toDto(acc);
+        return accountMapper.toResponse(accountRepository.save(acc));
     }
 
     @Override
@@ -105,22 +68,22 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @PreAuthorize("hasRole('Admin')")
-    public List<AccountDto> getAccounts() {
+    public List<AccountResponse> getAccounts() {
         log.info("Fetching all accounts");
-        return accountRepository.findAll().stream().map(accountMapper::toDto).toList();
+        return accountRepository.findAll().stream().map(accountMapper::toResponse).toList();
     }
 
     @Override
     @PreAuthorize("hasRole('Admin')")
-    public AccountDto getAccount(UUID id) {
-        return accountMapper.toDto(
+    public AccountResponse getAccount(UUID id) {
+        return accountMapper.toResponse(
                 accountRepository.findById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Account not found"))
+                        .orElseThrow(() -> new NoSuchElementException("Account not found"))
         );
     }
 
     @Override
-    public AccountDto changePassword(UUID accountId, ChangePasswordRequest req) {
+    public AccountResponse changePassword(UUID accountId, ChangePasswordRequest req) {
         if (req.getNewPassword() == null || req.getConfirmNewPassword() == null
                 || !req.getNewPassword().equals(req.getConfirmNewPassword())) {
             throw new IllegalArgumentException("Confirm new password does not match");
@@ -130,14 +93,14 @@ public class AccountServiceImpl implements AccountService {
         }
 
         Account acc = accountRepository.findById(accountId)
-                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
         if (!passwordEncoder.matches(req.getOldPassword(), acc.getPasswordHash())) {
             throw new IllegalArgumentException("Old password is incorrect");
         }
 
         acc.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
-        return accountMapper.toDto(accountRepository.save(acc));
+        return accountMapper.toResponse(accountRepository.save(acc));
     }
 
     @Override
@@ -152,7 +115,7 @@ public class AccountServiceImpl implements AccountService {
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Account acc = accountRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
         if (!passwordEncoder.matches(req.getOldPassword(), acc.getPasswordHash())) {
             throw new IllegalArgumentException("Old password is incorrect");
@@ -162,18 +125,74 @@ public class AccountServiceImpl implements AccountService {
         accountRepository.save(acc);
     }
 
-
     @Override
-    public AccountDto assignRole(UUID accountId, UUID roleId) {
+    public AccountResponse assignRole(UUID accountId, UUID roleId) {
         Account acc = accountRepository.findById(accountId)
-                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
         Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new ResourceNotFoundException("Role not found"));
+                .orElseThrow(() -> new NoSuchElementException("Role not found"));
 
         acc.getRoles().add(role);
         accountRepository.save(acc);
 
-        return accountMapper.toDto(acc);
+        return accountMapper.toResponse(acc);
+    }
+
+    @Override
+    @PreAuthorize("hasRole('Admin')")
+    public AccountResponse createShopOwner(AccountCreateRequest req) {
+        return createWithSingleRole(req, "Shop Owner");
+    }
+
+    @Override
+    @PreAuthorize("hasRole('Shop Owner')")
+    public AccountResponse createStaff(AccountCreateRequest req) {
+        String requested = (req.getRoles() != null && !req.getRoles().isEmpty()) ? req.getRoles().get(0) : null;
+        if (!"Warehouse Staff".equalsIgnoreCase(requested) && !"Sales Staff".equalsIgnoreCase(requested)) {
+            throw new IllegalArgumentException("Role must be Warehouse Staff or Sales Staff");
+        }
+        return createWithSingleRole(req, requested);
+    }
+
+    private AccountResponse createWithSingleRole(AccountCreateRequest req, String roleName) {
+        if (req.getPassword() == null || req.getConfirmPassword() == null
+                || !req.getPassword().equals(req.getConfirmPassword())) {
+            throw new IllegalArgumentException("Confirm password does not match");
+        }
+
+        String username = req.getUsername().toLowerCase();
+        if (username.contains(" ")) {
+            throw new IllegalArgumentException("Username must not contain spaces");
+        }
+        if (accountRepository.existsByUsernameIgnoreCase(username)) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+
+        if (accountRepository.existsByEmailIgnoreCase(req.getEmail())) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+        if (req.getPhone() != null && !req.getPhone().isBlank()
+                && accountRepository.existsByPhone(req.getPhone())) {
+            throw new IllegalArgumentException("Phone already exists");
+        }
+
+        Account account = accountMapper.toEntity(req);
+        if (account.getAccountId() == null) account.setAccountId(UUID.randomUUID());
+        account.setUsername(username);
+        account.setFullName(req.getFullName());
+        account.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+
+        Role role = roleRepository.findByRoleName(roleName)
+                .orElseThrow(() -> new NoSuchElementException("Role not found: " + roleName));
+        account.getRoles().clear();
+        account.getRoles().add(role);
+
+        try {
+            account = accountRepository.save(account);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("Duplicate or invalid data");
+        }
+        return accountMapper.toResponse(account);
     }
 }

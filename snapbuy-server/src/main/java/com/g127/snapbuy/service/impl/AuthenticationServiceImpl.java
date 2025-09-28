@@ -29,8 +29,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest req) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword()));
-        UserDetails user = userDetailsService.loadUserByUsername(req.getUsername());
+        String uname = req.getUsername().trim().toLowerCase();
+        req.setUsername(uname);
+
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(uname, req.getPassword()));
+
+        UserDetails user = userDetailsService.loadUserByUsername(uname);
         String token = jwtUtil.generateToken(user);
         long exp = new Date().getTime() + 60L * 60 * 1000;
         return AuthenticationResponse.builder().token(token).tokenType("Bearer").expiresAt(exp).build();
@@ -68,21 +73,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public void logout(LogoutRequest req) {
         String raw = req.getToken();
-        if (raw == null || raw.isBlank()) return;
+        if (raw == null || raw.isBlank()) {
+            throw new IllegalArgumentException("Token is required");
+        }
 
         String token = raw.startsWith("Bearer ") ? raw.substring(7) : raw;
 
-        try {
-            String jti = jwtUtil.extractJti(token);
+        String jti = jwtUtil.extractJti(token);
 
-            if (tokenBlacklistService.isBlacklisted(jti)) {
-                throw new IllegalArgumentException("Token already revoked");
-            }
-
-            long expMs = jwtUtil.extractExpiration(token).getTime();
-            tokenBlacklistService.blacklist(jti, expMs);
-        } catch (Exception ignored) {
+        if (tokenBlacklistService.isBlacklisted(jti)) {
+            throw new IllegalArgumentException("Token already revoked");
         }
+
+        long expMs = jwtUtil.extractExpiration(token).getTime();
+        tokenBlacklistService.blacklist(jti, expMs);
     }
 
 

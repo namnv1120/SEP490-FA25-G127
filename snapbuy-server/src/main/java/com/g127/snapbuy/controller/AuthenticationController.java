@@ -4,14 +4,14 @@ import com.g127.snapbuy.dto.request.AuthenticationRequest;
 import com.g127.snapbuy.dto.request.IntrospectRequest;
 import com.g127.snapbuy.dto.request.LogoutRequest;
 import com.g127.snapbuy.dto.request.RefreshRequest;
-import com.g127.snapbuy.dto.response.ApiResponse;
+import com.g127.snapbuy.dto.ApiResponse;
 import com.g127.snapbuy.dto.response.AuthenticationResponse;
 import com.g127.snapbuy.dto.response.IntrospectResponse;
+import com.g127.snapbuy.exception.AppException;
+import com.g127.snapbuy.exception.ErrorCode;
 import com.g127.snapbuy.service.AuthenticationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,57 +22,47 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/token")
-    public ResponseEntity<ApiResponse<AuthenticationResponse>> authenticate(
+    public ApiResponse<AuthenticationResponse> authenticate(
             @RequestBody @Valid AuthenticationRequest req) {
         try {
-            return ResponseEntity.ok(ApiResponse.ok(authenticationService.authenticate(req)));
-        } catch (AuthenticationException ex) {
-            return ResponseEntity.status(401).body(
-                    ApiResponse.<AuthenticationResponse>builder()
-                            .code("UNAUTHENTICATED")
-                            .message("Invalid username or password")
-                            .result(null)
-                            .build()
-            );
+            ApiResponse<AuthenticationResponse> response = new ApiResponse<>();
+            response.setResult(authenticationService.authenticate(req));
+            return response;
+        } catch (Exception e) {
+            throw new AppException(ErrorCode.AUTH_INVALID);
         }
     }
 
-
     @PostMapping("/introspect")
-    public ResponseEntity<ApiResponse<IntrospectResponse>> introspect(
+    public ApiResponse<IntrospectResponse> introspect(
             @RequestBody @Valid IntrospectRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok(authenticationService.introspect(req)));
+        ApiResponse<IntrospectResponse> response = new ApiResponse<>();
+        response.setResult(authenticationService.introspect(req));
+        return response;
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<AuthenticationResponse>> refresh(
+    public ApiResponse<AuthenticationResponse> refresh(
             @RequestBody @Valid RefreshRequest req) {
         try {
-            return ResponseEntity.ok(ApiResponse.ok(authenticationService.refreshToken(req)));
-        } catch (AuthenticationException ex) {
-            return ResponseEntity.status(401).body(
-                    ApiResponse.<AuthenticationResponse>builder()
-                            .code("UNAUTHENTICATED")
-                            .message("Invalid token")
-                            .result(null)
-                            .build()
-            );
+            ApiResponse<AuthenticationResponse> response = new ApiResponse<>();
+            response.setResult(authenticationService.refreshToken(req));
+            return response;
+        } catch (Exception e) {
+            throw new AppException(ErrorCode.TOKEN_INVALID);
         }
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(@RequestBody LogoutRequest req) {
+    public ApiResponse<Void> logout(@RequestBody LogoutRequest req) {
         try {
             authenticationService.logout(req);
-            return ResponseEntity.ok(ApiResponse.ok(null));
+            ApiResponse<Void> response = new ApiResponse<>();
+            response.setCode(1000);
+            response.setResult(null);
+            return response;
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.<Void>builder()
-                            .code("TOKEN_REVOKED")
-                            .message(e.getMessage())
-                            .build()
-            );
+            throw new AppException(ErrorCode.TOKEN_REVOKED);
         }
     }
-
 }
