@@ -1,4 +1,3 @@
-// ErrorCode.java
 package com.g127.snapbuy.exception;
 
 import lombok.AllArgsConstructor;
