@@ -23,8 +23,8 @@ const Sidebar = () => {
         <Nav.Link href="/sales">
           <FaShoppingCart className="me-2" /> Sales & Purchase
         </Nav.Link>
-        <Nav.Link href="/customers">
-          <FaUsers className="me-2" /> Customers
+        <Nav.Link href="/users">
+          <FaUsers className="me-2" /> Users
         </Nav.Link>
         <Nav.Link href="/reports">
           <FaChartBar className="me-2" /> Reports
