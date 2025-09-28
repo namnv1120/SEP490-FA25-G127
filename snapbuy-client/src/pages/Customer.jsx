@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { Container, Row, Col, Button } from "react-bootstrap";
+import { Container, Row, Col, Button, Card } from "react-bootstrap";
 import CustomerTable from "../components/customers/CustomerTable";
 import AddEditCustomerModal from "../components/customers/AddEditCustomerModal";
 import "../styles/Customers.css";
+import "../styles/Layout.css"; // dùng chung style căn giữa
 
 const initialCustomers = [
   {
@@ -87,14 +88,14 @@ export default function Customers() {
   const openView = (c) => {
     setEditing(c);
     setModalShow(true);
-  }; // modal dùng chung view/edit
+  };
 
   return (
-    <>
-      <Container fluid className="customers-page p-4">
+    <Container fluid className="customers-page page-container mt-4">
+      <Card className="shadow-sm border-0 p-3">
         <Row className="mb-3 align-items-center">
           <Col>
-            <h4 className="page-title">Customers</h4>
+            <h4 className="page-title mb-0">Customers</h4>
             <small className="text-muted">Manage your customers</small>
           </Col>
           <Col className="text-end">
@@ -107,32 +108,32 @@ export default function Customers() {
             <Button variant="outline-secondary" className="me-2">
               <i className="bi bi-arrow-clockwise"></i>
             </Button>
-            <Button variant="warning" className="btn-add" onClick={openAdd}>
+            <Button
+              variant="dark"
+              size="sm"
+              className="fw-bold"
+              onClick={openAdd}
+            >
               + Add Customer
             </Button>
           </Col>
         </Row>
 
-        <Row>
-          <Col>
-            <CustomerTable
-              customers={customers}
-              onEdit={openEdit}
-              onView={openView}
-              onDelete={handleDelete}
-            />
-          </Col>
-        </Row>
-
-        <AddEditCustomerModal
-          show={modalShow}
-          onHide={() => setModalShow(false)}
-          editing={editing}
-          onAdd={handleAdd}
-          onUpdate={handleUpdate}
+        <CustomerTable
+          customers={customers}
+          onEdit={openEdit}
+          onView={openView}
+          onDelete={handleDelete}
         />
-      </Container>
-      <div className="floating-gear">⚙</div>
-    </>
+      </Card>
+
+      <AddEditCustomerModal
+        show={modalShow}
+        onHide={() => setModalShow(false)}
+        editing={editing}
+        onAdd={handleAdd}
+        onUpdate={handleUpdate}
+      />
+    </Container>
   );
 }

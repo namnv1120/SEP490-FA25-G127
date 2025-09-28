@@ -86,3 +86,10 @@ body {
   color: #6c757d;
   font-size: 16px;
 }
+.main-menu {
+  padding: 0 40px; /* khoảng trống 2 bên */
+}
+
+.main-menu .nav {
+  justify-content: center; /* căn giữa */
+}

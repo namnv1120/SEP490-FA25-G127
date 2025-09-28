@@ -1,3 +1,4 @@
+// src/components/layout/TopHeader.jsx
 import React from "react";
 import {
   Navbar,
@@ -14,30 +15,33 @@ const TopHeader = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Xóa token, session... nếu bạn có
-    // localStorage.removeItem("token");
-
-    navigate("/login"); // chuyển hướng về login
+    localStorage.removeItem("authToken"); // nếu có token
+    navigate("/login");
   };
 
   return (
-    <Navbar bg="light" expand="lg" className="shadow-sm border-bottom">
-      <Container fluid>
-        {/* Logo */}
-        <Navbar.Brand href="/home" className="fw-bold text-primary">
-          <img src="/logo.png" alt="Logo" height="30" className="me-2" />
-          SnapBuy
+    <Navbar
+      bg="light"
+      expand="lg"
+      className="top-header shadow-sm border-bottom"
+    >
+      <Container>
+        <Navbar.Brand href="/home" className="fw-bold text-dark">
+          <img
+            src="../src/assets/logo.png"
+            alt="Logo"
+            height="28"
+            className="me-2"
+          />
+          Snap <span className="text-secondary">Buy</span>
         </Navbar.Brand>
 
-        {/* Ô search */}
-        <Form className="d-flex mx-auto w-50">
-          <FormControl type="search" placeholder="Search..." className="me-2" />
-          <Button variant="outline-primary">Search</Button>
+        <Form className="d-flex mx-3 flex-grow-1" style={{ maxWidth: 520 }}>
+          <FormControl type="search" placeholder="Search" />
         </Form>
 
-        {/* Nút chức năng */}
         <div className="d-flex align-items-center gap-2">
-          <select className="form-select form-select-sm">
+          <select className="form-select form-select-sm w-auto">
             <option>Freshmart</option>
             <option>Shop A</option>
           </select>
@@ -49,33 +53,33 @@ const TopHeader = () => {
           >
             + Add New
           </Button>
-          <Button variant="dark" size="sm">
+          <Button variant="dark" size="sm" className="fw-bold px-3">
             POS
           </Button>
-          <Button variant="light" size="sm">
+
+          <Button variant="light" size="sm" className="icon-btn">
             <i className="bi bi-bell"></i>
           </Button>
-          <Button variant="light" size="sm">
+          <Button variant="light" size="sm" className="icon-btn">
             <i className="bi bi-gear"></i>
           </Button>
 
-          {/* User Avatar Dropdown */}
           <Dropdown align="end">
             <Dropdown.Toggle
               variant="light"
+              id="dropdown-user"
               size="sm"
               className="d-flex align-items-center"
             >
               <i className="bi bi-person-circle fs-5"></i>
             </Dropdown.Toggle>
-
             <Dropdown.Menu>
               <Dropdown.Item onClick={() => navigate("/profile")}>
-                User Profile
+                Profile
               </Dropdown.Item>
               <Dropdown.Divider />
               <Dropdown.Item onClick={handleLogout} className="text-danger">
-                Log out
+                Logout
               </Dropdown.Item>
             </Dropdown.Menu>
           </Dropdown>

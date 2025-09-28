@@ -1,22 +1,22 @@
 import React from "react";
+import { Outlet } from "react-router-dom";
 import TopHeader from "./TopHeader";
 import MainMenu from "./MainMenu";
-//import "../../styles/Layout.css"; // tuỳ chọn, nếu bạn có style riêng
+import "../../styles/Layout.css";
 
-const Layout = ({ children }) => {
+const Layout = () => {
   return (
-    <div
-      className="app-layout d-flex flex-column"
-      style={{ minHeight: "100vh" }}
-    >
-      {/* Thanh header phía trên */}
+    <div className="app-layout">
+      {/* Thanh trên cùng */}
       <TopHeader />
 
-      {/* Menu chính dưới header */}
+      {/* Menu ngang */}
       <MainMenu />
 
-      {/* Khu vực nội dung động */}
-      <div className="flex-grow-1 p-3 bg-light">{children}</div>
+      {/* Nội dung chính */}
+      <main className="layout-content p-3">
+        <Outlet /> {/* nơi hiển thị nội dung từng page */}
+      </main>
     </div>
   );
 };

@@ -1,0 +1,54 @@
+/* src/styles/Layout.css */
+.app-layout {
+  min-height: 100vh;
+  background: #f4f6f8; /* nền nhẹ giống mẫu */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Thanh menu */
+.main-menu {
+  background: #fff;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Nav chính trong menu */
+.main-nav {
+  display: flex;
+  gap: 1.25rem;
+  padding: 10px 24px;     /* tăng padding 2 bên cho thoáng */
+  align-items: center;
+  max-width: 1200px;      /* giới hạn chiều ngang */
+  margin: 0 auto;         /* căn giữa */
+  width: 100%;
+}
+
+/* Nội dung chính */
+.layout-content {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  justify-content: center; /* căn giữa ngang */
+}
+
+/* Card chứa nội dung */
+.content-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(18, 38, 63, 0.05);
+  max-width: 1200px;     /* điều chỉnh width hiển thị chính giữa */
+  width: 100%;
+  margin: 0 auto;        /* căn giữa */
+}
+/* căn giữa giống dashboard */
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.export-btn {
+  font-size: 14px;
+  padding: 6px 12px;
+}
+
