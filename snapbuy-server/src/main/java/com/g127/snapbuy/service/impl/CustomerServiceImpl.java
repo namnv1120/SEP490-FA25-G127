@@ -1,57 +1,70 @@
 package com.g127.snapbuy.service.impl;
 
-import com.g127.snapbuy.dto.CustomerDto;
+import com.g127.snapbuy.dto.request.CustomerCreateRequest;
+import com.g127.snapbuy.dto.request.CustomerUpdateRequest;
+import com.g127.snapbuy.dto.response.CustomerResponse;
 import com.g127.snapbuy.entity.Customer;
-import com.g127.snapbuy.exception.ResourceNotFoundException;
+import com.g127.snapbuy.exception.AppException;
+import com.g127.snapbuy.exception.ErrorCode;
 import com.g127.snapbuy.mapper.CustomerMapper;
 import com.g127.snapbuy.repository.CustomerRepository;
 import com.g127.snapbuy.service.CustomerService;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
-@AllArgsConstructor
 @Service
+@RequiredArgsConstructor
 public class CustomerServiceImpl implements CustomerService {
-    private CustomerRepository customerRepository;
+
+    private final CustomerRepository customerRepository;
+    private final CustomerMapper customerMapper;
 
     @Override
-    public CustomerDto createCustomer(CustomerDto customerDto) {
-        Customer customer = CustomerMapper.toEntity(customerDto);
-        return CustomerMapper.toDto(customerRepository.save(customer));
+    public CustomerResponse createCustomer(CustomerCreateRequest request) {
+        if (customerRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(ErrorCode.EMAIL_EXISTED);
+        }
+        Customer customer = customerMapper.toEntity(request);
+        customer.setCreatedDate(LocalDateTime.now());
+        customer.setUpdatedDate(LocalDateTime.now());
+        String code = "CUST-" + System.currentTimeMillis();
+        customer.setCustomerCode(code);
+        return customerMapper.toResponse(customerRepository.save(customer));
     }
 
     @Override
-    public List<CustomerDto> getAllCustomers() {
-        return customerRepository.findAll()
-                .stream()
-                .map(CustomerMapper::toDto)
-                .toList();
-    }
-
-    @Override
-    public CustomerDto getCustomerById(Long id) {
+    public CustomerResponse getCustomerById(UUID id) {
         Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
-        return CustomerMapper.toDto(customer);
+                .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
+        return customerMapper.toResponse(customer);
     }
 
     @Override
-    public CustomerDto updateCustomer(Long id, CustomerDto customerDto) {
-        Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
-        customer.setName(customerDto.getName());
-        customer.setEmail(customerDto.getEmail());
-        customer.setPhone(customerDto.getPhone());
-        customer.setAddress(customerDto.getAddress());
-        return CustomerMapper.toDto(customerRepository.save(customer));
+    public List<CustomerResponse> getAllCustomers() {
+        List<Customer> customers = customerRepository.findAll();
+        return customers.stream()
+                .map(customerMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public void deleteCustomer(Long id) {
+    public CustomerResponse updateCustomer(UUID id, CustomerUpdateRequest request) {
         Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
-        customerRepository.deleteById(id);
+                .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
+        customerMapper.updateFromDto(request, customer);
+        customer.setUpdatedDate(LocalDateTime.now());
+        return customerMapper.toResponse(customerRepository.save(customer));
+    }
+
+    @Override
+    public void deleteCustomer(UUID id) {
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
+        customerRepository.delete(customer);
     }
 }
