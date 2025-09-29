@@ -1,8 +1,6 @@
 package com.g127.snapbuy.service.impl;
 
-import com.g127.snapbuy.dto.request.AccountCreateRequest;
-import com.g127.snapbuy.dto.request.AccountUpdateRequest;
-import com.g127.snapbuy.dto.request.ChangePasswordRequest;
+import com.g127.snapbuy.dto.request.*;
 import com.g127.snapbuy.dto.response.AccountResponse;
 import com.g127.snapbuy.entity.Account;
 import com.g127.snapbuy.entity.Role;
@@ -31,6 +29,8 @@ public class AccountServiceImpl implements AccountService {
     private final RoleRepository roleRepository;
     private final AccountMapper accountMapper;
     private final PasswordEncoder passwordEncoder;
+    private static final java.util.Set<String> ALLOWED_STAFF_ROLES =
+            java.util.Set.of("Warehouse Staff", "Sales Staff");
 
     @Override
     @PreAuthorize("hasRole('Admin')")
@@ -194,5 +194,52 @@ public class AccountServiceImpl implements AccountService {
             throw new IllegalArgumentException("Duplicate or invalid data");
         }
         return accountMapper.toResponse(account);
+    }
+
+    @Override
+    @PreAuthorize("hasRole('Shop Owner')")
+    public AccountResponse updateStaffByOwner(UUID staffId, StaffOwnerUpdateRequest req) {
+        Account staff = accountRepository.findById(staffId)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+
+        boolean isStaff = staff.getRoles().stream().anyMatch(r ->
+                ALLOWED_STAFF_ROLES.contains(r.getRoleName()));
+        if (!isStaff) {
+            throw new IllegalArgumentException("Only staff accounts can be updated by Shop Owner");
+        }
+
+        if (req.getFullName() != null)  staff.setFullName(req.getFullName());
+        if (req.getEmail() != null)     staff.setEmail(req.getEmail());
+        if (req.getPhone() != null)     staff.setPhone(req.getPhone());
+        if (req.getAvatarUrl() != null) staff.setAvatarUrl(req.getAvatarUrl());
+        if (req.getActive() != null)    staff.setIsActive(req.getActive());
+
+        return accountMapper.toResponse(accountRepository.save(staff));
+    }
+
+    @Override
+    @PreAuthorize("hasRole('Shop Owner')")
+    public AccountResponse updateStaffRolesByOwner(UUID staffId, StaffRoleUpdateRequest req) {
+        Account staff = accountRepository.findById(staffId)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+
+        for (String roleName : req.getRoles()) {
+            if (!ALLOWED_STAFF_ROLES.contains(roleName)) {
+                throw new IllegalArgumentException("Role not allowed for staff: " + roleName);
+            }
+        }
+
+        java.util.Set<Role> newRoles = new java.util.HashSet<>();
+        for (String roleName : req.getRoles()) {
+            Role r = roleRepository.findByRoleName(roleName)
+                    .orElseThrow(() -> new NoSuchElementException("Role not found: " + roleName));
+            newRoles.add(r);
+        }
+
+        staff.getRoles().removeIf(r -> !ALLOWED_STAFF_ROLES.contains(r.getRoleName()));
+        staff.getRoles().clear();
+        staff.getRoles().addAll(newRoles);
+
+        return accountMapper.toResponse(accountRepository.save(staff));
     }
 }

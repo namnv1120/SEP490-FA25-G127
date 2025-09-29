@@ -1,13 +1,10 @@
 package com.g127.snapbuy.controller;
 
-import com.g127.snapbuy.dto.request.AccountCreateRequest;
-import com.g127.snapbuy.dto.request.AccountUpdateRequest;
-import com.g127.snapbuy.dto.request.ChangePasswordRequest;
+import com.g127.snapbuy.dto.request.*;
 import com.g127.snapbuy.dto.response.AccountResponse;
 import com.g127.snapbuy.service.AccountService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,74 +21,80 @@ public class AccountController {
 
     @PostMapping
     @PreAuthorize("hasRole('Admin')")
-    public ResponseEntity<AccountResponse> createAccount(@Valid @RequestBody AccountCreateRequest req) {
-        AccountResponse created = accountService.createAccount(req);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public AccountResponse createAccount(@Valid @RequestBody AccountCreateRequest req) {
+        return accountService.createAccount(req);
     }
 
     @GetMapping
     @PreAuthorize("hasRole('Admin')")
-    public ResponseEntity<List<AccountResponse>> getAccounts() {
-        return ResponseEntity.ok(accountService.getAccounts());
+    public List<AccountResponse> getAccounts() {
+        return accountService.getAccounts();
     }
 
     @GetMapping("/{accountId}")
     @PreAuthorize("hasRole('Admin')")
-    public ResponseEntity<AccountResponse> getAccount(@PathVariable UUID accountId) {
-        return ResponseEntity.ok(accountService.getAccount(accountId));
+    public AccountResponse getAccount(@PathVariable UUID accountId) {
+        return accountService.getAccount(accountId);
     }
 
     @GetMapping("/my-info")
-    public ResponseEntity<AccountResponse> getMyInfo() {
-        return ResponseEntity.ok(accountService.getMyInfo());
+    public AccountResponse getMyInfo() {
+        return accountService.getMyInfo();
     }
 
     @PutMapping("/{accountId}")
-    public ResponseEntity<AccountResponse> updateAccount(@PathVariable UUID accountId,
-                                                         @Valid @RequestBody AccountUpdateRequest req) {
-        AccountResponse updated = accountService.updateAccount(accountId, req);
-        return ResponseEntity.ok(updated);
+    public AccountResponse updateAccount(@PathVariable UUID accountId,
+                                         @Valid @RequestBody AccountUpdateRequest req) {
+        return accountService.updateAccount(accountId, req);
     }
 
     @DeleteMapping("/{accountId}")
     @PreAuthorize("hasRole('Admin')")
-    public ResponseEntity<Void> deleteAccount(@PathVariable UUID accountId) {
+    public void deleteAccount(@PathVariable UUID accountId) {
         accountService.deleteAccount(accountId);
-        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{accountId}/assign-role/{roleId}")
     @PreAuthorize("hasRole('Admin')")
-    public ResponseEntity<AccountResponse> assignRole(@PathVariable UUID accountId, @PathVariable UUID roleId) {
-        return ResponseEntity.ok(accountService.assignRole(accountId, roleId));
+    public AccountResponse assignRole(@PathVariable UUID accountId, @PathVariable UUID roleId) {
+        return accountService.assignRole(accountId, roleId);
     }
 
     @PostMapping("/{accountId}/change-password")
-    public ResponseEntity<AccountResponse> changePassword(
-            @PathVariable UUID accountId,
-            @Valid @RequestBody ChangePasswordRequest req
-    ) {
-        AccountResponse changed = accountService.changePassword(accountId, req);
-        return ResponseEntity.ok(changed);
+    public AccountResponse changePassword(@PathVariable UUID accountId,
+                                          @Valid @RequestBody ChangePasswordRequest req) {
+        return accountService.changePassword(accountId, req);
     }
 
     @PutMapping("/me/change-password")
-    public ResponseEntity<?> changePasswordMe(@Valid @RequestBody ChangePasswordRequest req) {
+    public Map<String, String> changePasswordMe(@Valid @RequestBody ChangePasswordRequest req) {
         accountService.changePasswordForCurrentUser(req);
-        return ResponseEntity.ok(Map.of("code", "SUCCESS", "message", "Password changed successfully"));
+        return Map.of("code", "SUCCESS", "message", "Password changed successfully");
     }
 
     @PostMapping("/shop-owners")
     @PreAuthorize("hasRole('Admin')")
-    public ResponseEntity<AccountResponse> createShopOwner(@Valid @RequestBody AccountCreateRequest req) {
-        AccountResponse created = accountService.createShopOwner(req);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public AccountResponse createShopOwner(@Valid @RequestBody AccountCreateRequest req) {
+        return accountService.createShopOwner(req);
     }
 
     @PostMapping("/staff")
     @PreAuthorize("hasRole('Shop Owner')")
-    public ResponseEntity<AccountResponse> createStaff(@Valid @RequestBody AccountCreateRequest req) {
-        AccountResponse created = accountService.createStaff(req);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public AccountResponse createStaff(@Valid @RequestBody AccountCreateRequest req) {
+        return accountService.createStaff(req);
+    }
+
+    @PutMapping("/staff/{staffId}")
+    @PreAuthorize("hasRole('Shop Owner')")
+    public AccountResponse updateStaffByOwner(@PathVariable UUID staffId,
+                                              @Valid @RequestBody StaffOwnerUpdateRequest req) {
+        return accountService.updateStaffByOwner(staffId, req);
+    }
+
+    @PutMapping("/staff/{staffId}/roles")
+    @PreAuthorize("hasRole('Shop Owner')")
+    public AccountResponse updateStaffRolesByOwner(@PathVariable UUID staffId,
+                                                   @Valid @RequestBody StaffRoleUpdateRequest req) {
+        return accountService.updateStaffRolesByOwner(staffId, req);
     }
 }

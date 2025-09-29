@@ -29,7 +29,7 @@ public class PermissionController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
     public ResponseEntity<List<Permission>> list() {
         return ResponseEntity.ok(permissionRepository.findAll());
     }
@@ -60,4 +60,6 @@ public class PermissionController {
         permissionRepository.deleteById(permissionId);
         return ResponseEntity.noContent().build();
     }
+
+
 }
