@@ -1,10 +1,12 @@
 import { useSelector } from "react-redux";
 import { Outlet, useLocation, matchPath } from "react-router";
+import { useEffect, useState } from "react";
+
 import Header from "../components/layouts/header";
 import Sidebar from "../components/sidebar/sidebar";
-import { authRoutes, posPages, unAuthRoutes } from "../routes/path";
-import { useEffect, useState } from "react";
 import HorizontalSidebar from "../components/layouts/horizontalSidebar";
+
+import { authRoutes, posPages, unAuthRoutes } from "../routes/path";
 
 const FeatureModule = () => {
   const location = useLocation();
@@ -17,7 +19,9 @@ const FeatureModule = () => {
   const dataSidebarAll = useSelector(
     (state) => state.themeSetting.dataSidebarAll
   );
-  const dataColorAll = useSelector((state) => state.themeSetting.dataColorAll);
+  const dataColorAll = useSelector(
+    (state) => state.themeSetting.dataColorAll
+  );
   const dataTopBarColorAll = useSelector(
     (state) => state.themeSetting.dataTopBarColorAll
   );
@@ -30,20 +34,15 @@ const FeatureModule = () => {
     const timeoutId = setTimeout(() => {
       setShowLoader(false);
     }, 2000);
-
     window.scrollTo(0, 0);
-    return () => {
-      clearTimeout(timeoutId);
-    };
+    return () => clearTimeout(timeoutId);
   }, [location.pathname]);
 
-  const Preloader = () => {
-    return (
-      <div id="global-loader">
-        <div className="whirly-loader"> </div>
-      </div>
-    );
-  };
+  const Preloader = () => (
+    <div id="global-loader">
+      <div className="whirly-loader"> </div>
+    </div>
+  );
 
   const isUnAuthRoute = unAuthRoutes.some((route) =>
     matchPath(
@@ -51,14 +50,12 @@ const FeatureModule = () => {
       location.pathname
     )
   );
-
   const isPosPage = posPages.some((route) =>
     matchPath(
       { path: typeof route === "string" ? route : route.path, end: true },
       location.pathname
     )
   );
-
   const isAuthRoute = authRoutes.some((route) =>
     matchPath(
       { path: typeof route === "string" ? route : route.path, end: true },
@@ -67,17 +64,12 @@ const FeatureModule = () => {
   );
 
   if (isUnAuthRoute) {
-    return (
-      <div>
-        <Outlet />
-      </div>
-    );
+    return <Outlet />;
   }
 
   if (isPosPage) {
     return (
       <div className={`main-wrapper ${toggleHeader ? "header-collapse" : ""}`}>
-
         <Outlet />
       </div>
     );
@@ -90,9 +82,9 @@ const FeatureModule = () => {
           {`
             :root {
               --sidebar--rgb-picr: ${dataSidebarAll};
-              --topbar--rgb-picr: ${dataTopbarAll};
-              --topbarcolor--rgb-picr: ${dataTopBarColorAll};
-              --primary-rgb-picr: ${dataColorAll};
+              --topbar--rgb-picr:${dataTopbarAll};
+              --topbarcolor--rgb-picr:${dataTopBarColorAll};
+              --primary-rgb-picr:${dataColorAll};
             }
           `}
         </style>
@@ -114,7 +106,7 @@ const FeatureModule = () => {
                 ? "menu-horizontal"
                 : ""
             }
-            ${dataWidth === "box" ? "layout-box-mode" : ""}
+            ${dataWidth === "box" ? "layout-box-mode" : ""} 
           `}
         >
           {showLoader && <Preloader />}
@@ -123,7 +115,6 @@ const FeatureModule = () => {
             <Sidebar />
             <HorizontalSidebar />
             <Outlet />
-            {location.pathname.includes("layout")}
           </div>
         </div>
       </div>

@@ -1,10 +1,19 @@
-import React, { memo } from "react";
+import React, { memo, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import FeatureModule from "./feature-module/feture-module";
 import { authRoutes, posPages, unAuthRoutes } from "./routes/path";
 import { base_path } from "./environment";
+import { useDispatch } from "react-redux";
+import { setDataLayout, setDataWidth } from "./core/redux/themeSettingSlice";
 
 const AppRouter = () => {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(setDataLayout("horizontal"));
+    dispatch(setDataWidth("fluid"));
+  }, [dispatch]);
+
   const RouterContent = memo(() => {
     const renderRoutes = (routeList, _isProtected) =>
       routeList?.map((item) => (

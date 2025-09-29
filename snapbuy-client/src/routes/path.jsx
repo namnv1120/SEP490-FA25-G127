@@ -8,7 +8,7 @@ import { all_routes } from "./all_routes";
 // import Apexchart from "../feature-module/uiinterface/charts/apexcharts";
 // import ChartJs from "../feature-module/uiinterface/charts/chartjs";
 // import FloatingLabel from "../feature-module/uiinterface/forms/formelements/layouts/floating-label";
-// import FormHorizontal from "../feature-module/uiinterface/forms/formelements/layouts/form-horizontal";
+import FormHorizontal from "../feature-module/uiinterface/forms/formelements/layouts/form-horizontal";
 // import FormSelect2 from "../feature-module/uiinterface/forms/formelements/layouts/form-select2";
 // import FormValidation from "../feature-module/uiinterface/forms/formelements/layouts/form-validation";
 // import FormVertical from "../feature-module/uiinterface/forms/formelements/layouts/form-vertical";
@@ -45,6 +45,14 @@ export const authRoutes = [
     path: routes.dashboard,
     name: "home",
     element: <Dashboard />,
+    route: Route,
+  },
+
+  {
+    id: 230,
+    path: routes.formhorizontal,
+    name: "formhorizontal",
+    element: <FormHorizontal />,
     route: Route,
   },
 ];

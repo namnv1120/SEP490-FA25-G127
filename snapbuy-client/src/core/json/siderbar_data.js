@@ -17,8 +17,7 @@ export const SidebarData = [
         showSubRoute: false,
 
         submenuItems: [
-          { label: "Admin Dashboard", link: "/index" },
-          { label: "Admin Dashboard 2", link: "/admin-dashboard" },
+          { label: "Admin Dashboard", link: "/dashboard" },
           { label: "Sales Dashboard", link: "/sales-dashboard" },
         ],
       },
@@ -84,13 +83,6 @@ export const SidebarData = [
         showSubRoute: false,
         submenuItems: [
           { label: "Horizontal", link: route.Horizontal, showSubRoute: false },
-          { label: "Detached", link: route.Detached, showSubRoute: false },
-          // { label: "Modern", link: route.Modern, showSubRoute: false },
-          { label: "Two Column", link: route.TwoColumn, showSubRoute: false },
-          { label: "Hovered", link: route.Hovered, showSubRoute: false },
-          { label: "Boxed", link: route.Boxed, showSubRoute: false },
-          { label: "RTL", link: route.RTL, showSubRoute: false },
-          { label: "Dark", link: route.Dark, showSubRoute: false },
         ],
       },
     ],
@@ -1248,8 +1240,6 @@ export const SidebarData = [
             showSubRoute: false,
             submenuItems: [
               { label: "Horizontal Form", link: "/form-horizontal" },
-              { label: "Vertical Form", link: "/form-vertical" },
-              { label: "Floating Labels", link: "/form-floating-labels" },
             ],
           },
           { label: "Form Validation", link: "/form-validation" },

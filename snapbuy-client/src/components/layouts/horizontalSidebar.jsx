@@ -45,18 +45,14 @@ const HorizontalSidebar = () => {
     );
   };
 
-  const isActiveSubMenu = (mainMenus) => {
+  const isActiveSubMenu = (subMenu) => {
     const currentPath = location.pathname || "";
-    return (
-      (mainMenus.route &&
-        currentPath.split("/")[1] === mainMenus.route.split("/")[1]) ||
-      mainMenus.subRoutes?.some(
-        (subMenu) =>
-          subMenu.route &&
-          currentPath.split("/")[1] === subMenu.route.split("/")[1]
-      )
-    );
+    return subMenu.route && currentPath.split("/")[1] === subMenu.route.split("/")[1];
   };
+
+  useEffect(() => {
+    console.log("HorizontalSidebar rendered with opendSubMenu:", opendSubMenu);
+  }, [opendSubMenu]);
 
   return (
     <div
@@ -66,13 +62,12 @@ const HorizontalSidebar = () => {
     >
       <div className="sidebar-menu" id="sidebar-menu-3">
         <div className="main-menu">
-          <ul className="nav">
+          <ul className="nav nav-tabs" role="tablist">
             {SidebarData1.map((mainTittle, mainIndex) => (
-              <li className="submenu" key={mainIndex}>
+              <li className="nav-item" key={mainIndex}>
                 <a
-                  className={`${
-                    opendSubMenu[0] === mainTittle.tittle ||
-                    isActiveMainMenu(mainTittle)
+                  className={`nav-link ${
+                    opendSubMenu[0] === mainTittle.tittle || isActiveMainMenu(mainTittle)
                       ? "active"
                       : ""
                   }`}
@@ -84,29 +79,25 @@ const HorizontalSidebar = () => {
                     <i className={`ti ti-${mainTittle.icon} me-2`}></i>
                   )}
                   <span>{mainTittle.tittle}</span>
-                  <span className="menu-arrow"></span>
+                  {mainTittle.subRoutes.length > 0 && <span className="menu-arrow" />}
                 </a>
-                <ul
-                  className={`submenus-two ${
-                    opendSubMenu[0] === mainTittle.tittle ? "d-block" : "d-none"
-                  }`}
-                >
-                  {mainTittle.subRoutes.map((mainMenus, menuIndex) => (
-                    <React.Fragment key={menuIndex}>
-                      {!mainMenus.hasSubRoute && (
-                        <li>
+                {mainTittle.subRoutes.length > 0 && opendSubMenu[0] === mainTittle.tittle && (
+                  <ul className="dropdown-menu">
+                    {mainTittle.subRoutes.map((mainMenus, menuIndex) => (
+                      <li key={menuIndex}>
+                        {!mainMenus.hasSubRoute && (
                           <Link
                             to={mainMenus.route || "#"}
-                            className={isActiveMainMenu(mainMenus) ? "active" : ""}
+                            className={`dropdown-item ${
+                              isActiveSubMenu(mainMenus) ? "active" : ""
+                            }`}
                           >
                             <span>{mainMenus.tittle}</span>
                           </Link>
-                        </li>
-                      )}
-                      {mainMenus.hasSubRoute && (
-                        <li className="submenu">
+                        )}
+                        {mainMenus.hasSubRoute && (
                           <a
-                            className={`${
+                            className={`dropdown-item ${
                               isActiveSubMenu(mainMenus) ? "active" : ""
                             }`}
                             onClick={() => showSubMenu(mainMenus.tittle)}
@@ -114,35 +105,27 @@ const HorizontalSidebar = () => {
                             <span>{mainMenus.tittle}</span>
                             <span className="menu-arrow"></span>
                           </a>
-                          <ul
-                            className={`submenus-two ${
-                              opendSubMenu[1] === mainMenus.tittle
-                                ? "d-block"
-                                : "d-none"
-                            }`}
-                          >
-                            {mainMenus.subRoutes?.map(
-                              (subDropMenus, subIndex) => (
-                                <li key={subIndex}>
-                                  <Link
-                                    to={subDropMenus.route || "#"}
-                                    className={
-                                      isActiveSubMenu(subDropMenus)
-                                        ? "active"
-                                        : ""
-                                    }
-                                  >
-                                    {subDropMenus.tittle}
-                                  </Link>
-                                </li>
-                              )
-                            )}
+                        )}
+                        {mainMenus.hasSubRoute && opendSubMenu[1] === mainMenus.tittle && (
+                          <ul className="dropdown-menu submenu-two">
+                            {mainMenus.subRoutes.map((subDropMenus, subIndex) => (
+                              <li key={subIndex}>
+                                <Link
+                                  to={subDropMenus.route || "#"}
+                                  className={`dropdown-item ${
+                                    isActiveSubMenu(subDropMenus) ? "active" : ""
+                                  }`}
+                                >
+                                  {subDropMenus.tittle}
+                                </Link>
+                              </li>
+                            ))}
                           </ul>
-                        </li>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </ul>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </li>
             ))}
           </ul>
