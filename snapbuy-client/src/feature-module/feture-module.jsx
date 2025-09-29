@@ -3,7 +3,6 @@ import { Outlet, useLocation, matchPath } from "react-router";
 import { useEffect, useState } from "react";
 
 import Header from "../components/layouts/header";
-import Sidebar from "../components/sidebar/sidebar";
 import HorizontalSidebar from "../components/layouts/horizontalSidebar";
 
 import { authRoutes, posPages, unAuthRoutes } from "../routes/path";
@@ -112,7 +111,6 @@ const FeatureModule = () => {
           {showLoader && <Preloader />}
           <div className={`main-wrapper ${data ? "header-collapse" : ""}`}>
             <Header />
-            <Sidebar />
             <HorizontalSidebar />
             <Outlet />
           </div>

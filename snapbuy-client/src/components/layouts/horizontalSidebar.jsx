@@ -1,131 +1,156 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { SidebarData1 } from "../../core/json/sidebar_dataone";
+import { SidebarData1 } from "../../core/json/sidebar_dataone"; // chỉnh path nếu khác
 
-const HorizontalSidebar = () => {
-  const [opendSubMenu, setOpendSubMenu] = useState([null, null]);
-  const sidebarRef = useRef(null);
-  const location = useLocation();
+export default function HorizontalSidebar() {
+  const [open, setOpen] = useState([null, null]); // [mainTitle, subTitle]
+  const ref = useRef(null);
+  const { pathname } = useLocation();
 
-  const showMenu = (title) => {
-    setOpendSubMenu((prevState) =>
-      prevState[0] === title ? [null, null] : [title, null]
-    );
-  };
+  const showMain = (title) =>
+    setOpen((prev) => (prev[0] === title ? [null, null] : [title, null]));
 
-  const showSubMenu = (title) => {
-    setOpendSubMenu((prevState) =>
-      prevState[1] === title ? [prevState[0], null] : [prevState[0], title]
-    );
-  };
-
-  const handleClickOutside = (event) => {
-    if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-      setOpendSubMenu([null, null]);
-    }
-  };
+  const showSub = (title) =>
+    setOpen((prev) => (prev[1] === title ? [prev[0], null] : [prev[0], title]));
 
   useEffect(() => {
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+    const onDocClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen([null, null]);
     };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
-  const isActiveMainMenu = (mainMenus) => {
-    const currentPath = location.pathname || "";
-    return (
-      (mainMenus.route &&
-        currentPath.split("/")[1] === mainMenus.route.split("/")[1]) ||
-      mainMenus.subRoutes?.some(
-        (subMenu) =>
-          subMenu.route &&
-          currentPath.split("/")[1] === subMenu.route.split("/")[1]
-      )
+  const isActiveMain = (group) => {
+    const seg = (pathname.split("/")[1] || "").toLowerCase();
+    return Boolean(
+      (group.route && seg === group.route.split("/")[1]?.toLowerCase()) ||
+        group.subRoutes?.some(
+          (s) => s.route && seg === s.route.split("/")[1]?.toLowerCase()
+        )
     );
   };
 
-  const isActiveSubMenu = (subMenu) => {
-    const currentPath = location.pathname || "";
-    return subMenu.route && currentPath.split("/")[1] === subMenu.route.split("/")[1];
+  const isActive = (item) => {
+    const seg = (pathname.split("/")[1] || "").toLowerCase();
+    return (
+      item.route && seg === item.route.split("/")[1]?.toLowerCase()
+    );
   };
-
-  useEffect(() => {
-    console.log("HorizontalSidebar rendered with opendSubMenu:", opendSubMenu);
-  }, [opendSubMenu]);
 
   return (
     <div
-      className="sidebar sidebar-horizontal"
-      id="horizontal-menu"
-      ref={sidebarRef}
+      className="sidebar sidebar-horizontal border-bottom bg-white"
+      ref={ref}
+      style={{ fontFamily: "Nunito, sans-serif" }}
     >
-      <div className="sidebar-menu" id="sidebar-menu-3">
+      <div className="sidebar-menu">
         <div className="main-menu">
           <ul className="nav nav-tabs" role="tablist">
-            {SidebarData1.map((mainTittle, mainIndex) => (
-              <li className="nav-item" key={mainIndex}>
-                <a
+            {SidebarData1.map((group, i) => (
+              <li
+                key={i}
+                className={`nav-item dropdown ${
+                  open[0] === group.tittle ? "show" : ""
+                }`}
+                style={{ position: "relative" }}
+              >
+                <button
+                  type="button"
                   className={`nav-link ${
-                    opendSubMenu[0] === mainTittle.tittle || isActiveMainMenu(mainTittle)
-                      ? "active"
-                      : ""
+                    open[0] === group.tittle || isActiveMain(group) ? "active" : ""
                   }`}
-                  onClick={() => showMenu(mainTittle.tittle)}
+                  onClick={() => showMain(group.tittle)}
                 >
-                  {mainTittle.tittle === "Components" ? (
-                    <i className="feather icon-layers"></i>
+                  {group.tittle === "Components" ? (
+                    <i className="feather icon-layers me-2" />
                   ) : (
-                    <i className={`ti ti-${mainTittle.icon} me-2`}></i>
+                    <i className={`ti ti-${group.icon || "layout-grid"} me-2`} />
                   )}
-                  <span>{mainTittle.tittle}</span>
-                  {mainTittle.subRoutes.length > 0 && <span className="menu-arrow" />}
-                </a>
-                {mainTittle.subRoutes.length > 0 && opendSubMenu[0] === mainTittle.tittle && (
-                  <ul className="dropdown-menu">
-                    {mainTittle.subRoutes.map((mainMenus, menuIndex) => (
-                      <li key={menuIndex}>
-                        {!mainMenus.hasSubRoute && (
-                          <Link
-                            to={mainMenus.route || "#"}
-                            className={`dropdown-item ${
-                              isActiveSubMenu(mainMenus) ? "active" : ""
-                            }`}
-                          >
-                            <span>{mainMenus.tittle}</span>
-                          </Link>
-                        )}
-                        {mainMenus.hasSubRoute && (
+                  <span>{group.tittle}</span>
+                  {group.subRoutes?.length > 0 && (
+                    <i className="ti ti-chevron-down ms-1" />
+                  )}
+                </button>
+
+                {/* Dropdown cấp 1 */}
+                <ul
+                  className={`dropdown-menu ${
+                    open[0] === group.tittle ? "show" : ""
+                  }`}
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    left: 0,
+                    marginTop: 4,
+                    zIndex: 2000,
+                    display: open[0] === group.tittle ? "block" : "none",
+                  }}
+                >
+                  {group.subRoutes?.map((menu, j) => (
+                    <li
+                      key={j}
+                      className={menu.hasSubRoute ? "dropdown-submenu position-static" : ""}
+                    >
+                      {!menu.hasSubRoute && (
+                        <Link
+                          to={menu.route || "#"}
+                          className={`dropdown-item ${isActive(menu) ? "active" : ""}`}
+                        >
+                          {menu.tittle}
+                        </Link>
+                      )}
+
+                      {menu.hasSubRoute && (
+                        <>
                           <a
-                            className={`dropdown-item ${
-                              isActiveSubMenu(mainMenus) ? "active" : ""
+                            href="#"
+                            className={`dropdown-item d-flex justify-content-between align-items-center ${
+                              isActive(menu) ? "active" : ""
                             }`}
-                            onClick={() => showSubMenu(mainMenus.tittle)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              showSub(menu.tittle);
+                            }}
                           >
-                            <span>{mainMenus.tittle}</span>
-                            <span className="menu-arrow"></span>
+                            <span>{menu.tittle}</span>
+                            <i className="ti ti-chevron-right" />
                           </a>
-                        )}
-                        {mainMenus.hasSubRoute && opendSubMenu[1] === mainMenus.tittle && (
-                          <ul className="dropdown-menu submenu-two">
-                            {mainMenus.subRoutes.map((subDropMenus, subIndex) => (
-                              <li key={subIndex}>
+
+                          {/* Dropdown cấp 2 */}
+                          <ul
+                            className={`dropdown-menu submenu-two ${
+                              open[1] === menu.tittle ? "show" : ""
+                            }`}
+                            style={{
+                              position: "absolute",
+                              top: 0,
+                              left: "100%",
+                              marginLeft: 4,
+                              zIndex: 2000,
+                              display: open[1] === menu.tittle ? "block" : "none",
+                            }}
+                          >
+                            {menu.subRoutes?.map((child, k) => (
+                              <li key={k}>
                                 <Link
-                                  to={subDropMenus.route || "#"}
+                                  to={child.route || "#"}
                                   className={`dropdown-item ${
-                                    isActiveSubMenu(subDropMenus) ? "active" : ""
+                                    isActive(child) ? "active" : ""
                                   }`}
+                                  onClick={(e) => e.stopPropagation()}
                                 >
-                                  {subDropMenus.tittle}
+                                  {child.tittle}
                                 </Link>
                               </li>
                             ))}
                           </ul>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                        </>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               </li>
             ))}
           </ul>
@@ -133,6 +158,4 @@ const HorizontalSidebar = () => {
       </div>
     </div>
   );
-};
-
-export default HorizontalSidebar;
+}
