@@ -47,7 +47,6 @@ const Datatable = ({ props, columns, dataSource }) => {
       </div>
 
       <Table
-        key={props}
         className="table datanew dataTable no-footer"
         rowSelection={rowSelection}
         columns={columns}

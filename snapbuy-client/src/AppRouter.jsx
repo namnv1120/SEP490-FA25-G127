@@ -5,6 +5,7 @@ import { authRoutes, posPages, unAuthRoutes } from "./routes/path";
 import { base_path } from "./environment";
 import { useDispatch } from "react-redux";
 import { setDataLayout, setDataWidth } from "./core/redux/themeSettingSlice";
+import Header from "./components/layouts/header";
 
 const AppRouter = () => {
   const dispatch = useDispatch();
@@ -37,6 +38,7 @@ const AppRouter = () => {
 
   return (
     <BrowserRouter basename={base_path}>
+      <Header />
       <RouterContent />
     </BrowserRouter>
   );
