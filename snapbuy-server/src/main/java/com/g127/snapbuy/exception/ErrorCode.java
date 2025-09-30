@@ -16,7 +16,8 @@ public enum ErrorCode {
     SUPPLIER_NOT_FOUND(2004, "Supplier not found"),
     AUTH_INVALID(3001, "Invalid username or password"),
     TOKEN_INVALID(3002, "Invalid token"),
-    TOKEN_REVOKED(3003, "Token revoked");
+    TOKEN_REVOKED(3003, "Token revoked"),
+    ACCOUNT_LOCKED(3004, "Account is locked");
 
     ;
     private final int code;

@@ -22,16 +22,25 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/token")
-    public ApiResponse<AuthenticationResponse> authenticate(
-            @RequestBody @Valid AuthenticationRequest req) {
+    public ApiResponse<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest req) {
         try {
             ApiResponse<AuthenticationResponse> response = new ApiResponse<>();
             response.setResult(authenticationService.authenticate(req));
             return response;
-        } catch (Exception e) {
+
+        } catch (org.springframework.security.authentication.LockedException
+                 | org.springframework.security.authentication.DisabledException e) {
+            throw new AppException(ErrorCode.ACCOUNT_LOCKED);
+
+        } catch (org.springframework.security.core.userdetails.UsernameNotFoundException
+                 | org.springframework.security.authentication.BadCredentialsException e) {
             throw new AppException(ErrorCode.AUTH_INVALID);
+
+        } catch (Exception e) {
+            throw new AppException(ErrorCode.UNCATEGORIZED_ERROR);
         }
     }
+
 
     @PostMapping("/introspect")
     public ApiResponse<IntrospectResponse> introspect(

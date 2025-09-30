@@ -97,4 +97,10 @@ public class AccountController {
                                                    @Valid @RequestBody StaffRoleUpdateRequest req) {
         return accountService.updateStaffRolesByOwner(staffId, req);
     }
+    @PutMapping("/admin/{accountId}")
+    @PreAuthorize("hasRole('Admin')")
+    public AccountResponse adminUpdateAccount(@PathVariable UUID accountId,
+                                              @Valid @RequestBody AccountUpdateRequest req) {
+        return accountService.adminUpdateAccount(accountId, req);
+    }
 }

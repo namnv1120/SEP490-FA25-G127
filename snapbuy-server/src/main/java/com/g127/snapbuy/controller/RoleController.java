@@ -1,8 +1,9 @@
 package com.g127.snapbuy.controller;
 
-import com.g127.snapbuy.dto.request.RolePermissionUpdateRequest;
 import com.g127.snapbuy.entity.Permission;
 import com.g127.snapbuy.entity.Role;
+import com.g127.snapbuy.exception.AppException;
+import com.g127.snapbuy.exception.ErrorCode;
 import com.g127.snapbuy.repository.PermissionRepository;
 import com.g127.snapbuy.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,11 +26,19 @@ public class RoleController {
     @PostMapping
     @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
     public ResponseEntity<Role> createRole(@RequestBody Role req) {
-        if (req.getRoleName() != null && ADMIN_ROLE_NAME.equalsIgnoreCase(req.getRoleName())) {
+        String name = req.getRoleName() == null ? null : req.getRoleName().trim();
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("roleName is required");
+        }
+        if (ADMIN_ROLE_NAME.equalsIgnoreCase(name)) {
             throw new IllegalArgumentException("Cannot create role named 'Admin'.");
         }
+        if (roleRepository.existsByRoleNameIgnoreCase(name)) {
+            throw new AppException(ErrorCode.NAME_EXISTED);
+        }
+
         Role r = new Role();
-        r.setRoleName(req.getRoleName());
+        r.setRoleName(name);
         r.setDescription(req.getDescription());
         r.setIsActive(req.getIsActive() == null ? Boolean.TRUE : req.getIsActive());
         r.setCreatedDate(new Date());
@@ -57,11 +66,18 @@ public class RoleController {
                 .orElseThrow(() -> new NoSuchElementException("Role not found"));
         ensureNotAdminRole(r, "Cannot update 'Admin' role.");
 
-        if (req.getRoleName() != null && ADMIN_ROLE_NAME.equalsIgnoreCase(req.getRoleName())) {
-            throw new IllegalArgumentException("Cannot rename any role to 'Admin'.");
+        if (req.getRoleName() != null) {
+            String newName = req.getRoleName().trim();
+            if (newName.isBlank()) throw new IllegalArgumentException("roleName must not be blank");
+            if (ADMIN_ROLE_NAME.equalsIgnoreCase(newName)) {
+                throw new IllegalArgumentException("Cannot rename any role to 'Admin'.");
+            }
+            roleRepository.findByRoleNameIgnoreCase(newName)
+                    .filter(other -> !other.getRoleId().equals(roleId))
+                    .ifPresent(other -> { throw new AppException(ErrorCode.NAME_EXISTED); });
+            r.setRoleName(newName);
         }
 
-        if (req.getRoleName() != null)   r.setRoleName(req.getRoleName());
         if (req.getDescription() != null) r.setDescription(req.getDescription());
         if (req.getIsActive() != null)    r.setIsActive(req.getIsActive());
         return ResponseEntity.ok(roleRepository.save(r));
@@ -118,7 +134,7 @@ public class RoleController {
     @PutMapping("/{roleId}/permissions")
     @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
     public ResponseEntity<Role> replacePermissions(@PathVariable UUID roleId,
-                                                   @RequestBody RolePermissionUpdateRequest req) {
+                                                   @RequestBody com.g127.snapbuy.dto.request.RolePermissionUpdateRequest req) {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new NoSuchElementException("Role not found"));
         ensureNotAdminRole(role, "Cannot modify permissions of 'Admin' role.");

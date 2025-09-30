@@ -242,4 +242,30 @@ public class AccountServiceImpl implements AccountService {
 
         return accountMapper.toResponse(accountRepository.save(staff));
     }
+
+    @Override
+    @PreAuthorize("hasRole('Admin')")
+    public AccountResponse adminUpdateAccount(UUID accountId, AccountUpdateRequest req) {
+        Account acc = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+
+        if (req.getFullName() != null)  acc.setFullName(req.getFullName());
+        if (req.getEmail() != null)     acc.setEmail(req.getEmail());
+        if (req.getPhone() != null)     acc.setPhone(req.getPhone());
+        if (req.getAvatarUrl() != null) acc.setAvatarUrl(req.getAvatarUrl());
+
+        if (req.getActive() != null)    acc.setIsActive(req.getActive());
+
+        if (req.getPassword() != null && !req.getPassword().isBlank()) {
+            acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+        }
+
+        try {
+            acc = accountRepository.save(acc);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("Duplicate or invalid data");
+        }
+        return accountMapper.toResponse(acc);
+    }
+
 }
