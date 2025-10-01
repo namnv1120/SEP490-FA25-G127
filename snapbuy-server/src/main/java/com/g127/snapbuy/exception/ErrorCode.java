@@ -15,6 +15,7 @@ public enum ErrorCode {
     PARENT_NOT_FOUND(2003, "Parent not found"),
     SUPPLIER_NOT_FOUND(2004, "Supplier not found"),
     PRODUCT_NOT_FOUND(2005, "Product not found"),
+    PRICE_NOT_FOUND(2006, "Price not found"),
     ;
     private final int code;
     private final String message;
