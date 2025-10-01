@@ -1,26 +1,25 @@
 package com.g127.snapbuy.mapper;
 
-import com.g127.snapbuy.dto.CustomerDto;
+import com.g127.snapbuy.dto.request.CustomerCreateRequest;
+import com.g127.snapbuy.dto.request.CustomerUpdateRequest;
+import com.g127.snapbuy.dto.response.CustomerResponse;
 import com.g127.snapbuy.entity.Customer;
+import org.mapstruct.*;
 
-public class CustomerMapper {
-    public static CustomerDto toDto(Customer customer) {
-        CustomerDto customerDto = new CustomerDto();
-        customerDto.setId(customer.getId());
-        customerDto.setName(customer.getName());
-        customerDto.setEmail(customer.getEmail());
-        customerDto.setPhone(customer.getPhone());
-        customerDto.setAddress(customer.getAddress());
-        return customerDto;
-    }
+@Mapper(componentModel = "spring")
+public interface CustomerMapper {
 
-    public static Customer toEntity(CustomerDto customerDto) {
-        Customer customer = new Customer();
-        customer.setId(customerDto.getId());
-        customer.setName(customerDto.getName());
-        customer.setEmail(customerDto.getEmail());
-        customer.setPhone(customerDto.getPhone());
-        customer.setAddress(customerDto.getAddress());
-        return customer;
-    }
+    @Mapping(target = "customerId", ignore = true)
+    @Mapping(target = "customerCode", ignore = true)
+    @Mapping(target = "createdDate", ignore = true)
+    @Mapping(target = "updatedDate", ignore = true)
+    Customer toEntity(CustomerCreateRequest request);
+
+    @Mapping(target = "customerId", ignore = true)
+    @Mapping(target = "customerCode", ignore = true)
+    @Mapping(target = "createdDate", ignore = true)
+    @Mapping(target = "updatedDate", ignore = true)
+    void updateFromDto(CustomerUpdateRequest request, @MappingTarget Customer customer);
+
+    CustomerResponse toResponse(Customer customer);
 }

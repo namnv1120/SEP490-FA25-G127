@@ -1,18 +1,20 @@
 package com.g127.snapbuy.service;
 
-import com.g127.snapbuy.dto.CustomerDto;
-import org.springframework.stereotype.Service;
+import com.g127.snapbuy.dto.request.CustomerCreateRequest;
+import com.g127.snapbuy.dto.request.CustomerUpdateRequest;
+import com.g127.snapbuy.dto.response.CustomerResponse;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface CustomerService {
-    CustomerDto createCustomer(CustomerDto customerDto);
+    CustomerResponse createCustomer(CustomerCreateRequest request);
 
-    List<CustomerDto> getAllCustomers();
+    List<CustomerResponse> getAllCustomers();
 
-    CustomerDto getCustomerById(Long id);
+    CustomerResponse getCustomerById(UUID id);
 
-    CustomerDto updateCustomer(Long id, CustomerDto customerDto);
+    CustomerResponse updateCustomer(UUID id, CustomerUpdateRequest request);
 
-    void deleteCustomer(Long id);
+    void deleteCustomer(UUID id);
 }
