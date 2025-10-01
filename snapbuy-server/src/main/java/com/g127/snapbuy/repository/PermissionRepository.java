@@ -8,6 +8,5 @@ import java.util.UUID;
 
 public interface PermissionRepository extends JpaRepository<Permission, UUID> {
     Optional<Permission> findByPermissionNameIgnoreCase(String permissionName);
-
     boolean existsByPermissionNameIgnoreCase(String permissionName);
 }

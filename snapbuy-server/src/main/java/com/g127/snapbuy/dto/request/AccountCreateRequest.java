@@ -37,9 +37,6 @@ public class AccountCreateRequest {
             message = "Phone must be exactly 10 digits"
     )
     private String phone;
-
     private String avatarUrl;
-
-    // Shop Owner creating staff must provide ["Sales Staff"] or ["Warehouse Staff"]
     private List<String> roles;
 }

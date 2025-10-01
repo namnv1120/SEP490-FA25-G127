@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -29,8 +30,9 @@ public class AccountServiceImpl implements AccountService {
     private final RoleRepository roleRepository;
     private final AccountMapper accountMapper;
     private final PasswordEncoder passwordEncoder;
-    private static final java.util.Set<String> ALLOWED_STAFF_ROLES =
-            java.util.Set.of("Warehouse Staff", "Sales Staff");
+
+    private static final Set<String> FORBIDDEN_STAFF_ROLES =
+            Set.of("Admin", "Shop Owner");
 
     @Override
     @PreAuthorize("hasRole('Admin')")
@@ -145,14 +147,64 @@ public class AccountServiceImpl implements AccountService {
         return createWithSingleRole(req, "Shop Owner");
     }
 
+
     @Override
     @PreAuthorize("hasRole('Shop Owner')")
     public AccountResponse createStaff(AccountCreateRequest req) {
-        String requested = (req.getRoles() != null && !req.getRoles().isEmpty()) ? req.getRoles().get(0) : null;
-        if (!"Warehouse Staff".equalsIgnoreCase(requested) && !"Sales Staff".equalsIgnoreCase(requested)) {
-            throw new IllegalArgumentException("Role must be Warehouse Staff or Sales Staff");
+        if (req.getPassword() == null || req.getConfirmPassword() == null
+                || !req.getPassword().equals(req.getConfirmPassword())) {
+            throw new IllegalArgumentException("Confirm password does not match");
         }
-        return createWithSingleRole(req, requested);
+
+        String username = req.getUsername().toLowerCase();
+        if (username.contains(" ")) {
+            throw new IllegalArgumentException("Username must not contain spaces");
+        }
+        if (accountRepository.existsByUsernameIgnoreCase(username)) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+        if (accountRepository.existsByEmailIgnoreCase(req.getEmail())) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+        if (req.getPhone() != null && !req.getPhone().isBlank()
+                && accountRepository.existsByPhone(req.getPhone())) {
+            throw new IllegalArgumentException("Phone already exists");
+        }
+
+        List<String> roleNames = (req.getRoles() == null) ? List.of() : req.getRoles();
+        if (roleNames.isEmpty()) {
+            throw new IllegalArgumentException("At least one role is required for staff");
+        }
+
+        for (String rn : roleNames) {
+            for (String forbid : FORBIDDEN_STAFF_ROLES) {
+                if (forbid.equalsIgnoreCase(rn)) {
+                    throw new IllegalArgumentException("Role not allowed for staff: " + rn);
+                }
+            }
+        }
+
+        java.util.Set<Role> staffRoles = new java.util.HashSet<>();
+        for (String rn : roleNames) {
+            Role r = roleRepository.findByRoleNameIgnoreCase(rn)
+                    .orElseThrow(() -> new NoSuchElementException("Role not found: " + rn));
+            staffRoles.add(r);
+        }
+
+        Account acc = accountMapper.toEntity(req);
+        if (acc.getAccountId() == null) acc.setAccountId(UUID.randomUUID());
+        acc.setUsername(username);
+        acc.setFullName(req.getFullName());
+        acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+        acc.getRoles().clear();
+        acc.getRoles().addAll(staffRoles);
+
+        try {
+            acc = accountRepository.save(acc);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("Duplicate or invalid data");
+        }
+        return accountMapper.toResponse(acc);
     }
 
     private AccountResponse createWithSingleRole(AccountCreateRequest req, String roleName) {
@@ -202,9 +254,10 @@ public class AccountServiceImpl implements AccountService {
         Account staff = accountRepository.findById(staffId)
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
-        boolean isStaff = staff.getRoles().stream().anyMatch(r ->
-                ALLOWED_STAFF_ROLES.contains(r.getRoleName()));
-        if (!isStaff) {
+        boolean hasForbidden = staff.getRoles().stream()
+                .anyMatch(r -> FORBIDDEN_STAFF_ROLES.stream()
+                        .anyMatch(f -> f.equalsIgnoreCase(r.getRoleName())));
+        if (hasForbidden) {
             throw new IllegalArgumentException("Only staff accounts can be updated by Shop Owner");
         }
 
@@ -223,20 +276,21 @@ public class AccountServiceImpl implements AccountService {
         Account staff = accountRepository.findById(staffId)
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
-        for (String roleName : req.getRoles()) {
-            if (!ALLOWED_STAFF_ROLES.contains(roleName)) {
-                throw new IllegalArgumentException("Role not allowed for staff: " + roleName);
+        for (String rn : req.getRoles()) {
+            for (String forbid : FORBIDDEN_STAFF_ROLES) {
+                if (forbid.equalsIgnoreCase(rn)) {
+                    throw new IllegalArgumentException("Role not allowed for staff: " + rn);
+                }
             }
         }
 
         java.util.Set<Role> newRoles = new java.util.HashSet<>();
-        for (String roleName : req.getRoles()) {
-            Role r = roleRepository.findByRoleName(roleName)
-                    .orElseThrow(() -> new NoSuchElementException("Role not found: " + roleName));
+        for (String rn : req.getRoles()) {
+            Role r = roleRepository.findByRoleNameIgnoreCase(rn)
+                    .orElseThrow(() -> new NoSuchElementException("Role not found: " + rn));
             newRoles.add(r);
         }
 
-        staff.getRoles().removeIf(r -> !ALLOWED_STAFF_ROLES.contains(r.getRoleName()));
         staff.getRoles().clear();
         staff.getRoles().addAll(newRoles);
 
@@ -253,9 +307,7 @@ public class AccountServiceImpl implements AccountService {
         if (req.getEmail() != null)     acc.setEmail(req.getEmail());
         if (req.getPhone() != null)     acc.setPhone(req.getPhone());
         if (req.getAvatarUrl() != null) acc.setAvatarUrl(req.getAvatarUrl());
-
         if (req.getActive() != null)    acc.setIsActive(req.getActive());
-
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
             acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
         }
@@ -267,5 +319,4 @@ public class AccountServiceImpl implements AccountService {
         }
         return accountMapper.toResponse(acc);
     }
-
 }

@@ -7,8 +7,6 @@ import com.g127.snapbuy.dto.request.RefreshRequest;
 import com.g127.snapbuy.dto.ApiResponse;
 import com.g127.snapbuy.dto.response.AuthenticationResponse;
 import com.g127.snapbuy.dto.response.IntrospectResponse;
-import com.g127.snapbuy.exception.AppException;
-import com.g127.snapbuy.exception.ErrorCode;
 import com.g127.snapbuy.service.AuthenticationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,55 +21,30 @@ public class AuthenticationController {
 
     @PostMapping("/token")
     public ApiResponse<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest req) {
-        try {
-            ApiResponse<AuthenticationResponse> response = new ApiResponse<>();
-            response.setResult(authenticationService.authenticate(req));
-            return response;
-
-        } catch (org.springframework.security.authentication.LockedException
-                 | org.springframework.security.authentication.DisabledException e) {
-            throw new AppException(ErrorCode.ACCOUNT_LOCKED);
-
-        } catch (org.springframework.security.core.userdetails.UsernameNotFoundException
-                 | org.springframework.security.authentication.BadCredentialsException e) {
-            throw new AppException(ErrorCode.AUTH_INVALID);
-
-        } catch (Exception e) {
-            throw new AppException(ErrorCode.UNCATEGORIZED_ERROR);
-        }
+        ApiResponse<AuthenticationResponse> response = new ApiResponse<>();
+        response.setResult(authenticationService.authenticate(req));
+        return response;
     }
 
-
     @PostMapping("/introspect")
-    public ApiResponse<IntrospectResponse> introspect(
-            @RequestBody @Valid IntrospectRequest req) {
+    public ApiResponse<IntrospectResponse> introspect(@RequestBody @Valid IntrospectRequest req) {
         ApiResponse<IntrospectResponse> response = new ApiResponse<>();
         response.setResult(authenticationService.introspect(req));
         return response;
     }
 
     @PostMapping("/refresh")
-    public ApiResponse<AuthenticationResponse> refresh(
-            @RequestBody @Valid RefreshRequest req) {
-        try {
-            ApiResponse<AuthenticationResponse> response = new ApiResponse<>();
-            response.setResult(authenticationService.refreshToken(req));
-            return response;
-        } catch (Exception e) {
-            throw new AppException(ErrorCode.TOKEN_INVALID);
-        }
+    public ApiResponse<AuthenticationResponse> refresh(@RequestBody @Valid RefreshRequest req) {
+        ApiResponse<AuthenticationResponse> response = new ApiResponse<>();
+        response.setResult(authenticationService.refreshToken(req));
+        return response;
     }
 
     @PostMapping("/logout")
     public ApiResponse<Void> logout(@RequestBody LogoutRequest req) {
-        try {
-            authenticationService.logout(req);
-            ApiResponse<Void> response = new ApiResponse<>();
-            response.setCode(1000);
-            response.setResult(null);
-            return response;
-        } catch (IllegalArgumentException e) {
-            throw new AppException(ErrorCode.TOKEN_REVOKED);
-        }
+        authenticationService.logout(req);
+        ApiResponse<Void> response = new ApiResponse<>();
+        response.setResult(null);
+        return response;
     }
 }

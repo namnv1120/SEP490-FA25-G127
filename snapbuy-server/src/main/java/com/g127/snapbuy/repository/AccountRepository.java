@@ -10,7 +10,6 @@ import java.util.UUID;
 public interface AccountRepository extends JpaRepository<Account, UUID> {
 
     Optional<Account> findByUsername(String username);
-    Optional<Account> findByUsernameIgnoreCase(String username);
     Optional<Account> findByEmail(String email);
 
     boolean existsByUsernameIgnoreCase(String username);
@@ -25,4 +24,12 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
            where lower(a.username) = lower(:username)
            """)
     Optional<Account> findByUsernameWithRolesAndPermissionsIgnoreCase(@Param("username") String username);
+
+    @Query("""
+           select count(a)
+           from Account a
+           join a.roles r
+           where r.roleId = :roleId
+           """)
+    long countAccountsByRoleId(@Param("roleId") UUID roleId);
 }
