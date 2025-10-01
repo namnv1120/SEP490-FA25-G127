@@ -569,187 +569,12 @@
         }
     }
 }
-.header-left{    
-        #toggle_btn{
-            display: -webkit-box;
-            display: -ms-flexbox;
-            display: flex;
-            align-items: center;
-            -webkit-box-align: center;
-            -ms-flex-align: center;
-            justify-content: center;
-            -webkit-justify-content: center;
-            -ms-flex-pack: center;
-            position: absolute;
-            opacity: 1;
-            background: variables.$primary;
-            right: -13px;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            color: variables.$white;
-            cursor: pointer;
-            svg {
-                transform: rotate(180deg);
-            }    
-            &:hover {
-                background: variables.$primary-hover;
-            }       
-        }
+.header-left{
         &.active svg {
             transform: rotate(0) !important;
         }
       
 }
-
-@include mixins.respond-above(custom991) {
-    .mini-sidebar {
-        .page-wrapper {
-            margin-left: 86px;
-        }
-        .header-left {
-            #toggle_btn{
-                opacity: 0;
-                &:after {
-                   border:0;
-                }
-            }
-        }
-        &.expand-menu{
-            .header-left {
-                #toggle_btn{
-                    opacity: 1;
-                }
-            }  
-           .sidebar {
-                .sidebar-menu {
-                    ul {
-                        li {
-                            .submenu-hdr {
-                                display: block;
-                            }
-                        }
-                    }
-                    & > ul > li.submenu-open ul li a {
-                        ul {
-                            li {
-                                a {
-                                    padding: 8px 12px;
-                                }
-                            }
-                        }
-                    }
-                }
-           }
-           .sidebar .sidebar-menu .submenu-open .submenu ul li a {
-                padding: 8px 10px 8px 15px !important;
-           }
-        }
-        .sidebar-right {
-            display: none;
-        }
-        .sidebar {
-            .sidebar-menu{
-               ul{
-                    li{
-                        a {
-                            span{
-                                display:none;
-                            }
-                        }
-                        .submenu-hdr {
-                            display:none;
-                        }                                                       
-                        svg {
-                            margin-right:0;
-                        }
-                    }
-                }
-            } 
-        }
-        .sidebar{
-            width: 86px;
-        }
-    }
-    .expand-menu{
-        .sidebar-right {
-            display: block;
-            @include mixins.transition(all 0.2s ease);
-        }
-        .sidebar {
-            width: 252px;
-            .sidebar-menu{
-               ul{
-                   > li{
-                        > a {
-                            @include mixins.margin-padding(null, 10px 15px);
-                            span{
-                                display:inline-block;
-                            }
-                        }                        
-                        svg {
-                            margin-right:10px;
-                        }
-                    }
-                }
-                .submenu-hdr {
-                    display:block;
-                }
-            }
-        }
-        .header-left{
-            width: 252px;
-        }
-    }
-    #toggle_btn {
-        display: -webkit-box;
-        display: -ms-flexbox;
-        display: flex;
-        align-items: center;
-        -webkit-box-align: center;
-        -ms-flex-align: center;
-        justify-content: center;
-        -webkit-justify-content: center;
-        -ms-flex-pack: center;
-        float: left;
-        margin-left: 15px;
-    }
-}
-body.mini-sidebar{
-    .sidebar {
-        .sidebar-menu > ul > li.submenu-open ul li a {
-            display: -webkit-box;
-            display: -ms-flexbox;
-            display: flex;
-            align-items: center;
-            -webkit-box-align: center;
-            -ms-flex-align: center;
-            justify-content: center;
-            -webkit-justify-content: center;
-            -ms-flex-pack: center;
-            position: relative;
-            width: 100%;
-            padding: 8px;
-            i {
-                margin-right: 0 !important;
-            }
-        }
-    }
-    &.expand-menu {
-        .sidebar {
-            .sidebar-menu > ul > li.submenu-open ul li a {
-                justify-content: left;
-                -webkit-justify-content: left;
-                -ms-flex-pack: left;
-                padding: 8px 12px !important;
-                i {
-                    margin-right: 8px !important;
-                }
-            }
-        }
-    }
-}
-
 .sidebarrightmenu{
     .sidebar-right{
         display: block;
@@ -769,29 +594,6 @@ body.mini-sidebar{
     @include mixins.position(fixed,60px,null,null,0);
     &.opened {
         display: block;
-    }
-}
-.nosidebar {
-    .sidebar {
-        left: -350px;
-    }
-    .page-wrapper{
-        margin: 0;
-    }
-    #toggle_btn{
-        svg{
-            @include mixins.transform(rotate(180deg));
-        }
-    }
-}
-.mini-sidebar{
-    .active.subdrop ~ ul{
-        display: none !important;
-    }
-}
-.mini-sidebar.expand-menu{
-    .active.subdrop ~ ul{
-        display: block !important;
     }
 }
 .active.subdrop ~ ul{
@@ -825,36 +627,6 @@ body.mini-sidebar{
         .logo-small {
             display: none;
         }
-        #toggle_btn{
-            display: -webkit-box;
-            display: -ms-flexbox;
-            display: flex;
-            align-items: center;
-            -webkit-box-align: center;
-            -ms-flex-align: center;
-            justify-content: center;
-            -webkit-justify-content: center;
-            -ms-flex-pack: center;
-            position: absolute;
-            opacity: 1;
-            background: variables.$primary;
-            right: -13px;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            color: variables.$white;
-            cursor: pointer;
-            svg {
-                transform: rotate(0);
-            }    
-            &:hover {
-                background: variables.$primary-hover;
-            }    
-            &.active svg {
-                transform: rotate(180deg) !important;
-            }   
-        }
-       
     }
 }
 @include mixins.respond-above(custom992) {
@@ -864,43 +636,6 @@ body.mini-sidebar{
     .sidebar {
         top: 0;
     }
-    .mini-sidebar {
-        .sidebar {
-            .sidebar-logo {
-               
-                .logo {
-                    display: none;
-                }
-                .logo-small {
-                    display: block;
-                }
-                #toggle_btn {
-                   opacity: 0;
-                }
-            }
-        }
-        .header {
-            left: 86px;
-        }
-        &.expand-menu {
-            .sidebar {
-                .sidebar-logo {
-                   
-                    .logo {
-                        display: block;
-                    }
-                    .logo-small {
-                        display: none;
-                    }
-                    #toggle_btn {
-                        opacity: 1;
-                    }
-                }
-            }
-            .header {
-                left: 252px;
-            }
-        }
     }
     .header .header-left {
         float: left;
@@ -909,29 +644,12 @@ body.mini-sidebar{
         z-index: 1;
         display: none;
     }
-}
 .sidebar .sidebar-menu .menu-arrow::before, .settings-sidebar .sidebar-menu .menu-arrow::before {
     left: 4px;
 }
 @include mixins.respond-below(custom991) {
     .sidebar-logo {
         display: none !important;
-    }
-}
-@include mixins.respond-above(custom991) {
-    body.mini-sidebar.expand-menu {
-        .sidebar .sidebar-menu {
-            .submenu-open .submenu ul li a {
-                padding: 8px 10px 8px 30px !important;
-           }
-        } 
-    }
-    body.layout-mode-rtl.mini-sidebar.expand-menu {
-        .sidebar .sidebar-menu {
-            .submenu-open .submenu ul li a {
-                padding: 8px 30px 8px 10px !important;
-           }
-        } 
     }
 }
 body.layout-mode-rtl {

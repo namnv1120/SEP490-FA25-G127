@@ -33,11 +33,11 @@ import FormHorizontal from "../feature-module/uiinterface/forms/formelements/lay
 // import Pos from "../feature-module/pos/pos";
 
 const Dashboard = lazy(() => import("../feature-module/dashboard/dashboard"));
-const Users = lazy(() => import("../feature-module/usermanagement/users"));
+const Users = lazy(() => import("../feature-module/usermanagement/Users"));
 const RolesPermissions = lazy(() =>
-  import("../feature-module/usermanagement/rolespermissions")
+  import("../feature-module/usermanagement/Rolespermissions")
 );
-const Profile = lazy(() => import("../feature-module/usermanagement/profile"));
+const Profile = lazy(() => import("../feature-module/usermanagement/Profile"));
 
 const routes = all_routes;
 

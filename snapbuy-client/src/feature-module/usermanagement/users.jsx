@@ -10,7 +10,7 @@ import Table from "../../core/pagination/datatable";
 const Users = () => {
   const sampleUsers = [
     {
-      key: "1",
+      id: "1",
       username: "Henry Bryant",
       phone: "+12498345785",
       email: "henry@example.com",
@@ -19,7 +19,7 @@ const Users = () => {
       img: "/path/to/henry.jpg",
     },
     {
-      key: "2",
+      id: "2",
       username: "Jenny Ellis",
       phone: "+13178964582",
       email: "jenny@example.com",
@@ -28,16 +28,16 @@ const Users = () => {
       img: "/path/to/jenny.jpg",
     },
     {
-      key: "3",
+      id: "3",
       username: "Leon Baxter",
       phone: "+12796183487",
       email: "leon@example.com",
       role: "Salesman",
-      status: "Active",
+      status: "Inactive",
       img: "/path/to/leon.jpg",
     },
     {
-      key: "4",
+      id: "4",
       username: "Karen Flores",
       phone: "+17538647943",
       email: "karen@example.com",
@@ -46,12 +46,12 @@ const Users = () => {
       img: "/path/to/karen.jpg",
     },
     {
-      key: "5",
+      id: "5",
       username: "Michael Dawson",
       phone: "+11576348795",
       email: "michael@example.com",
       role: "Store Keeper",
-      status: "Active",
+      status: "Inactive",
       img: "/path/to/michael.jpg",
     },
   ];
@@ -199,7 +199,11 @@ const Users = () => {
 
             <div className="card-body">
               <div className="table-responsive">
-                <Table columns={columns} dataSource={sampleUsers} />
+                <Table
+                  columns={columns}
+                  dataSource={sampleUsers}
+                  rowKey={(record) => record.id} // 🔑 fix key warning
+                />
               </div>
             </div>
           </div>

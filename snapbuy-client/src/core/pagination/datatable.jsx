@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Table } from "antd";
 
-const Datatable = ({ props, columns, dataSource }) => {
+const Datatable = ({ columns, dataSource }) => {
   const [, setSearchText] = useState("");
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [filteredDataSource, setFilteredDataSource] = useState(dataSource);
@@ -51,7 +51,8 @@ const Datatable = ({ props, columns, dataSource }) => {
         rowSelection={rowSelection}
         columns={columns}
         dataSource={filteredDataSource}
-        rowKey={(record) => record.id}
+        // dùng id hoặc fallback index nếu id không có
+        rowKey={(record, index) => record.id || record.userId || index}
         pagination={{
           locale: { items_per_page: "" },
           nextIcon: (
