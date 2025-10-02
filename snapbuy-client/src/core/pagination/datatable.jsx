@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { Table } from "antd";
+import Pagination from "./pagination";
 
 const Datatable = ({ columns, dataSource }) => {
   const [, setSearchText] = useState("");
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [filteredDataSource, setFilteredDataSource] = useState(dataSource);
+
+  // state pagination
+  const [current, setCurrent] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const onSelectChange = (newSelectedRowKeys) => {
     setSelectedRowKeys(newSelectedRowKeys);
@@ -18,6 +23,7 @@ const Datatable = ({ columns, dataSource }) => {
       )
     );
     setFilteredDataSource(filteredData);
+    setCurrent(1); // reset về trang 1 sau khi search
   };
 
   const rowSelection = {
@@ -25,8 +31,15 @@ const Datatable = ({ columns, dataSource }) => {
     onChange: onSelectChange,
   };
 
+  // tính data theo trang
+  const paginatedData = filteredDataSource.slice(
+    (current - 1) * pageSize,
+    current * pageSize
+  );
+
   return (
     <>
+      {/* search box */}
       <div className="search-set table-search-set">
         <div className="search-input">
           <button type="button" className="btn btn-searchset">
@@ -46,28 +59,28 @@ const Datatable = ({ columns, dataSource }) => {
         </div>
       </div>
 
+      {/* table */}
       <Table
         className="table datanew dataTable no-footer"
         rowSelection={rowSelection}
         columns={columns}
-        dataSource={filteredDataSource}
-        // dùng id hoặc fallback index nếu id không có
+        dataSource={paginatedData}
         rowKey={(record, index) => record.id || record.userId || index}
-        pagination={{
-          locale: { items_per_page: "" },
-          nextIcon: (
-            <span>
-              <i className="fa fa-angle-right" />
-            </span>
-          ),
-          prevIcon: (
-            <span>
-              <i className="fa fa-angle-left" />
-            </span>
-          ),
-          defaultPageSize: 10,
-          showSizeChanger: true,
-          pageSizeOptions: ["10", "20", "30"],
+        pagination={false} // tắt pagination mặc định của antd
+      />
+
+      {/* pagination riêng */}
+      <Pagination
+        current={current}
+        pageSize={pageSize}
+        total={filteredDataSource.length}
+        onChange={(page, size) => {
+          setCurrent(page);
+          setPageSize(size);
+        }}
+        onShowSizeChange={(page, size) => {
+          setCurrent(page);
+          setPageSize(size);
         }}
       />
     </>

@@ -312,73 +312,6 @@
 .logo-small img {
     width: 30px;
 }
-@include mixins.respond-above(custom992) {
-    .mini-sidebar{
-        &.expand-menu{
-            .header-left {
-                flex-direction:row;
-                justify-content: space-between;
-                -webkit-justify-content: space-between;
-                -ms-flex-pack: space-between;
-            }
-        }
-        .header-left {
-            display: -webkit-box;
-            display: -ms-flexbox;
-            display: flex;
-            align-items: center;
-            -webkit-box-align: center;
-            -ms-flex-align: center;
-            justify-content: center;
-            -webkit-justify-content: center;
-            -ms-flex-pack: center;
-            width: 86px;
-            @include mixins.margin-padding(null, 0);
-            flex-direction:column;
-            .logo-small{
-                display: block;
-                padding: 10px 0 0;
-            }
-            .logo{
-                display: none;
-            }
-        }
-        .menu-arrow{
-            display: none !important;
-        }
-        .chat-user{
-            display: none !important;
-        }
-        .user-menu{
-            .badge{
-                display: flex !important;
-            }  
-        }
-        &.expand-menu{
-            .menu-arrow{
-                display: block !important;
-            }
-            .chat-user{
-                display: block !important;
-            }
-            .logo-small{
-                display: none;
-            }
-            .logo{
-                display: block;
-            }
-            #toggle_btn{
-               opacity: 1;
-            }
-            
-        }
-        .noti-dot{
-            &:before{
-                display: none;
-            }
-        }
-    }
-}
 .header-pos{
     &.header {
         position: relative;
@@ -1266,35 +1199,6 @@ hr{
         }
     }
 
-}
-.header-collapse {
-    .user-menu {
-        height:  0;
-        display: none;
-    }
-    .page-wrapper {
-        padding-top:  0;
-    }
-    .header {
-        border-bottom: none;
-        background: transparent;
-        width: 260px;
-        .header-left {
-            background: variables.$white;
-        }
-    }
-    .welcome {
-        #collapse-header {
-            &.active {
-                background: variables.$primary;
-                border-color: variables.$primary;
-                svg {
-                    @include mixins.transform(rotate(180deg));
-                    color: variables.$white;
-                }
-            }
-        }
-    }
 }
 .link-nav {
     .dropdown-menu {

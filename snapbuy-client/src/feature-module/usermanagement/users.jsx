@@ -60,8 +60,9 @@ const Users = () => {
     {
       title: "User Name",
       dataIndex: "username",
+      className: "text-center", // thêm
       render: (text, record) => (
-        <span className="userimgname">
+        <span className="userimgname d-flex align-items-center justify-content-center">
           <Link to="#" className="avatar avatar-md me-2">
             <img alt="" src={record.img} />
           </Link>
@@ -75,23 +76,27 @@ const Users = () => {
     {
       title: "Phone",
       dataIndex: "phone",
+      className: "text-center", // thêm
       sorter: (a, b) => a.phone.localeCompare(b.phone),
     },
     {
       title: "Email",
       dataIndex: "email",
+      className: "text-center", // thêm
       sorter: (a, b) => a.email.localeCompare(b.email),
     },
     {
       title: "Role",
       dataIndex: "role",
+      className: "text-center", // thêm
       sorter: (a, b) => a.role.localeCompare(b.role),
     },
     {
       title: "Status",
       dataIndex: "status",
+      className: "text-center", // thêm
       render: (text) => (
-        <div>
+        <div className="text-center">
           {text === "Active" && (
             <span className="d-inline-flex align-items-center p-1 pe-2 rounded-1 text-white bg-success fs-10">
               <i className="ti ti-point-filled me-1 fs-11"></i>
@@ -112,11 +117,15 @@ const Users = () => {
       title: "Actions",
       dataIndex: "actions",
       key: "actions",
+      className: "text-center", // thêm
       render: () => (
-        <div className="action-table-data">
+        <div className="action-table-data d-flex justify-content-center">
           <div className="edit-delete-action">
             <Link className="me-2 p-2" to="#">
-              <i data-feather="eye" className="feather feather-eye action-eye"></i>
+              <i
+                data-feather="eye"
+                className="feather feather-eye action-eye"
+              ></i>
             </Link>
             <Link
               className="me-2 p-2"
@@ -202,7 +211,7 @@ const Users = () => {
                 <Table
                   columns={columns}
                   dataSource={sampleUsers}
-                  rowKey={(record) => record.id} // 🔑 fix key warning
+                  rowKey={(record) => record.id}
                 />
               </div>
             </div>
