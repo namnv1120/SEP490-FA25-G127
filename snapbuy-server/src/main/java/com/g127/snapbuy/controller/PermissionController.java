@@ -45,7 +45,7 @@ public class PermissionController {
     }
 
     @PutMapping("/{permissionId}")
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
     public ApiResponse<PermissionResponse> update(@PathVariable UUID permissionId,
                                                   @Valid @RequestBody PermissionUpdateRequest req) {
         ApiResponse<PermissionResponse> response = new ApiResponse<>();

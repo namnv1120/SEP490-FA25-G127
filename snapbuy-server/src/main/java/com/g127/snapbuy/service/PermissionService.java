@@ -10,7 +10,7 @@ import java.util.UUID;
 public interface PermissionService {
     PermissionResponse createPermission(PermissionCreateRequest req);
     List<PermissionResponse> getAllPermissions();
-    PermissionResponse getPermissionById(UUID permissionId);
-    PermissionResponse updatePermission(UUID permissionId, PermissionUpdateRequest req);
-    void deletePermission(UUID permissionId);
+    PermissionResponse getPermissionById(UUID id);
+    PermissionResponse updatePermission(UUID id, PermissionUpdateRequest req);
+    void deletePermission(UUID id);
 }

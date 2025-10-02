@@ -47,7 +47,7 @@ public class RoleController {
     }
 
     @PutMapping("/{roleId}")
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
     public ApiResponse<RoleResponse> update(@PathVariable UUID roleId,
                                             @Valid @RequestBody RoleUpdateRequest req) {
         ApiResponse<RoleResponse> response = new ApiResponse<>();
@@ -73,7 +73,7 @@ public class RoleController {
     }
 
     @PostMapping("/{roleId}/permissions/{permissionId}")
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
     public ApiResponse<Void> addPermission(@PathVariable UUID roleId,
                                            @PathVariable UUID permissionId) {
         roleService.addPermission(roleId, permissionId);
@@ -83,7 +83,7 @@ public class RoleController {
     }
 
     @DeleteMapping("/{roleId}/permissions/{permissionId}")
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
     public ApiResponse<Void> removePermission(@PathVariable UUID roleId,
                                               @PathVariable UUID permissionId) {
         roleService.removePermission(roleId, permissionId);
@@ -93,7 +93,7 @@ public class RoleController {
     }
 
     @PutMapping("/{roleId}/permissions")
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
     public ApiResponse<RoleResponse> setPermissions(@PathVariable UUID roleId,
                                                     @Valid @RequestBody RolePermissionUpdateRequest req) {
         ApiResponse<RoleResponse> response = new ApiResponse<>();
