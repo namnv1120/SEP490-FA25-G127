@@ -7,7 +7,7 @@ import com.g127.snapbuy.entity.Account;
 import com.g127.snapbuy.repository.AccountRepository;
 import com.g127.snapbuy.service.ForgotPasswordService;
 import com.g127.snapbuy.service.MailService;
-import com.g127.snapbuy.service.OtpStore;
+import com.g127.snapbuy.config.OtpStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;

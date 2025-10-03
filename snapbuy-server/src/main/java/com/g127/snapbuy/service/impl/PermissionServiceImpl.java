@@ -84,7 +84,9 @@ public class PermissionServiceImpl implements PermissionService {
             String newName = req.getPermissionName().trim();
             permissionRepository.findByPermissionNameIgnoreCase(newName)
                     .filter(other -> !other.getPermissionId().equals(id))
-                    .ifPresent(other -> { throw new AppException(ErrorCode.NAME_EXISTED); });
+                    .ifPresent(other -> {
+                        throw new AppException(ErrorCode.NAME_EXISTED);
+                    });
             p.setPermissionName(newName);
         }
 

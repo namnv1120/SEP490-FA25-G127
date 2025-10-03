@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Arrays;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -91,5 +92,24 @@ public class GlobalExceptionHandler {
                 .message(ErrorCode.ACCOUNT_LOCKED.getMessage())
                 .build();
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+    //-------------------------------------//
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
+    public ResponseEntity<ApiResponse<?>> handleIllegalArgs(RuntimeException ex) {
+        ApiResponse<?> response = ApiResponse.builder()
+                .code(4000)
+                .message(ex.getMessage())
+                .build();
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<ApiResponse<?>> handleNotFound(NoSuchElementException ex) {
+        ApiResponse<?> response = ApiResponse.builder()
+                .code(4000)
+                .message(ex.getMessage())
+                .build();
+        return ResponseEntity.badRequest().body(response);
     }
 }
