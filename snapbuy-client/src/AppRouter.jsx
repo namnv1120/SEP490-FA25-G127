@@ -1,3 +1,4 @@
+// src/AppRouter.jsx
 import React, { memo, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import FeatureModule from "./feature-module/feture-module";
@@ -6,8 +7,11 @@ import { base_path } from "./environment";
 import { useDispatch } from "react-redux";
 import { setDataLayout, setDataWidth } from "./core/redux/themeSettingSlice";
 
-// ✅ Import đúng đường dẫn file CustomerList
-import CustomerPage from "./feature-module/customers/CustomerList";
+// ✅ Import các page customer (chỉ dùng những file bạn đã có)
+import CustomerList from "./feature-module/customers/CustomerList";
+import EditCustomerPage from "./feature-module/customers/EditCustomerPage";
+import ViewCustomerPage from "./feature-module/customers/ViewCustomerPage";
+import CustomerFormModal from "./feature-module/customers/CustomerFormModal";
 
 const AppRouter = () => {
   const dispatch = useDispatch();
@@ -34,9 +38,16 @@ const AppRouter = () => {
           {renderRoutes(authRoutes)}
           {renderRoutes(posPages)}
 
-          {/* ✅ Route Customer */}
-          <Route path="customers" element={<CustomerPage />} />
-          {/* chú ý: nếu bạn muốn URL là /customers thì path="customers" */}
+          {/* --- Customers group --- */}
+          <Route path="customers">
+            <Route index element={<CustomerList />} /> {/* /customers */}
+            <Route path="add" element={<CustomerFormModal mode="add" />} />{" "}
+            {/* /customers/add */}
+            <Route path="edit/:id" element={<EditCustomerPage />} />{" "}
+            {/* /customers/edit/123 */}
+            <Route path="view/:id" element={<ViewCustomerPage />} />{" "}
+            {/* /customers/view/123 */}
+          </Route>
         </Route>
       </Routes>
     );
