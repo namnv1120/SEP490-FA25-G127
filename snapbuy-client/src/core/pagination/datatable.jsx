@@ -7,7 +7,6 @@ const Datatable = ({ columns, dataSource }) => {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [filteredDataSource, setFilteredDataSource] = useState(dataSource);
 
-  // state pagination
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -23,7 +22,7 @@ const Datatable = ({ columns, dataSource }) => {
       )
     );
     setFilteredDataSource(filteredData);
-    setCurrent(1); // reset về trang 1 sau khi search
+    setCurrent(1);
   };
 
   const rowSelection = {
@@ -31,7 +30,6 @@ const Datatable = ({ columns, dataSource }) => {
     onChange: onSelectChange,
   };
 
-  // tính data theo trang
   const paginatedData = filteredDataSource.slice(
     (current - 1) * pageSize,
     current * pageSize
@@ -39,7 +37,6 @@ const Datatable = ({ columns, dataSource }) => {
 
   return (
     <>
-      {/* search box */}
       <div className="search-set table-search-set">
         <div className="search-input">
           <button type="button" className="btn btn-searchset">
@@ -59,17 +56,15 @@ const Datatable = ({ columns, dataSource }) => {
         </div>
       </div>
 
-      {/* table */}
       <Table
         className="table datanew dataTable no-footer"
         rowSelection={rowSelection}
         columns={columns}
         dataSource={paginatedData}
         rowKey={(record, index) => record.id || record.userId || index}
-        pagination={false} // tắt pagination mặc định của antd
+        pagination={false}
       />
 
-      {/* pagination riêng */}
       <Pagination
         current={current}
         pageSize={pageSize}

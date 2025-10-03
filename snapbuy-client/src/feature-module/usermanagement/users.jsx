@@ -8,61 +8,68 @@ import CollapesIcon from "../../components/tooltip-content/collapes";
 import Table from "../../core/pagination/datatable";
 
 const Users = () => {
-  const sampleUsers = [
+  // Sample data thay thế userlisadata
+  const sampleRoles = [
     {
-      id: "1",
-      username: "Henry Bryant",
-      phone: "+12498345785",
-      email: "henry@example.com",
+      id: 1,
+      username: "John Doe",
+      phone: "0123456789",
+      email: "john@example.com",
       role: "Admin",
+      createdon: "2025-09-01",
       status: "Active",
-      img: "/path/to/henry.jpg",
+      img: "https://via.placeholder.com/40",
     },
     {
-      id: "2",
-      username: "Jenny Ellis",
-      phone: "+13178964582",
-      email: "jenny@example.com",
+      id: 2,
+      username: "Jane Smith",
+      phone: "0987654321",
+      email: "jane@example.com",
       role: "Manager",
-      status: "Active",
-      img: "/path/to/jenny.jpg",
-    },
-    {
-      id: "3",
-      username: "Leon Baxter",
-      phone: "+12796183487",
-      email: "leon@example.com",
-      role: "Salesman",
+      createdon: "2025-09-05",
       status: "Inactive",
-      img: "/path/to/leon.jpg",
+      img: "https://via.placeholder.com/40",
     },
     {
-      id: "4",
-      username: "Karen Flores",
-      phone: "+17538647943",
-      email: "karen@example.com",
-      role: "Supervisor",
-      status: "Active",
-      img: "/path/to/karen.jpg",
-    },
-    {
-      id: "5",
-      username: "Michael Dawson",
-      phone: "+11576348795",
+      id: 3,
+      username: "Michael Johnson",
+      phone: "0112233445",
       email: "michael@example.com",
-      role: "Store Keeper",
+      role: "User",
+      createdon: "2025-09-10",
+      status: "Active",
+      img: "https://via.placeholder.com/40",
+    },
+    {
+      id: 4,
+      username: "Emily Davis",
+      phone: "0223344556",
+      email: "emily@example.com",
+      role: "Editor",
+      createdon: "2025-09-15",
       status: "Inactive",
-      img: "/path/to/michael.jpg",
+      img: "https://via.placeholder.com/40",
+    },
+    {
+      id: 5,
+      username: "Chris Brown",
+      phone: "0334455667",
+      email: "chris@example.com",
+      role: "Viewer",
+      createdon: "2025-09-20",
+      status: "Active",
+      img: "https://via.placeholder.com/40",
     },
   ];
+
+  const dataSource = sampleRoles;
 
   const columns = [
     {
       title: "User Name",
       dataIndex: "username",
-      className: "text-center", // thêm
       render: (text, record) => (
-        <span className="userimgname d-flex align-items-center justify-content-center">
+        <span className="userimgname">
           <Link to="#" className="avatar avatar-md me-2">
             <img alt="" src={record.img} />
           </Link>
@@ -71,32 +78,33 @@ const Users = () => {
           </div>
         </span>
       ),
-      sorter: (a, b) => a.username.localeCompare(b.username),
+      sorter: (a, b) => a.username.length - b.username.length,
     },
     {
       title: "Phone",
       dataIndex: "phone",
-      className: "text-center", // thêm
-      sorter: (a, b) => a.phone.localeCompare(b.phone),
+      sorter: (a, b) => a.phone.length - b.phone.length,
     },
     {
       title: "Email",
       dataIndex: "email",
-      className: "text-center", // thêm
-      sorter: (a, b) => a.email.localeCompare(b.email),
+      sorter: (a, b) => a.email.length - b.email.length,
     },
     {
       title: "Role",
       dataIndex: "role",
-      className: "text-center", // thêm
-      sorter: (a, b) => a.role.localeCompare(b.role),
+      sorter: (a, b) => a.role.length - b.role.length,
+    },
+    {
+      title: "Created On",
+      dataIndex: "createdon",
+      sorter: (a, b) => a.createdon.length - b.createdon.length,
     },
     {
       title: "Status",
       dataIndex: "status",
-      className: "text-center", // thêm
       render: (text) => (
-        <div className="text-center">
+        <div>
           {text === "Active" && (
             <span className="d-inline-flex align-items-center p-1 pe-2 rounded-1 text-white bg-success fs-10">
               <i className="ti ti-point-filled me-1 fs-11"></i>
@@ -111,21 +119,18 @@ const Users = () => {
           )}
         </div>
       ),
-      sorter: (a, b) => a.status.localeCompare(b.status),
+      sorter: (a, b) => a.status.length - b.status.length,
     },
     {
-      title: "Actions",
-      dataIndex: "actions",
+      header: "",
+      field: "actions",
       key: "actions",
-      className: "text-center", // thêm
+      align: "center",
       render: () => (
-        <div className="action-table-data d-flex justify-content-center">
+        <div className="action-table-data">
           <div className="edit-delete-action">
             <Link className="me-2 p-2" to="#">
-              <i
-                data-feather="eye"
-                className="feather feather-eye action-eye"
-              ></i>
+              <i data-feather="eye" className="feather feather-eye action-eye"></i>
             </Link>
             <Link
               className="me-2 p-2"
@@ -173,11 +178,10 @@ const Users = () => {
                 data-bs-target="#add-units"
               >
                 <i className="ti ti-circle-plus me-1"></i>
-                Add User
+                Add New User
               </Link>
             </div>
           </div>
-
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
               <div className="search-set"></div>
@@ -190,7 +194,7 @@ const Users = () => {
                   >
                     Status
                   </Link>
-                  <ul className="dropdown-menu dropdown-menu-end p-3">
+                  <ul className="dropdown-menu  dropdown-menu-end p-3">
                     <li>
                       <Link to="#" className="dropdown-item rounded-1">
                         Active
@@ -208,11 +212,7 @@ const Users = () => {
 
             <div className="card-body">
               <div className="table-responsive">
-                <Table
-                  columns={columns}
-                  dataSource={sampleUsers}
-                  rowKey={(record) => record.id}
-                />
+                <Table columns={columns} dataSource={dataSource} />
               </div>
             </div>
           </div>

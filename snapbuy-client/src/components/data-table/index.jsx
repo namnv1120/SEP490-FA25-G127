@@ -23,7 +23,6 @@ const PrimeDataTable = ({
   const skeletonRows = Array(rows).fill({});
   const totalPages = Math.ceil(totalRecords / rows);
 
-  // Calculate paginated data
   const startIndex = (currentPage - 1) * rows;
   const endIndex = startIndex + rows;
   const paginatedData = loading ? skeletonRows : data.slice(startIndex, endIndex);
@@ -34,41 +33,31 @@ const PrimeDataTable = ({
 
   const customEmptyMessage = () => (
     <div className="no-record-found">
-      {/* <img src={noRecord} alt="no-record"></img> */}
       <h4>No records found.</h4>
       <p>No records to show here...</p>
     </div>
   );
 
-  // Prepare DataTable props based on selection mode
   const getDataTableProps = () => {
     const baseProps = {
       value: paginatedData,
       className: "table custom-table datatable",
-      totalRecords: totalRecords,
+      totalRecords,
       paginator: false,
       emptyMessage: customEmptyMessage,
-      footer: footer,
+      footer,
       dataKey: "id",
     };
 
-    if (selectionMode && ["multiple", "checkbox"].includes(selectionMode)) {
+    if (selectionMode) {
       return {
         ...baseProps,
-        selectionMode: selectionMode,
-        selection: selection,
-        onSelectionChange: onSelectionChange,
+        selection,
+        onSelectionChange: (e) => onSelectionChange(e.value),
       };
-    } else if (selectionMode && ["single", "radiobutton"].includes(selectionMode)) {
-      return {
-        ...baseProps,
-        selectionMode: selectionMode,
-        selection: selection,
-        onSelectionChange: onSelectionChange,
-      };
-    } else {
-      return baseProps;
     }
+
+    return baseProps;
   };
 
   return (
@@ -76,9 +65,9 @@ const PrimeDataTable = ({
       <DataTable {...getDataTableProps()}>
         {column?.map((col, index) => (
           <Column
-            header={col.header}
-            key={col.field || index}
+            key={col.key || col.field || index}
             field={col.field}
+            header={col.header}
             body={(rowData, options) => {
               return loading ? (
                 <Skeleton width="100%" height="2rem" className="skeleton-glow" />
@@ -89,11 +78,14 @@ const PrimeDataTable = ({
               );
             }}
             sortable={sortable === false ? false : col.sortable !== false}
-            sortField={col.sortField ? col.sortField : col.field}
-            className={col.className ? col.className : ""}
+            sortField={col.sortField || col.field}
+            className={col.className || ""}
+            style={col.style}
+            selectionMode={col.selectionMode || undefined}
           />
         ))}
       </DataTable>
+
       {isPaginationEnabled && (
         <CustomPaginator
           currentPage={currentPage}

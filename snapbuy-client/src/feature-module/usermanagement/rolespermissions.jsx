@@ -46,67 +46,79 @@ const RolesPermissions = () => {
   const [rows, setRows] = useState(10);
   const [searchQuery, setSearchQuery] = useState();
 
-  const columns = [
-    {
-      header: (
-        <div className="form-check form-check-md">
-          <input className="form-check-input" type="checkbox" id="select-all" />
-        </div>
-      ),
-      body: () => (
-        <div className="form-check form-check-md">
-          <input className="form-check-input" type="checkbox" />
-        </div>
-      ),
-      sortable: false,
-      key: "select",
-    },
-    { header: "Role", field: "role", key: "role" },
-    { header: "Created Date", field: "createdDate", key: "createdDate" },
-    {
-      header: "Status",
-      field: "status",
-      key: "status",
-      body: (row) => (
-        <span className={`badge d-inline-flex align-items-center badge-xs ${row.status === "Active" ? "badge-success" : "badge-danger"}`}>
-          <i className="ti ti-point-filled me-1"></i>
-          {row.status}
-        </span>
-      ),
-    },
-    {
-      header: "",
-      field: "actions",
-      key: "actions",
-      sortable: false,
-      body: (_row) => (
-        <div className="action-icon d-inline-flex">
-          <Link
-            to={all_routes.rolespermission}
-            className="me-2 d-flex align-items-center p-2 border rounded"
-          >
-            <i className="ti ti-shield"></i>
-          </Link>
-          <Link
-            to="#"
-            className="me-2 d-flex align-items-center p-2 border rounded"
-            data-bs-toggle="modal"
-            data-bs-target="#edit-role"
-          >
-            <i className="ti ti-edit"></i>
-          </Link>
-          <Link
-            to="#"
-            data-bs-toggle="modal"
-            data-bs-target="#delete-modal"
-            className="d-flex align-items-center p-2 border rounded"
-          >
-            <i className="ti ti-trash"></i>
-          </Link>
-        </div>
-      ),
-    },
-  ];
+const columns = [
+  {
+    key: "select",
+    selectionMode: "multiple", // ✅ PrimeReact tự lo select all
+    headerStyle: { width: "60px", textAlign: "center" },
+    bodyStyle: { textAlign: "center" },
+  },
+  { 
+    header: "Role", 
+    field: "role", 
+    key: "role", 
+    className: "text-center",
+    style: { width: "200px" } 
+  },
+  { 
+    header: "Created Date", 
+    field: "createdDate", 
+    key: "createdDate", 
+    className: "text-center",
+    style: { width: "200px" } 
+  },
+  {
+    header: "Status",
+    field: "status",
+    key: "status",
+    className: "text-center",
+    style: { width: "150px" },
+    body: (row) => (
+      <span
+        className={`badge d-inline-flex align-items-center badge-xs ${
+          row.status === "Active" ? "badge-success" : "badge-danger"
+        }`}
+      >
+        <i className="ti ti-point-filled me-1"></i>
+        {row.status}
+      </span>
+    ),
+  },
+  {
+    header: " ",
+    field: "actions",
+    key: "actions",
+    sortable: false,
+    className: "text-center",
+    style: { width: "150px" },
+    body: (_row) => (
+      <div className="action-icon d-inline-flex justify-content-center">
+        <Link
+          to={all_routes.rolespermission}
+          className="me-2 d-flex align-items-center p-2 border rounded"
+        >
+          <i className="ti ti-shield"></i>
+        </Link>
+        <Link
+          to="#"
+          className="me-2 d-flex align-items-center p-2 border rounded"
+          data-bs-toggle="modal"
+          data-bs-target="#edit-role"
+        >
+          <i className="ti ti-edit"></i>
+        </Link>
+        <Link
+          to="#"
+          data-bs-toggle="modal"
+          data-bs-target="#delete-modal"
+          className="d-flex align-items-center p-2 border rounded"
+        >
+          <i className="ti ti-trash"></i>
+        </Link>
+      </div>
+    ),
+  },
+];
 
   const handleSearch = (value) => {
     setSearchQuery(value);

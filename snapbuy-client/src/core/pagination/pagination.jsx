@@ -8,10 +8,10 @@ const Pagination = ({ current, pageSize, total, onChange, onShowSizeChange }) =>
     <div className="d-flex align-items-center justify-content-between px-3 py-2 border-top">
       {/* Left: Hiển thị số bản ghi */}
       <div className="d-flex align-items-center">
-        <span className="me-2">Showing</span>
+        <span className="me-2">Row Per Pages</span>
         <Select
           value={pageSize}
-          onChange={(value) => onShowSizeChange(1, value)} // reset về page 1
+          onChange={(value) => onShowSizeChange(1, value)}
           style={{ width: 80 }}
           size="small"
         >
