@@ -7,11 +7,16 @@ import { base_path } from "./environment";
 import { useDispatch } from "react-redux";
 import { setDataLayout, setDataWidth } from "./core/redux/themeSettingSlice";
 
-// ✅ Import các page customer (chỉ dùng những file bạn đã có)
+// ✅ Import các page customer
 import CustomerList from "./feature-module/customers/CustomerList";
 import EditCustomerPage from "./feature-module/customers/EditCustomerPage";
 import ViewCustomerPage from "./feature-module/customers/ViewCustomerPage";
 import CustomerFormModal from "./feature-module/customers/CustomerFormModal";
+
+// ✅ Import thêm 3 trang auth bạn vừa code
+import Login from "./auth/Login";
+import Register from "./auth/Register";
+import ForgotPassword from "./auth/ForgotPassword";
 
 const AppRouter = () => {
   const dispatch = useDispatch();
@@ -33,6 +38,12 @@ const AppRouter = () => {
 
     return (
       <Routes>
+        {/* --- Auth routes --- */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+
+        {/* --- App (có layout FeatureModule) --- */}
         <Route path="/" element={<FeatureModule />}>
           {renderRoutes(unAuthRoutes)}
           {renderRoutes(authRoutes)}
