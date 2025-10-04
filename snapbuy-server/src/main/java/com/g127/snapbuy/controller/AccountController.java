@@ -65,6 +65,7 @@ public class AccountController {
         accountService.deleteAccount(accountId);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setResult(null);
+        response.setMessage("Account deleted successfully");
         return response;
     }
 

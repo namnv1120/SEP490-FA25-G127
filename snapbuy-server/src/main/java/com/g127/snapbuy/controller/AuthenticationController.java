@@ -45,6 +45,7 @@ public class AuthenticationController {
         authenticationService.logout(req);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setResult(null);
+        response.setMessage("Logged out successfully");
         return response;
     }
 }

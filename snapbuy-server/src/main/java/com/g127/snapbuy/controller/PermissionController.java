@@ -59,6 +59,7 @@ public class PermissionController {
         permissionService.deletePermission(permissionId);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setResult(null);
+        response.setMessage("Permission deleted successfully");
         return response;
     }
 }

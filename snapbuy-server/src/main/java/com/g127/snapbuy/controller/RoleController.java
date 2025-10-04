@@ -61,6 +61,7 @@ public class RoleController {
         roleService.deleteRole(roleId);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setResult(null);
+        response.setMessage("Role deleted successfully");
         return response;
     }
 
@@ -79,6 +80,7 @@ public class RoleController {
         roleService.addPermission(roleId, permissionId);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setResult(null);
+        response.setMessage("Permission added to role");
         return response;
     }
 
@@ -89,6 +91,7 @@ public class RoleController {
         roleService.removePermission(roleId, permissionId);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setResult(null);
+        response.setMessage("Permission removed from role");
         return response;
     }
 
@@ -98,6 +101,7 @@ public class RoleController {
                                                     @Valid @RequestBody RolePermissionUpdateRequest req) {
         ApiResponse<RoleResponse> response = new ApiResponse<>();
         response.setResult(roleService.setPermissions(roleId, req));
+        response.setMessage("Role permissions updated");
         return response;
     }
 }
