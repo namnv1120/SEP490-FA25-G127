@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -25,14 +26,20 @@ public class PermissionController {
     public ApiResponse<PermissionResponse> create(@Valid @RequestBody PermissionCreateRequest req) {
         ApiResponse<PermissionResponse> response = new ApiResponse<>();
         response.setResult(permissionService.createPermission(req));
+        response.setMessage("Create permission successfully");
         return response;
     }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
-    public ApiResponse<List<PermissionResponse>> list() {
+    public ApiResponse<List<PermissionResponse>> list(@RequestParam(name = "active", required = false) String active) {
+        Optional<Boolean> filter;
+        if (active == null) filter = Optional.empty();
+        else if ("all".equalsIgnoreCase(active)) filter = Optional.ofNullable(null);
+        else filter = Optional.of(Boolean.parseBoolean(active));
+
         ApiResponse<List<PermissionResponse>> response = new ApiResponse<>();
-        response.setResult(permissionService.getAllPermissions());
+        response.setResult(permissionService.getAllPermissions(filter));
         return response;
     }
 
@@ -50,6 +57,7 @@ public class PermissionController {
                                                   @Valid @RequestBody PermissionUpdateRequest req) {
         ApiResponse<PermissionResponse> response = new ApiResponse<>();
         response.setResult(permissionService.updatePermission(permissionId, req));
+        response.setMessage("Update permission successfully");
         return response;
     }
 
@@ -59,7 +67,7 @@ public class PermissionController {
         permissionService.deletePermission(permissionId);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setResult(null);
-        response.setMessage("Permission deleted successfully");
+        response.setMessage("Delete permission successfully");
         return response;
     }
 }

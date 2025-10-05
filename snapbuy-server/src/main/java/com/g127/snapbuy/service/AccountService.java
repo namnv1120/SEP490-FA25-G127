@@ -13,6 +13,7 @@ public interface AccountService {
 
     AccountResponse getMyInfo();
     AccountResponse updateAccount(UUID accountId, AccountUpdateRequest req);
+
     void deleteAccount(UUID accountId);
     List<AccountResponse> getAccounts();
     AccountResponse getAccount(UUID id);
@@ -21,6 +22,7 @@ public interface AccountService {
     void changePasswordForCurrentUser(ChangePasswordRequest req);
 
     AccountResponse assignRole(UUID accountId, UUID roleId);
+    void unassignRole(UUID accountId, UUID roleId);
 
     AccountResponse updateStaffByOwner(UUID staffId, StaffOwnerUpdateRequest req);
     AccountResponse updateStaffRolesByOwner(UUID staffId, StaffRoleUpdateRequest req);

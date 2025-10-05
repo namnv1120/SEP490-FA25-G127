@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -27,14 +28,20 @@ public class RoleController {
     public ApiResponse<RoleResponse> createRole(@Valid @RequestBody RoleCreateRequest req) {
         ApiResponse<RoleResponse> response = new ApiResponse<>();
         response.setResult(roleService.createRole(req));
+        response.setMessage("Create role successfully");
         return response;
     }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
-    public ApiResponse<List<RoleResponse>> list() {
+    public ApiResponse<List<RoleResponse>> list(@RequestParam(name = "active", required = false) String active) {
+        Optional<Boolean> filter;
+        if (active == null) filter = Optional.empty();
+        else if ("all".equalsIgnoreCase(active)) filter = Optional.ofNullable(null);
+        else filter = Optional.of(Boolean.parseBoolean(active));
+
         ApiResponse<List<RoleResponse>> response = new ApiResponse<>();
-        response.setResult(roleService.getAllRoles());
+        response.setResult(roleService.getAllRoles(filter));
         return response;
     }
 
@@ -52,16 +59,17 @@ public class RoleController {
                                             @Valid @RequestBody RoleUpdateRequest req) {
         ApiResponse<RoleResponse> response = new ApiResponse<>();
         response.setResult(roleService.updateRole(roleId, req));
+        response.setMessage("Update role successfully");
         return response;
     }
 
     @DeleteMapping("/{roleId}")
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
     public ApiResponse<Void> delete(@PathVariable UUID roleId) {
         roleService.deleteRole(roleId);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setResult(null);
-        response.setMessage("Role deleted successfully");
+        response.setMessage("Delete role successfully");
         return response;
     }
 
@@ -80,7 +88,7 @@ public class RoleController {
         roleService.addPermission(roleId, permissionId);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setResult(null);
-        response.setMessage("Permission added to role");
+        response.setMessage("Add permission to role successfully");
         return response;
     }
 
@@ -91,7 +99,7 @@ public class RoleController {
         roleService.removePermission(roleId, permissionId);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setResult(null);
-        response.setMessage("Permission removed from role");
+        response.setMessage("Remove permission from role successfully");
         return response;
     }
 
@@ -101,7 +109,7 @@ public class RoleController {
                                                     @Valid @RequestBody RolePermissionUpdateRequest req) {
         ApiResponse<RoleResponse> response = new ApiResponse<>();
         response.setResult(roleService.setPermissions(roleId, req));
-        response.setMessage("Role permissions updated");
+        response.setMessage("Set permissions successfully");
         return response;
     }
 }

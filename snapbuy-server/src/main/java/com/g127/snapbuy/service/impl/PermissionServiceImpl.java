@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -28,15 +29,12 @@ public class PermissionServiceImpl implements PermissionService {
     private boolean isAdmin() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null) return false;
-        for (GrantedAuthority ga : auth.getAuthorities()) {
-            if ("ROLE_Admin".equals(ga.getAuthority())) return true;
-        }
-        return false;
+        return auth.getAuthorities().stream().anyMatch(a -> "ROLE_Admin".equals(a.getAuthority()));
     }
 
     private PermissionResponse toResponse(Permission p) {
         return PermissionResponse.builder()
-                .id(p.getPermissionId() != null ? p.getPermissionId().toString() : null)
+                .id(p.getPermissionId() == null ? null : p.getPermissionId().toString())
                 .name(p.getPermissionName())
                 .description(p.getDescription())
                 .module(p.getModule())
@@ -60,8 +58,17 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     @Override
-    public List<PermissionResponse> getAllPermissions() {
-        return permissionRepository.findAll().stream().map(this::toResponse).toList();
+    public List<PermissionResponse> getAllPermissions(Optional<Boolean> activeFilter) {
+        List<Permission> all = permissionRepository.findAll();
+        if (activeFilter.isPresent()) {
+            Boolean f = activeFilter.get();
+            if (f != null) {
+                all = all.stream().filter(p -> Boolean.TRUE.equals(p.getIsActive()) == f).toList();
+            }
+        } else {
+            all = all.stream().filter(p -> Boolean.TRUE.equals(p.getIsActive())).toList();
+        }
+        return all.stream().map(this::toResponse).toList();
     }
 
     @Override
@@ -84,22 +91,17 @@ public class PermissionServiceImpl implements PermissionService {
             String newName = req.getPermissionName().trim();
             permissionRepository.findByPermissionNameIgnoreCase(newName)
                     .filter(other -> !other.getPermissionId().equals(id))
-                    .ifPresent(other -> {
-                        throw new AppException(ErrorCode.NAME_EXISTED);
-                    });
+                    .ifPresent(other -> { throw new AppException(ErrorCode.NAME_EXISTED); });
             p.setPermissionName(newName);
         }
-
         if (req.getDescription() != null) {
             if (!admin) throw new IllegalArgumentException("Only Admin can update description");
             p.setDescription(req.getDescription());
         }
-
         if (req.getModule() != null) {
             if (!admin) throw new IllegalArgumentException("Only Admin can update module");
             p.setModule(req.getModule());
         }
-
         if (req.getIsActive() != null) {
             p.setIsActive(req.getIsActive());
         }

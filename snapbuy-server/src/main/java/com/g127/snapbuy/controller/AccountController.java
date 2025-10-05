@@ -136,4 +136,16 @@ public class AccountController {
         response.setResult(accountService.adminUpdateAccount(accountId, req));
         return response;
     }
+
+    @DeleteMapping("/{accountId}/roles/{roleId}")
+    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
+    public ApiResponse<Void> unassignRole(@PathVariable UUID accountId, @PathVariable UUID roleId) {
+        accountService.unassignRole(accountId, roleId);
+        ApiResponse<Void> response = new ApiResponse<>();
+        response.setMessage("Unassigned role successfully");
+        response.setResult(null);
+        return response;
+    }
+
+
 }
