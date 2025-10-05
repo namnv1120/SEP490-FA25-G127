@@ -7,8 +7,18 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ✅ Sau này thay bằng API Spring Boot: POST /api/auth/forgot-password
+    // const res = await fetch("http://localhost:8080/api/auth/forgot-password", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify({ email }),
+    // });
+    // if (res.ok) setSent(true);
+
+    console.log("Forgot password request:", email);
     setSent(true);
   };
 
@@ -18,9 +28,9 @@ export default function ForgotPassword() {
         <h2>Reset Password</h2>
         {!sent ? (
           <form onSubmit={handleSubmit}>
-            <p>
-              Please enter the email address that you used to register, and we
-              will send you a link to reset your password.
+            <p className="info-text">
+              Please enter the email address that you used to register. We will
+              send you a link to reset your password.
             </p>
             <div className="form-group">
               <input
@@ -36,14 +46,8 @@ export default function ForgotPassword() {
             </button>
           </form>
         ) : (
-          <div>
-            <p
-              style={{
-                background: "#e6f7ff",
-                padding: "10px",
-                borderRadius: "6px",
-              }}
-            >
+          <div className="reset-success">
+            <p>
               A reset link has been sent to: <b>{email}</b>
             </p>
             <button className="btn" onClick={() => navigate("/login")}>

@@ -4,21 +4,24 @@
   justify-content: center;
   align-items: center;
   background: linear-gradient(135deg, #ff416c, #ff4b2b);
-  font-family: Arial, sans-serif;
+  font-family: "Segoe UI", Arial, sans-serif;
+  padding: 20px;
 
   .auth-card {
     background: #fff;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    width: 380px;
-    max-width: 90%;
+    padding: 30px 25px;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    width: 400px;
+    max-width: 95%;
+    animation: fadeInUp 0.6s ease;
 
     h2 {
       text-align: center;
       margin-bottom: 20px;
-      font-size: 22px;
-      font-weight: bold;
+      font-size: 24px;
+      font-weight: 700;
+      color: #333;
     }
 
     p {
@@ -26,6 +29,7 @@
       color: #666;
       font-size: 14px;
       margin-bottom: 20px;
+      line-height: 1.5;
     }
 
     .form-group {
@@ -37,17 +41,20 @@
         border: 1px solid #ddd;
         border-radius: 8px;
         font-size: 14px;
+        transition: all 0.3s ease;
 
         &:focus {
-          border-color: #007bff;
+          border-color: #36d1dc;
+          box-shadow: 0 0 6px rgba(54, 209, 220, 0.4);
           outline: none;
         }
       }
 
       .error {
-        color: red;
+        color: #e74c3c;
         font-size: 12px;
         margin-top: 4px;
+        text-align: left;
       }
     }
 
@@ -61,24 +68,49 @@
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
-      transition: 0.3s;
+      transition: transform 0.2s, opacity 0.3s;
 
       &:hover {
         opacity: 0.9;
+        transform: translateY(-2px);
       }
     }
 
     .link {
       display: block;
       text-align: center;
-      margin-top: 12px;
+      margin-top: 14px;
       font-size: 14px;
       color: #007bff;
-      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.3s;
 
       &:hover {
         text-decoration: underline;
+        color: #0056b3;
       }
     }
+
+    .reset-success {
+      background: #e6f7ff;
+      border: 1px solid #b3e5fc;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: #333;
+    }
+  }
+}
+
+/* Hiệu ứng vào mượt mà */
+@keyframes fadeInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }

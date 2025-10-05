@@ -4,13 +4,29 @@ import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
 
-  const handleLogin = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    alert(`Login with: ${email}`);
-    navigate("/dashboard"); // chuyển sau khi login thành công
+
+    // ✅ Sau này thay bằng API call Spring Boot
+    // const res = await fetch("http://localhost:8080/api/auth/login", {...})
+    // const data = await res.json()
+
+    if (form.email && form.password) {
+      console.log("Login success:", form);
+      navigate("/dashboard"); // đổi route tùy backend
+    } else {
+      alert("Please enter email and password");
+    }
   };
 
   return (
@@ -21,18 +37,20 @@ export default function Login() {
           <div className="form-group">
             <input
               type="email"
+              name="email"
               placeholder="Your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={form.email}
+              onChange={handleChange}
               required
             />
           </div>
           <div className="form-group">
             <input
               type="password"
+              name="password"
               placeholder="Your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={form.password}
+              onChange={handleChange}
               required
             />
           </div>
@@ -40,12 +58,22 @@ export default function Login() {
             Login
           </button>
         </form>
-        <a className="link" onClick={() => navigate("/forgot-password")}>
+
+        {/* ✅ sửa lại để không bị reload trang */}
+        <button
+          type="button"
+          className="link"
+          onClick={() => navigate("/forgot-password")}
+        >
           Forgot Password?
-        </a>
-        <a className="link" onClick={() => navigate("/register")}>
+        </button>
+        <button
+          type="button"
+          className="link"
+          onClick={() => navigate("/register")}
+        >
           Create Account
-        </a>
+        </button>
       </div>
     </div>
   );

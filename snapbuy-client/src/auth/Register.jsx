@@ -12,15 +12,45 @@ export default function Register() {
     confirm: "",
   });
 
+  const [registered, setRegistered] = useState(false);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (form.password !== form.confirm) {
       alert("Passwords do not match!");
       return;
     }
-    alert(`Register success: ${form.email}`);
-    navigate("/login");
+
+    // 🚀 Gọi API backend (Spring Boot sau này)
+    // Ví dụ:
+    // fetch("/api/auth/register", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify(form),
+    // }).then(...);
+
+    // Hiện tại chỉ mock
+    setRegistered(true);
   };
+
+  if (registered) {
+    return (
+      <div className="auth-page">
+        <div className="auth-card">
+          <h2>Verify your email</h2>
+          <p>
+            We have sent a verification link to: <b>{form.email}</b>.
+          </p>
+          <p>
+            Please check your inbox and click the link to activate your account.
+          </p>
+          <button className="btn" onClick={() => navigate("/login")}>
+            Back to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-page">

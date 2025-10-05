@@ -1,35 +1,43 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import customerService from "../../services/customerService";
 import "../../ViewCustomerPage.scss";
-
-const STORAGE_KEY = "customers_v1";
 
 export default function ViewCustomerPage() {
   const { code } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
 
   const [customer, setCustomer] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (location.state && location.state.customer) {
-      setCustomer(location.state.customer);
-      return;
-    }
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const customers = JSON.parse(saved);
-        const found = customers.find((c) => c.code === code);
-        if (found) {
-          setCustomer(found);
-          return;
-        }
+    const fetchCustomer = async () => {
+      try {
+        const data = await customerService.getByCode(code);
+        setCustomer(data);
+      } catch (err) {
+        console.error("Customer not found", err);
+        navigate("/customers", { replace: true });
+      } finally {
+        setLoading(false);
       }
-    } catch (e) {}
-    navigate("/customers", { replace: true });
-  }, [code, location.state, navigate]);
+    };
+    fetchCustomer();
+  }, [code, navigate]);
 
+  const handleDelete = async () => {
+    if (window.confirm(`Are you sure to delete ${customer.name}?`)) {
+      try {
+        await customerService.delete(code);
+        navigate("/customers", { state: { deletedCustomer: code } });
+      } catch (err) {
+        console.error("Delete failed", err);
+        alert("Failed to delete customer.");
+      }
+    }
+  };
+
+  if (loading) return <p>Loading...</p>;
   if (!customer) return null;
 
   return (
@@ -79,10 +87,7 @@ export default function ViewCustomerPage() {
           >
             ✏️ Edit
           </button>
-          <button
-            className="btn delete"
-            onClick={() => alert("Delete " + customer.name)}
-          >
+          <button className="btn delete" onClick={handleDelete}>
             🗑 Delete
           </button>
         </div>
