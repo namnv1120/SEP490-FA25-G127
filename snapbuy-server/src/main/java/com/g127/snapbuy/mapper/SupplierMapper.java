@@ -22,7 +22,4 @@ public interface SupplierMapper {
 
     SupplierResponse toResponse(Supplier entity);
 
-    default Page<SupplierResponse> toResponsePage(Page<Supplier> page) {
-        return page.map(this::toResponse);
-    }
 }
