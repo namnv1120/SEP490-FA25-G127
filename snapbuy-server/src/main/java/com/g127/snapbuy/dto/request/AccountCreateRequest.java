@@ -1,23 +1,22 @@
-package com.g127.snapbuy.dto;
+package com.g127.snapbuy.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.*;
-import lombok.*;
+import lombok.Data;
 import java.util.List;
 
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class AccountDto {
-    private String id;
-
+public class AccountCreateRequest {
     @NotBlank(message = "Full name is required")
     @Size(max = 100, message = "Full name must be <= 100 characters")
     private String fullName;
 
     @NotBlank(message = "Username is required")
-    @Size(min = 3, max = 50, message = "Username must be 3-50 characters")
+    @Size(min = 3, max = 50, message = "Username must be 3–50 characters")
+    @Pattern(
+            regexp = "^[A-Za-z0-9._-]+$",
+            message = "Username may only contain letters, digits, '.', '_' or '-' and no spaces"
+    )
     private String username;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
@@ -33,10 +32,11 @@ public class AccountDto {
     @Email(message = "Email is invalid")
     private String email;
 
-    @Pattern(regexp = "^$|^\\d{10}$", message = "Phone must be exactly 10 digits")
+    @Pattern(
+            regexp = "^$|^\\d{10}$",
+            message = "Phone must be exactly 10 digits"
+    )
     private String phone;
-
     private String avatarUrl;
-
     private List<String> roles;
 }

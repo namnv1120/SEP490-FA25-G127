@@ -17,8 +17,10 @@ public class AccountDetailsServiceImpl implements AccountDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        String uname = username == null ? null : username.trim().toLowerCase();
+
         Account acc = accountRepository
-                .findByUsernameWithRolesAndPermissions(username)
+                .findByUsernameWithRolesAndPermissionsIgnoreCase(uname)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
         String[] authorities = acc.getRoles().stream()

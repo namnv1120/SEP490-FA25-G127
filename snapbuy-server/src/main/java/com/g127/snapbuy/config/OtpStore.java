@@ -1,4 +1,4 @@
-package com.g127.snapbuy.service;
+package com.g127.snapbuy.config;
 
 import org.springframework.stereotype.Component;
 

@@ -1,13 +1,6 @@
-import { Route, Navigate } from "react-router-dom";
+import { Route } from "react-router-dom";
 import { lazy } from "react";
 import { all_routes } from "./all_routes";
-// import { Units } from "../feature-module/inventory/units";
-// import StoreList from "../feature-module/people/store-list";
-// import Warehouse from "../feature-module/people/warehouse";
-
-// import Apexchart from "../feature-module/uiinterface/charts/apexcharts";
-// import ChartJs from "../feature-module/uiinterface/charts/chartjs";
-// import FloatingLabel from "../feature-module/uiinterface/forms/formelements/layouts/floating-label";
 import FormHorizontal from "../feature-module/uiinterface/forms/formelements/layouts/form-horizontal";
 // import FormBasicInputs from "../feature-module/uiinterface/forms/formelements/basic-inputs";
 // import CheckboxRadios from "../feature-module/uiinterface/forms/formelements/checkbox-radios";
@@ -32,6 +25,7 @@ import FormHorizontal from "../feature-module/uiinterface/forms/formelements/lay
 // import TablesBasic from "../feature-module/uiinterface/table/tables-basic";
 // import Pos from "../feature-module/pos/pos";
 
+// Lazy load Dashboard
 const Dashboard = lazy(() => import("../feature-module/dashboard/dashboard"));
 const Users = lazy(() => import("../feature-module/usermanagement/Users"));
 const RolesPermissions = lazy(() =>
@@ -44,12 +38,18 @@ const routes = all_routes;
 export const authRoutes = [
   {
     id: 1,
-    path: routes.dashboard,
-    name: "home",
+    path: routes.dashboard, // dùng routes.dashboard thay vì "/dashboard"
+    name: "dashboard",
     element: <Dashboard />,
     route: Route,
   },
-
+  {
+    id: 2,
+    path: "/customers",
+    name: "customers",
+    element: <CustomerList />,
+    route: Route,
+  },
   {
     id: 106,
     path: routes.profile,
@@ -80,43 +80,11 @@ export const authRoutes = [
     route: Route,
   },
 ];
+
 export const posPages = [
-  // {
-  //   id: 25,
-  //   path: routes.pos,
-  //   name: "pos",
-  //   element: <Pos />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 26,
-  //   path: routes.pos2,
-  //   name: "pos-2",
-  //   element: <Pos2 />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 27,
-  //   path: routes.pos3,
-  //   name: "pos-3",
-  //   element: <Pos3 />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 28,
-  //   path: routes.pos4,
-  //   name: "pos-4",
-  //   element: <Pos4 />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 29,
-  //   path: routes.pos5,
-  //   name: "pos-5",
-  //   element: <Pos5 />,
-  //   route: Route,
-  // },
+  // giữ nguyên pos nếu cần
 ];
+
 export const unAuthRoutes = [
   // {
   //   id: 1,

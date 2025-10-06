@@ -60,6 +60,9 @@ const FeatureModule = () => {
     )
   );
 
+  // ----------------------------
+  // Các route không cần layout
+  // ----------------------------
   if (isUnAuthRoute) {
     return <Outlet />;
   }
@@ -72,6 +75,9 @@ const FeatureModule = () => {
     );
   }
 
+  // ----------------------------
+  // Các route auth (Dashboard, Customers, v.v.)
+  // ----------------------------
   if (isAuthRoute) {
     return (
       <>
@@ -117,6 +123,7 @@ const FeatureModule = () => {
     );
   }
 
+  // fallback
   return <Outlet />;
 };
 

@@ -10,10 +10,9 @@ import java.util.UUID;
 public interface AccountRepository extends JpaRepository<Account, UUID> {
 
     Optional<Account> findByUsername(String username);
-
     Optional<Account> findByEmail(String email);
 
-    boolean existsByUsername(String username);
+    boolean existsByUsernameIgnoreCase(String username);
     boolean existsByEmailIgnoreCase(String email);
     boolean existsByPhone(String phone);
 
@@ -22,7 +21,15 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
            from Account a
            left join fetch a.roles r
            left join fetch r.permissions p
-           where a.username = :username
+           where lower(a.username) = lower(:username)
            """)
-    Optional<Account> findByUsernameWithRolesAndPermissions(@Param("username") String username);
+    Optional<Account> findByUsernameWithRolesAndPermissionsIgnoreCase(@Param("username") String username);
+
+    @Query("""
+           select count(a)
+           from Account a
+           join a.roles r
+           where r.roleId = :roleId
+           """)
+    long countAccountsByRoleId(@Param("roleId") UUID roleId);
 }
