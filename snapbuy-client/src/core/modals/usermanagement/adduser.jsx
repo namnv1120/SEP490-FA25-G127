@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import CommonSelect from "../../../components/select/common-select";
-import axios from "axios";
-
+import { createUser } from "../../../services/UserService";
 const AddUsers = ({ onUserAdded }) => {
   const status = [
     { value: "Choose", label: "Choose" },
@@ -27,11 +26,16 @@ const AddUsers = ({ onUserAdded }) => {
   });
 
   const handleTogglePassword = () => setShowPassword(!showPassword);
-  const handleToggleConfirmPassword = () =>
-    setConfirmPassword(!showConfirmPassword);
+  const handleToggleConfirmPassword = () => setConfirmPassword(!showConfirmPassword);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+
     try {
       const form = new FormData();
       form.append("username", formData.username);
@@ -44,17 +48,9 @@ const AddUsers = ({ onUserAdded }) => {
         form.append("file", formData.avatar);
       }
 
-      const response = await axios.post(
-        "http://localhost:8080/api/users",
-        form,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
+      await createUser(form);
 
-      console.log("User created:", response.data);
-
-      if (onUserAdded) {
-        onUserAdded();
-      }
+      if (onUserAdded) onUserAdded();
 
       setFormData({
         username: "",
@@ -66,12 +62,18 @@ const AddUsers = ({ onUserAdded }) => {
         description: "",
         avatar: null,
       });
-      setSelectedStatus("");
+      setSelectedStatus(null);
       setPreview(null);
 
-      window.$("#add-units").modal("hide");
+      const modalElement = document.getElementById("add-units");
+      if (modalElement) {
+        const modal = window.bootstrap.Modal.getInstance(modalElement);
+        modal?.hide();
+      }
+
     } catch (error) {
       console.error("Error creating user:", error);
+      alert("Failed to create user!");
     }
   };
 
@@ -124,15 +126,8 @@ const AddUsers = ({ onUserAdded }) => {
                                   accept="image/*"
                                   onChange={(e) => {
                                     const file = e.target.files[0];
-                                    setFormData({
-                                      ...formData,
-                                      avatar: file,
-                                    });
-                                    if (file) {
-                                      setPreview(URL.createObjectURL(file));
-                                    } else {
-                                      setPreview(null);
-                                    }
+                                    setFormData({ ...formData, avatar: file });
+                                    setPreview(file ? URL.createObjectURL(file) : null);
                                   }}
                                 />
                                 <div className="image-uploads">
@@ -144,7 +139,6 @@ const AddUsers = ({ onUserAdded }) => {
                         </div>
                       </div>
 
-                      {/* Username */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>User Name</label>
@@ -153,16 +147,12 @@ const AddUsers = ({ onUserAdded }) => {
                             className="form-control"
                             value={formData.username}
                             onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                username: e.target.value,
-                              })
+                              setFormData({ ...formData, username: e.target.value })
                             }
                           />
                         </div>
                       </div>
 
-                      {/* Phone */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Phone</label>
@@ -171,16 +161,12 @@ const AddUsers = ({ onUserAdded }) => {
                             className="form-control"
                             value={formData.phone}
                             onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                phone: e.target.value,
-                              })
+                              setFormData({ ...formData, phone: e.target.value })
                             }
                           />
                         </div>
                       </div>
 
-                      {/* Email */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Email</label>
@@ -189,16 +175,12 @@ const AddUsers = ({ onUserAdded }) => {
                             className="form-control"
                             value={formData.email}
                             onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                email: e.target.value,
-                              })
+                              setFormData({ ...formData, email: e.target.value })
                             }
                           />
                         </div>
                       </div>
 
-                      {/* Role */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Role</label>
@@ -208,10 +190,7 @@ const AddUsers = ({ onUserAdded }) => {
                             value={selectedStatus}
                             onChange={(e) => {
                               setSelectedStatus(e.value);
-                              setFormData((prev) => ({
-                                ...prev,
-                                role: e.value,
-                              }));
+                              setFormData((prev) => ({ ...prev, role: e.value }));
                             }}
                             placeholder="Choose"
                             filter={false}
@@ -219,7 +198,6 @@ const AddUsers = ({ onUserAdded }) => {
                         </div>
                       </div>
 
-                      {/* Password */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Password</label>
@@ -230,10 +208,7 @@ const AddUsers = ({ onUserAdded }) => {
                               placeholder="Enter your password"
                               value={formData.password}
                               onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  password: e.target.value,
-                                })
+                                setFormData({ ...formData, password: e.target.value })
                               }
                             />
                             <span
@@ -246,7 +221,6 @@ const AddUsers = ({ onUserAdded }) => {
                         </div>
                       </div>
 
-                      {/* Confirm Password */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Confirm Password</label>
@@ -257,10 +231,7 @@ const AddUsers = ({ onUserAdded }) => {
                               placeholder="Enter your password"
                               value={formData.confirmPassword}
                               onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  confirmPassword: e.target.value,
-                                })
+                                setFormData({ ...formData, confirmPassword: e.target.value })
                               }
                             />
                             <span
@@ -273,7 +244,6 @@ const AddUsers = ({ onUserAdded }) => {
                         </div>
                       </div>
 
-                      {/* Description */}
                       <div className="col-lg-12">
                         <div className="mb-0 input-blocks">
                           <label className="form-label">Descriptions</label>
@@ -281,10 +251,7 @@ const AddUsers = ({ onUserAdded }) => {
                             className="form-control mb-1"
                             value={formData.description}
                             onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                description: e.target.value,
-                              })
+                              setFormData({ ...formData, description: e.target.value })
                             }
                           />
                           <p>Maximum 600 Characters</p>

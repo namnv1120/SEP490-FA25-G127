@@ -1,5 +1,6 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import AddUsers from "../../core/modals/usermanagement/addusers";
+import AddUsers from "../../core/modals/usermanagement/adduser";
 import EditUser from "../../core/modals/usermanagement/edituser";
 
 import TooltipIcons from "../../components/tooltip-content/tooltipIcons";
@@ -7,62 +8,41 @@ import RefreshIcon from "../../components/tooltip-content/refresh";
 import CollapesIcon from "../../components/tooltip-content/collapes";
 import Table from "../../core/pagination/datatable";
 
-const Users = () => {
-  // Sample data thay thế userlisadata
-  const sampleRoles = [
-    {
-      id: 1,
-      username: "John Doe",
-      phone: "0123456789",
-      email: "john@example.com",
-      role: "Admin",
-      createdon: "2025-09-01",
-      status: "Active",
-      img: "https://via.placeholder.com/40",
-    },
-    {
-      id: 2,
-      username: "Jane Smith",
-      phone: "0987654321",
-      email: "jane@example.com",
-      role: "Manager",
-      createdon: "2025-09-05",
-      status: "Inactive",
-      img: "https://via.placeholder.com/40",
-    },
-    {
-      id: 3,
-      username: "Michael Johnson",
-      phone: "0112233445",
-      email: "michael@example.com",
-      role: "User",
-      createdon: "2025-09-10",
-      status: "Active",
-      img: "https://via.placeholder.com/40",
-    },
-    {
-      id: 4,
-      username: "Emily Davis",
-      phone: "0223344556",
-      email: "emily@example.com",
-      role: "Editor",
-      createdon: "2025-09-15",
-      status: "Inactive",
-      img: "https://via.placeholder.com/40",
-    },
-    {
-      id: 5,
-      username: "Chris Brown",
-      phone: "0334455667",
-      email: "chris@example.com",
-      role: "Viewer",
-      createdon: "2025-09-20",
-      status: "Active",
-      img: "https://via.placeholder.com/40",
-    },
-  ];
+import {
+  listUsers,
+  deleteUser,
+} from "../../services/UserService";
 
-  const dataSource = sampleRoles;
+const Users = () => {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await listUsers();
+      setUsers(response.data || []);
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    try {
+      await deleteUser(selectedUser.id);
+      fetchUsers();
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+    }
+  };
 
   const columns = [
     {
@@ -71,34 +51,34 @@ const Users = () => {
       render: (text, record) => (
         <span className="userimgname">
           <Link to="#" className="avatar avatar-md me-2">
-            <img alt="" src={record.img} />
+            <img alt="" src={record.img || "https://via.placeholder.com/40"} />
           </Link>
           <div>
             <Link to="#">{text}</Link>
           </div>
         </span>
       ),
-      sorter: (a, b) => a.username.length - b.username.length,
+      sorter: (a, b) => a.username.localeCompare(b.username),
     },
     {
       title: "Phone",
       dataIndex: "phone",
-      sorter: (a, b) => a.phone.length - b.phone.length,
+      sorter: (a, b) => a.phone.localeCompare(b.phone),
     },
     {
       title: "Email",
       dataIndex: "email",
-      sorter: (a, b) => a.email.length - b.email.length,
+      sorter: (a, b) => a.email.localeCompare(b.email),
     },
     {
       title: "Role",
       dataIndex: "role",
-      sorter: (a, b) => a.role.length - b.role.length,
+      sorter: (a, b) => a.role.localeCompare(b.role),
     },
     {
       title: "Created On",
       dataIndex: "createdon",
-      sorter: (a, b) => a.createdon.length - b.createdon.length,
+      sorter: (a, b) => a.createdon.localeCompare(b.createdon),
     },
     {
       title: "Status",
@@ -119,14 +99,14 @@ const Users = () => {
           )}
         </div>
       ),
-      sorter: (a, b) => a.status.length - b.status.length,
+      sorter: (a, b) => a.status.localeCompare(b.status),
     },
     {
       header: "",
       field: "actions",
       key: "actions",
       align: "center",
-      render: () => (
+      render: (record) => (
         <div className="action-table-data">
           <div className="edit-delete-action">
             <Link className="me-2 p-2" to="#">
@@ -140,13 +120,14 @@ const Users = () => {
             >
               <i data-feather="edit" className="feather-edit"></i>
             </Link>
-            <Link className="confirm-text p-2" to="#">
-              <i
-                data-feather="trash-2"
-                className="feather-trash-2"
-                data-bs-toggle="modal"
-                data-bs-target="#delete-modal"
-              ></i>
+            <Link
+              className="confirm-text p-2"
+              to="#"
+              data-bs-toggle="modal"
+              data-bs-target="#delete-modal"
+              onClick={() => setSelectedUser(record)}
+            >
+              <i data-feather="trash-2" className="feather-trash-2"></i>
             </Link>
           </div>
         </div>
@@ -167,7 +148,7 @@ const Users = () => {
             </div>
             <ul className="table-top-head">
               <TooltipIcons />
-              <RefreshIcon />
+              <RefreshIcon onClick={fetchUsers} /> {/* ✅ refresh thật */}
               <CollapesIcon />
             </ul>
             <div className="page-btn">
@@ -182,6 +163,7 @@ const Users = () => {
               </Link>
             </div>
           </div>
+
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
               <div className="search-set"></div>
@@ -194,7 +176,7 @@ const Users = () => {
                   >
                     Status
                   </Link>
-                  <ul className="dropdown-menu  dropdown-menu-end p-3">
+                  <ul className="dropdown-menu dropdown-menu-end p-3">
                     <li>
                       <Link to="#" className="dropdown-item rounded-1">
                         Active
@@ -212,14 +194,20 @@ const Users = () => {
 
             <div className="card-body">
               <div className="table-responsive">
-                <Table columns={columns} dataSource={dataSource} />
+                {loading ? (
+                  <div className="text-center p-4">Loading...</div>
+                ) : (
+                  <Table columns={columns} dataSource={users} />
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
-      <AddUsers />
-      <EditUser />
+
+      <AddUsers onCreated={fetchUsers} />
+      <EditUser user={selectedUser} onUpdated={fetchUsers} />
+
       <div className="modal fade" id="delete-modal">
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
@@ -242,7 +230,9 @@ const Users = () => {
                   </button>
                   <button
                     type="submit"
+                    onClick={handleDeleteUser}
                     className="btn btn-primary fs-13 fw-medium p-2 px-3"
+                    data-bs-dismiss="modal"
                   >
                     Yes Delete
                   </button>

@@ -1,32 +1,94 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import CommonSelect from "../../../components/select/common-select";
 import { editUser } from "../../../utils/imagepath";
+import { getUser, updateUser } from "../../../services/UserService";
 
-const EditUser = () => {
+const EditUser = ({ userId, onClose, onUpdated }) => {
   const statusOptions = [
     { value: "Choose", label: "Choose" },
     { value: "Manager", label: "Manager" },
     { value: "Admin", label: "Admin" },
   ];
 
-  // State
   const [avatar, setAvatar] = useState(editUser);
   const [selectedStatus, setSelectedStatus] = useState(statusOptions[0].value);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Handlers
-  const handleTogglePassword = () => setShowPassword((prev) => !prev);
-  const handleToggleConfirmPassword = () => setShowConfirmPassword((prev) => !prev);
+  const [userData, setUserData] = useState({
+    username: "",
+    phone: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    description: "",
+  });
+
+  useEffect(() => {
+    if (userId) {
+      getUser(userId)
+        .then((res) => {
+          const user = res.data;
+          setUserData({
+            username: user.username || "",
+            phone: user.phone || "",
+            email: user.email || "",
+            password: "",
+            confirmPassword: "",
+            description: user.description || "",
+          });
+          setSelectedStatus(user.role || "Choose");
+          if (user.avatarUrl) setAvatar(user.avatarUrl);
+        })
+        .catch((err) => console.error("Error fetching user data:", err));
+    }
+  }, [userId]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (userData.password !== userData.confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+
+    const updatedData = {
+      username: userData.username,
+      phone: userData.phone,
+      email: userData.email,
+      role: selectedStatus,
+      password: userData.password,
+      description: userData.description,
+      avatarUrl: avatar,
+    };
+
+    try {
+      await updateUser(userId, updatedData);
+      alert("User updated successfully!");
+      if (onUpdated) onUpdated();
+      if (onClose) onClose();
+    } catch (error) {
+      console.error("Error updating user:", error);
+      alert("Failed to update user. Please try again!");
+    }
+  };
+
   const handleChangeAvatar = (e) => {
     const file = e.target.files[0];
     if (file) setAvatar(URL.createObjectURL(file));
   };
 
+  const handleTogglePassword = () => setShowPassword((prev) => !prev);
+  const handleToggleConfirmPassword = () => setShowConfirmPassword((prev) => !prev);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setUserData((prev) => ({ ...prev, [name]: value }));
+  };
+
   return (
     <div>
-      {/* Edit User */}
       <div className="modal fade" id="edit-units">
         <div className="modal-dialog modal-dialog-centered custom-modal-two">
           <div className="modal-content">
@@ -42,11 +104,9 @@ const EditUser = () => {
                   </button>
                 </div>
 
-                {/* Modal Body */}
                 <div className="modal-body custom-modal-body">
-                  <form>
+                  <form onSubmit={handleSubmit}>
                     <div className="row">
-                      {/* Avatar */}
                       <div className="col-lg-12">
                         <div className="new-employee-field">
                           <span>Avatar</span>
@@ -71,31 +131,45 @@ const EditUser = () => {
                         </div>
                       </div>
 
-                      {/* User Name */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>User Name</label>
-                          <input type="text" placeholder="Thomas" />
+                          <input
+                            type="text"
+                            name="username"
+                            value={userData.username}
+                            onChange={handleChange}
+                            placeholder="Thomas"
+                          />
                         </div>
                       </div>
 
-                      {/* Phone */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Phone</label>
-                          <input type="text" placeholder="+12163547758" />
+                          <input
+                            type="text"
+                            name="phone"
+                            value={userData.phone}
+                            onChange={handleChange}
+                            placeholder="+12163547758"
+                          />
                         </div>
                       </div>
 
-                      {/* Email */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Email</label>
-                          <input type="email" placeholder="thomas@example.com" />
+                          <input
+                            type="email"
+                            name="email"
+                            value={userData.email}
+                            onChange={handleChange}
+                            placeholder="thomas@example.com"
+                          />
                         </div>
                       </div>
 
-                      {/* Role */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Role</label>
@@ -110,7 +184,6 @@ const EditUser = () => {
                         </div>
                       </div>
 
-                      {/* Password */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Password</label>
@@ -118,6 +191,9 @@ const EditUser = () => {
                             <input
                               type={showPassword ? "text" : "password"}
                               className="pass-input"
+                              name="password"
+                              value={userData.password}
+                              onChange={handleChange}
                               placeholder="Enter your password"
                             />
                             <span
@@ -128,7 +204,6 @@ const EditUser = () => {
                         </div>
                       </div>
 
-                      {/* Confirm Password */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Confirm Password</label>
@@ -136,7 +211,10 @@ const EditUser = () => {
                             <input
                               type={showConfirmPassword ? "text" : "password"}
                               className="pass-input"
-                              placeholder="Enter your password"
+                              name="confirmPassword"
+                              value={userData.confirmPassword}
+                              onChange={handleChange}
+                              placeholder="Enter your password again"
                             />
                             <span
                               className={`ti toggle-password ${showConfirmPassword ? "ti-eye" : "ti-eye-off"}`}
@@ -146,24 +224,32 @@ const EditUser = () => {
                         </div>
                       </div>
 
-                      {/* Descriptions */}
                       <div className="col-lg-12">
                         <div className="mb-0 input-blocks">
                           <label className="form-label">Descriptions</label>
-                          <textarea className="form-control mb-1" defaultValue="" />
+                          <textarea
+                            className="form-control mb-1"
+                            name="description"
+                            value={userData.description}
+                            onChange={handleChange}
+                          />
                           <p>Maximum 600 Characters</p>
                         </div>
                       </div>
                     </div>
 
-                    {/* Modal Footer */}
                     <div className="modal-footer-btn">
-                      <button type="button" className="btn btn-cancel me-2" data-bs-dismiss="modal">
+                      <button
+                        type="button"
+                        className="btn btn-cancel me-2"
+                        data-bs-dismiss="modal"
+                        onClick={onClose}
+                      >
                         Cancel
                       </button>
-                      <Link to="#" className="btn btn-submit">
+                      <button type="submit" className="btn btn-submit">
                         Submit
-                      </Link>
+                      </button>
                     </div>
                   </form>
                 </div>

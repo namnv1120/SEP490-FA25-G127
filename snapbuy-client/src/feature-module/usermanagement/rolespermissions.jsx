@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import AddRole from "../../core/modals/usermanagement/addrole";
 import EditRole from "../../core/modals/usermanagement/editrole";
@@ -9,49 +10,58 @@ import RefreshIcon from "../../components/tooltip-content/refresh";
 import CollapesIcon from "../../components/tooltip-content/collapes";
 import Table from "../../core/pagination/datatable";
 
+import {
+  listRolesPermissions,
+  deleteRolePermission,
+} from "../../services/RolesPermissionService";
+
 const RolesPermissions = () => {
-  // Sample data cho roles
-  const sampleRoles = [
-    {
-      id: 1,
-      role: "Admin",
-      createdon: "2025-09-01",
-      status: "Active",
-    },
-    {
-      id: 2,
-      role: "Manager",
-      createdon: "2025-08-15",
-      status: "Inactive",
-    },
-    {
-      id: 3,
-      role: "Editor",
-      createdon: "2025-07-20",
-      status: "Active",
-    },
-    {
-      id: 4,
-      role: "Viewer",
-      createdon: "2025-06-10",
-      status: "Active",
-    },
-  ];
+  const [roles, setRoles] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedRole, setSelectedRole] = useState(null);
 
-  const dataSource = sampleRoles;
+  // Load danh sách roles từ API
+  const fetchRoles = async () => {
+    try {
+      setLoading(true);
+      const response = await listRolesPermissions();
+      setRoles(response.data); // Giả định API trả về danh sách role
+    } catch (error) {
+      console.error("Failed to fetch roles:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // Gọi API khi component mount
+  useEffect(() => {
+    fetchRoles();
+  }, []);
+
+  // Xử lý xóa role
+  const handleDeleteRole = async () => {
+    if (!selectedRole) return;
+    try {
+      await deleteRolePermission(selectedRole.id);
+      fetchRoles();
+    } catch (error) {
+      console.error("Failed to delete role:", error);
+    }
+  };
+
+  // Cột hiển thị bảng
   const columns = [
     {
       title: "Role",
-      dataIndex: "role",
+      dataIndex: "roleName" || "role", // tùy theo field trong DB
       align: "center",
-      sorter: (a, b) => a.role.length - b.role.length,
+      sorter: (a, b) => a.role.localeCompare(b.role),
     },
     {
       title: "Created On",
-      dataIndex: "createdon",
+      dataIndex: "createdOn" || "createdon",
       align: "center",
-      sorter: (a, b) => a.createdon.length - b.createdon.length,
+      sorter: (a, b) => a.createdon.localeCompare(b.createdon),
     },
     {
       title: "Status",
@@ -73,42 +83,44 @@ const RolesPermissions = () => {
           )}
         </div>
       ),
-      sorter: (a, b) => a.status.length - b.status.length,
+      sorter: (a, b) => a.status.localeCompare(b.status),
     },
-{
-  title: "",
-  dataIndex: "actions",
-  key: "actions",
-  align: "center",
-  render: () => (
-    <div className="action-table-data">
-      <div className="edit-delete-action">
-        <Link
-          to={all_routes.rolespermission}
-          className="me-2 d-flex align-items-center p-2 border rounded"
-        >
-          <i className="ti ti-shield"></i>
-        </Link>
-        <Link
-          className="me-2 p-2"
-          to="#"
-          data-bs-toggle="modal"
-          data-bs-target="#edit-role"
-        >
-          <i data-feather="edit" className="feather-edit"></i>
-        </Link>
-        <Link
-          className="confirm-text p-2"
-          to="#"
-          data-bs-toggle="modal"
-          data-bs-target="#delete-modal"
-        >
-          <i data-feather="trash-2" className="feather-trash-2"></i>
-        </Link>
-      </div>
-    </div>
-  ),
-},
+    {
+      title: "",
+      dataIndex: "actions",
+      key: "actions",
+      align: "center",
+      render: (record) => (
+        <div className="action-table-data">
+          <div className="edit-delete-action">
+            <Link
+              to={all_routes.rolespermission}
+              className="me-2 d-flex align-items-center p-2 border rounded"
+            >
+              <i className="ti ti-shield"></i>
+            </Link>
+            <Link
+              className="me-2 p-2"
+              to="#"
+              data-bs-toggle="modal"
+              data-bs-target="#edit-role"
+              onClick={() => setSelectedRole(record)}
+            >
+              <i data-feather="edit" className="feather-edit"></i>
+            </Link>
+            <Link
+              className="confirm-text p-2"
+              to="#"
+              data-bs-toggle="modal"
+              data-bs-target="#delete-modal"
+              onClick={() => setSelectedRole(record)}
+            >
+              <i data-feather="trash-2" className="feather-trash-2"></i>
+            </Link>
+          </div>
+        </div>
+      ),
+    },
   ];
 
   return (
@@ -124,7 +136,7 @@ const RolesPermissions = () => {
             </div>
             <ul className="table-top-head">
               <TooltipIcons />
-              <RefreshIcon />
+              <RefreshIcon onClick={fetchRoles} />
               <CollapesIcon />
             </ul>
             <div className="page-btn">
@@ -139,6 +151,7 @@ const RolesPermissions = () => {
               </Link>
             </div>
           </div>
+
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
               <div className="search-set"></div>
@@ -151,7 +164,7 @@ const RolesPermissions = () => {
                   >
                     Status
                   </Link>
-                  <ul className="dropdown-menu  dropdown-menu-end p-3">
+                  <ul className="dropdown-menu dropdown-menu-end p-3">
                     <li>
                       <Link to="#" className="dropdown-item rounded-1">
                         Active
@@ -169,16 +182,20 @@ const RolesPermissions = () => {
 
             <div className="card-body">
               <div className="table-responsive">
-                <Table columns={columns} dataSource={dataSource} />
+                {loading ? (
+                  <div className="text-center p-4">Loading...</div>
+                ) : (
+                  <Table columns={columns} dataSource={roles} />
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <AddRole />
-      <EditRole />
-      <DeleteModal />
+      <AddRole onCreated={fetchRoles} />
+      <EditRole role={selectedRole} onUpdated={fetchRoles} />
+      <DeleteModal onConfirm={handleDeleteRole} />
     </div>
   );
 };

@@ -1,14 +1,43 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import CommonFooter from "../../components/layouts/footer";
 import { user49 } from "../../utils/imagepath";
+import { getUser, updateUser } from "../../services/UserService";
 
 const Profile = () => {
   const [isPasswordVisible, setPasswordVisible] = useState(false);
   const [avatar, setAvatar] = useState(user49);
 
-  const togglePasswordVisibility = () => {
-    setPasswordVisible((prevState) => !prevState);
+  const [user, setUser] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    username: "",
+    password: "",
+  });
+
+  useEffect(() => {
+    const userId = 1;
+    getUser(userId)
+      .then((res) => {
+        const data = res.data;
+        setUser({
+          firstName: data.firstName || "",
+          lastName: data.lastName || "",
+          email: data.email || "",
+          phone: data.phone || "",
+          username: data.username || "",
+          password: data.password || "",
+        });
+        if (data.image) setAvatar(data.image);
+      })
+      .catch((err) => console.error("Error fetching user:", err));
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setUser((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageChange = (e) => {
@@ -18,6 +47,17 @@ const Profile = () => {
       reader.onload = (ev) => setAvatar(ev.target.result);
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleSave = () => {
+    const userId = 1; // tạm thời fix cứng
+    updateUser(userId, { ...user, image: avatar })
+      .then(() => alert("Profile updated successfully!"))
+      .catch(() => alert("Failed to update profile!"));
+  };
+
+  const togglePasswordVisibility = () => {
+    setPasswordVisible((prevState) => !prevState);
   };
 
   return (
@@ -71,58 +111,79 @@ const Profile = () => {
             <div className="row">
               <div className="col-lg-6 col-sm-12">
                 <div className="mb-3">
-                  <label className="form-label">
-                    First Name<span className="text-danger ms-1">*</span>
-                  </label>
-                  <input type="text" className="form-control" defaultValue="Jeffry" />
+                  <label className="form-label">First Name</label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    className="form-control"
+                    value={user.firstName}
+                    onChange={handleChange}
+                  />
                 </div>
               </div>
 
               <div className="col-lg-6 col-sm-12">
                 <div className="mb-3">
-                  <label className="form-label">
-                    Last Name<span className="text-danger ms-1">*</span>
-                  </label>
-                  <input type="text" className="form-control" defaultValue="Jordan" />
+                  <label className="form-label">Last Name</label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    className="form-control"
+                    value={user.lastName}
+                    onChange={handleChange}
+                  />
                 </div>
               </div>
 
               <div className="col-lg-6 col-sm-12">
                 <div className="mb-3">
-                  <label>
-                    Email<span className="text-danger ms-1">*</span>
-                  </label>
-                  <input type="email" className="form-control" defaultValue="jeffry@example.com" />
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    className="form-control"
+                    value={user.email}
+                    onChange={handleChange}
+                  />
                 </div>
               </div>
 
               <div className="col-lg-6 col-sm-12">
                 <div className="mb-3">
-                  <label className="form-label">
-                    Phone Number<span className="text-danger ms-1">*</span>
-                  </label>
-                  <input type="text" defaultValue="+17468314286" className="form-control" />
+                  <label className="form-label">Phone Number</label>
+                  <input
+                    type="text"
+                    name="phone"
+                    className="form-control"
+                    value={user.phone}
+                    onChange={handleChange}
+                  />
                 </div>
               </div>
 
               <div className="col-lg-6 col-sm-12">
                 <div className="mb-3">
-                  <label className="form-label">
-                    User Name<span className="text-danger ms-1">*</span>
-                  </label>
-                  <input type="text" className="form-control" defaultValue="Jeffry Jordan" />
+                  <label className="form-label">User Name</label>
+                  <input
+                    type="text"
+                    name="username"
+                    className="form-control"
+                    value={user.username}
+                    onChange={handleChange}
+                  />
                 </div>
               </div>
 
               <div className="col-lg-6 col-sm-12">
                 <div className="mb-3">
-                  <label className="form-label">
-                    Password<span className="text-danger ms-1">*</span>
-                  </label>
+                  <label className="form-label">Password</label>
                   <div className="pass-group">
                     <input
                       type={isPasswordVisible ? "text" : "password"}
+                      name="password"
                       className="pass-input form-control"
+                      value={user.password}
+                      onChange={handleChange}
                     />
                     <span
                       className={`ti toggle-password text-gray-9 ${
@@ -138,7 +199,11 @@ const Profile = () => {
                 <Link to="#" className="btn btn-secondary me-2 shadow-none">
                   Cancel
                 </Link>
-                <Link to="#" className="btn btn-primary shadow-none">
+                <Link
+                  to="#"
+                  onClick={handleSave}
+                  className="btn btn-primary shadow-none"
+                >
                   Save Changes
                 </Link>
               </div>
