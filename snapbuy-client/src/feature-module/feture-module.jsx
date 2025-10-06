@@ -80,50 +80,46 @@ const FeatureModule = () => {
   // ----------------------------
   if (isAuthRoute) {
     return (
-      <div className={`main-wrapper ${toggleHeader ? "header-collapse" : ""}`}>
+      <>
         <style>
           {`
-            :root {
-              --sidebar--rgb-picr: ${dataSidebarAll};
-              --topbar--rgb-picr:${dataTopbarAll};
-              --topbarcolor--rgb-picr:${dataTopBarColorAll};
-              --primary-rgb-picr:${dataColorAll};
-            }
-          `}
+          :root {
+            --sidebar--rgb-picr: ${dataSidebarAll};
+            --topbar--rgb-picr:${dataTopbarAll};
+            --topbarcolor--rgb-picr:${dataTopBarColorAll};
+            --primary-rgb-picr:${dataColorAll};
+          }
+        `}
         </style>
 
         <div
           className={`
-            ${
-              dataLayout === "mini" ||
-              dataLayout === "layout-hovered" ||
-              dataWidth === "box"
-                ? "mini-sidebar"
-                : ""
-            }
-            ${
-              dataLayout === "horizontal" ||
-              dataLayout === "horizontal-single" ||
-              dataLayout === "horizontal-overlay" ||
-              dataLayout === "horizontal-box"
-                ? "menu-horizontal"
-                : ""
-            }
-            ${dataWidth === "box" ? "layout-box-mode" : ""} 
-          `}
+          main-wrapper
+          ${toggleHeader || data ? "header-collapse" : ""}
+          ${
+            dataLayout === "mini" ||
+            dataLayout === "layout-hovered" ||
+            dataWidth === "box"
+              ? "mini-sidebar"
+              : ""
+          }
+          ${
+            dataLayout === "horizontal" ||
+            dataLayout === "horizontal-single" ||
+            dataLayout === "horizontal-overlay" ||
+            dataLayout === "horizontal-box"
+              ? "menu-horizontal"
+              : ""
+          }
+          ${dataWidth === "box" ? "layout-box-mode" : ""} 
+        `}
         >
           {showLoader && <Preloader />}
-
-          {/* Layout chuẩn: Header + Sidebar + Nội dung */}
-          <div className={`main-wrapper ${data ? "header-collapse" : ""}`}>
-            <Header />
-            <HorizontalSidebar />
-            <main className="content">
-              <Outlet />
-            </main>
-          </div>
+          <Header />
+          <HorizontalSidebar />
+          <Outlet />
         </div>
-      </div>
+      </>
     );
   }
 
