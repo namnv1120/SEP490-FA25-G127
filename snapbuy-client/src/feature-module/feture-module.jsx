@@ -18,9 +18,7 @@ const FeatureModule = () => {
   const dataSidebarAll = useSelector(
     (state) => state.themeSetting.dataSidebarAll
   );
-  const dataColorAll = useSelector(
-    (state) => state.themeSetting.dataColorAll
-  );
+  const dataColorAll = useSelector((state) => state.themeSetting.dataColorAll);
   const dataTopBarColorAll = useSelector(
     (state) => state.themeSetting.dataTopBarColorAll
   );
@@ -62,6 +60,9 @@ const FeatureModule = () => {
     )
   );
 
+  // ----------------------------
+  // Các route không cần layout
+  // ----------------------------
   if (isUnAuthRoute) {
     return <Outlet />;
   }
@@ -74,6 +75,9 @@ const FeatureModule = () => {
     );
   }
 
+  // ----------------------------
+  // Các route auth (Dashboard, Customers, v.v.)
+  // ----------------------------
   if (isAuthRoute) {
     return (
       <div className={`main-wrapper ${toggleHeader ? "header-collapse" : ""}`}>
@@ -109,16 +113,21 @@ const FeatureModule = () => {
           `}
         >
           {showLoader && <Preloader />}
+
+          {/* Layout chuẩn: Header + Sidebar + Nội dung */}
           <div className={`main-wrapper ${data ? "header-collapse" : ""}`}>
             <Header />
             <HorizontalSidebar />
-            <Outlet />
+            <main className="content">
+              <Outlet />
+            </main>
           </div>
         </div>
       </div>
     );
   }
 
+  // fallback
   return <Outlet />;
 };
 
