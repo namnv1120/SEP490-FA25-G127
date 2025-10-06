@@ -4,11 +4,10 @@ import com.g127.snapbuy.dto.request.ForgotPasswordRequest;
 import com.g127.snapbuy.dto.request.ResetPasswordRequest;
 import com.g127.snapbuy.dto.request.VerifyOtpRequest;
 import com.g127.snapbuy.entity.Account;
-import com.g127.snapbuy.exception.ResourceNotFoundException;
 import com.g127.snapbuy.repository.AccountRepository;
 import com.g127.snapbuy.service.ForgotPasswordService;
 import com.g127.snapbuy.service.MailService;
-import com.g127.snapbuy.service.OtpStore;
+import com.g127.snapbuy.config.OtpStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.NoSuchElementException;
 import java.util.Random;
 
 @Service
@@ -38,7 +38,7 @@ public class ForgotPasswordServiceImpl implements ForgotPasswordService {
     public void requestOtp(ForgotPasswordRequest req) {
         String email = req.getEmail();
         Account acc = accountRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Email not found"));
+                .orElseThrow(() -> new NoSuchElementException("Email not found"));
 
         if (!otpStore.canResend(email, RESEND_GAP_SECONDS)) {
             throw new IllegalStateException("Please wait a moment before requesting again");
@@ -80,7 +80,7 @@ public class ForgotPasswordServiceImpl implements ForgotPasswordService {
         }
 
         Account acc = accountRepository.findByEmail(req.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("Email not found"));
+                .orElseThrow(() -> new NoSuchElementException("Email not found"));
 
         acc.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
         accountRepository.save(acc);

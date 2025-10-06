@@ -1,63 +1,73 @@
 package com.g127.snapbuy.controller;
 
-import com.g127.snapbuy.entity.Permission;
-import com.g127.snapbuy.repository.PermissionRepository;
+import com.g127.snapbuy.dto.ApiResponse;
+import com.g127.snapbuy.dto.request.PermissionCreateRequest;
+import com.g127.snapbuy.dto.request.PermissionUpdateRequest;
+import com.g127.snapbuy.dto.response.PermissionResponse;
+import com.g127.snapbuy.service.PermissionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/permissions")
 @RequiredArgsConstructor
 public class PermissionController {
 
-    private final PermissionRepository permissionRepository;
+    private final PermissionService permissionService;
 
     @PostMapping
     @PreAuthorize("hasRole('Admin')")
-    public ResponseEntity<Permission> create(@RequestBody Permission req) {
-        Permission p = new Permission();
-        p.setPermissionId(UUID.randomUUID());
-        p.setPermissionName(req.getPermissionName());
-        p.setDescription(req.getDescription());
-        p.setModule(req.getModule());
-        p.setIsActive(req.getIsActive() == null ? Boolean.TRUE : req.getIsActive());
-        return ResponseEntity.status(HttpStatus.CREATED).body(permissionRepository.save(p));
+    public ApiResponse<PermissionResponse> create(@Valid @RequestBody PermissionCreateRequest req) {
+        ApiResponse<PermissionResponse> response = new ApiResponse<>();
+        response.setResult(permissionService.createPermission(req));
+        response.setMessage("Create permission successfully");
+        return response;
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('Admin')")
-    public ResponseEntity<List<Permission>> list() {
-        return ResponseEntity.ok(permissionRepository.findAll());
+    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
+    public ApiResponse<List<PermissionResponse>> list(@RequestParam(name = "active", required = false) String active) {
+        Optional<Boolean> filter;
+        if (active == null) filter = Optional.empty();
+        else if ("all".equalsIgnoreCase(active)) filter = Optional.ofNullable(null);
+        else filter = Optional.of(Boolean.parseBoolean(active));
+
+        ApiResponse<List<PermissionResponse>> response = new ApiResponse<>();
+        response.setResult(permissionService.getAllPermissions(filter));
+        return response;
     }
 
     @GetMapping("/{permissionId}")
-    @PreAuthorize("hasRole('Admin')")
-    public ResponseEntity<Permission> get(@PathVariable UUID permissionId) {
-        Permission p = permissionRepository.findById(permissionId)
-                .orElseThrow(() -> new NoSuchElementException("Permission not found"));
-        return ResponseEntity.ok(p);
+    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
+    public ApiResponse<PermissionResponse> get(@PathVariable UUID permissionId) {
+        ApiResponse<PermissionResponse> response = new ApiResponse<>();
+        response.setResult(permissionService.getPermissionById(permissionId));
+        return response;
     }
 
     @PutMapping("/{permissionId}")
-    @PreAuthorize("hasRole('Admin')")
-    public ResponseEntity<Permission> update(@PathVariable UUID permissionId, @RequestBody Permission req) {
-        Permission p = permissionRepository.findById(permissionId)
-                .orElseThrow(() -> new NoSuchElementException("Permission not found"));
-        if (req.getPermissionName() != null) p.setPermissionName(req.getPermissionName());
-        if (req.getDescription() != null) p.setDescription(req.getDescription());
-        if (req.getModule() != null) p.setModule(req.getModule());
-        if (req.getIsActive() != null) p.setIsActive(req.getIsActive());
-        return ResponseEntity.ok(permissionRepository.save(p));
+    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
+    public ApiResponse<PermissionResponse> update(@PathVariable UUID permissionId,
+                                                  @Valid @RequestBody PermissionUpdateRequest req) {
+        ApiResponse<PermissionResponse> response = new ApiResponse<>();
+        response.setResult(permissionService.updatePermission(permissionId, req));
+        response.setMessage("Update permission successfully");
+        return response;
     }
 
     @DeleteMapping("/{permissionId}")
     @PreAuthorize("hasRole('Admin')")
-    public ResponseEntity<Void> delete(@PathVariable UUID permissionId) {
-        permissionRepository.deleteById(permissionId);
-        return ResponseEntity.noContent().build();
+    public ApiResponse<Void> delete(@PathVariable UUID permissionId) {
+        permissionService.deletePermission(permissionId);
+        ApiResponse<Void> response = new ApiResponse<>();
+        response.setResult(null);
+        response.setMessage("Delete permission successfully");
+        return response;
     }
 }
