@@ -20,7 +20,5 @@ public class CategoryUpdateRequest {
     @NotNull(message = "Active status cannot be null.")
     private Boolean active = true;
 
-    @NotNull(message = "Updated date cannot be null.")
-    private LocalDateTime updatedDate;
 }
 

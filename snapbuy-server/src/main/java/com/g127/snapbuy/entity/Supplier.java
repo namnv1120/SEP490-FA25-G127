@@ -1,17 +1,22 @@
 package com.g127.snapbuy.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "suppliers")
 public class Supplier {
-
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "supplier_id", columnDefinition = "uniqueidentifier")
@@ -38,13 +43,15 @@ public class Supplier {
     @Column(name = "tax_code", length = 20)
     private String taxCode;
 
+    @Builder.Default
     @Column(name = "active", nullable = false)
-    private Boolean active = true;
+    private boolean active = true;
 
-    @Column(name = "created_date", nullable = false)
-    private LocalDateTime createdDate = LocalDateTime.now();
+    @CreationTimestamp
+    @Column(name = "created_date", nullable = false, updatable = false)
+    private LocalDateTime createdDate;
 
+    @UpdateTimestamp
     @Column(name = "updated_date", nullable = false)
-    private LocalDateTime updatedDate = LocalDateTime.now();
+    private LocalDateTime updatedDate;
 }
-
