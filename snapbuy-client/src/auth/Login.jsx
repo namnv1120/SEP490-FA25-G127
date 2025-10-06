@@ -17,13 +17,9 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    // ✅ Sau này thay bằng API call Spring Boot
-    // const res = await fetch("http://localhost:8080/api/auth/login", {...})
-    // const data = await res.json()
-
     if (form.email && form.password) {
       console.log("Login success:", form);
-      navigate("/dashboard"); // đổi route tùy backend
+      navigate("/dashboard");
     } else {
       alert("Please enter email and password");
     }
@@ -59,7 +55,6 @@ export default function Login() {
           </button>
         </form>
 
-        {/* ✅ sửa lại để không bị reload trang */}
         <button
           type="button"
           className="link"

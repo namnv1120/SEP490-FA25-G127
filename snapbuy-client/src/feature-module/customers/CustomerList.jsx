@@ -1,7 +1,6 @@
-// src/feature-module/customers/CustomerList.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import customerService from "../../services/customerService"; // 👈 service gọi API
+import customerService from "../../services/customerService";
 import "../../CustomerList.scss";
 
 const CustomerList = () => {
@@ -25,7 +24,6 @@ const CustomerList = () => {
     avatar: "",
   });
 
-  // ✅ Fetch từ backend khi load trang
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -40,7 +38,6 @@ const CustomerList = () => {
     fetchData();
   }, []);
 
-  // Nếu có state từ navigate (edit / add / delete)
   useEffect(() => {
     if (location.state) {
       const { updatedCustomer, newCustomer, deletedCustomer } = location.state;
@@ -114,7 +111,7 @@ const CustomerList = () => {
     }
   };
 
-  // Routing (nếu vẫn muốn tách view/edit page riêng)
+  // Routing
   const goEditPage = (customer) =>
     navigate(`/customers/edit/${customer.id}`, { state: { customer } });
 
@@ -188,19 +185,19 @@ const CustomerList = () => {
                       className="icon-btn view"
                       onClick={() => goViewPage(c)}
                     >
-                      👁
+                      View
                     </button>
                     <button
                       className="icon-btn edit"
                       onClick={() => goEditPage(c)}
                     >
-                      ✏️
+                      Edit
                     </button>
                     <button
                       className="icon-btn delete"
                       onClick={() => handleDelete(c.id)}
                     >
-                      🗑
+                      Delete
                     </button>
                   </td>
                 </tr>
@@ -210,7 +207,6 @@ const CustomerList = () => {
         </>
       )}
 
-      {/* Modal giữ nguyên nhưng dùng handleFormSubmit gọi API */}
       {modalOpen && (
         <div className="modal-backdrop">
           <div className="customer-modal">
@@ -224,7 +220,6 @@ const CustomerList = () => {
             </div>
 
             <form onSubmit={handleFormSubmit} className="modal-form">
-              {/* Các input giữ nguyên */}
               <div className="form-row">
                 <label>Name</label>
                 <input
@@ -247,7 +242,6 @@ const CustomerList = () => {
                   required
                 />
               </div>
-              {/* ... thêm các field khác */}
 
               <div className="modal-actions">
                 <button type="button" className="btn" onClick={closeModal}>

@@ -21,15 +21,6 @@ export default function Register() {
       return;
     }
 
-    // 🚀 Gọi API backend (Spring Boot sau này)
-    // Ví dụ:
-    // fetch("/api/auth/register", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify(form),
-    // }).then(...);
-
-    // Hiện tại chỉ mock
     setRegistered(true);
   };
 

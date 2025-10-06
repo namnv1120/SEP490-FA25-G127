@@ -1,4 +1,3 @@
-// src/AppRouter.jsx
 import React, { memo, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import FeatureModule from "./feature-module/feture-module";

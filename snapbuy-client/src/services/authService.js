@@ -1,7 +1,6 @@
-const API_BASE = "http://localhost:8080/api/auth"; // đổi URL theo backend
+const API_BASE = "http://localhost:8080/api/auth";
 
 export async function loginUser(credentials) {
-  // gọi backend login
   return fetch(`${API_BASE}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE = "http://localhost:8080/api/customers"; // URL backend Spring Boot
+const API_BASE = "http://localhost:8080/api/customers";
 
 const customerService = {
   getAll: async () => {
