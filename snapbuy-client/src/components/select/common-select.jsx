@@ -10,8 +10,6 @@ const CommonSelect = ({
   disabled = false,
   filter = true,
 }) => {
-  console.log("values", value);
-
   return (
     <Dropdown
       value={value}

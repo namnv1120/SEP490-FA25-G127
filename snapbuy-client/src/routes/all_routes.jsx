@@ -9,8 +9,13 @@ export const all_routes = {
   Horizontal: "/layout-horizontal",
   
   superadmindashboard: "/dashboard",
+
+  //  Product routes
   productlist: "/product-list",
   addproduct: "/add-product",
+  editproduct: "/product-list/edit",      
+  viewproduct: "/product-list/view",      
+
   expiredproduct: "/expired-products",
   lowstock: "/low-stocks",
   categorylist: "/category-list",

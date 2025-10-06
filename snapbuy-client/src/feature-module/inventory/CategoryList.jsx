@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import EditCategoryList from "../../core/modals/inventory/editcategorylist";
+import EditCategoryList from "../../feature-module/inventory/EditCategoryList";
+import SubCategory from "../../feature-module/inventory/SubCategory";
 import CommonFooter from "../../components/footer/commonFooter";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
@@ -280,6 +281,7 @@ const CategoryList = () => {
       {/* /Add Category */}
 
       <EditCategoryList />
+      <SubCategory />
       <DeleteModal />
     </div>
   );

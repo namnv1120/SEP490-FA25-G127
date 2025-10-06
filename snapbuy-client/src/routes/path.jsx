@@ -15,7 +15,6 @@ import FormHorizontal from "../feature-module/uiinterface/forms/formelements/lay
 // import FormBasicInputs from "../feature-module/uiinterface/forms/formelements/basic-inputs";
 // import CheckboxRadios from "../feature-module/uiinterface/forms/formelements/checkbox-radios";
 // import FileUpload from "../feature-module/uiinterface/forms/formelements/fileupload";
-
 // import FormSelect from "../feature-module/uiinterface/forms/formelements/form-select";
 // import FormWizard from "../feature-module/uiinterface/forms/formelements/form-wizard";
 // import FormPikers from "../feature-module/uiinterface/forms/formelements/formpickers";
@@ -34,9 +33,10 @@ import FormHorizontal from "../feature-module/uiinterface/forms/formelements/lay
 // import DataTables from "../feature-module/uiinterface/table/data-tables";
 // import TablesBasic from "../feature-module/uiinterface/table/tables-basic";
 // import Pos from "../feature-module/pos/pos";
+const Suppliers = lazy(() => import("../feature-module/people/Supplier"));
 
 const Dashboard = lazy(() => import("../feature-module/dashboard/dashboard"));
-
+const ProductList = lazy(() => import("../feature-module/inventory/ProductList"));
 const routes = all_routes;
 
 export const authRoutes = [
@@ -55,6 +55,23 @@ export const authRoutes = [
     element: <FormHorizontal />,
     route: Route,
   },
+
+  {
+    id: 231,
+    path: "/suppliers",
+    name: "suppliers",
+    element: <Suppliers />,
+    route: Route,
+  },
+
+ {
+    id: 232,
+    path: "/product-list",
+    name: "product-list",
+    element: <ProductList />,
+    route: Route,
+  },
+
 ];
 export const posPages = [
   // {
