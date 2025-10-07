@@ -512,43 +512,43 @@ table tbody td .action-table-data a .action-edit {
   top: 44px;
   width: 15px;
 }
-  .sidebar {
-    // width: 260px;
-    .sidebar-menu {
-      ul {
-        > li {
-          > a {
-            padding: 10px 15px;
-            margin: 0;
+.sidebar {
+  // width: 260px;
+  .sidebar-menu {
+    ul {
+      > li {
+        > a {
+          padding: 10px 15px;
+          margin: 0;
 
-            span {
-              display: inline-block;
-              line-height: 0;
-            }
-          }
-
-          svg {
-            margin-right: 10px;
+          span {
+            display: inline-block;
+            line-height: 0;
           }
         }
-      }
 
-      .submenu-hdr {
-        display: block;
+        svg {
+          margin-right: 10px;
+        }
       }
     }
-  }
 
-  .header-left {
-    width: 260px;
+    .submenu-hdr {
+      display: block;
+    }
   }
-  .sidebar.collapsed-sidebar .sidebar-menu ul li a::before {
-    left: 0;
-  }
+}
 
-  .sidebar.collapsed-sidebar .sidebar-menu ul li ul li a {
-    padding: 10px 15px 10px 25px;
-  }
+.header-left {
+  width: 260px;
+}
+.sidebar.collapsed-sidebar .sidebar-menu ul li a::before {
+  left: 0;
+}
+
+.sidebar.collapsed-sidebar .sidebar-menu ul li ul li a {
+  padding: 10px 15px 10px 25px;
+}
 
 div.rc-slider-handle:hover {
   border-color: #ff8d1f;
@@ -2029,4 +2029,33 @@ div.p-datepicker table td.p-datepicker-today > span.p-highlight {
   visibility: visible !important;
   position: relative;
   z-index: 1000;
+}
+
+
+.nav-link:hover {
+  color: #fe9f43;
+}
+
+
+.nav-link.active {
+  color: #fe9f43; 
+}
+
+
+.nav-link {
+  color: #212b36; 
+}
+
+
+.dropdown-item:hover {
+  color: #fe9f43;
+}
+
+.dropdown-item.active {
+  color: #fe9f43; 
+}
+
+.menu-horizontal .header .main-header {
+  margin: 0 auto;
+  max-width: 1320px;
 }

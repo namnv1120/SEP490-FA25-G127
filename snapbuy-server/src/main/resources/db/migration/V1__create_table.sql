@@ -1,9 +1,3 @@
-CREATE DATABASE SnapBuy;
-GO
-
-USE SnapBuy;
-GO
-
 CREATE TABLE accounts
 (
     account_id    UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
@@ -155,7 +149,7 @@ CREATE TABLE [permissions]
     permission_id     UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     [permission_name] NVARCHAR(50) NOT NULL,
     [description]     NVARCHAR(200),
-    module            NVARCHAR(50), -- PRODUCT, ORDER, CUSTOMER, REPORT
+    module            NVARCHAR(50),
     active            BIT                          DEFAULT 1
 );
 
@@ -297,7 +291,6 @@ VALUES (N'Admin', N'System Administrator - Full access rights', 1),
        (N'Shop Owner', N'Shop Owner - Manages all business operations', 1),
        (N'Warehouse Staff', N'Warehouse Staff - Manages inventory receipts and issues', 1),
        (N'Sales Staff', N'Sales Staff - Processes orders and manages customers', 1);
-GO
 
 
 INSERT INTO [permissions] ([permission_name], [description], module, active)
@@ -353,4 +346,3 @@ VALUES
 (N'CREATE_PROMOTION', N'Create promotion', N'PROMOTION', 1),
 (N'UPDATE_PROMOTION', N'Update promotion', N'PROMOTION', 1),
 (N'DELETE_PROMOTION', N'Delete promotion', N'PROMOTION', 1);
-GO

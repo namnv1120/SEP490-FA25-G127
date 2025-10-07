@@ -27,11 +27,18 @@ import FormHorizontal from "../feature-module/uiinterface/forms/formelements/lay
 
 // Lazy load Dashboard
 const Dashboard = lazy(() => import("../feature-module/dashboard/dashboard"));
-const Users = lazy(() => import("../feature-module/usermanagement/Users"));
+const Accounts = lazy(() => import("../feature-module/usermanagement/account"));
 const RolesPermissions = lazy(() =>
   import("../feature-module/usermanagement/Rolespermissions")
 );
 const Profile = lazy(() => import("../feature-module/usermanagement/Profile"));
+const Login = lazy(() => import("../feature-module/pages/authentication/Login"));
+const Register = lazy(() =>
+  import("../feature-module/pages/authentication/Register")
+);
+const Forgotpassword = lazy(() =>
+  import("../feature-module/pages/authentication/ForgotPassword")
+);
 
 const routes = all_routes;
 
@@ -43,13 +50,13 @@ export const authRoutes = [
     element: <Dashboard />,
     route: Route,
   },
-  {
-    id: 2,
-    path: "/customers",
-    name: "customers",
-    element: <CustomerList />,
-    route: Route,
-  },
+  // {
+  //   id: 2,
+  //   path: "/customers",
+  //   name: "customers",
+  //   element: <CustomerList />,
+  //   route: Route,
+  // },
   {
     id: 106,
     path: routes.profile,
@@ -59,9 +66,9 @@ export const authRoutes = [
   },
   {
     id: 104,
-    path: routes.users,
-    name: "users",
-    element: <Users />,
+    path: routes.accounts,
+    name: "accounts",
+    element: <Accounts />,
     route: Route,
   },
   {
@@ -86,186 +93,88 @@ export const posPages = [
 ];
 
 export const unAuthRoutes = [
-  // {
-  //   id: 1,
-  //   path: routes.signin,
-  //   name: "signin",
-  //   element: <Signin />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 2,
-  //   path: routes.signintwo,
-  //   name: "signintwo",
-  //   element: <SigninTwo />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 3,
-  //   path: routes.signinthree,
-  //   name: "signinthree",
-  //   element: <SigninThree />,
-  //   route: Route,
-  // },
+  {
+    id: 1,
+    path: routes.login,
+    name: "login",
+    element: <Login />,
+    route: Route,
+  },
+  {
+    id: 2,
+    path: routes.register,
+    name: "register",
+    element: <Register />,
+    route: Route,
+  },
+  {
+    id: 3,
+    path: routes.forgotpassword,
+    name: "forgotpassword",
+    element: <Forgotpassword />,
+    route: Route,
+  },
   // {
   //   id: 4,
-  //   path: routes.register,
-  //   name: "register",
-  //   element: <Register />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 5,
-  //   path: routes.registerTwo,
-  //   name: "registerTwo",
-  //   element: <RegisterTwo />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 6,
-  //   path: routes.registerThree,
-  //   name: "registerThree",
-  //   element: <RegisterThree />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 7,
-  //   path: routes.forgotPassword,
-  //   name: "forgotPassword",
-  //   element: <Forgotpassword />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 7,
-  //   path: routes.forgotPasswordTwo,
-  //   name: "forgotPasswordTwo",
-  //   element: <ForgotpasswordTwo />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 8,
-  //   path: routes.forgotPasswordThree,
-  //   name: "forgotPasswordThree",
-  //   element: <ForgotpasswordThree />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 9,
   //   path: routes.resetpassword,
   //   name: "resetpassword",
   //   element: <Resetpassword />,
   //   route: Route,
   // },
   // {
-  //   id: 10,
-  //   path: routes.resetpasswordTwo,
-  //   name: "resetpasswordTwo",
-  //   element: <ResetpasswordTwo />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 11,
-  //   path: routes.resetpasswordThree,
-  //   name: "resetpasswordThree",
-  //   element: <ResetpasswordThree />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 12,
+  //   id: 5,
   //   path: routes.emailverification,
   //   name: "emailverification",
   //   element: <EmailVerification />,
   //   route: Route,
   // },
   // {
-  //   id: 12,
-  //   path: routes.emailverificationTwo,
-  //   name: "emailverificationTwo",
-  //   element: <EmailverificationTwo />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 13,
-  //   path: routes.emailverificationThree,
-  //   name: "emailverificationThree",
-  //   element: <EmailverificationThree />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 14,
+  //   id: 6,
   //   path: routes.twostepverification,
   //   name: "twostepverification",
   //   element: <Twostepverification />,
   //   route: Route,
   // },
   // {
-  //   id: 15,
-  //   path: routes.twostepverificationTwo,
-  //   name: "twostepverificationTwo",
-  //   element: <TwostepverificationTwo />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 16,
-  //   path: routes.twostepverificationThree,
-  //   name: "twostepverificationThree",
-  //   element: <TwostepverificationThree />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 17,
+  //   id: 7,
   //   path: routes.lockscreen,
   //   name: "lockscreen",
   //   element: <Lockscreen />,
   //   route: Route,
   // },
   // {
-  //   id: 18,
+  //   id: 8,
   //   path: routes.error404,
   //   name: "error404",
   //   element: <Error404 />,
   //   route: Route,
   // },
   // {
-  //   id: 19,
+  //   id: 9,
   //   path: routes.error500,
   //   name: "error500",
   //   element: <Error500 />,
   //   route: Route,
   // },
   // {
-  //   id: 20,
+  //   id: 10,
   //   path: routes.comingsoon,
   //   name: "comingsoon",
   //   element: <Comingsoon />,
   //   route: Route,
   // },
   // {
-  //   id: 21,
+  //   id: 11,
   //   path: routes.undermaintenance,
   //   name: "undermaintenance",
   //   element: <Undermaintainence />,
   //   route: Route,
   // },
   // {
-  //   id: 22,
+  //   id: 12,
   //   path: routes.success,
   //   name: "success",
   //   element: <Success />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 23,
-  //   path: routes.successTwo,
-  //   name: "success-2",
-  //   element: <SuccessTwo />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 24,
-  //   path: routes.successThree,
-  //   name: "success-3",
-  //   element: <SuccessThree />,
   //   route: Route,
   // },
 ];

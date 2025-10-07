@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { all_routes } from "../../routes/all_routes";
 import {
@@ -15,14 +15,13 @@ import {
   commandSvg,
   englishFlag,
   logoPng,
-  logoSmallPng,
-  logoWhitePng,
   store_01,
   store_02,
   store_03,
   store_04,
   usFlag,
 } from "../../utils/imagepath";
+import { Button } from "antd";
 
 const Header = () => {
   const route = all_routes;
@@ -39,13 +38,27 @@ const Header = () => {
     return element.offsetWidth > 0 || element.offsetHeight > 0;
   };
 
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Xoá token lưu trong localStorage
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("authTokenType");
+    localStorage.removeItem("userInfo");
+
+    navigate(route.login);
+  };
+
   useEffect(() => {
     const handleMouseover = (e) => {
       e.stopPropagation();
       const body = document.body;
       const toggleBtn = document.getElementById("toggle_btn");
 
-      if (body.classList.contains("mini-sidebar") && isElementVisible(toggleBtn)) {
+      if (
+        body.classList.contains("mini-sidebar") &&
+        isElementVisible(toggleBtn)
+      ) {
         e.preventDefault();
       }
     };
@@ -73,9 +86,18 @@ const Header = () => {
 
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
-      document.removeEventListener("mozfullscreenchange", handleFullscreenChange);
-      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
-      document.removeEventListener("msfullscreenchange", handleFullscreenChange);
+      document.removeEventListener(
+        "mozfullscreenchange",
+        handleFullscreenChange
+      );
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        handleFullscreenChange
+      );
+      document.removeEventListener(
+        "msfullscreenchange",
+        handleFullscreenChange
+      );
     };
   }, []);
 
@@ -138,7 +160,9 @@ const Header = () => {
     }
   };
 
-  const { expandMenus } = useSelector((state) => state.themeSetting.expandMenus);
+  const { expandMenus } = useSelector(
+    (state) => state.themeSetting.expandMenus
+  );
   const dataLayout = useSelector((state) => state.themeSetting.dataLayout);
 
   const expandMenu = () => {
@@ -152,23 +176,21 @@ const Header = () => {
     <>
       <div className="header">
         {/* Toàn bộ JSX giữ nguyên */}
-        <div className="main-header">
+        <div className="main-header ">
           <div
             className={`header-left
              ${toggle ? "" : "active"}
-             ${expandMenus || dataLayout === "layout-hovered" ? "expand-menu" : ""}
+             ${
+               expandMenus || dataLayout === "layout-hovered"
+                 ? "expand-menu"
+                 : ""
+             }
              `}
             onMouseLeave={expandMenu}
             onMouseOver={expandMenuOpen}
           >
             <Link to="/dashboard" className="logo logo-normal">
               <img src={logoPng} alt="img" />
-            </Link>
-            <Link to="/dashboard" className="logo logo-white">
-              <img src={logoWhitePng} alt="img" />
-            </Link>
-            <Link to="/dashboard" className="logo-small">
-              <img src={logoSmallPng} alt="img" />
             </Link>
             <Link
               id="toggle_btn"
@@ -178,8 +200,8 @@ const Header = () => {
                   pathname.includes("tasks") || pathname.includes("pos")
                     ? "none"
                     : pathname.includes("compose")
-                      ? "none"
-                      : "",
+                    ? "none"
+                    : "",
               }}
               onClick={handlesidebar}
             >
@@ -234,7 +256,7 @@ const Header = () => {
                     <div className="search-info">
                       <h6>
                         <span>
-                          <i  className="feather icon-search feather-16" />
+                          <i className="feather icon-search feather-16" />
                         </span>
                         Recent Searches
                       </h6>
@@ -253,9 +275,7 @@ const Header = () => {
                     <div className="search-info">
                       <h6>
                         <span>
-                          <i
-                            className="feather-16 feather icon-help-circle"
-                          />
+                          <i className="feather-16 feather icon-help-circle" />
                         </span>
                         Help
                       </h6>
@@ -268,7 +288,7 @@ const Header = () => {
                     <div className="search-info">
                       <h6>
                         <span>
-                          <i  className="feather icon-user feather-16" />
+                          <i className="feather icon-user feather-16" />
                         </span>
                         Customers
                       </h6>
@@ -652,14 +672,16 @@ const Header = () => {
                   Settings
                 </Link>
                 <hr className="my-2" />
-                <Link className="dropdown-item logout pb-0" to={route.signin}>
+                <button
+                  className="dropdown-item logout pb-0 border-0 bg-transparent w-100 text-start"
+                  onClick={handleLogout}
+                >
                   <i className="ti ti-logout me-2" />
                   Logout
-                </Link>
+                </button>
               </div>
             </li>
           </ul>
-        
         </div>
       </div>
     </>

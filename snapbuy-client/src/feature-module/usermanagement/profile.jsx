@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import CommonFooter from "../../components/layouts/footer";
 import { user49 } from "../../utils/imagepath";
-import { getUser, updateUser } from "../../services/UserService";
+import { getUser, updateUser } from "../../services/accountService";
 
 const Profile = () => {
   const [isPasswordVisible, setPasswordVisible] = useState(false);

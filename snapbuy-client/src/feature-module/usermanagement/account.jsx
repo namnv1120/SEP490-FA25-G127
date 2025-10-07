@@ -8,37 +8,34 @@ import RefreshIcon from "../../components/tooltip-content/refresh";
 import CollapesIcon from "../../components/tooltip-content/collapes";
 import Table from "../../core/pagination/datatable";
 
-import {
-  listUsers,
-  deleteUser,
-} from "../../services/UserService";
+import { listAccounts, deleteAccount } from "../../services/accountService";
 
-const Users = () => {
-  const [users, setUsers] = useState([]);
+const Accounts = () => {
+  const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedAccount, setSelectedAccount] = useState(null);
 
-  const fetchUsers = async () => {
+  const fetchAccounts = async () => {
     try {
       setLoading(true);
-      const response = await listUsers();
-      setUsers(response.data || []);
+      const response = await listAccounts();
+      setAccounts(response || []);
     } catch (error) {
-      console.error("Failed to fetch users:", error);
+      console.error("Failed to fetch accounts:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetchAccounts();
   }, []);
 
-  const handleDeleteUser = async () => {
+  const handleDeleteAccount = async () => {
     if (!selectedUser) return;
     try {
-      await deleteUser(selectedUser.id);
-      fetchUsers();
+      await deleteAccount(selectedAccount.id);
+      fetchAccounts();
     } catch (error) {
       console.error("Failed to delete user:", error);
     }
@@ -46,18 +43,13 @@ const Users = () => {
 
   const columns = [
     {
-      title: "User Name",
+      title: "Fullname",
+      dataIndex: "fullName",
+      sorter: (a, b) => a.fullName.localeCompare(b.fullName),
+    },
+    {
+      title: "Username",
       dataIndex: "username",
-      render: (text, record) => (
-        <span className="userimgname">
-          <Link to="#" className="avatar avatar-md me-2">
-            <img alt="" src={record.img || "https://via.placeholder.com/40"} />
-          </Link>
-          <div>
-            <Link to="#">{text}</Link>
-          </div>
-        </span>
-      ),
       sorter: (a, b) => a.username.localeCompare(b.username),
     },
     {
@@ -72,13 +64,8 @@ const Users = () => {
     },
     {
       title: "Role",
-      dataIndex: "role",
-      sorter: (a, b) => a.role.localeCompare(b.role),
-    },
-    {
-      title: "Created On",
-      dataIndex: "createdon",
-      sorter: (a, b) => a.createdon.localeCompare(b.createdon),
+      dataIndex: "roles",
+      sorter: (a, b) => a.roles.localeCompare(b.roles),
     },
     {
       title: "Status",
@@ -110,7 +97,10 @@ const Users = () => {
         <div className="action-table-data">
           <div className="edit-delete-action">
             <Link className="me-2 p-2" to="#">
-              <i data-feather="eye" className="feather feather-eye action-eye"></i>
+              <i
+                data-feather="eye"
+                className="feather feather-eye action-eye"
+              ></i>
             </Link>
             <Link
               className="me-2 p-2"
@@ -125,7 +115,7 @@ const Users = () => {
               to="#"
               data-bs-toggle="modal"
               data-bs-target="#delete-modal"
-              onClick={() => setSelectedUser(record)}
+              onClick={() => setSelectedAccount(record)}
             >
               <i data-feather="trash-2" className="feather-trash-2"></i>
             </Link>
@@ -142,13 +132,13 @@ const Users = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>User List</h4>
-                <h6>Manage Your Users</h6>
+                <h4>Account List</h4>
+                <h6>Manage Your Accounts</h6>
               </div>
             </div>
             <ul className="table-top-head">
               <TooltipIcons />
-              <RefreshIcon onClick={fetchUsers} /> {/* ✅ refresh thật */}
+              <RefreshIcon onClick={fetchAccounts} />
               <CollapesIcon />
             </ul>
             <div className="page-btn">
@@ -159,7 +149,7 @@ const Users = () => {
                 data-bs-target="#add-units"
               >
                 <i className="ti ti-circle-plus me-1"></i>
-                Add New User
+                Add New Account
               </Link>
             </div>
           </div>
@@ -197,7 +187,7 @@ const Users = () => {
                 {loading ? (
                   <div className="text-center p-4">Loading...</div>
                 ) : (
-                  <Table columns={columns} dataSource={users} />
+                  <Table columns={columns} dataSource={accounts} />
                 )}
               </div>
             </div>
@@ -205,8 +195,8 @@ const Users = () => {
         </div>
       </div>
 
-      <AddUsers onCreated={fetchUsers} />
-      <EditUser user={selectedUser} onUpdated={fetchUsers} />
+      {/* <AddAccount onCreated={fetchAccounts} />
+      <EditAccount user={selectedAccount} onUpdated={fetchAccounts} /> */}
 
       <div className="modal fade" id="delete-modal">
         <div className="modal-dialog modal-dialog-centered">
@@ -230,7 +220,7 @@ const Users = () => {
                   </button>
                   <button
                     type="submit"
-                    onClick={handleDeleteUser}
+                    onClick={handleDeleteAccount}
                     className="btn btn-primary fs-13 fw-medium p-2 px-3"
                     data-bs-dismiss="modal"
                   >
@@ -246,4 +236,4 @@ const Users = () => {
   );
 };
 
-export default Users;
+export default Accounts;

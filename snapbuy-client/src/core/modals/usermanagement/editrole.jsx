@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { updateRolePermission } from "../../../services/RolesPermissionService";
+import { updateRolePermission } from "../../../services/role_permissionService";
 
 const EditRole = ({ role, onUpdated }) => {
   const [roleName, setRoleName] = useState(role?.role || "");

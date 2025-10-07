@@ -1,6 +1,6 @@
 export const all_routes = {
   // Dashboard
-  dashboard: "/",
+  dashboard: "/dashboard",
   superadmindashboard: "/dashboard",
   salesdashboard: "/sales-dashboard",
   newdashboard: "/new-dashboard",
@@ -93,9 +93,9 @@ export const all_routes = {
   securitysettings: "/security-settings",
 
   // Authentication
-  signin: "/signin",
+  login: "/login",
   register: "/register",
-  forgotPassword: "/forgot-password",
+  forgotpassword: "/forgot-password",
   resetpassword: "/reset-password",
   emailverification: "/email-verification",
   twostepverification: "/two-step-verification",
@@ -107,7 +107,7 @@ export const all_routes = {
   todo: "/todo",
   activities: "/activities",
   profile: "/profile",
-  users: "/users",
+  accounts: "/accounts",
   rolespermission: "/roles-permissions",
   permissions: "/permissions",
   companies: "/companies",

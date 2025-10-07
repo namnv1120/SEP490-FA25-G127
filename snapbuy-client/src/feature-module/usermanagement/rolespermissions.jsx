@@ -13,7 +13,7 @@ import Table from "../../core/pagination/datatable";
 import {
   listRolesPermissions,
   deleteRolePermission,
-} from "../../services/RolesPermissionService";
+} from "../../services/role_permissionService";
 
 const RolesPermissions = () => {
   const [roles, setRoles] = useState([]);

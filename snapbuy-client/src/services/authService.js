@@ -1,25 +1,49 @@
-const API_BASE = "http://localhost:8080/api/auth";
+import axios from 'axios';
 
-export async function loginUser(credentials) {
-  return fetch(`${API_BASE}/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(credentials),
-  }).then((res) => res.json());
-}
+const REST_API_BASE_URL = 'http://localhost:8080/api/auth'; // URL cho đăng nhập, đăng ký
 
-export async function registerUser(data) {
-  return fetch(`${API_BASE}/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  }).then((res) => res.json());
-}
+// API đăng nhập
+export const login = async (username, password) => {
+  if (!username || !password) throw new Error('Username and password are required.');
 
-export async function forgotPassword(email) {
-  return fetch(`${API_BASE}/forgot-password`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
-  }).then((res) => res.json());
-}
+  try {
+    const response = await axios.post(`${REST_API_BASE_URL}/login`, { username, password });
+    const { token, tokenType } = response.data.result;
+
+    if (token) {
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('authTokenType', tokenType || 'Bearer');
+      return response.data.result;
+    } else {
+      throw new Error('Login failed: No token received.');
+    }
+  } catch (error) {
+    console.error('Login failed:', error.response ? error.response.data : error.message);
+    throw new Error(error.response ? error.response.data.message : error.message);
+  }
+};
+
+export const getUserProfile = async () => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    throw new Error("No token found");
+  }
+
+  try {
+    const response = await axios.get(`${REST_API_BASE_URL}/profile`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Fetching user profile failed:", error);
+    throw error;
+  }
+};
+
+// API logout (xoá token)
+export const logout = () => {
+  // Xoá token khỏi localStorage
+  localStorage.removeItem('authToken');
+};

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import CommonSelect from "../../../components/select/common-select";
-import { editUser } from "../../../utils/imagepath";
-import { getUser, updateUser } from "../../../services/UserService";
+// import { editUser } from "../../../utils/imagepath";
+// import { getUser, updateUser } from "../../../services/accountService";
 
 const EditUser = ({ userId, onClose, onUpdated }) => {
   const statusOptions = [
@@ -80,7 +80,8 @@ const EditUser = ({ userId, onClose, onUpdated }) => {
   };
 
   const handleTogglePassword = () => setShowPassword((prev) => !prev);
-  const handleToggleConfirmPassword = () => setShowConfirmPassword((prev) => !prev);
+  const handleToggleConfirmPassword = () =>
+    setShowConfirmPassword((prev) => !prev);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -99,7 +100,12 @@ const EditUser = ({ userId, onClose, onUpdated }) => {
                   <div className="page-title">
                     <h4>Edit User</h4>
                   </div>
-                  <button type="button" className="close" data-bs-dismiss="modal" aria-label="Close">
+                  <button
+                    type="button"
+                    className="close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                  >
                     <span aria-hidden="true">×</span>
                   </button>
                 </div>
@@ -113,7 +119,11 @@ const EditUser = ({ userId, onClose, onUpdated }) => {
                           <div className="profile-pic-upload edit-pic">
                             <div className="profile-pic">
                               <span>
-                                <img src={avatar} className="user-editer" alt="User" />
+                                <img
+                                  src={avatar}
+                                  className="user-editer"
+                                  alt="User"
+                                />
                               </span>
                               <div className="close-img">
                                 <i className="feather icon-x info-img" />
@@ -121,7 +131,10 @@ const EditUser = ({ userId, onClose, onUpdated }) => {
                             </div>
                             <div className="input-blocks mb-0">
                               <div className="image-upload mb-0">
-                                <input type="file" onChange={handleChangeAvatar} />
+                                <input
+                                  type="file"
+                                  onChange={handleChangeAvatar}
+                                />
                                 <div className="image-uploads">
                                   <h4>Change Image</h4>
                                 </div>
@@ -197,7 +210,9 @@ const EditUser = ({ userId, onClose, onUpdated }) => {
                               placeholder="Enter your password"
                             />
                             <span
-                              className={`ti toggle-password text-gray-9 ${showPassword ? "ti-eye" : "ti-eye-off"}`}
+                              className={`ti toggle-password text-gray-9 ${
+                                showPassword ? "ti-eye" : "ti-eye-off"
+                              }`}
                               onClick={handleTogglePassword}
                             />
                           </div>
@@ -217,7 +232,9 @@ const EditUser = ({ userId, onClose, onUpdated }) => {
                               placeholder="Enter your password again"
                             />
                             <span
-                              className={`ti toggle-password ${showConfirmPassword ? "ti-eye" : "ti-eye-off"}`}
+                              className={`ti toggle-password ${
+                                showConfirmPassword ? "ti-eye" : "ti-eye-off"
+                              }`}
                               onClick={handleToggleConfirmPassword}
                             />
                           </div>
