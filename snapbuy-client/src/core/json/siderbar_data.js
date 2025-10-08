@@ -425,11 +425,11 @@ export const SidebarData = [
         submenu: false,
       },
       {
-        label: "Suppliers",
-        link: "/suppliers",
-        icon: 'user-dollar',
-        showSubRoute: false,
-        submenu: false,
+      label: "Suppliers",
+      link: "/suppliers",
+      icon: 'user-dollar',
+      showSubRoute: false,
+      submenu: false,
       },
       {
         label: "Stores",

@@ -4,6 +4,15 @@ import FeatureModule from "./feature-module/feature-module";
 import { authRoutes, posPages, unAuthRoutes } from "./routes/path";
 import { base_path } from "./environment";
 
+// --- Import Product pages ---
+import ProductList from "./feature-module/inventory/ProductList";
+import AddProduct from "./feature-module/inventory/AddProduct";
+import EditProduct from "./feature-module/inventory/EditProduct";
+import ProductDetail from "./feature-module/inventory/ProductDetail";
+
+// --- Import Supplier pages ---
+import SupplierList from "./feature-module/people/Supplier";
+
 const AppRouter = () => {
   const renderRoutes = (list) =>
     list?.map((item) => (
