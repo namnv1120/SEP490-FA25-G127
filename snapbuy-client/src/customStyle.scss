@@ -221,9 +221,9 @@ ul.tabs.owl-carousel.pos-category {
   position: relative;
 }
 
-.mini-sidebar .active.subdrop ~ ul {
-  display: none !important;
-}
+// .mini-sidebar .active.subdrop ~ ul {
+//   display: none !important;
+// }
 
 .pos-category .owl-item {
   padding: 15px 0;
@@ -512,63 +512,42 @@ table tbody td .action-table-data a .action-edit {
   top: 44px;
   width: 15px;
 }
+.sidebar {
+  // width: 260px;
+  .sidebar-menu {
+    ul {
+      > li {
+        > a {
+          padding: 10px 15px;
+          margin: 0;
 
-@media (min-width: 991.98px) {
-  .expand-menu.mini-sidebar .sidebar {
-    width: 252px;
-  }
-}
-
-.expand-menu.mini-sidebar {
-  .sidebar-right {
-    display: block;
-    transition: all 0.5s;
-  }
-
-  .sidebar {
-    // width: 260px;
-    .sidebar-menu {
-      ul {
-        > li {
-          > a {
-            padding: 10px 15px;
-            margin: 0;
-
-            span {
-              display: inline-block;
-              line-height: 0;
-            }
-          }
-
-          svg {
-            margin-right: 10px;
+          span {
+            display: inline-block;
+            line-height: 0;
           }
         }
-      }
 
-      .submenu-hdr {
-        display: block;
+        svg {
+          margin-right: 10px;
+        }
       }
     }
-  }
 
-  .header-left {
-    width: 260px;
+    .submenu-hdr {
+      display: block;
+    }
   }
 }
 
-.expand-menu.mini-sidebar {
-  .sidebar .sidebar-menu ul > li > a {
-    padding: 18px 15px;
-  }
+.header-left {
+  width: 260px;
+}
+.sidebar.collapsed-sidebar .sidebar-menu ul li a::before {
+  left: 0;
+}
 
-  .sidebar.collapsed-sidebar .sidebar-menu ul li a::before {
-    left: 0;
-  }
-
-  .sidebar.collapsed-sidebar .sidebar-menu ul li ul li a {
-    padding: 10px 15px 10px 25px;
-  }
+.sidebar.collapsed-sidebar .sidebar-menu ul li ul li a {
+  padding: 10px 15px 10px 25px;
 }
 
 div.rc-slider-handle:hover {
@@ -1098,23 +1077,6 @@ div.rti--container {
     }
   }
 }
-
-body {
-  &.expand-menu {
-    .mini-sidebar .sidebar .sidebar-logo .logo-small {
-      display: none;
-    }
-
-    .mini-sidebar .sidebar .sidebar-logo .logo-normal {
-      display: block;
-    }
-
-    .mini-sidebar .sidebar .sidebar-logo #toggle_btn {
-      opacity: 1;
-    }
-  }
-}
-
 .manage-stock .table-search-set {
   top: 0;
 }
@@ -2067,4 +2029,33 @@ div.p-datepicker table td.p-datepicker-today > span.p-highlight {
   visibility: visible !important;
   position: relative;
   z-index: 1000;
+}
+
+
+.nav-link:hover {
+  color: #fe9f43;
+}
+
+
+.nav-link.active {
+  color: #fe9f43; 
+}
+
+
+.nav-link {
+  color: #212b36; 
+}
+
+
+.dropdown-item:hover {
+  color: #fe9f43;
+}
+
+.dropdown-item.active {
+  color: #fe9f43; 
+}
+
+.menu-horizontal .header .main-header {
+  margin: 0 auto;
+  max-width: 1320px;
 }

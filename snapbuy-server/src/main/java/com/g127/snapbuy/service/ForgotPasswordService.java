@@ -6,6 +6,8 @@ import com.g127.snapbuy.dto.request.VerifyOtpRequest;
 
 public interface ForgotPasswordService {
     void requestOtp(ForgotPasswordRequest req);
+
     void verifyOtp(VerifyOtpRequest req);
+
     void resetPassword(ResetPasswordRequest req);
 }

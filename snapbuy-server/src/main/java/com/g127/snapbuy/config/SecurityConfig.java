@@ -50,7 +50,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/auth/forgot-password/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/accounts").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -65,7 +64,7 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration c = new CorsConfiguration();
         c.setAllowCredentials(true);
-        c.setAllowedOrigins(List.of("http://localhost:3000"));
+        c.setAllowedOrigins(List.of("http://localhost:5173"));
         c.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         c.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With"));
         c.setExposedHeaders(List.of("Authorization"));

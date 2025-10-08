@@ -3,6 +3,7 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import CustomPaginator from "./custom-paginator";
 import { Skeleton } from "primereact/skeleton";
+// import { noRecord } from "../../utils/imagepath";
 
 const PrimeDataTable = ({
   column,
@@ -23,7 +24,6 @@ const PrimeDataTable = ({
   const skeletonRows = Array(rows).fill({});
   const totalPages = Math.ceil(totalRecords / rows);
 
-  // Calculate paginated data
   const startIndex = (currentPage - 1) * rows;
   const endIndex = startIndex + rows;
   const paginatedData = loading ? skeletonRows : data.slice(startIndex, endIndex);

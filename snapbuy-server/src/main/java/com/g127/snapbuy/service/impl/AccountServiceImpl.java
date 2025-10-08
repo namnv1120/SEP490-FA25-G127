@@ -1,24 +1,24 @@
 package com.g127.snapbuy.service.impl;
 
-import com.g127.snapbuy.dto.AccountDto;
+import com.g127.snapbuy.dto.request.*;
+import com.g127.snapbuy.dto.response.AccountResponse;
 import com.g127.snapbuy.entity.Account;
 import com.g127.snapbuy.entity.Role;
-import com.g127.snapbuy.exception.ResourceNotFoundException;
 import com.g127.snapbuy.mapper.AccountMapper;
 import com.g127.snapbuy.repository.AccountRepository;
 import com.g127.snapbuy.repository.RoleRepository;
 import com.g127.snapbuy.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.g127.snapbuy.dto.request.ChangePasswordRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,150 +30,352 @@ public class AccountServiceImpl implements AccountService {
     private final AccountMapper accountMapper;
     private final PasswordEncoder passwordEncoder;
 
+    private static final Set<String> FORBIDDEN_STAFF_ROLES =
+            Set.of("Admin", "Shop Owner");
+
+    private String getCurrentUsername() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth == null ? null : auth.getName();
+    }
+
+    private boolean isAdmin() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return false;
+        return auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_Admin".equals(a.getAuthority()));
+    }
+
+    private boolean isShopOwner() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return false;
+        return auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_Shop Owner".equals(a.getAuthority()));
+    }
+
+    private void ensureActive(Role r) {
+        if (r.getIsActive() != null && !r.getIsActive()) {
+            throw new IllegalStateException("Role is inactive");
+        }
+    }
+
 
     @Override
-    public AccountDto createAccount(AccountDto dto) {
+    @PreAuthorize("hasRole('Admin')")
+    public AccountResponse createAccount(AccountCreateRequest req) {
+        return createWithSingleRole(req, "Shop Owner");
+    }
 
-        if (dto.getPassword() == null || dto.getConfirmPassword() == null
-                || !dto.getPassword().equals(dto.getConfirmPassword())) {
+    @Override
+    @PreAuthorize("hasRole('Admin')")
+    public AccountResponse createShopOwner(AccountCreateRequest req) {
+        return createWithSingleRole(req, "Shop Owner");
+    }
+
+    @Override
+    @PreAuthorize("hasRole('Shop Owner')")
+    public AccountResponse createStaff(AccountCreateRequest req) {
+        if (req.getPassword() == null || req.getConfirmPassword() == null
+                || !req.getPassword().equals(req.getConfirmPassword())) {
             throw new IllegalArgumentException("Confirm password does not match");
         }
 
-        if (accountRepository.existsByUsername(dto.getUsername())) {
+        String username = req.getUsername().toLowerCase();
+        if (username.contains(" ")) {
+            throw new IllegalArgumentException("Username must not contain spaces");
+        }
+        if (accountRepository.existsByUsernameIgnoreCase(username)) {
             throw new IllegalArgumentException("Username already exists");
         }
-        if (accountRepository.existsByEmailIgnoreCase(dto.getEmail())) {
+        if (accountRepository.existsByEmailIgnoreCase(req.getEmail())) {
             throw new IllegalArgumentException("Email already exists");
         }
-        if (dto.getPhone() != null && !dto.getPhone().isBlank()
-                && accountRepository.existsByPhone(dto.getPhone())) {
+        if (req.getPhone() != null && !req.getPhone().isBlank()
+                && accountRepository.existsByPhone(req.getPhone())) {
             throw new IllegalArgumentException("Phone already exists");
         }
 
-        Account account = accountMapper.toEntity(dto);
-        if (account.getAccountId() == null) {
-            account.setAccountId(java.util.UUID.randomUUID());
+        List<String> roleNames = Optional.ofNullable(req.getRoles()).orElse(List.of());
+        if (roleNames.isEmpty()) {
+            throw new IllegalArgumentException("At least one role is required for staff");
         }
-        account.setFullName(dto.getFullName());
-        account.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
+
+        for (String rn : roleNames) {
+            if (FORBIDDEN_STAFF_ROLES.stream().anyMatch(f -> f.equalsIgnoreCase(rn))) {
+                throw new IllegalArgumentException("Role not allowed for staff: " + rn);
+            }
+        }
+
+        Set<Role> staffRoles = new HashSet<>();
+        for (String rn : roleNames) {
+            Role r = roleRepository.findByRoleNameIgnoreCase(rn)
+                    .orElseThrow(() -> new NoSuchElementException("Role not found: " + rn));
+            ensureActive(r);
+            staffRoles.add(r);
+        }
+
+        Account acc = accountMapper.toEntity(req);
+        acc.setAccountId(UUID.randomUUID());
+        acc.setUsername(username);
+        acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+        acc.setRoles(staffRoles);
 
         try {
-            account = accountRepository.save(account);
+            acc = accountRepository.save(acc);
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             throw new IllegalArgumentException("Duplicate or invalid data");
         }
+        return accountMapper.toResponse(acc);
+    }
 
-        Role defaultRole = roleRepository.findByRoleName("Sales Staff")
-                .orElseThrow(() -> new ResourceNotFoundException("Default role not found"));
-        account.getRoles().add(defaultRole);
-        accountRepository.save(account);
+    private AccountResponse createWithSingleRole(AccountCreateRequest req, String roleName) {
+        if (req.getPassword() == null || req.getConfirmPassword() == null
+                || !req.getPassword().equals(req.getConfirmPassword())) {
+            throw new IllegalArgumentException("Confirm password does not match");
+        }
 
-        return accountMapper.toDto(account);
+        String username = req.getUsername().toLowerCase();
+        if (username.contains(" ")) {
+            throw new IllegalArgumentException("Username must not contain spaces");
+        }
+        if (accountRepository.existsByUsernameIgnoreCase(username)) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+        if (accountRepository.existsByEmailIgnoreCase(req.getEmail())) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+        if (req.getPhone() != null && !req.getPhone().isBlank()
+                && accountRepository.existsByPhone(req.getPhone())) {
+            throw new IllegalArgumentException("Phone already exists");
+        }
+
+        Role role = roleRepository.findByRoleName(roleName)
+                .orElseThrow(() -> new NoSuchElementException("Role not found: " + roleName));
+        ensureActive(role);
+
+        Account account = accountMapper.toEntity(req);
+        account.setAccountId(UUID.randomUUID());
+        account.setUsername(username);
+        account.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+        account.setRoles(Set.of(role));
+
+        return accountMapper.toResponse(accountRepository.save(account));
     }
 
 
-
     @Override
-    public AccountDto getMyInfo() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+    public AccountResponse getMyInfo() {
+        String username = getCurrentUsername();
         Account acc = accountRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
-        return accountMapper.toDto(acc);
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+        return accountMapper.toResponse(acc);
     }
 
     @Override
-    @PostAuthorize("returnObject.username == authentication.name")
-    public AccountDto updateAccount(UUID accountId, AccountDto dto) {
+    @PreAuthorize("hasRole('Admin')")
+    public List<AccountResponse> getAccounts() {
+        return accountRepository.findAll().stream()
+                .map(accountMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @PreAuthorize("hasRole('Admin')")
+    public AccountResponse getAccount(UUID id) {
+        Account acc = accountRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+        return accountMapper.toResponse(acc);
+    }
+
+
+    @Override
+    public AccountResponse changePassword(UUID accountId, ChangePasswordRequest req) {
+        if (!Objects.equals(req.getNewPassword(), req.getConfirmNewPassword())) {
+            throw new IllegalArgumentException("Confirm new password does not match");
+        }
+
         Account acc = accountRepository.findById(accountId)
-                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+        if (!passwordEncoder.matches(req.getOldPassword(), acc.getPasswordHash())) {
+            throw new IllegalArgumentException("Old password is incorrect");
+        }
 
-        if (dto.getEmail() != null) acc.setEmail(dto.getEmail());
-        if (dto.getPhone() != null) acc.setPhone(dto.getPhone());
-        if (dto.getAvatarUrl() != null) acc.setAvatarUrl(dto.getAvatarUrl());
-        if (dto.getPassword() != null && !dto.getPassword().isBlank())
-            acc.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
+        acc.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
+        return accountMapper.toResponse(accountRepository.save(acc));
+    }
 
-        acc = accountRepository.save(acc);
-        return accountMapper.toDto(acc);
+    @Override
+    public void changePasswordForCurrentUser(ChangePasswordRequest req) {
+        if (!Objects.equals(req.getNewPassword(), req.getConfirmNewPassword())) {
+            throw new IllegalArgumentException("Confirm new password does not match");
+        }
+
+        String username = getCurrentUsername();
+        Account acc = accountRepository.findByUsername(username)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+
+        if (!passwordEncoder.matches(req.getOldPassword(), acc.getPasswordHash())) {
+            throw new IllegalArgumentException("Old password is incorrect");
+        }
+
+        acc.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
+        accountRepository.save(acc);
+    }
+
+
+    @Override
+    public AccountResponse assignRole(UUID accountId, UUID roleId) {
+        Account acc = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new NoSuchElementException("Role not found"));
+        ensureActive(role);
+
+        acc.getRoles().add(role);
+        accountRepository.save(acc);
+        return accountMapper.toResponse(acc);
+    }
+
+    @Override
+    public void unassignRole(UUID accountId, UUID roleId) {
+        Account acc = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new NoSuchElementException("Role not found"));
+
+        if ("Admin".equalsIgnoreCase(role.getRoleName())) {
+            long adminCount = accountRepository.countAccountsByRoleId(roleId);
+            if (adminCount <= 1) {
+                throw new IllegalStateException("Cannot unassign the last Admin");
+            }
+        }
+
+        String currentUser = getCurrentUsername();
+        if (acc.getUsername().equalsIgnoreCase(currentUser)) {
+            throw new IllegalStateException("You cannot unassign your own role");
+        }
+
+        acc.getRoles().remove(role);
+        accountRepository.save(acc);
+    }
+
+
+    @Override
+    @PreAuthorize("hasRole('Shop Owner')")
+    public AccountResponse updateStaffByOwner(UUID staffId, StaffOwnerUpdateRequest req) {
+        Account staff = accountRepository.findById(staffId)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+
+        boolean forbidden = staff.getRoles().stream()
+                .anyMatch(r -> FORBIDDEN_STAFF_ROLES.stream()
+                        .anyMatch(f -> f.equalsIgnoreCase(r.getRoleName())));
+        if (forbidden) {
+            throw new IllegalArgumentException("Cannot modify Admin or Shop Owner");
+        }
+
+        if (req.getFullName() != null) staff.setFullName(req.getFullName());
+        if (req.getEmail() != null) staff.setEmail(req.getEmail());
+        if (req.getPhone() != null) staff.setPhone(req.getPhone());
+        if (req.getAvatarUrl() != null) staff.setAvatarUrl(req.getAvatarUrl());
+        if (req.getActive() != null) {
+            if (staff.getUsername().equalsIgnoreCase(getCurrentUsername())) {
+                throw new IllegalStateException("You cannot deactivate yourself");
+            }
+            staff.setIsActive(req.getActive());
+        }
+
+        return accountMapper.toResponse(accountRepository.save(staff));
+    }
+
+    @Override
+    @PreAuthorize("hasRole('Shop Owner')")
+    public AccountResponse updateStaffRolesByOwner(UUID staffId, StaffRoleUpdateRequest req) {
+        Account staff = accountRepository.findById(staffId)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+
+        for (String rn : req.getRoles()) {
+            if (FORBIDDEN_STAFF_ROLES.stream().anyMatch(f -> f.equalsIgnoreCase(rn))) {
+                throw new IllegalArgumentException("Role not allowed for staff: " + rn);
+            }
+        }
+
+        Set<Role> newRoles = new HashSet<>();
+        for (String rn : req.getRoles()) {
+            Role r = roleRepository.findByRoleNameIgnoreCase(rn)
+                    .orElseThrow(() -> new NoSuchElementException("Role not found: " + rn));
+            ensureActive(r);
+            newRoles.add(r);
+        }
+
+        staff.getRoles().clear();
+        staff.getRoles().addAll(newRoles);
+        return accountMapper.toResponse(accountRepository.save(staff));
+    }
+
+
+    @Override
+    @PreAuthorize("hasRole('Admin')")
+    public AccountResponse adminUpdateAccount(UUID accountId, AccountUpdateRequest req) {
+        Account acc = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+
+        if (req.getActive() != null && Boolean.FALSE.equals(req.getActive())
+                && acc.getUsername().equalsIgnoreCase(getCurrentUsername())) {
+            throw new IllegalStateException("You cannot deactivate your own account");
+        }
+
+        if (req.getFullName() != null) acc.setFullName(req.getFullName());
+        if (req.getEmail() != null) acc.setEmail(req.getEmail());
+        if (req.getPhone() != null) acc.setPhone(req.getPhone());
+        if (req.getAvatarUrl() != null) acc.setAvatarUrl(req.getAvatarUrl());
+        if (req.getActive() != null) acc.setIsActive(req.getActive());
+        if (req.getPassword() != null && !req.getPassword().isBlank()) {
+            acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+        }
+
+        return accountMapper.toResponse(accountRepository.save(acc));
+    }
+
+    @Override
+    public AccountResponse updateAccount(UUID accountId, AccountUpdateRequest req) {
+        Account acc = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+
+        String currentUser = getCurrentUsername();
+        if (!Objects.equals(acc.getUsername(), currentUser) && !isAdmin()) {
+            throw new IllegalStateException("You can only update your own account");
+        }
+
+        if (req.getFullName() != null) acc.setFullName(req.getFullName());
+        if (req.getEmail() != null) acc.setEmail(req.getEmail());
+        if (req.getPhone() != null) acc.setPhone(req.getPhone());
+        if (req.getAvatarUrl() != null) acc.setAvatarUrl(req.getAvatarUrl());
+        if (req.getPassword() != null && !req.getPassword().isBlank()) {
+            acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+        }
+
+        return accountMapper.toResponse(accountRepository.save(acc));
     }
 
     @Override
     @PreAuthorize("hasRole('Admin')")
     public void deleteAccount(UUID accountId) {
-        accountRepository.deleteById(accountId);
-    }
-
-    @Override
-    @PreAuthorize("hasRole('Admin')")
-    public List<AccountDto> getAccounts() {
-        log.info("Fetching all accounts");
-        return accountRepository.findAll().stream().map(accountMapper::toDto).toList();
-    }
-
-    @Override
-    @PreAuthorize("hasRole('Admin')")
-    public AccountDto getAccount(UUID id) {
-        return accountMapper.toDto(
-                accountRepository.findById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Account not found"))
-        );
-    }
-
-    @Override
-    public AccountDto changePassword(UUID accountId, ChangePasswordRequest req) {
-        if (req.getNewPassword() == null || req.getConfirmNewPassword() == null
-                || !req.getNewPassword().equals(req.getConfirmNewPassword())) {
-            throw new IllegalArgumentException("Confirm new password does not match");
-        }
-        if (req.getOldPassword() != null && req.getOldPassword().equals(req.getNewPassword())) {
-            throw new IllegalArgumentException("New password must be different from old password");
-        }
-
         Account acc = accountRepository.findById(accountId)
-                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
-        if (!passwordEncoder.matches(req.getOldPassword(), acc.getPasswordHash())) {
-            throw new IllegalArgumentException("Old password is incorrect");
+        String currentUser = getCurrentUsername();
+        if (currentUser != null && currentUser.equalsIgnoreCase(acc.getUsername())) {
+            throw new IllegalStateException("You cannot delete your own account");
         }
 
-        acc.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
-        return accountMapper.toDto(accountRepository.save(acc));
-    }
-
-    @Override
-    public void changePasswordForCurrentUser(ChangePasswordRequest req) {
-        if (req.getNewPassword() == null || req.getConfirmNewPassword() == null
-                || !req.getNewPassword().equals(req.getConfirmNewPassword())) {
-            throw new IllegalArgumentException("Confirm new password does not match");
-        }
-        if (req.getOldPassword() != null && req.getOldPassword().equals(req.getNewPassword())) {
-            throw new IllegalArgumentException("New password must be different from old password");
+        boolean hasProtectedRole = acc.getRoles().stream()
+                .anyMatch(r -> "Admin".equalsIgnoreCase(r.getRoleName())
+                        || "Shop Owner".equalsIgnoreCase(r.getRoleName()));
+        if (hasProtectedRole) {
+            throw new IllegalStateException("Cannot delete an account with Admin or Shop Owner role");
         }
 
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Account acc = accountRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
-
-        if (!passwordEncoder.matches(req.getOldPassword(), acc.getPasswordHash())) {
-            throw new IllegalArgumentException("Old password is incorrect");
-        }
-
-        acc.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
-        accountRepository.save(acc);
+        accountRepository.delete(acc);
     }
 
 
-    @Override
-    public AccountDto assignRole(UUID accountId, UUID roleId) {
-        Account acc = accountRepository.findById(accountId)
-                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
-
-        Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new ResourceNotFoundException("Role not found"));
-
-        acc.getRoles().add(role);
-        accountRepository.save(acc);
-
-        return accountMapper.toDto(acc);
-    }
 }

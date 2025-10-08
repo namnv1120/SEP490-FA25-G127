@@ -2160,16 +2160,16 @@ export const SidebarData1 = [
         ],
       },
       {
-        tittle: "User Management",
+        tittle: "Accounts",
         hasSubRoute: true,
         showSubRoute: false,
         //   route: routes.users,
         subRoutes: [
           {
-            tittle: "Users",
+            tittle: "Accounts List",
             hasSubRoute: false,
             showSubRoute: false,
-            route: "/users",
+            route: "/accounts",
             subRoutes: [],
           },
           {

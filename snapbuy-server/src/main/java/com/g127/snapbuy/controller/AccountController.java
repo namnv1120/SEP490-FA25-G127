@@ -1,16 +1,17 @@
 package com.g127.snapbuy.controller;
 
-import com.g127.snapbuy.dto.AccountDto;
-import com.g127.snapbuy.dto.request.ChangePasswordRequest;
+import com.g127.snapbuy.dto.ApiResponse;
+import com.g127.snapbuy.dto.request.*;
+import com.g127.snapbuy.dto.response.AccountResponse;
 import com.g127.snapbuy.service.AccountService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
+
 
 @RestController
 @RequestMapping("/api/accounts")
@@ -20,58 +21,131 @@ public class AccountController {
     private final AccountService accountService;
 
     @PostMapping
-    public ResponseEntity<AccountDto> createAccount(@Valid @RequestBody AccountDto dto) {
-        AccountDto created = accountService.createAccount(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    @PreAuthorize("hasRole('Admin')")
+    public ApiResponse<AccountResponse> createAccount(@Valid @RequestBody AccountCreateRequest req) {
+        ApiResponse<AccountResponse> response = new ApiResponse<>();
+        response.setResult(accountService.createAccount(req));
+        return response;
     }
 
     @GetMapping
-    public ResponseEntity<List<AccountDto>> getAccounts() {
-        return ResponseEntity.ok(accountService.getAccounts());
+    @PreAuthorize("hasRole('Admin')")
+    public ApiResponse<List<AccountResponse>> getAccounts() {
+        ApiResponse<List<AccountResponse>> response = new ApiResponse<>();
+        response.setResult(accountService.getAccounts());
+        return response;
     }
 
     @GetMapping("/{accountId}")
-    public ResponseEntity<AccountDto> getAccount(@PathVariable UUID accountId) {
-        return ResponseEntity.ok(accountService.getAccount(accountId));
+    @PreAuthorize("hasRole('Admin')")
+    public ApiResponse<AccountResponse> getAccount(@PathVariable UUID accountId) {
+        ApiResponse<AccountResponse> response = new ApiResponse<>();
+        response.setResult(accountService.getAccount(accountId));
+        return response;
     }
 
     @GetMapping("/my-info")
-    public ResponseEntity<AccountDto> getMyInfo() {
-        return ResponseEntity.ok(accountService.getMyInfo());
+    public ApiResponse<AccountResponse> getMyInfo() {
+        ApiResponse<AccountResponse> response = new ApiResponse<>();
+        response.setResult(accountService.getMyInfo());
+        return response;
     }
 
     @PutMapping("/{accountId}")
-    public ResponseEntity<AccountDto> updateAccount(@PathVariable UUID accountId,
-                                                    @Valid @RequestBody AccountDto dto) {
-        AccountDto updated = accountService.updateAccount(accountId, dto);
-        return ResponseEntity.ok(updated);
+    public ApiResponse<AccountResponse> updateAccount(@PathVariable UUID accountId,
+                                                      @Valid @RequestBody AccountUpdateRequest req) {
+        ApiResponse<AccountResponse> response = new ApiResponse<>();
+        response.setResult(accountService.updateAccount(accountId, req));
+        return response;
     }
 
     @DeleteMapping("/{accountId}")
-    public ResponseEntity<Void> deleteAccount(@PathVariable UUID accountId) {
+    @PreAuthorize("hasRole('Admin')")
+    public ApiResponse<Void> deleteAccount(@PathVariable UUID accountId) {
         accountService.deleteAccount(accountId);
-        return ResponseEntity.noContent().build();
+        ApiResponse<Void> response = new ApiResponse<>();
+        response.setResult(null);
+        response.setMessage("Account deleted successfully");
+        return response;
     }
 
     @PostMapping("/{accountId}/assign-role/{roleId}")
-    public ResponseEntity<AccountDto> assignRole(@PathVariable UUID accountId, @PathVariable UUID roleId) {
-        return ResponseEntity.ok(accountService.assignRole(accountId, roleId));
+    @PreAuthorize("hasRole('Admin')")
+    public ApiResponse<AccountResponse> assignRole(@PathVariable UUID accountId, @PathVariable UUID roleId) {
+        ApiResponse<AccountResponse> response = new ApiResponse<>();
+        response.setResult(accountService.assignRole(accountId, roleId));
+        return response;
     }
 
     @PostMapping("/{accountId}/change-password")
-    public ResponseEntity<AccountDto> changePassword(
-            @PathVariable UUID accountId,
-            @Valid @RequestBody ChangePasswordRequest req
-    ) {
-        AccountDto changed = accountService.changePassword(accountId, req);
-        return ResponseEntity.ok(changed);
+    public ApiResponse<AccountResponse> changePassword(@PathVariable UUID accountId,
+                                                       @Valid @RequestBody ChangePasswordRequest req) {
+        ApiResponse<AccountResponse> response = new ApiResponse<>();
+        response.setResult(accountService.changePassword(accountId, req));
+        return response;
     }
 
     @PutMapping("/me/change-password")
-    public ResponseEntity<?> changePasswordMe(@Valid @RequestBody ChangePasswordRequest req) {
+    public ApiResponse<Void> changePasswordMe(@Valid @RequestBody ChangePasswordRequest req) {
         accountService.changePasswordForCurrentUser(req);
-        return ResponseEntity.ok(
-                Map.of("code", "SUCCESS", "message", "Password changed successfully")
-        );
+        ApiResponse<Void> response = new ApiResponse<>();
+        response.setMessage("Password changed successfully");
+        response.setResult(null);
+        return response;
     }
+
+    @PostMapping("/shop-owners")
+    @PreAuthorize("hasRole('Admin')")
+    public ApiResponse<AccountResponse> createShopOwner(@Valid @RequestBody AccountCreateRequest req) {
+        ApiResponse<AccountResponse> response = new ApiResponse<>();
+        response.setResult(accountService.createShopOwner(req));
+        return response;
+    }
+
+    @PostMapping("/staff")
+    @PreAuthorize("hasRole('Shop Owner')")
+    public ApiResponse<AccountResponse> createStaff(@Valid @RequestBody AccountCreateRequest req) {
+        ApiResponse<AccountResponse> response = new ApiResponse<>();
+        response.setResult(accountService.createStaff(req));
+        return response;
+    }
+
+    @PutMapping("/staff/{staffId}")
+    @PreAuthorize("hasRole('Shop Owner')")
+    public ApiResponse<AccountResponse> updateStaffByOwner(@PathVariable UUID staffId,
+                                                           @Valid @RequestBody StaffOwnerUpdateRequest req) {
+        ApiResponse<AccountResponse> response = new ApiResponse<>();
+        response.setResult(accountService.updateStaffByOwner(staffId, req));
+        return response;
+    }
+
+    @PutMapping("/staff/{staffId}/roles")
+    @PreAuthorize("hasRole('Shop Owner')")
+    public ApiResponse<AccountResponse> updateStaffRolesByOwner(@PathVariable UUID staffId,
+                                                                @Valid @RequestBody StaffRoleUpdateRequest req) {
+        ApiResponse<AccountResponse> response = new ApiResponse<>();
+        response.setResult(accountService.updateStaffRolesByOwner(staffId, req));
+        return response;
+    }
+
+    @PutMapping("/admin/{accountId}")
+    @PreAuthorize("hasRole('Admin')")
+    public ApiResponse<AccountResponse> adminUpdateAccount(@PathVariable UUID accountId,
+                                                           @Valid @RequestBody AccountUpdateRequest req) {
+        ApiResponse<AccountResponse> response = new ApiResponse<>();
+        response.setResult(accountService.adminUpdateAccount(accountId, req));
+        return response;
+    }
+
+    @DeleteMapping("/{accountId}/roles/{roleId}")
+    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
+    public ApiResponse<Void> unassignRole(@PathVariable UUID accountId, @PathVariable UUID roleId) {
+        accountService.unassignRole(accountId, roleId);
+        ApiResponse<Void> response = new ApiResponse<>();
+        response.setMessage("Unassigned role successfully");
+        response.setResult(null);
+        return response;
+    }
+
+
 }

@@ -1,5 +1,6 @@
 package com.g127.snapbuy.entity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -78,7 +79,11 @@ public class Customer {
     public enum Gender {
         Male,
         Female,
-        Other
+        Other;
+        @JsonCreator
+        public static Gender fromString(String value) {
+            return Gender.valueOf(value.substring(0,1).toUpperCase() + value.substring(1).toLowerCase());
+        }
     }
 
 }
