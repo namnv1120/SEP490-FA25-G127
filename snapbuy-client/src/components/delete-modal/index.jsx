@@ -1,19 +1,30 @@
+// DeleteModal.jsx - Version đơn giản hơn
 import axios from "axios";
 
-const DeleteModal = ({ productId }) => {
+const DeleteModal = ({ productId, onDeleteSuccess }) => {
   const handleDelete = async () => {
     if (!productId) {
-      alert(" No product selected");
+      alert("⚠️ No product selected");
       return;
     }
 
     try {
       await axios.delete(`http://localhost:8080/api/products/${productId}`);
-      alert(" Product deleted successfully");
-      window.location.reload(); // hoặc gọi hàm refresh danh sách nếu muốn tối ưu hơn
+      alert("✅ Product deleted successfully");
+      
+      // Gọi callback để refresh danh sách
+      if (onDeleteSuccess) {
+        onDeleteSuccess();
+      }
+      
+      // Đóng modal bằng Bootstrap
+      const modalElement = document.getElementById('delete-modal');
+      const modal = window.bootstrap?.Modal?.getInstance(modalElement);
+      modal?.hide();
+      
     } catch (error) {
-      console.error("Delete failed:", error);
-      alert(" Failed to delete product");
+      console.error("❌ Delete failed:", error);
+      alert("❌ Failed to delete product");
     }
   };
 
@@ -27,7 +38,7 @@ const DeleteModal = ({ productId }) => {
                 <i className="ti ti-trash fs-24 text-danger" />
               </span>
               <h4 className="mb-0 delete-account-font">
-                Are you sure you want to delete this?
+                Are you sure you want to delete this product?
               </h4>
               <div className="modal-footer-btn mt-3 d-flex justify-content-center">
                 <button
@@ -42,9 +53,8 @@ const DeleteModal = ({ productId }) => {
                   type="button"
                   className="btn btn-primary fs-13 fw-medium p-2 px-3"
                   onClick={handleDelete}
-                  data-bs-dismiss="modal"
                 >
-                  Yes Delete
+                  Yes, Delete
                 </button>
               </div>
             </div>

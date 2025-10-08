@@ -8,7 +8,7 @@ import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
 
-const API_BASE_URL = "http://localhost:8080/api"; // ⚠️ cập nhật cho đúng backend
+const API_BASE_URL = "http://localhost:8080/api";
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
@@ -16,11 +16,13 @@ const ProductList = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedId, setSelectedId] = useState(null); // ✅ lưu productId khi click delete
+  const [selectedId, setSelectedId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // ✅ Gọi API lấy danh sách sản phẩm
+  // Gọi API lấy danh sách sản phẩm
   const fetchProducts = async () => {
     try {
+      setLoading(true);
       const res = await axios.get(`${API_BASE_URL}/products`, {
         params: { page: currentPage, limit: rows, search: searchQuery },
       });
@@ -28,6 +30,11 @@ const ProductList = () => {
       setTotalRecords(res.data?.total || 0);
     } catch (err) {
       console.error("❌ Lỗi khi fetch sản phẩm:", err);
+      if (err.code === 'ERR_NETWORK' || err.message.includes('Network Error')) {
+        alert("⚠️ Không thể kết nối đến server. Vui lòng kiểm tra:\n- Backend đã chạy chưa?\n- URL API có đúng không?");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -35,32 +42,24 @@ const ProductList = () => {
     fetchProducts();
   }, [currentPage, rows, searchQuery]);
 
-  // ✅ Hàm tìm kiếm
+  // Hàm tìm kiếm
   const handleSearch = (value) => {
     setSearchQuery(value);
     setCurrentPage(1);
   };
 
-  // ✅ Khi click vào nút xoá → mở modal & lưu ID
+  // Khi click vào nút xoá → mở modal & lưu ID
   const handleDeleteClick = (id) => {
     setSelectedId(id);
   };
 
-  // ✅ Hàm xoá sản phẩm (sẽ được gọi trong DeleteModal)
-  const handleDeleteConfirm = async () => {
-    if (!selectedId) return;
-
-    try {
-      await axios.delete(`${API_BASE_URL}/products/${selectedId}`);
-      alert("✅ Sản phẩm đã được xoá!");
-      fetchProducts(); // load lại danh sách sau khi xoá
-    } catch (err) {
-      console.error("❌ Lỗi khi xoá sản phẩm:", err);
-      alert("Xoá thất bại!");
-    }
+  // Hàm được gọi sau khi xóa thành công
+  const handleDeleteSuccess = () => {
+    setSelectedId(null);
+    fetchProducts();
   };
 
-  // ✅ Cấu hình cột bảng
+  // Cấu hình cột bảng
   const columns = [
     { header: "SKU", field: "sku", sortable: true },
     {
@@ -70,9 +69,18 @@ const ProductList = () => {
       body: (data) => (
         <div className="d-flex align-items-center">
           <img
-            src={data.productImage}
+            src={data.productImage || "/placeholder-image.png"}
             alt={data.product}
-            style={{ width: "40px", height: "40px", marginRight: "10px" }}
+            style={{ 
+              width: "40px", 
+              height: "40px", 
+              marginRight: "10px",
+              objectFit: "cover",
+              borderRadius: "4px"
+            }}
+            onError={(e) => {
+              e.target.src = "/placeholder-image.png";
+            }}
           />
           <span>{data.product}</span>
         </div>
@@ -98,7 +106,7 @@ const ProductList = () => {
             className="btn btn-sm btn-outline-danger"
             data-bs-toggle="modal"
             data-bs-target="#delete-modal"
-            onClick={() => handleDeleteClick(data.id)} // ✅ lưu ID vào state
+            onClick={() => handleDeleteClick(data.id)}
           >
             Delete
           </button>
@@ -121,25 +129,35 @@ const ProductList = () => {
             </Link>
           </div>
 
-          <TableTopHead />
-
-          <div className="card mt-3">
+          <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
-              <SearchFromApi callback={handleSearch} rows={rows} setRows={setRows} />
+              <SearchFromApi 
+                callback={handleSearch} 
+                rows={rows} 
+                setRows={setRows} 
+              />
             </div>
 
             <div className="card-body">
-              <div className="table-responsive">
-                <PrimeDataTable
-                  column={columns}
-                  data={products}
-                  rows={rows}
-                  setRows={setRows}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalRecords={totalRecords}
-                />
-              </div>
+              {loading ? (
+                <div className="text-center py-5">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <PrimeDataTable
+                    column={columns}
+                    data={products}
+                    rows={rows}
+                    setRows={setRows}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    totalRecords={totalRecords}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -147,8 +165,11 @@ const ProductList = () => {
         </div>
       </div>
 
-      {/* ✅ Gọi modal cuối trang + truyền hàm xoá */}
-      <DeleteModal onConfirm={handleDeleteConfirm} />
+      {/* Truyền productId và callback vào DeleteModal */}
+      <DeleteModal 
+        productId={selectedId}
+        onDeleteSuccess={handleDeleteSuccess}
+      />
     </>
   );
 };

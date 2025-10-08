@@ -49,9 +49,9 @@ const AppRouter = () => {
             <Route path="view/:id" element={<ProductDetail />} /> {/* /products/view/:id */}
           </Route>
 
-          {/*  Alias routes để tương thích với /product-list */}
+          {/* Alias routes để tương thích với /product-list */}
           <Route path="product-list" element={<ProductList />} /> {/* /product-list */}
-          <Route path="add-product" element={<AddProduct />} /> {/* /product-list/add */}
+          <Route path="add-product" element={<AddProduct />} /> {/* /add-product */}
           <Route path="product-list/edit/:id" element={<EditProduct />} /> {/* /product-list/edit/:id */}
           <Route path="product-list/view/:id" element={<ProductDetail />} /> {/* /product-list/view/:id */}
 
@@ -66,7 +66,13 @@ const AppRouter = () => {
   });
 
   return (
-    <BrowserRouter basename={base_path}>
+    <BrowserRouter 
+      basename={base_path}
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true
+      }}
+    >
       <RouterContent />
     </BrowserRouter>
   );
