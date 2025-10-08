@@ -94,11 +94,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
-    //-------------------------------------//
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     public ResponseEntity<ApiResponse<?>> handleIllegalArgs(RuntimeException ex) {
         ApiResponse<?> response = ApiResponse.builder()
-                .code(4000)
+                .code(4002)
                 .message(ex.getMessage())
                 .build();
         return ResponseEntity.badRequest().body(response);
@@ -107,55 +106,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<ApiResponse<?>> handleNotFound(NoSuchElementException ex) {
         ApiResponse<?> response = ApiResponse.builder()
-                .code(4000)
+                .code(4003)
                 .message(ex.getMessage())
                 .build();
         return ResponseEntity.badRequest().body(response);
     }
 }
-    }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<?>> handleRuntimeException(Exception ex) {
-        ApiResponse<?> response = ApiResponse.builder()
-                .code(9999)
-                .message(ex.getMessage())
-                .build();
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<?>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        String message = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(DefaultMessageSourceResolvable::getDefaultMessage)
-                .collect(Collectors.joining("; "));
-        ApiResponse<?> response = ApiResponse.builder()
-                .code(4000)
-                .message(message)
-                .build();
-
-        return ResponseEntity.badRequest().body(response);
-    }
-
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiResponse<?>> handleJsonParseExceptions(HttpMessageNotReadableException ex) {
-        String message = "Invalid request format";
-
-        if (ex.getCause() instanceof InvalidFormatException invalidFormat) {
-            if (invalidFormat.getTargetType().isEnum()) {
-                message = "Invalid value for field. Accepted values: " +
-                        Arrays.toString(invalidFormat.getTargetType().getEnumConstants());
-            } else if (invalidFormat.getTargetType() == UUID.class) {
-                message = "UUID format error. Please provide a valid UUID.";
-            }
-        }
-
-        ApiResponse<?> response = ApiResponse.builder()
-                .code(4001)
-                .message(message)
-                .build();
-        return ResponseEntity.badRequest().body(response);
-    }
-}

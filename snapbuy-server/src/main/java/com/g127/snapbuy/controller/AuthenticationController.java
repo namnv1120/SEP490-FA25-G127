@@ -19,7 +19,7 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
 
-    @PostMapping("/token")
+    @PostMapping("/login")
     public ApiResponse<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest req) {
         ApiResponse<AuthenticationResponse> response = new ApiResponse<>();
         response.setResult(authenticationService.authenticate(req));
