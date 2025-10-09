@@ -24,5 +24,7 @@ public class PaymentRequest {
 
     private String transactionReference;
 
+    private String paymentStatus;
+
     private String notes;
 }

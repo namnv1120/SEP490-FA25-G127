@@ -10,38 +10,37 @@ import java.util.UUID;
 @Table(name = "payments")
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Payment {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "payment_id")
+    @Column(name = "payment_id", nullable = false)
     private UUID paymentId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", referencedColumnName = "order_id", nullable = false)
+    @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    @Column(name = "payment_method", length = 30, nullable = false)
+    @Column(name = "payment_method")
     private String paymentMethod;
 
     @Column(name = "payment_date")
     private LocalDateTime paymentDate;
 
-    @Column(name = "amount", precision = 18, scale = 2, nullable = false)
+    @Column(name = "amount")
     private BigDecimal amount;
 
-    @Column(name = "payment_status", length = 20)
+    @Column(name = "payment_status")
     private String paymentStatus;
 
-    @Column(name = "transaction_reference", length = 100)
+    @Column(name = "transaction_reference")
     private String transactionReference;
 
-    @Column(name = "notes", length = 500)
+    @Column(name = "notes")
     private String notes;
 
     @Column(name = "created_date")
-    private LocalDateTime createdDate;
+    private LocalDateTime createdDate = LocalDateTime.now();
 }

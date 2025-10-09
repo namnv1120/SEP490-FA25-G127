@@ -19,4 +19,8 @@ public interface OrderService {
     PaymentResponse addPayment(PaymentRequest req);
 
     void cancelOrder(UUID orderId);
+
+    void holdOrder(UUID id);
+
+    void completeOrder(UUID id);
 }

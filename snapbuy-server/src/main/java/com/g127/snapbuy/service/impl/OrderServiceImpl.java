@@ -210,4 +210,22 @@ public class OrderServiceImpl implements OrderService {
         trx.setCreatedBy(account.getFullName());
         inventoryTransactionRepository.save(trx);
     }
+
+    @Override
+    public void holdOrder(UUID id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        order.setOrderStatus("HOLD");
+        orderRepository.save(order);
+    }
+
+    @Override
+    public void completeOrder(UUID id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        order.setOrderStatus("COMPLETED");
+        orderRepository.save(order);
+    }
+
+
 }
