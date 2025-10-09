@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import store from "./core/redux/store.js";
@@ -21,7 +21,17 @@ import "./customStyle.scss";
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Provider store={store}>
-      <AppRouter />
+      <Suspense
+        fallback={
+          <div className="d-flex justify-content-center align-items-center vh-100">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        }
+      >
+        <AppRouter />
+      </Suspense>
     </Provider>
   </React.StrictMode>
 );

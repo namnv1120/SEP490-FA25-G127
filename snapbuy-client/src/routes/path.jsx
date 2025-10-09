@@ -34,9 +34,6 @@ const RolesPermissions = lazy(() =>
 );
 const Profile = lazy(() => import("../feature-module/usermanagement/Profile"));
 const Login = lazy(() => import("../feature-module/pages/authentication/Login"));
-const Register = lazy(() =>
-  import("../feature-module/pages/authentication/Register")
-);
 const Forgotpassword = lazy(() =>
   import("../feature-module/pages/authentication/ForgotPassword")
 );
@@ -46,7 +43,7 @@ const routes = all_routes;
 export const authRoutes = [
   {
     id: 1,
-    path: routes.dashboard, // dùng routes.dashboard thay vì "/dashboard"
+    path: routes.dashboard, 
     name: "dashboard",
     element: <Dashboard />,
     route: Route,
@@ -116,13 +113,6 @@ export const unAuthRoutes = [
     path: routes.login,
     name: "login",
     element: <Login />,
-    route: Route,
-  },
-  {
-    id: 2,
-    path: routes.register,
-    name: "register",
-    element: <Register />,
     route: Route,
   },
   {
