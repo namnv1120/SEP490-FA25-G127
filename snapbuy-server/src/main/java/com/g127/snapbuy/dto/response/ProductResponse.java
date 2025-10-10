@@ -20,7 +20,6 @@ public class ProductResponse {
     private UUID supplierId;
     private String supplierName;
     private String unit;
-    private BigDecimal weight;
     private String dimensions;
     private String imageUrl;
     private Boolean active;

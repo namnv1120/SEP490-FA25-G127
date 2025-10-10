@@ -40,9 +40,6 @@ public class Product {
     @Column(name = "unit", length = 20)
     private String unit = "Piece";
 
-    @Column(name = "weight", precision = 8, scale = 3)
-    private BigDecimal weight;
-
     @Column(name = "dimensions", length = 50)
     private String dimensions;
 

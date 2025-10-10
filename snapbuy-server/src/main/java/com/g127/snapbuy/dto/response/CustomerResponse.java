@@ -19,17 +19,9 @@ public class CustomerResponse {
 
     private UUID customerId;
     private String customerCode;
-    private String firstName;
-    private String lastName;
     private String fullName;
-    private String email;
     private String phone;
-    private LocalDate dateOfBirth;
     private String gender;
-    private String address;
-    private String city;
-    private String district;
-    private String ward;
     private boolean active;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
