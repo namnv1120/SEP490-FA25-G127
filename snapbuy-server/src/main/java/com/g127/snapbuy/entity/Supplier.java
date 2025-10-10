@@ -25,9 +25,6 @@ public class Supplier {
     @Column(name = "supplier_name", nullable = false, length = 100)
     private String supplierName;
 
-    @Column(name = "contact_person", length = 50)
-    private String contactPerson;
-
     @Column(name = "phone", length = 20)
     private String phone;
 
@@ -39,9 +36,6 @@ public class Supplier {
 
     @Column(name = "city", length = 50)
     private String city;
-
-    @Column(name = "tax_code", length = 20)
-    private String taxCode;
 
     @Builder.Default
     @Column(name = "active", nullable = false)

@@ -26,9 +26,6 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public CustomerResponse createCustomer(CustomerCreateRequest request) {
-        if (customerRepository.existsByEmail(request.getEmail())) {
-            throw new AppException(ErrorCode.EMAIL_EXISTED);
-        }
         Customer customer = customerMapper.toEntity(request);
         customer.setCreatedDate(LocalDateTime.now());
         customer.setUpdatedDate(LocalDateTime.now());
@@ -75,5 +72,4 @@ public class CustomerServiceImpl implements CustomerService {
                 .map(customerMapper::toResponse)
                 .collect(Collectors.toList());
     }
-
 }

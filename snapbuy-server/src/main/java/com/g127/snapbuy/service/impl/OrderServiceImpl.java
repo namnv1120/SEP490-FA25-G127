@@ -29,47 +29,75 @@ public class OrderServiceImpl implements OrderService {
     private final InventoryTransactionRepository inventoryTransactionRepository;
     private final AccountRepository accountRepository;
     private final CustomerRepository customerRepository;
+    private final ProductPriceRepository productPriceRepository;
     private final OrderMapper orderMapper;
-
 
     @Override
     @Transactional
     public OrderResponse createOrder(OrderCreateRequest req) {
+
+        if (req.getAccountId() == null)
+            throw new IllegalArgumentException("accountId is required");
+        if (req.getCustomerId() == null)
+            throw new IllegalArgumentException("customerId is required");
+        if (req.getItems() == null || req.getItems().isEmpty())
+            throw new IllegalArgumentException("Order must contain at least 1 item");
+
         Account creator = accountRepository.findById(req.getAccountId())
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
 
-        Customer customer = null;
-        if (req.getCustomerId() != null) {
-            customer = customerRepository.findById(req.getCustomerId())
-                    .orElseThrow(() -> new NoSuchElementException("Customer not found"));
-        }
+        Customer customer = customerRepository.findById(req.getCustomerId())
+                .orElseThrow(() -> new NoSuchElementException("Customer not found"));
 
         String orderNumber = generateOrderNumber();
 
         Order order = new Order();
-        order.setOrderId(UUID.randomUUID());
         order.setOrderNumber(orderNumber);
         order.setAccount(creator);
         order.setCustomer(customer);
         order.setOrderDate(LocalDateTime.now());
         order.setOrderStatus("PENDING");
         order.setPaymentStatus("UNPAID");
-        order.setDiscountAmount(req.getDiscountAmount() != null ? req.getDiscountAmount() : BigDecimal.ZERO);
-        order.setTaxAmount(req.getTaxAmount() != null ? req.getTaxAmount() : BigDecimal.ZERO);
         order.setNotes(req.getNotes());
-        order.setCreatedBy(creator.getFullName());
+        order.setCreatedDate(LocalDateTime.now());
+        order.setUpdatedDate(LocalDateTime.now());
 
         BigDecimal total = BigDecimal.ZERO;
         List<OrderDetail> orderDetails = new ArrayList<>();
 
+        // ✅ Tính tổng từng sản phẩm (đã trừ giảm giá riêng)
         for (OrderDetailRequest item : req.getItems()) {
+
+            if (item.getProductId() == null)
+                throw new IllegalArgumentException("productId is required for each item");
+            if (item.getQuantity() == null || item.getQuantity() <= 0)
+                throw new IllegalArgumentException("quantity must be > 0");
+
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new NoSuchElementException("Product not found"));
 
-            BigDecimal discount = item.getDiscount() != null ? item.getDiscount() : BigDecimal.ZERO;
-            BigDecimal itemTotal = item.getUnitPrice()
+            BigDecimal unitPrice = item.getUnitPrice();
+            if (unitPrice == null || unitPrice.compareTo(BigDecimal.ZERO) <= 0) {
+                ProductPrice price = productPriceRepository.findCurrentPriceByProductId(product.getProductId())
+                        .orElseThrow(() -> new NoSuchElementException(
+                                "No active price found for product: " + product.getProductName()));
+                unitPrice = price.getUnitPrice();
+                log.info("Auto-loaded price {} for product {}", unitPrice, product.getProductName());
+            }
+
+            if (unitPrice.compareTo(BigDecimal.ZERO) <= 0)
+                throw new IllegalArgumentException("Unit price must be greater than 0");
+
+            BigDecimal discountPercent = item.getDiscount() != null ? item.getDiscount() : BigDecimal.ZERO;
+            if (discountPercent.compareTo(BigDecimal.ZERO) < 0 || discountPercent.compareTo(BigDecimal.valueOf(100)) > 0)
+                throw new IllegalArgumentException("Discount must be between 0 and 100 percent");
+
+            BigDecimal discountMultiplier = BigDecimal.ONE.subtract(
+                    discountPercent.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP));
+
+            BigDecimal itemTotal = unitPrice
                     .multiply(BigDecimal.valueOf(item.getQuantity()))
-                    .multiply(BigDecimal.ONE.subtract(discount.divide(BigDecimal.valueOf(100))));
+                    .multiply(discountMultiplier);
 
             total = total.add(itemTotal);
 
@@ -77,35 +105,56 @@ public class OrderServiceImpl implements OrderService {
             detail.setOrder(order);
             detail.setProduct(product);
             detail.setQuantity(item.getQuantity());
-            detail.setUnitPrice(item.getUnitPrice());
-            detail.setDiscount(discount);
+            detail.setUnitPrice(unitPrice);
+            detail.setDiscount(discountPercent);
             orderDetails.add(detail);
 
-            adjustInventory(product, item.getQuantity() * -1, creator);
+            adjustInventory(product, -item.getQuantity(), creator);
         }
 
-        order.setTotalAmount(total);
+        BigDecimal billDiscountPercent = req.getDiscountAmount() != null ? req.getDiscountAmount() : BigDecimal.ZERO;
+        if (billDiscountPercent.compareTo(BigDecimal.ZERO) < 0 || billDiscountPercent.compareTo(BigDecimal.valueOf(100)) > 0)
+            throw new IllegalArgumentException("Order-level discount must be between 0 and 100 percent");
+
+        BigDecimal billDiscountAmount = total.multiply(
+                billDiscountPercent.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP)
+        );
+        BigDecimal afterDiscount = total.subtract(billDiscountAmount);
+
+        BigDecimal taxPercent = req.getTaxAmount() != null ? req.getTaxAmount() : BigDecimal.ZERO;
+        if (taxPercent.compareTo(BigDecimal.ZERO) < 0)
+            throw new IllegalArgumentException("Tax must be non-negative");
+
+        BigDecimal taxAmount = afterDiscount.multiply(
+                taxPercent.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP)
+        );
+
+        BigDecimal grandTotal = afterDiscount.add(taxAmount);
+        if (grandTotal.compareTo(BigDecimal.ZERO) < 0) grandTotal = BigDecimal.ZERO;
+
+        order.setDiscountAmount(billDiscountAmount);
+        order.setTaxAmount(taxAmount);
+        order.setTotalAmount(grandTotal);
+
         orderRepository.save(order);
         orderDetailRepository.saveAll(orderDetails);
 
-        if (req.getPaymentMethod() != null && total.compareTo(BigDecimal.ZERO) > 0) {
+        // ✅ Tự tạo thanh toán nếu có
+        if (req.getPaymentMethod() != null && grandTotal.compareTo(BigDecimal.ZERO) > 0) {
             Payment payment = new Payment();
-            payment.setPaymentId(UUID.randomUUID());
             payment.setOrder(order);
             payment.setPaymentMethod(req.getPaymentMethod());
-            payment.setAmount(total);
+            payment.setAmount(grandTotal);
             payment.setPaymentStatus("SUCCESS");
             payment.setPaymentDate(LocalDateTime.now());
             paymentRepository.save(payment);
-
             order.setPaymentStatus("PAID");
         }
 
-        orderRepository.save(order);
+        order.setUpdatedDate(LocalDateTime.now());
 
         return orderMapper.toResponse(order, orderDetails, paymentRepository.findByOrder(order));
     }
-
 
     @Override
     public OrderResponse getOrder(UUID orderId) {
@@ -126,15 +175,16 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
     }
 
-
     @Override
     @Transactional
     public PaymentResponse addPayment(PaymentRequest req) {
         Order order = orderRepository.findById(req.getOrderId())
                 .orElseThrow(() -> new NoSuchElementException("Order not found"));
 
+        if (req.getAmount() == null || req.getAmount().compareTo(BigDecimal.ZERO) <= 0)
+            throw new IllegalArgumentException("Payment amount must be > 0");
+
         Payment payment = new Payment();
-        payment.setPaymentId(UUID.randomUUID());
         payment.setOrder(order);
         payment.setPaymentMethod(req.getPaymentMethod());
         payment.setAmount(req.getAmount());
@@ -154,7 +204,7 @@ public class OrderServiceImpl implements OrderService {
             order.setPaymentStatus("PARTIAL");
         }
 
-        orderRepository.save(order);
+        order.setUpdatedDate(LocalDateTime.now());
 
         return PaymentResponse.builder()
                 .paymentId(payment.getPaymentId())
@@ -173,18 +223,16 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NoSuchElementException("Order not found"));
 
-        if ("CANCELLED".equalsIgnoreCase(order.getOrderStatus())) {
+        if ("CANCELLED".equalsIgnoreCase(order.getOrderStatus()))
             throw new IllegalStateException("Order already cancelled");
-        }
 
-        // Hoàn tồn kho
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
         for (OrderDetail d : details) {
             adjustInventory(d.getProduct(), d.getQuantity(), order.getAccount());
         }
 
         order.setOrderStatus("CANCELLED");
-        orderRepository.save(order);
+        order.setUpdatedDate(LocalDateTime.now());
     }
 
     private String generateOrderNumber() {
@@ -194,7 +242,8 @@ public class OrderServiceImpl implements OrderService {
 
     private void adjustInventory(Product product, int quantityChange, Account account) {
         Inventory inv = inventoryRepository.findByProduct(product)
-                .orElseThrow(() -> new NoSuchElementException("Inventory not found for product: " + product.getProductName()));
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Inventory not found for product: " + product.getProductName()));
 
         inv.setQuantityInStock(inv.getQuantityInStock() + quantityChange);
         inv.setLastUpdated(LocalDateTime.now());
@@ -207,25 +256,24 @@ public class OrderServiceImpl implements OrderService {
         trx.setTransactionType(quantityChange < 0 ? "SALE_OUT" : "SALE_CANCEL");
         trx.setQuantity(Math.abs(quantityChange));
         trx.setTransactionDate(LocalDateTime.now());
-        trx.setCreatedBy(account.getFullName());
         inventoryTransactionRepository.save(trx);
     }
 
     @Override
+    @Transactional
     public void holdOrder(UUID id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
         order.setOrderStatus("HOLD");
-        orderRepository.save(order);
+        order.setUpdatedDate(LocalDateTime.now());
     }
 
     @Override
+    @Transactional
     public void completeOrder(UUID id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
         order.setOrderStatus("COMPLETED");
-        orderRepository.save(order);
+        order.setUpdatedDate(LocalDateTime.now());
     }
-
-
 }

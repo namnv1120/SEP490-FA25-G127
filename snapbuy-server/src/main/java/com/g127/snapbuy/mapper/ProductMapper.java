@@ -17,7 +17,7 @@ public interface ProductMapper {
     @Mapping(target = "updatedDate", ignore = true)
     Product toEntity(ProductCreateRequest request);
 
-    @Mapping(target = "productId", ignore = true) // id lấy từ path
+    @Mapping(target = "productId", ignore = true)
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "supplier", ignore = true)
     @Mapping(target = "createdDate", ignore = true)

@@ -45,6 +45,4 @@ public class InventoryTransaction {
     @Column(name = "transaction_date")
     private LocalDateTime transactionDate;
 
-    @Column(name = "created_by")
-    private String createdBy;
 }

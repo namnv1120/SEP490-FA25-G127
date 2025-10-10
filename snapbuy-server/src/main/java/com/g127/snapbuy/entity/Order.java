@@ -2,12 +2,15 @@ package com.g127.snapbuy.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
 @Table(name = "orders")
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @Builder
@@ -33,9 +36,6 @@ public class Order {
     @Column(name = "order_date")
     private LocalDateTime orderDate;
 
-    @Column(name = "required_date")
-    private LocalDateTime requiredDate;
-
     @Column(name = "order_status", length = 20)
     private String orderStatus;
 
@@ -54,14 +54,22 @@ public class Order {
     @Column(name = "notes", length = 500)
     private String notes;
 
-    @Column(name = "created_by", length = 100)
-    private String createdBy;
-
     @Column(name = "created_date")
     private LocalDateTime createdDate;
 
     @Column(name = "updated_date")
     private LocalDateTime updatedDate;
+
+    @PrePersist
+    public void onCreate() {
+        this.createdDate = LocalDateTime.now();
+        this.updatedDate = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        this.updatedDate = LocalDateTime.now();
+    }
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderDetail> orderDetails = new ArrayList<>();
