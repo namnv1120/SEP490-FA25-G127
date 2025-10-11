@@ -65,7 +65,6 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal total = BigDecimal.ZERO;
         List<OrderDetail> orderDetails = new ArrayList<>();
 
-        // ✅ Tính tổng từng sản phẩm (đã trừ giảm giá riêng)
         for (OrderDetailRequest item : req.getItems()) {
 
             if (item.getProductId() == null)
@@ -194,17 +193,10 @@ public class OrderServiceImpl implements OrderService {
         payment.setPaymentDate(LocalDateTime.now());
         paymentRepository.save(payment);
 
-        BigDecimal totalPaid = paymentRepository.findByOrder(order).stream()
-                .map(Payment::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        if (totalPaid.compareTo(order.getTotalAmount()) >= 0) {
-            order.setPaymentStatus("PAID");
-        } else {
-            order.setPaymentStatus("PARTIAL");
-        }
-
+        order.setPaymentStatus("PAID");
+        order.setOrderStatus("COMPLETED");
         order.setUpdatedDate(LocalDateTime.now());
+        orderRepository.save(order);
 
         return PaymentResponse.builder()
                 .paymentId(payment.getPaymentId())
@@ -217,6 +209,7 @@ public class OrderServiceImpl implements OrderService {
                 .build();
     }
 
+
     @Override
     @Transactional
     public void cancelOrder(UUID orderId) {
@@ -226,14 +219,24 @@ public class OrderServiceImpl implements OrderService {
         if ("CANCELLED".equalsIgnoreCase(order.getOrderStatus()))
             throw new IllegalStateException("Order already cancelled");
 
+        if ("UNPAID".equalsIgnoreCase(order.getPaymentStatus())) {
+            order.setPaymentStatus("UNPAID");
+        }
+        else if ("PAID".equalsIgnoreCase(order.getPaymentStatus())) {
+            order.setPaymentStatus("REFUNDED");
+        }
+
+        order.setOrderStatus("CANCELLED");
+        order.setUpdatedDate(LocalDateTime.now());
+
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
         for (OrderDetail d : details) {
             adjustInventory(d.getProduct(), d.getQuantity(), order.getAccount());
         }
 
-        order.setOrderStatus("CANCELLED");
-        order.setUpdatedDate(LocalDateTime.now());
+        orderRepository.save(order);
     }
+
 
     private String generateOrderNumber() {
         long count = orderRepository.count() + 1;

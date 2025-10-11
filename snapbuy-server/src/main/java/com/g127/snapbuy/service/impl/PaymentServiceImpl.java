@@ -27,11 +27,22 @@ public class PaymentServiceImpl implements PaymentService {
         Order order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
+        BigDecimal orderTotal = order.getTotalAmount();
+        BigDecimal paymentAmount = request.getAmount();
+
+        if (paymentAmount == null || paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Payment amount must be greater than 0");
+        }
+
+        if (paymentAmount.compareTo(orderTotal) < 0) {
+            throw new IllegalArgumentException("Payment amount is less than the total order amount");
+        }
+
         Payment payment = new Payment();
         payment.setPaymentId(UUID.randomUUID());
         payment.setOrder(order);
         payment.setPaymentMethod(request.getPaymentMethod());
-        payment.setAmount(request.getAmount());
+        payment.setAmount(paymentAmount);
         payment.setPaymentStatus("SUCCESS");
         payment.setTransactionReference(request.getTransactionReference());
         payment.setNotes(request.getNotes());
@@ -39,15 +50,9 @@ public class PaymentServiceImpl implements PaymentService {
 
         paymentRepository.save(payment);
 
-        BigDecimal totalPaid = paymentRepository.findByOrder(order).stream()
-                .map(Payment::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        if (totalPaid.compareTo(order.getTotalAmount()) >= 0) {
-            order.setPaymentStatus("PAID");
-        } else {
-            order.setPaymentStatus("PARTIAL");
-        }
+        order.setPaymentStatus("PAID");
+        order.setOrderStatus("COMPLETED");
+        order.setUpdatedDate(LocalDateTime.now());
         orderRepository.save(order);
 
         return PaymentResponse.builder()
