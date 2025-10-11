@@ -213,6 +213,7 @@ CREATE TABLE order_detail
     order_id        UNIQUEIDENTIFIER NOT NULL,
     product_id      UNIQUEIDENTIFIER NOT NULL,
     quantity        INT              NOT NULL,
+    
     unit_price      DECIMAL(18, 2)   NOT NULL,
     discount        DECIMAL(5, 2)                DEFAULT 0,
     total_price     AS (quantity * unit_price * (1 - discount / 100)),

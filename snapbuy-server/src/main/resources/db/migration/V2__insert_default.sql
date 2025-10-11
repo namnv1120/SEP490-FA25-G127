@@ -175,16 +175,16 @@ VALUES
     ((SELECT product_id FROM products WHERE product_code = 'PRD001'), (SELECT TOP 1 account_id FROM accounts), N'IMPORT', 10, 3800000, N'PURCHASE_ORDER', N'Nhập hàng từ PO001'),
     ((SELECT product_id FROM products WHERE product_code = 'PRD002'), (SELECT TOP 1 account_id FROM accounts), N'SALE', 5, 650000, N'ORDER', N'Bán cho khách hàng CUST001'),
     ((SELECT product_id FROM products WHERE product_code = 'PRD003'), (SELECT TOP 1 account_id FROM accounts), N'RETURN', 2, 490000, N'ORDER', N'Khách trả hàng'),
-    ((SELECT product_id FROM products WHERE product_code = 'PRD004'), (SELECT TOP 1 account_id FROM accounts), N'ADJUSTMENT', 3, 420000, N'STOCK', N'Kiểm kê chênh lệch tồn'),
+    ((SELECT product_id FROM products WHERE product_code = 'PRD004'), (SELECT TOP 1 account_id FROM accounts), N'IMPORT', 3, 420000, N'PURCHASE_ORDER', N'Nhập hàng từ PO001'),
     ((SELECT product_id FROM products WHERE product_code = 'PRD005'), (SELECT TOP 1 account_id FROM accounts), N'IMPORT', 5, 6400000, N'PURCHASE_ORDER', N'Nhập bổ sung hàng RO');
 
 INSERT INTO orders (order_number, customer_id, account_id, order_status, payment_status, total_amount, discount_amount, tax_amount, notes)
 VALUES
-    ('ORD001', (SELECT customer_id FROM customers WHERE customer_code = 'CUST001'), (SELECT TOP 1 account_id FROM accounts), N'CONFIRMED', N'PAID', 2500000, 0, 250000, N'Đơn hàng online'),
+    ('ORD001', (SELECT customer_id FROM customers WHERE customer_code = 'CUST001'), (SELECT TOP 1 account_id FROM accounts), N'CONFIRMED', N'PAID', 2500000, 0, 250000, N'Đã thanh toán'),
     ('ORD002', (SELECT customer_id FROM customers WHERE customer_code = 'CUST002'), (SELECT TOP 1 account_id FROM accounts), N'PENDING', N'UNPAID', 1500000, 100000, 150000, N'Chờ thanh toán'),
-    ('ORD003', (SELECT customer_id FROM customers WHERE customer_code = 'CUST003'), (SELECT TOP 1 account_id FROM accounts), N'COMPLETED', N'PAID', 5600000, 200000, 560000, N'Khách thân thiết'),
+    ('ORD003', (SELECT customer_id FROM customers WHERE customer_code = 'CUST003'), (SELECT TOP 1 account_id FROM accounts), N'COMPLETED', N'PAID', 5600000, 200000, 560000, N'Đã thanh toán'),
     ('ORD004', (SELECT customer_id FROM customers WHERE customer_code = 'CUST004'), (SELECT TOP 1 account_id FROM accounts), N'CANCELLED', N'REFUNDED', 300000, 0, 0, N'Đơn hàng bị hủy'),
-    ('ORD005', (SELECT customer_id FROM customers WHERE customer_code = 'CUST005'), (SELECT TOP 1 account_id FROM accounts), N'CONFIRMED', N'PARTIAL', 4500000, 0, 450000, N'Thanh toán 1 phần');
+    ('ORD005', (SELECT customer_id FROM customers WHERE customer_code = 'CUST005'), (SELECT TOP 1 account_id FROM accounts), N'CONFIRMED', N'PAID', 4500000, 0, 450000, N'Đã thanh toán');
 
 INSERT INTO order_detail (order_id, product_id, quantity, unit_price, discount)
 VALUES
