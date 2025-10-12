@@ -1,104 +1,87 @@
 import axios from "axios";
 
-//  Đặt URL backend của bạn ở đây (ví dụ localhost hoặc domain thực tế)
-const API_BASE_URL = "http://localhost:5000/api";
-//  Nhớ thay URL cho đúng với backend nhé!
+const REST_API_BASE_URL = "http://localhost:8080/api/products";
 
-//  Lấy danh sách sản phẩm (có hỗ trợ phân trang + search)
-const getAllProducts = async ({ page = 1, limit = 10, search = "" }) => {
+// 🧾 Lấy danh sách sản phẩm
+export const getAllProducts = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/products`, {
-      params: { page, limit, search },
+    const token = localStorage.getItem("authToken");
+    const tokenType = localStorage.getItem("authTokenType") || "Bearer";
+
+    const response = await axios.get(REST_API_BASE_URL, {
+      headers: {
+        Authorization: `${tokenType} ${token}`,
+      },
     });
 
-    return {
-      success: true,
-      data: response.data,
-    };
+    // Backend có thể trả về { result: [...] } hoặc { products: [...] } hoặc mảng trực tiếp
+    return (
+      response.data?.result ||
+      response.data?.products ||
+      response.data ||
+      []
+    );
   } catch (error) {
-    console.error(" getAllProducts error:", error);
-    return {
-      success: false,
-      error: error.response?.data?.message || "Failed to fetch products",
-    };
+    console.error("❌ Failed to fetch products:", error);
+    throw error;
   }
 };
 
-//  Lấy chi tiết sản phẩm theo ID
-const getProductById = async (id) => {
+// ➕ Thêm sản phẩm
+export const createProduct = async (productData) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/products/${id}`);
-    return {
-      success: true,
-      data: response.data,
-    };
+    const token = localStorage.getItem("authToken");
+    const tokenType = localStorage.getItem("authTokenType") || "Bearer";
+
+    const response = await axios.post(REST_API_BASE_URL, productData, {
+      headers: {
+        Authorization: `${tokenType} ${token}`,
+      },
+    });
+
+    return response.data?.result || response.data;
   } catch (error) {
-    console.error(" getProductById error:", error);
-    return {
-      success: false,
-      error: error.response?.data?.message || "Failed to fetch product detail",
-    };
+    console.error("❌ Failed to create product:", error);
+    throw error;
   }
 };
 
-//  Thêm sản phẩm mới
-const addProduct = async (productData) => {
+// ✏️ Sửa sản phẩm
+export const updateProduct = async (id, productData) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/products`, productData);
-    return {
-      success: true,
-      data: response.data,
-    };
+    const token = localStorage.getItem("authToken");
+    const tokenType = localStorage.getItem("authTokenType") || "Bearer";
+
+    const response = await axios.put(
+      `${REST_API_BASE_URL}/${id}`,
+      productData,
+      {
+        headers: {
+          Authorization: `${tokenType} ${token}`,
+        },
+      }
+    );
+
+    return response.data?.result || response.data;
   } catch (error) {
-    console.error(" addProduct error:", error);
-    return {
-      success: false,
-      error: error.response?.data?.message || "Failed to add product",
-    };
+    console.error("❌ Failed to update product:", error);
+    throw error;
   }
 };
 
-//  Cập nhật sản phẩm
-const updateProduct = async (id, productData) => {
+// 🗑️ Xoá sản phẩm
+export const deleteProduct = async (id) => {
   try {
-    const response = await axios.put(`${API_BASE_URL}/products/${id}`, productData);
-    return {
-      success: true,
-      data: response.data,
-    };
+    const token = localStorage.getItem("authToken");
+    const tokenType = localStorage.getItem("authTokenType") || "Bearer";
+
+    await axios.delete(`${REST_API_BASE_URL}/${id}`, {
+      headers: {
+        Authorization: `${tokenType} ${token}`,
+      },
+    });
   } catch (error) {
-    console.error(" updateProduct error:", error);
-    return {
-      success: false,
-      error: error.response?.data?.message || "Failed to update product",
-    };
+    console.error("❌ Failed to delete product:", error);
+    throw error;
   }
 };
-
-//  Xóa sản phẩm
-const deleteProduct = async (id) => {
-  try {
-    const response = await axios.delete(`${API_BASE_URL}/products/${id}`);
-    return {
-      success: true,
-      data: response.data,
-    };
-  } catch (error) {
-    console.error(" deleteProduct error:", error);
-    return {
-      success: false,
-      error: error.response?.data?.message || "Failed to delete product",
-    };
-  }
-};
-
-//  Export tất cả hàm
-const productService = {
-  getAllProducts,
-  getProductById,
-  addProduct,
-  updateProduct,
-  deleteProduct,
-};
-
-export default productService;

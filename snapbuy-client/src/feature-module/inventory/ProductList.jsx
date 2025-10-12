@@ -1,97 +1,104 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import {
+  getAllProducts,
+  deleteProduct,
+} from "../../services/ProductService"; // 👈 import service
 import Brand from "../../core/modals/inventory/brand";
 import { all_routes } from "../../routes/all_routes";
 import PrimeDataTable from "../../components/data-table";
-import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
-
-const API_BASE_URL = "http://localhost:8080/api";
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Gọi API lấy danh sách sản phẩm
+  // ✅ Gọi API lấy danh sách sản phẩm
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_BASE_URL}/products`, {
-        params: { page: currentPage, limit: rows, search: searchQuery },
-      });
-      setProducts(res.data?.products || []);
-      setTotalRecords(res.data?.total || 0);
+      let response;
+      response = await getAllProducts();
+
+
+      // Nếu backend trả về phân trang (vd: { products: [], total: 50 })
+      setProducts(response.products || response);
+      setTotalRecords(response.total || response.length || 0);
     } catch (err) {
       console.error("❌ Lỗi khi fetch sản phẩm:", err);
-      if (err.code === 'ERR_NETWORK' || err.message.includes('Network Error')) {
-        alert("⚠️ Không thể kết nối đến server. Vui lòng kiểm tra:\n- Backend đã chạy chưa?\n- URL API có đúng không?");
+      if (err.code === "ERR_NETWORK" || err.message.includes("Network Error")) {
+        alert(
+          "⚠️ Không thể kết nối đến server.\nVui lòng kiểm tra:\n- Backend đã chạy chưa?\n- URL API có đúng không?"
+        );
       }
     } finally {
       setLoading(false);
     }
   };
 
+  // ✅ Load khi page, rows hoặc search thay đổi
   useEffect(() => {
     fetchProducts();
-  }, [currentPage, rows, searchQuery]);
+  }, [currentPage, rows]);
 
-  // Hàm tìm kiếm
-  const handleSearch = (value) => {
-    setSearchQuery(value);
-    setCurrentPage(1);
-  };
 
-  // Khi click vào nút xoá → mở modal & lưu ID
+
+  // ✅ Khi click nút xóa → mở modal
   const handleDeleteClick = (id) => {
     setSelectedId(id);
   };
 
-  // Hàm được gọi sau khi xóa thành công
-  const handleDeleteSuccess = () => {
-    setSelectedId(null);
-    fetchProducts();
+  // ✅ Khi xóa thành công → reload data
+  const handleDeleteSuccess = async () => {
+    if (selectedId) {
+      try {
+        await deleteProduct(selectedId);
+        fetchProducts();
+      } catch (err) {
+        console.error("❌ Lỗi khi xóa sản phẩm:", err);
+      } finally {
+        setSelectedId(null);
+      }
+    }
   };
 
-  // Cấu hình cột bảng
+  // ✅ Cấu hình cột bảng
   const columns = [
-    { header: "SKU", field: "sku", sortable: true },
+    { header: "Code", field: "productCode", sortable: true },
     {
       header: "Product",
-      field: "product",
+      field: "productName",
       sortable: true,
       body: (data) => (
         <div className="d-flex align-items-center">
           <img
             src={data.productImage || "/placeholder-image.png"}
-            alt={data.product}
-            style={{ 
-              width: "40px", 
-              height: "40px", 
+            alt={data.products}
+            style={{
+              width: "40px",
+              height: "40px",
               marginRight: "10px",
               objectFit: "cover",
-              borderRadius: "4px"
+              borderRadius: "4px",
             }}
             onError={(e) => {
               e.target.src = "/placeholder-image.png";
             }}
           />
-          <span>{data.product}</span>
+          <span>{data.productName}</span>
         </div>
       ),
     },
-    { header: "Category", field: "category", sortable: true },
-    { header: "Brand", field: "brand", sortable: true },
-    { header: "Price", field: "price", sortable: true },
+    { header: "Category", field: "categoryName", sortable: true },
+    { header: "Description", field: "description", sortable: true },
+    { header: "Price", field: "unitPrice", sortable: true },
     { header: "Unit", field: "unit", sortable: true },
-    { header: "Qty", field: "qty", sortable: true },
-    { header: "Created By", field: "createdby", sortable: true },
+
     {
       header: "Actions",
       body: (data) => (
@@ -131,11 +138,11 @@ const ProductList = () => {
 
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
-              <SearchFromApi 
-                callback={handleSearch} 
-                rows={rows} 
-                setRows={setRows} 
-              />
+              {/* <SearchFromApi
+                callback={handleSearch}
+                rows={rows}
+                setRows={setRows}
+              /> */}
             </div>
 
             <div className="card-body">
@@ -155,6 +162,7 @@ const ProductList = () => {
                     currentPage={currentPage}
                     setCurrentPage={setCurrentPage}
                     totalRecords={totalRecords}
+                    dataKey="productId"
                   />
                 </div>
               )}
@@ -165,8 +173,8 @@ const ProductList = () => {
         </div>
       </div>
 
-      {/* Truyền productId và callback vào DeleteModal */}
-      <DeleteModal 
+      {/* Delete Modal */}
+      <DeleteModal
         productId={selectedId}
         onDeleteSuccess={handleDeleteSuccess}
       />

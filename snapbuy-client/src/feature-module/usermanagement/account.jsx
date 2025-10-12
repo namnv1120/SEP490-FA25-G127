@@ -32,7 +32,7 @@ const Accounts = () => {
   }, []);
 
   const handleDeleteAccount = async () => {
-    if (!selectedUser) return;
+    if (!selectedAccount) return;
     try {
       await deleteAccount(selectedAccount.id);
       fetchAccounts();

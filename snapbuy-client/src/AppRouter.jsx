@@ -6,7 +6,7 @@ import { base_path } from "./environment";
 
 const AppRouter = () => {
   const RouterContent = memo(() => {
-    const renderRoutes = (routeList, _isProtected) =>
+    const renderRoutes = (routeList) =>
       routeList?.map((item) => (
         <Route
           key={`route-${item?.id}`}

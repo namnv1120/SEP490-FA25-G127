@@ -26,7 +26,7 @@ import FormHorizontal from "../feature-module/uiinterface/forms/formelements/lay
 const Suppliers = lazy(() => import("../feature-module/people/Supplier"));
 
 // Lazy load Dashboard
-const Dashboard = lazy(() => import("../feature-module/dashboard/dashboard"));
+const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
 const ProductList = lazy(() => import("../feature-module/inventory/ProductList"));
 const Accounts = lazy(() => import("../feature-module/usermanagement/account"));
 const RolesPermissions = lazy(() =>
@@ -87,7 +87,7 @@ export const authRoutes = [
 
   {
     id: 231,
-    path: "/suppliers",
+    path: routes.suppliers,
     name: "suppliers",
     element: <Suppliers />,
     route: Route,

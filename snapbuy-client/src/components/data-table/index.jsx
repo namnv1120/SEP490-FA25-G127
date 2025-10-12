@@ -1,4 +1,4 @@
-import React from "react";
+
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import CustomPaginator from "./custom-paginator";
@@ -20,6 +20,7 @@ const PrimeDataTable = ({
   selectionMode,
   selection,
   onSelectionChange,
+  dataKey = "id",
 }) => {
   const skeletonRows = Array(rows).fill({});
   const totalPages = Math.ceil(totalRecords / rows);
@@ -49,7 +50,7 @@ const PrimeDataTable = ({
       paginator: false,
       emptyMessage: customEmptyMessage,
       footer: footer,
-      dataKey: "id",
+      dataKey: dataKey,
     };
 
     if (selectionMode && ["multiple", "checkbox"].includes(selectionMode)) {

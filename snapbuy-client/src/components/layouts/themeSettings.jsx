@@ -21,12 +21,7 @@ import {
 import { all_routes } from "../../routes/all_routes";
 
 const ThemeSettings = () => {
-  const buyNow = () => {
-    window.open(
-      "https://themeforest.net/item/dreamspos-pos-inventory-management-admin-dashboard-template/38834413?s_rank=13",
-      "_blank"
-    );
-  };
+
 
   const dispatch = useDispatch();
 
@@ -655,467 +650,456 @@ const ThemeSettings = () => {
                   </div>
                   <p className="mb-2 text-gray-9">Gradient Colors</p>
                   <div className="d-flex align-items-center">
-                      <div className="theme-colorselect m-1 me-2">
-                        <input
-                          type="radio"
-                          name="sidebar"
-                          id="bgcolor7Sidebar"
-                          defaultValue="sidebarcolorseven"
-                          checked={dataSidebar === "sidebarcolorseven" ? true : false}
-                          onChange={() => handleDataSidebarChange("sidebarcolorseven")}
-                        />
-                        <label
-                          htmlFor="bgcolor7Sidebar"
-                          className="d-block bg-sidebar-color-7 mb-2"
-                        ></label>
-                      </div>
-                      <div className="theme-colorselect m-1 me-2">
-                        <input
-                          type="radio"
-                          name="sidebar"
-                          id="bgcolor8Sidebar"
-                          defaultValue="sidebarcoloreight"
-                          checked={dataSidebar === "sidebarcoloreight" ? true : false}
-                          onChange={() => handleDataSidebarChange("sidebarcoloreight")}
-                        />
-                        <label
-                          htmlFor="bgcolor8Sidebar"
-                          className="d-block bg-sidebar-color-8 mb-2"
-                        ></label>
-                      </div>
-                      <div className="theme-colorselect m-1 me-2">
-                        <input
-                          type="radio"
-                          name="sidebar"
-                          id="bgcolor9Sidebar"
-                          defaultValue="sidebarcolornine"
-                          checked={dataSidebar === "sidebarcolornine" ? true : false}
-                          onChange={() => handleDataSidebarChange("sidebarcolornine")}
-                        />
-                        <label
-                          htmlFor="bgcolor9Sidebar"
-                          className="d-block bg-sidebar-color-9 mb-2"
-                        ></label>
-                      </div>
-                      <div className="theme-colorselect m-1 me-2">
-                        <input
-                          type="radio"
-                          name="sidebar"
-                          id="bgcolor10Sidebar"
-                          defaultValue="sidebarcolorten"
-                          checked={dataSidebar === "sidebarcolorten" ? true : false}
-                          onChange={() => handleDataSidebarChange("sidebarcolorten")}
-                        />
-                        <label
-                          htmlFor="bgcolor10Sidebar"
-                          className="d-block bg-sidebar-color-10 mb-2"
-                        ></label>
-                      </div>
-                      <div className="theme-colorselect m-1 me-2">
-                        <input
-                          type="radio"
-                          name="sidebar"
-                          id="bgcolor11Sidebar"
-                          defaultValue="sidebarcoloreleven"
-                          checked={dataSidebar === "sidebarcoloreleven" ? true : false}
-                          onChange={() => handleDataSidebarChange("sidebarcoloreleven")}
-                        />
-                        <label
-                          htmlFor="bgcolor11Sidebar"
-                          className="d-block bg-sidebar-color-11 mb-2"
-                        ></label>
-                      </div>
-                      <div className="theme-colorselect m-1 me-2">
-                        <input
-                          type="radio"
-                          name="sidebar"
-                          id="bgcolor12Sidebar"
-                          defaultValue="sidebarcolortwelve"
-                          checked={dataSidebar === "sidebarcolortwelve" ? true : false}
-                          onChange={() => handleDataSidebarChange("sidebarcolortwelve")}
-                        />
-                        <label
-                          htmlFor="bgcolor12Sidebar"
-                          className="d-block bg-sidebar-color-12 mb-2"
-                        ></label>
-                      </div>
-                      <div className="theme-colorselect m-1 me-2">
-                        <input
-                          type="radio"
-                          name="sidebar"
-                          id="bgcolor13Sidebar"
-                          defaultValue="sidebarcolorthirteen"
-                          checked={dataSidebar === "sidebarcolorthirteen" ? true : false}
-                          onChange={() => handleDataSidebarChange("sidebarcolorthirteen")}
-                        />
-                        <label
-                          htmlFor="bgcolor13Sidebar"
-                          className="d-block bg-sidebar-color-13 mb-2"
-                        ></label>
-                      </div>
-                      <div className="theme-colorselect m-1 me-2">
-                        <input
-                          type="radio"
-                          name="sidebar"
-                          id="bgcolor14Sidebar"
-                          defaultValue="sidebarcolorfourteen"
-                          checked={dataSidebar === "sidebarcolorfourteen" ? true : false}
-                          onChange={() => handleDataSidebarChange("sidebarcolorfourteen")}
-                        />
-                        <label
-                          htmlFor="bgcolor14Sidebar"
-                          className="d-block bg-sidebar-color-14 mb-2"
-                        ></label>
-                      </div>
-
+                    <div className="theme-colorselect m-1 me-2">
+                      <input
+                        type="radio"
+                        name="sidebar"
+                        id="bgcolor7Sidebar"
+                        defaultValue="sidebarcolorseven"
+                        checked={dataSidebar === "sidebarcolorseven" ? true : false}
+                        onChange={() => handleDataSidebarChange("sidebarcolorseven")}
+                      />
+                      <label
+                        htmlFor="bgcolor7Sidebar"
+                        className="d-block bg-sidebar-color-7 mb-2"
+                      ></label>
                     </div>
+                    <div className="theme-colorselect m-1 me-2">
+                      <input
+                        type="radio"
+                        name="sidebar"
+                        id="bgcolor8Sidebar"
+                        defaultValue="sidebarcoloreight"
+                        checked={dataSidebar === "sidebarcoloreight" ? true : false}
+                        onChange={() => handleDataSidebarChange("sidebarcoloreight")}
+                      />
+                      <label
+                        htmlFor="bgcolor8Sidebar"
+                        className="d-block bg-sidebar-color-8 mb-2"
+                      ></label>
+                    </div>
+                    <div className="theme-colorselect m-1 me-2">
+                      <input
+                        type="radio"
+                        name="sidebar"
+                        id="bgcolor9Sidebar"
+                        defaultValue="sidebarcolornine"
+                        checked={dataSidebar === "sidebarcolornine" ? true : false}
+                        onChange={() => handleDataSidebarChange("sidebarcolornine")}
+                      />
+                      <label
+                        htmlFor="bgcolor9Sidebar"
+                        className="d-block bg-sidebar-color-9 mb-2"
+                      ></label>
+                    </div>
+                    <div className="theme-colorselect m-1 me-2">
+                      <input
+                        type="radio"
+                        name="sidebar"
+                        id="bgcolor10Sidebar"
+                        defaultValue="sidebarcolorten"
+                        checked={dataSidebar === "sidebarcolorten" ? true : false}
+                        onChange={() => handleDataSidebarChange("sidebarcolorten")}
+                      />
+                      <label
+                        htmlFor="bgcolor10Sidebar"
+                        className="d-block bg-sidebar-color-10 mb-2"
+                      ></label>
+                    </div>
+                    <div className="theme-colorselect m-1 me-2">
+                      <input
+                        type="radio"
+                        name="sidebar"
+                        id="bgcolor11Sidebar"
+                        defaultValue="sidebarcoloreleven"
+                        checked={dataSidebar === "sidebarcoloreleven" ? true : false}
+                        onChange={() => handleDataSidebarChange("sidebarcoloreleven")}
+                      />
+                      <label
+                        htmlFor="bgcolor11Sidebar"
+                        className="d-block bg-sidebar-color-11 mb-2"
+                      ></label>
+                    </div>
+                    <div className="theme-colorselect m-1 me-2">
+                      <input
+                        type="radio"
+                        name="sidebar"
+                        id="bgcolor12Sidebar"
+                        defaultValue="sidebarcolortwelve"
+                        checked={dataSidebar === "sidebarcolortwelve" ? true : false}
+                        onChange={() => handleDataSidebarChange("sidebarcolortwelve")}
+                      />
+                      <label
+                        htmlFor="bgcolor12Sidebar"
+                        className="d-block bg-sidebar-color-12 mb-2"
+                      ></label>
+                    </div>
+                    <div className="theme-colorselect m-1 me-2">
+                      <input
+                        type="radio"
+                        name="sidebar"
+                        id="bgcolor13Sidebar"
+                        defaultValue="sidebarcolorthirteen"
+                        checked={dataSidebar === "sidebarcolorthirteen" ? true : false}
+                        onChange={() => handleDataSidebarChange("sidebarcolorthirteen")}
+                      />
+                      <label
+                        htmlFor="bgcolor13Sidebar"
+                        className="d-block bg-sidebar-color-13 mb-2"
+                      ></label>
+                    </div>
+                    <div className="theme-colorselect m-1 me-2">
+                      <input
+                        type="radio"
+                        name="sidebar"
+                        id="bgcolor14Sidebar"
+                        defaultValue="sidebarcolorfourteen"
+                        checked={dataSidebar === "sidebarcolorfourteen" ? true : false}
+                        onChange={() => handleDataSidebarChange("sidebarcolorfourteen")}
+                      />
+                      <label
+                        htmlFor="bgcolor14Sidebar"
+                        className="d-block bg-sidebar-color-14 mb-2"
+                      ></label>
+                    </div>
+
                   </div>
                 </div>
               </div>
-              <div className="accordion-item border px-3">
-                <h2 className="accordion-header">
-                  <button
-                    className="accordion-button text-dark fs-16 px-0 py-3 bg-transparent"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#modesetting"
-                    aria-expanded="true"
-                  >
-                    Theme Mode
-                  </button>
-                </h2>
-                <div id="modesetting" className="accordion-collapse collapse show">
-                  <div className="accordion-body px-0 py3 border-top">
-                    <div className="d-flex align-items-center">
-                      <div className="theme-mode flex-fill text-center w-100 me-3">
-                        <input
-                          type="radio"
-                          name="theme"
-                          id="lightTheme"
-                          defaultValue="light"
-                          checked={dataTheme === "light" ? true : false}
-                          onChange={() => handleDataThemeChange("light")}
-                        />
-                        <label
-                          htmlFor="lightTheme"
-                          className="rounded fw-medium w-100"
-                        >
-                          <span className="d-inline-flex rounded me-2">
-                            <i className="ti ti-sun-filled" />
-                          </span>
-                          Light
-                        </label>
-                      </div>
-                      <div className="theme-mode flex-fill text-center w-100 me-3">
-                        <input
-                          type="radio"
-                          name="theme"
-                          id="darkTheme"
-                          defaultValue="dark"
-                          checked={dataTheme === "dark" ? true : false}
-                          onChange={() => handleDataThemeChange("dark")}
-                        />
-                        <label
-                          htmlFor="darkTheme"
-                          className="rounded fw-medium w-100"
-                        >
-                          <span className="d-inline-flex rounded me-2">
-                            <i className="ti ti-moon-filled" />
-                          </span>
-                          Dark
-                        </label>
-                      </div>
-                      <div className="theme-mode flex-fill text-center w-100 me-3">
-                        <input
-                          type="radio"
-                          name="theme"
-                          id="system"
-                          defaultValue="system"
-                          checked={dataTheme === "system" ? true : false}
-                          onChange={() => handleDataThemeChange("system")}
-                        />
-                        <label
-                          htmlFor="system"
-                          className="rounded fw-medium w-100"
-                        >
-                          <span className="d-inline-flex rounded me-2">
-                            <i className="ti ti-device-laptop" />
-                          </span>
-                          System
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="accordion-item border px-3 layout-select">
-                <h2 className="accordion-header">
-                  <button
-                    className="accordion-button text-dark fs-16 px-0 py-3 bg-transparent"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#sidebarbgsetting"
-                    aria-expanded="true"
-                  >
-                    Sidebar Background
-                  </button>
-                </h2>
-                <div
-                  id="sidebarbgsetting"
-                  className="accordion-collapse collapse show"
+            </div>
+            <div className="accordion-item border px-3">
+              <h2 className="accordion-header">
+                <button
+                  className="accordion-button text-dark fs-16 px-0 py-3 bg-transparent"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#modesetting"
+                  aria-expanded="true"
                 >
-                  <div className="accordion-body pb-1 px-0 py-3 border-top">
-                    <div className="d-flex align-items-center flex-wrap">
-                      <div className="theme-sidebarbg me-3 mb-3">
-                        <input
-                          type="radio"
-                          name="sidebarbg"
-                          id="sidebarBg1"
-                          defaultValue="sidebarbg1"
-                          checked={dataSidebarBg === "sidebarbg1" ? true : false}
-                          onChange={() => handleDataSidebarBgChange("sidebarbg1")}
-                        />
-                        <label htmlFor="sidebarBg1" className="d-block rounded">
-                          <img
-                            src="src/assets/img/theme/sidebar-bg-01.svg"
-                            alt="img"
-                            className="rounded"
-                          />
-                        </label>
-                      </div>
-                      <div className="theme-sidebarbg me-3 mb-3">
-                        <input
-                          type="radio"
-                          name="sidebarbg"
-                          id="sidebarBg2"
-                          defaultValue="sidebarbg2"
-                          checked={dataSidebarBg === "sidebarbg2" ? true : false}
-                          onChange={() => handleDataSidebarBgChange("sidebarbg2")}
-                        />
-                        <label htmlFor="sidebarBg2" className="d-block rounded">
-                          <img
-                            src="src/assets/img/theme/sidebar-bg-02.svg"
-                            alt="img"
-                            className="rounded"
-                          />
-                        </label>
-                      </div>
-                      <div className="theme-sidebarbg me-3 mb-3">
-                        <input
-                          type="radio"
-                          name="sidebarbg"
-                          id="sidebarBg3"
-                          defaultValue="sidebarbg3"
-                          checked={dataSidebarBg === "sidebarbg3" ? true : false}
-                          onChange={() => handleDataSidebarBgChange("sidebarbg3")}
-                        />
-                        <label htmlFor="sidebarBg3" className="d-block rounded">
-                          <img
-                            src="src/assets/img/theme/sidebar-bg-03.svg"
-                            alt="img"
-                            className="rounded"
-                          />
-                        </label>
-                      </div>
-                      <div className="theme-sidebarbg me-3 mb-3">
-                        <input
-                          type="radio"
-                          name="sidebarbg"
-                          id="sidebarBg4"
-                          defaultValue="sidebarbg4"
-                          checked={dataSidebarBg === "sidebarbg4" ? true : false}
-                          onChange={() => handleDataSidebarBgChange("sidebarbg4")}
-                        />
-                        <label htmlFor="sidebarBg4" className="d-block rounded">
-                          <img
-                            src="src/assets/img/theme/sidebar-bg-04.svg"
-                            alt="img"
-                            className="rounded"
-                          />
-                        </label>
-                      </div>
-                      <div className="theme-sidebarbg me-3 mb-3">
-                        <input
-                          type="radio"
-                          name="sidebarbg"
-                          id="sidebarBg5"
-                          defaultValue="sidebarbg5"
-                          checked={dataSidebarBg === "sidebarbg5" ? true : false}
-                          onChange={() => handleDataSidebarBgChange("sidebarbg5")}
-                        />
-                        <label htmlFor="sidebarBg5" className="d-block rounded">
-                          <img
-                            src="src/assets/img/theme/sidebar-bg-05.svg"
-                            alt="img"
-                            className="rounded"
-                          />
-                        </label>
-                      </div>
-                      <div className="theme-sidebarbg me-3 mb-3">
-                        <input
-                          type="radio"
-                          name="sidebarbg"
-                          id="sidebarBg6"
-                          defaultValue="sidebarBg6"
-                          checked={dataSidebarBg === "sidebarBg6" ? true : false}
-                          onChange={() => handleDataSidebarBgChange("sidebarBg6")}
-                        />
-                        <label htmlFor="sidebarBg6" className="d-block rounded">
-                          <img
-                            src="src/assets/img/theme/sidebar-bg-06.svg"
-                            alt="img"
-                            className="rounded"
-                          />
-                        </label>
-                      </div>
+                  Theme Mode
+                </button>
+              </h2>
+              <div id="modesetting" className="accordion-collapse collapse show">
+                <div className="accordion-body px-0 py3 border-top">
+                  <div className="d-flex align-items-center">
+                    <div className="theme-mode flex-fill text-center w-100 me-3">
+                      <input
+                        type="radio"
+                        name="theme"
+                        id="lightTheme"
+                        defaultValue="light"
+                        checked={dataTheme === "light" ? true : false}
+                        onChange={() => handleDataThemeChange("light")}
+                      />
+                      <label
+                        htmlFor="lightTheme"
+                        className="rounded fw-medium w-100"
+                      >
+                        <span className="d-inline-flex rounded me-2">
+                          <i className="ti ti-sun-filled" />
+                        </span>
+                        Light
+                      </label>
                     </div>
-                  </div>
-                </div>
-              </div>
-              <div className="accordion-item border px-3">
-                <h2 className="accordion-header">
-                  <button
-                    className="accordion-button text-dark fs-16 px-0 py-3 bg-transparent"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#sidebarcolor"
-                    aria-expanded="true"
-                  >
-                    Theme Colors
-                  </button>
-                </h2>
-                <div id="sidebarcolor" className="accordion-collapse collapse show">
-                  <div className="accordion-body pb-2 px-0 py-3 border-top">
-                    <div className="d-flex align-items-center flex-wrap">
-                      <div className="theme-colorsset me-2 mb-2">
-                        <input
-                          type="radio"
-                          name="color"
-                          id="primaryColor"
-                          defaultValue="primary"
-                          checked={dataColor === "primary" ? true : false}
-                          onChange={() => handleDataColorChange("primary")}
-                        />
-                        <label htmlFor="primaryColor" className="primary-clr" />
-                      </div>
-                      <div className="theme-colorsset me-2 mb-2">
-                        <input
-                          type="radio"
-                          name="color"
-                          id="brightblueColor"
-                          defaultValue="brightblue"
-                          checked={dataColor === "brightblue" ? true : false}
-                          onChange={() => handleDataColorChange("brightblue")}
-                        />
-                        <label htmlFor="brightblueColor" className="theme-color-1" />
-                      </div>
-                      <div className="theme-colorsset me-2 mb-2">
-                        <input
-                          type="radio"
-                          name="color"
-                          id="lunargreenColor"
-                          defaultValue="lunargreen"
-                          checked={dataColor === "lunargreen" ? true : false}
-                          onChange={() => handleDataColorChange("lunargreen")}
-                        />
-                        <label htmlFor="lunargreenColor" className="theme-color-2" />
-                      </div>
-                      <div className="theme-colorsset me-2 mb-2">
-                        <input
-                          type="radio"
-                          name="color"
-                          id="lavendarColor"
-                          defaultValue="lavendar"
-                          checked={dataColor === "lavendar" ? true : false}
-                          onChange={() => handleDataColorChange("lavendar")}
-                        />
-                        <label htmlFor="lavendarColor" className="theme-color-3" />
-                      </div>
-                      <div className="theme-colorsset me-2 mb-2">
-                        <input
-                          type="radio"
-                          name="color"
-                          id="magentaColor"
-                          defaultValue="magenta"
-                          checked={dataColor === "magenta" ? true : false}
-                          onChange={() => handleDataColorChange("magenta")}
-                        />
-                        <label htmlFor="magentaColor" className="theme-color-4" />
-                      </div>
-                      <div className="theme-colorsset me-2 mb-2">
-                        <input
-                          type="radio"
-                          name="color"
-                          id="chromeyellowColor"
-                          defaultValue="chromeyellow"
-                          checked={dataColor === "chromeyellow" ? true : false}
-                          onChange={() => handleDataColorChange("chromeyellow")}
-                        />
-                        <label
-                          htmlFor="chromeyellowColor"
-                          className="theme-color-5"
-                        />
-                      </div>
-                      <div className="theme-colorsset me-2 mb-2">
-                        <input
-                          type="radio"
-                          name="color"
-                          id="orangeColor"
-                          defaultValue="orange"
-                          checked={dataColor === "orange" ? true : false}
-                          onChange={() => handleDataColorChange("orange")}
-                        />
-                        <label
-                          htmlFor="orangeColor"
-                          className="theme-color-6"
-                        />
-                      </div>
-                      <div className={`theme-colorsset round-style select-theme-color position-relative  mb-2 ${dataColor === 'all' ? 'active' : ''}`} onClick={() => handleDataColorChange('all')}>
-                        <div className="select-color position-absolute"><i className="ti ti-palette"></i></div>
-                        <ColorPicker
-                          format={formatRgb}
-                          value={colorRgb4}
-                          onChange={setColorRgb4}
-                          onFormatChange={(format) => {
-                            if (format) setFormatRgb(format);
-                          }}
-                        />
-                      </div>
+                    <div className="theme-mode flex-fill text-center w-100 me-3">
+                      <input
+                        type="radio"
+                        name="theme"
+                        id="darkTheme"
+                        defaultValue="dark"
+                        checked={dataTheme === "dark" ? true : false}
+                        onChange={() => handleDataThemeChange("dark")}
+                      />
+                      <label
+                        htmlFor="darkTheme"
+                        className="rounded fw-medium w-100"
+                      >
+                        <span className="d-inline-flex rounded me-2">
+                          <i className="ti ti-moon-filled" />
+                        </span>
+                        Dark
+                      </label>
+                    </div>
+                    <div className="theme-mode flex-fill text-center w-100 me-3">
+                      <input
+                        type="radio"
+                        name="theme"
+                        id="system"
+                        defaultValue="system"
+                        checked={dataTheme === "system" ? true : false}
+                        onChange={() => handleDataThemeChange("system")}
+                      />
+                      <label
+                        htmlFor="system"
+                        className="rounded fw-medium w-100"
+                      >
+                        <span className="d-inline-flex rounded me-2">
+                          <i className="ti ti-device-laptop" />
+                        </span>
+                        System
+                      </label>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div className="p-3 pt-0">
-            <div className="row gx-3">
-              <div className="col-6">
-                <Link
-                  to="#"
-                  id="resetbutton"
-                  className="btn btn-light close-theme w-100"
-                  onClick={handleReset}
+
+            <div className="accordion-item border px-3 layout-select">
+              <h2 className="accordion-header">
+                <button
+                  className="accordion-button text-dark fs-16 px-0 py-3 bg-transparent"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#sidebarbgsetting"
+                  aria-expanded="true"
                 >
-                  <i className="ti ti-restore me-1" />
-                  Reset
-                </Link>
+                  Sidebar Background
+                </button>
+              </h2>
+              <div
+                id="sidebarbgsetting"
+                className="accordion-collapse collapse show"
+              >
+                <div className="accordion-body pb-1 px-0 py-3 border-top">
+                  <div className="d-flex align-items-center flex-wrap">
+                    <div className="theme-sidebarbg me-3 mb-3">
+                      <input
+                        type="radio"
+                        name="sidebarbg"
+                        id="sidebarBg1"
+                        defaultValue="sidebarbg1"
+                        checked={dataSidebarBg === "sidebarbg1" ? true : false}
+                        onChange={() => handleDataSidebarBgChange("sidebarbg1")}
+                      />
+                      <label htmlFor="sidebarBg1" className="d-block rounded">
+                        <img
+                          src="src/assets/img/theme/sidebar-bg-01.svg"
+                          alt="img"
+                          className="rounded"
+                        />
+                      </label>
+                    </div>
+                    <div className="theme-sidebarbg me-3 mb-3">
+                      <input
+                        type="radio"
+                        name="sidebarbg"
+                        id="sidebarBg2"
+                        defaultValue="sidebarbg2"
+                        checked={dataSidebarBg === "sidebarbg2" ? true : false}
+                        onChange={() => handleDataSidebarBgChange("sidebarbg2")}
+                      />
+                      <label htmlFor="sidebarBg2" className="d-block rounded">
+                        <img
+                          src="src/assets/img/theme/sidebar-bg-02.svg"
+                          alt="img"
+                          className="rounded"
+                        />
+                      </label>
+                    </div>
+                    <div className="theme-sidebarbg me-3 mb-3">
+                      <input
+                        type="radio"
+                        name="sidebarbg"
+                        id="sidebarBg3"
+                        defaultValue="sidebarbg3"
+                        checked={dataSidebarBg === "sidebarbg3" ? true : false}
+                        onChange={() => handleDataSidebarBgChange("sidebarbg3")}
+                      />
+                      <label htmlFor="sidebarBg3" className="d-block rounded">
+                        <img
+                          src="src/assets/img/theme/sidebar-bg-03.svg"
+                          alt="img"
+                          className="rounded"
+                        />
+                      </label>
+                    </div>
+                    <div className="theme-sidebarbg me-3 mb-3">
+                      <input
+                        type="radio"
+                        name="sidebarbg"
+                        id="sidebarBg4"
+                        defaultValue="sidebarbg4"
+                        checked={dataSidebarBg === "sidebarbg4" ? true : false}
+                        onChange={() => handleDataSidebarBgChange("sidebarbg4")}
+                      />
+                      <label htmlFor="sidebarBg4" className="d-block rounded">
+                        <img
+                          src="src/assets/img/theme/sidebar-bg-04.svg"
+                          alt="img"
+                          className="rounded"
+                        />
+                      </label>
+                    </div>
+                    <div className="theme-sidebarbg me-3 mb-3">
+                      <input
+                        type="radio"
+                        name="sidebarbg"
+                        id="sidebarBg5"
+                        defaultValue="sidebarbg5"
+                        checked={dataSidebarBg === "sidebarbg5" ? true : false}
+                        onChange={() => handleDataSidebarBgChange("sidebarbg5")}
+                      />
+                      <label htmlFor="sidebarBg5" className="d-block rounded">
+                        <img
+                          src="src/assets/img/theme/sidebar-bg-05.svg"
+                          alt="img"
+                          className="rounded"
+                        />
+                      </label>
+                    </div>
+                    <div className="theme-sidebarbg me-3 mb-3">
+                      <input
+                        type="radio"
+                        name="sidebarbg"
+                        id="sidebarBg6"
+                        defaultValue="sidebarBg6"
+                        checked={dataSidebarBg === "sidebarBg6" ? true : false}
+                        onChange={() => handleDataSidebarBgChange("sidebarBg6")}
+                      />
+                      <label htmlFor="sidebarBg6" className="d-block rounded">
+                        <img
+                          src="src/assets/img/theme/sidebar-bg-06.svg"
+                          alt="img"
+                          className="rounded"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="col-6">
-                <Link
-                  to="#"
-                  className="btn btn-primary w-100"
-                  onClick={buyNow}
-                  data-bs-dismiss="offcanvas"
+            </div>
+            <div className="accordion-item border px-3">
+              <h2 className="accordion-header">
+                <button
+                  className="accordion-button text-dark fs-16 px-0 py-3 bg-transparent"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#sidebarcolor"
+                  aria-expanded="true"
                 >
-                  <i className="ti ti-shopping-cart-plus me-1" />
-                  Buy Product
-                </Link>
+                  Theme Colors
+                </button>
+              </h2>
+              <div id="sidebarcolor" className="accordion-collapse collapse show">
+                <div className="accordion-body pb-2 px-0 py-3 border-top">
+                  <div className="d-flex align-items-center flex-wrap">
+                    <div className="theme-colorsset me-2 mb-2">
+                      <input
+                        type="radio"
+                        name="color"
+                        id="primaryColor"
+                        defaultValue="primary"
+                        checked={dataColor === "primary" ? true : false}
+                        onChange={() => handleDataColorChange("primary")}
+                      />
+                      <label htmlFor="primaryColor" className="primary-clr" />
+                    </div>
+                    <div className="theme-colorsset me-2 mb-2">
+                      <input
+                        type="radio"
+                        name="color"
+                        id="brightblueColor"
+                        defaultValue="brightblue"
+                        checked={dataColor === "brightblue" ? true : false}
+                        onChange={() => handleDataColorChange("brightblue")}
+                      />
+                      <label htmlFor="brightblueColor" className="theme-color-1" />
+                    </div>
+                    <div className="theme-colorsset me-2 mb-2">
+                      <input
+                        type="radio"
+                        name="color"
+                        id="lunargreenColor"
+                        defaultValue="lunargreen"
+                        checked={dataColor === "lunargreen" ? true : false}
+                        onChange={() => handleDataColorChange("lunargreen")}
+                      />
+                      <label htmlFor="lunargreenColor" className="theme-color-2" />
+                    </div>
+                    <div className="theme-colorsset me-2 mb-2">
+                      <input
+                        type="radio"
+                        name="color"
+                        id="lavendarColor"
+                        defaultValue="lavendar"
+                        checked={dataColor === "lavendar" ? true : false}
+                        onChange={() => handleDataColorChange("lavendar")}
+                      />
+                      <label htmlFor="lavendarColor" className="theme-color-3" />
+                    </div>
+                    <div className="theme-colorsset me-2 mb-2">
+                      <input
+                        type="radio"
+                        name="color"
+                        id="magentaColor"
+                        defaultValue="magenta"
+                        checked={dataColor === "magenta" ? true : false}
+                        onChange={() => handleDataColorChange("magenta")}
+                      />
+                      <label htmlFor="magentaColor" className="theme-color-4" />
+                    </div>
+                    <div className="theme-colorsset me-2 mb-2">
+                      <input
+                        type="radio"
+                        name="color"
+                        id="chromeyellowColor"
+                        defaultValue="chromeyellow"
+                        checked={dataColor === "chromeyellow" ? true : false}
+                        onChange={() => handleDataColorChange("chromeyellow")}
+                      />
+                      <label
+                        htmlFor="chromeyellowColor"
+                        className="theme-color-5"
+                      />
+                    </div>
+                    <div className="theme-colorsset me-2 mb-2">
+                      <input
+                        type="radio"
+                        name="color"
+                        id="orangeColor"
+                        defaultValue="orange"
+                        checked={dataColor === "orange" ? true : false}
+                        onChange={() => handleDataColorChange("orange")}
+                      />
+                      <label
+                        htmlFor="orangeColor"
+                        className="theme-color-6"
+                      />
+                    </div>
+                    <div className={`theme-colorsset round-style select-theme-color position-relative  mb-2 ${dataColor === 'all' ? 'active' : ''}`} onClick={() => handleDataColorChange('all')}>
+                      <div className="select-color position-absolute"><i className="ti ti-palette"></i></div>
+                      <ColorPicker
+                        format={formatRgb}
+                        value={colorRgb4}
+                        onChange={setColorRgb4}
+                        onFormatChange={(format) => {
+                          if (format) setFormatRgb(format);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </>
+        <div className="p-3 pt-0">
+          <div className="row gx-3">
+            <div className="col-6">
+              <Link
+                to="#"
+                id="resetbutton"
+                className="btn btn-light close-theme w-100"
+                onClick={handleReset}
+              >
+                <i className="ti ti-restore me-1" />
+                Reset
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 

@@ -23,6 +23,8 @@ public class ProductResponse {
     private String dimensions;
     private String imageUrl;
     private Boolean active;
+    private BigDecimal unitPrice;
+    private BigDecimal costPrice;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
 }
