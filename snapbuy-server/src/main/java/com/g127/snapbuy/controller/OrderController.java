@@ -44,11 +44,6 @@ public class OrderController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/payment")
-    public ResponseEntity<PaymentResponse> addPayment(@RequestBody PaymentRequest req) {
-        return ResponseEntity.ok(orderService.addPayment(req));
-    }
-
     @PostMapping("/{id}/cancel")
     public ResponseEntity<Void> cancelOrder(@PathVariable UUID id) {
         orderService.cancelOrder(id);

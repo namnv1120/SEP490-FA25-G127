@@ -1,9 +1,14 @@
 package com.g127.snapbuy.mapper;
 
-import com.g127.snapbuy.dto.response.*;
-import com.g127.snapbuy.entity.*;
-import org.mapstruct.*;
-import org.springframework.stereotype.Component;
+import com.g127.snapbuy.dto.response.OrderDetailResponse;
+import com.g127.snapbuy.dto.response.OrderResponse;
+import com.g127.snapbuy.dto.response.PaymentResponse;
+import com.g127.snapbuy.entity.Order;
+import com.g127.snapbuy.entity.OrderDetail;
+import com.g127.snapbuy.entity.Payment;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -34,27 +39,25 @@ public interface OrderMapper {
                 .collect(Collectors.toList());
     }
 
-    @Named("toPaymentResponseList")
-    default List<PaymentResponse> toPaymentResponseList(List<Payment> payments) {
-        if (payments == null) return List.of();
-        return payments.stream()
-                .map(p -> PaymentResponse.builder()
-                        .paymentId(p.getPaymentId())
-                        .paymentMethod(p.getPaymentMethod())
-                        .amount(p.getAmount())
-                        .paymentStatus(p.getPaymentStatus())
-                        .transactionReference(p.getTransactionReference())
-                        .notes(p.getNotes())
-                        .paymentDate(p.getPaymentDate())
-                        .build())
-                .collect(Collectors.toList());
+    @Named("toPaymentResponse")
+    default PaymentResponse toPaymentResponse(Payment payment) {
+        if (payment == null) return null;
+        return PaymentResponse.builder()
+                .paymentId(payment.getPaymentId())
+                .paymentMethod(payment.getPaymentMethod())
+                .amount(payment.getAmount())
+                .paymentStatus(payment.getPaymentStatus())
+                .transactionReference(payment.getTransactionReference())
+                .notes(payment.getNotes())
+                .paymentDate(payment.getPaymentDate())
+                .build();
     }
 
     @Named("toResponse")
-    default OrderResponse toResponse(Order order, List<OrderDetail> details, List<Payment> payments) {
+    default OrderResponse toResponse(Order order, List<OrderDetail> details, Payment payment) {
         OrderResponse base = toBaseResponse(order);
         base.setOrderDetails(toOrderDetailResponseList(details));
-        base.setPayments(toPaymentResponseList(payments));
+        base.setPayment(toPaymentResponse(payment));
         return base;
     }
 
@@ -63,6 +66,8 @@ public interface OrderMapper {
         BigDecimal disc = (discount != null) ? discount : BigDecimal.ZERO;
         return unitPrice
                 .multiply(BigDecimal.valueOf(quantity))
-                .multiply(BigDecimal.ONE.subtract(disc.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP)));
+                .multiply(BigDecimal.ONE.subtract(
+                        disc.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP)
+                ));
     }
 }

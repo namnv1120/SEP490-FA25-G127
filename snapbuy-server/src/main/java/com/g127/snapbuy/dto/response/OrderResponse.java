@@ -26,5 +26,5 @@ public class OrderResponse {
     private BigDecimal taxAmount;
     private String notes;
     private List<OrderDetailResponse> orderDetails;
-    private List<PaymentResponse> payments;
+    private PaymentResponse payment;
 }
