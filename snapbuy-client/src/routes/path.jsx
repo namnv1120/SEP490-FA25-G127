@@ -27,34 +27,39 @@ const Suppliers = lazy(() => import("../feature-module/people/Supplier"));
 
 // Lazy load Dashboard
 const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
-const ProductList = lazy(() => import("../feature-module/inventory/ProductList"));
+const ProductList = lazy(() =>
+  import("../feature-module/inventory/ProductList")
+);
 const Accounts = lazy(() => import("../feature-module/usermanagement/account"));
 const RolesPermissions = lazy(() =>
   import("../feature-module/usermanagement/Rolespermissions")
 );
 const Profile = lazy(() => import("../feature-module/usermanagement/Profile"));
-const Login = lazy(() => import("../feature-module/pages/authentication/Login"));
+const Login = lazy(() =>
+  import("../feature-module/pages/authentication/Login")
+);
 const Forgotpassword = lazy(() =>
   import("../feature-module/pages/authentication/ForgotPassword")
 );
+const Customers = lazy(() => import("../feature-module/people/Customer"));
 
 const routes = all_routes;
 
 export const authRoutes = [
   {
     id: 1,
-    path: routes.dashboard, 
+    path: routes.dashboard,
     name: "dashboard",
     element: <Dashboard />,
     route: Route,
   },
-  // {
-  //   id: 2,
-  //   path: "/customers",
-  //   name: "customers",
-  //   element: <CustomerList />,
-  //   route: Route,
-  // },
+  {
+    id: 2,
+    path: "/customers",
+    name: "customers",
+    element: <Customers />,
+    route: Route,
+  },
   {
     id: 106,
     path: routes.profile,
@@ -93,14 +98,13 @@ export const authRoutes = [
     route: Route,
   },
 
- {
+  {
     id: 232,
     path: "/product-list",
     name: "product-list",
     element: <ProductList />,
     route: Route,
   },
-
 ];
 
 export const posPages = [
