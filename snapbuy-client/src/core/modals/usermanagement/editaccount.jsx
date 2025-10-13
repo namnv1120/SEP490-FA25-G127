@@ -11,7 +11,7 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
   ];
 
   const [avatar, setAvatar] = useState(null);
-  const [selectedStatus, setSelectedStatus] = useState(statusOptions[0].value);
+  const [selectedStatus, setSelectedStatus] = useState(statusOptions[0]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -23,25 +23,33 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
     description: "",
   });
 
+  // ✅ Load dữ liệu tài khoản
   useEffect(() => {
     if (accountId) {
       getAccount(accountId)
-        .then((res) => {
-          const account = res.data.result || res.data;
+        .then((account) => {
+          const data = account.result || account;
+
           setAccountData({
-            phone: account.phone || "",
-            email: account.email || "",
-            password: "",
+            phone: data.phone || "",
+            email: data.email || "",
+            password: "", // không hiển thị password thật (bảo mật)
             confirmPassword: "",
-            description: account.description || "",
+            description: data.description || "",
           });
-          setSelectedStatus(account.role || "Choose");
-          if (account.avatarUrl) setAvatar(account.avatarUrl);
+
+          const selectedRole =
+            statusOptions.find((opt) => opt.value === data.role) ||
+            statusOptions[0];
+          setSelectedStatus(selectedRole);
+
+          if (data.avatarUrl) setAvatar(data.avatarUrl);
         })
         .catch((err) => console.error("Error fetching account data:", err));
     }
   }, [accountId]);
 
+  // ✅ Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -53,8 +61,8 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
     const updatedData = {
       phone: accountData.phone,
       email: accountData.email,
-      role: selectedStatus,
-      password: accountData.password,
+      role: selectedStatus.value,
+      password: accountData.password, // sử dụng giá trị nhập mới
       description: accountData.description,
       avatarUrl: avatar,
     };
@@ -141,6 +149,7 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
                         </div>
                       </div>
 
+                      {/* Phone */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Phone</label>
@@ -155,6 +164,7 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
                         </div>
                       </div>
 
+                      {/* Email */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Email</label>
@@ -169,6 +179,7 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
                         </div>
                       </div>
 
+                      {/* Role */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Role</label>
@@ -176,13 +187,13 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
                             className="w-100"
                             options={statusOptions}
                             value={selectedStatus}
-                            onChange={(e) => setSelectedStatus(e.value)}
+                            onChange={(e) => setSelectedStatus(e)}
                             placeholder="Choose"
-                            filter={false}
                           />
                         </div>
                       </div>
 
+                      {/* Password */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Password</label>
@@ -193,7 +204,7 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
                               name="password"
                               value={accountData.password}
                               onChange={handleChange}
-                              placeholder="Enter your password"
+                              placeholder="Enter new password"
                             />
                             <span
                               className={`ti toggle-password text-gray-9 ${
@@ -205,6 +216,7 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
                         </div>
                       </div>
 
+                      {/* Confirm Password */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Confirm Password</label>
@@ -215,7 +227,7 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
                               name="confirmPassword"
                               value={accountData.confirmPassword}
                               onChange={handleChange}
-                              placeholder="Enter your password again"
+                              placeholder="Re-enter your password"
                             />
                             <span
                               className={`ti toggle-password ${
@@ -227,6 +239,7 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
                         </div>
                       </div>
 
+                      {/* Description */}
                       <div className="col-lg-12">
                         <div className="mb-0 input-blocks">
                           <label className="form-label">Descriptions</label>

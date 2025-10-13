@@ -27,13 +27,23 @@ const Suppliers = lazy(() => import("../feature-module/people/Supplier"));
 
 // Lazy load Dashboard
 const Dashboard = lazy(() => import("../feature-module/dashboard/dashboard"));
-const ProductList = lazy(() => import("../feature-module/inventory/ProductList"));
+const ProductList = lazy(() =>
+  import("../feature-module/inventory/ProductList")
+);
 const Accounts = lazy(() => import("../feature-module/usermanagement/account"));
 const RolesPermissions = lazy(() =>
   import("../feature-module/usermanagement/Rolespermissions")
 );
+const Permissions = lazy(() =>
+  import("../feature-module/usermanagement/permissions")
+);
+// const DeleteAccount = lazy(() =>
+//   import("../feature-module/usermanagement/deleteaccount")
+// );
 const Profile = lazy(() => import("../feature-module/usermanagement/Profile"));
-const Login = lazy(() => import("../feature-module/pages/authentication/Login"));
+const Login = lazy(() =>
+  import("../feature-module/pages/authentication/Login")
+);
 const Forgotpassword = lazy(() =>
   import("../feature-module/pages/authentication/ForgotPassword")
 );
@@ -43,7 +53,7 @@ const routes = all_routes;
 export const authRoutes = [
   {
     id: 1,
-    path: routes.dashboard, 
+    path: routes.dashboard,
     name: "dashboard",
     element: <Dashboard />,
     route: Route,
@@ -76,6 +86,20 @@ export const authRoutes = [
     element: <RolesPermissions />,
     route: Route,
   },
+  {
+    id: 106,
+    path: routes.permissions,
+    name: "permissions",
+    element: <Permissions />,
+    route: Route,
+  },
+  // {
+  //   id: 107,
+  //   path: routes.deleteaccount,
+  //   name: "deleteaccount",
+  //   element: <DeleteAccount />,
+  //   route: Route,
+  // },
 
   {
     id: 230,
@@ -93,14 +117,13 @@ export const authRoutes = [
     route: Route,
   },
 
- {
+  {
     id: 232,
     path: "/product-list",
     name: "product-list",
     element: <ProductList />,
     route: Route,
   },
-
 ];
 
 export const posPages = [

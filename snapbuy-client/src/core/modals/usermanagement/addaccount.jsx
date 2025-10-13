@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import CommonSelect from "../../../components/select/common-select";
 import { createAccount } from "../../../services/accountService";
 
@@ -59,7 +58,6 @@ const AddAccount = ({ onUserAdded }) => {
       await createAccount(form, {
         headers: {
           Authorization: `${tokenType} ${token}`,
-          "Content-Type": "multipart/form-data",
         },
       });
 
@@ -153,7 +151,6 @@ const AddAccount = ({ onUserAdded }) => {
                         </div>
                       </div>
 
-                      {/* Username */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>User Name</label>
@@ -168,7 +165,6 @@ const AddAccount = ({ onUserAdded }) => {
                         </div>
                       </div>
 
-                      {/* Phone */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Phone</label>
@@ -183,7 +179,6 @@ const AddAccount = ({ onUserAdded }) => {
                         </div>
                       </div>
 
-                      {/* Email */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Email</label>
@@ -198,7 +193,6 @@ const AddAccount = ({ onUserAdded }) => {
                         </div>
                       </div>
 
-                      {/* Role */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Role</label>
@@ -216,7 +210,6 @@ const AddAccount = ({ onUserAdded }) => {
                         </div>
                       </div>
 
-                      {/* Password */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Password</label>
@@ -240,7 +233,6 @@ const AddAccount = ({ onUserAdded }) => {
                         </div>
                       </div>
 
-                      {/* Confirm Password */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Confirm Password</label>
@@ -267,7 +259,6 @@ const AddAccount = ({ onUserAdded }) => {
                         </div>
                       </div>
 
-                      {/* Description */}
                       <div className="col-lg-12">
                         <div className="mb-0 input-blocks">
                           <label className="form-label">Descriptions</label>
@@ -283,7 +274,6 @@ const AddAccount = ({ onUserAdded }) => {
                       </div>
                     </div>
 
-                    {/* Footer */}
                     <div className="modal-footer-btn">
                       <button
                         type="button"

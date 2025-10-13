@@ -197,7 +197,12 @@ const Accounts = () => {
       </div>
 
       <AddAccount id="add-account" onCreated={fetchAccounts} />
-      <EditAccount id="edit-account" account={selectedAccount} onUpdated={fetchAccounts} />
+      <EditAccount
+        id="edit-account"
+        accountId={selectedAccount?.id}
+        onUpdated={fetchAccounts}
+        onClose={() => setSelectedAccount(null)}
+      />
 
       <div className="modal fade" id="delete-modal">
         <div className="modal-dialog modal-dialog-centered">

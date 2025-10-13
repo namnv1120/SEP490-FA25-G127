@@ -11,79 +11,90 @@ import CollapesIcon from "../../components/tooltip-content/collapes";
 import Table from "../../core/pagination/datatable";
 
 import {
-  listRolesPermissions,
-  deleteRolePermission,
-} from "../../services/role_permissionService";
+  listRoles,
+  deleteRole,
+  createRole,
+  updateRole,
+} from "../../services/roleService";
 
 const RolesPermissions = () => {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
 
-  // Load danh sách roles từ API
   const fetchRoles = async () => {
     try {
       setLoading(true);
-      const response = await listRolesPermissions();
-      setRoles(response.data); // Giả định API trả về danh sách role
+      const response = await listRoles();
+      const data = Array.isArray(response) ? response : response.data || response.result || [];
+      setRoles(data);
     } catch (error) {
-      console.error("Failed to fetch roles:", error);
+      console.error("Failed to fetch roles:", error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Gọi API khi component mount
   useEffect(() => {
     fetchRoles();
   }, []);
 
-  // Xử lý xóa role
   const handleDeleteRole = async () => {
     if (!selectedRole) return;
     try {
-      await deleteRolePermission(selectedRole.id);
+      await deleteRole(selectedRole.id || selectedRole.roleId);
       fetchRoles();
     } catch (error) {
-      console.error("Failed to delete role:", error);
+      console.error("Failed to delete role:", error.message);
     }
   };
 
-  // Cột hiển thị bảng
+  const handleAddRole = async (roleData) => {
+    try {
+      await createRole(roleData);
+      fetchRoles();
+    } catch (error) {
+      console.error("Failed to create role:", error.message);
+    }
+  };
+
+  const handleUpdateRole = async (roleId, updatedData) => {
+    try {
+      await updateRole(roleId, updatedData);
+      fetchRoles();
+    } catch (error) {
+      console.error("Failed to update role:", error.message);
+    }
+  };
+
   const columns = [
     {
-      title: "Role",
-      dataIndex: "roleName" || "role", // tùy theo field trong DB
+      title: "Role Name",
+      dataIndex: "roleName",
       align: "center",
-      sorter: (a, b) => a.role.localeCompare(b.role),
+      sorter: (a, b) => a.roleName.localeCompare(b.roleName),
     },
     {
       title: "Created On",
-      dataIndex: "createdOn" || "createdon",
+      dataIndex: "createdOn",
       align: "center",
-      sorter: (a, b) => a.createdon.localeCompare(b.createdon),
+      sorter: (a, b) => a.createdOn.localeCompare(b.createdOn),
     },
     {
       title: "Status",
-      dataIndex: "status",
+      dataIndex: "active",
       align: "center",
-      render: (text) => (
-        <div>
-          {text === "Active" && (
-            <span className="d-inline-flex align-items-center p-1 pe-2 rounded-1 text-white bg-success fs-10">
-              <i className="ti ti-point-filled me-1 fs-11"></i>
-              {text}
-            </span>
-          )}
-          {text === "Inactive" && (
-            <span className="d-inline-flex align-items-center p-1 pe-2 rounded-1 text-white bg-danger fs-10">
-              <i className="ti ti-point-filled me-1 fs-11"></i>
-              {text}
-            </span>
-          )}
-        </div>
+      render: (active) => (
+        <span
+          className={`d-inline-flex align-items-center p-1 pe-2 rounded-1 text-white ${
+            active ? "bg-success" : "bg-danger"
+          } fs-10`}
+        >
+          <i className="ti ti-point-filled me-1 fs-11"></i>
+          {active ? "Active" : "Inactive"}
+        </span>
       ),
-      sorter: (a, b) => a.status.localeCompare(b.status),
+      sorter: (a, b) => a.active - b.active,
     },
     {
       title: "",
@@ -94,7 +105,7 @@ const RolesPermissions = () => {
         <div className="action-table-data">
           <div className="edit-delete-action">
             <Link
-              to={all_routes.rolespermission}
+              to={all_routes.permissions}
               className="me-2 d-flex align-items-center p-2 border rounded"
             >
               <i className="ti ti-shield"></i>
@@ -144,7 +155,7 @@ const RolesPermissions = () => {
                 to="#"
                 className="btn btn-added"
                 data-bs-toggle="modal"
-                data-bs-target="#add-units"
+                data-bs-target="#add-role"
               >
                 <i className="ti ti-circle-plus me-1"></i>
                 Add Role
@@ -193,8 +204,13 @@ const RolesPermissions = () => {
         </div>
       </div>
 
-      <AddRole onCreated={fetchRoles} />
-      <EditRole role={selectedRole} onUpdated={fetchRoles} />
+      <AddRole id="add-role" onCreated={handleAddRole}/>
+      <EditRole
+        id="edit-role"
+        roleId={selectedRole?.id}
+        onUpdated={handleUpdateRole}
+        onClose={() => setSelectedRole(null)}
+      />
       <DeleteModal onConfirm={handleDeleteRole} />
     </div>
   );

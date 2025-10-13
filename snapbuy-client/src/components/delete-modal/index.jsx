@@ -38,7 +38,7 @@ const DeleteModal = ({ productId, onDeleteSuccess }) => {
                 <i className="ti ti-trash fs-24 text-danger" />
               </span>
               <h4 className="mb-0 delete-account-font">
-                Are you sure you want to delete this product?
+                Are you sure you want to delete this?
               </h4>
               <div className="modal-footer-btn mt-3 d-flex justify-content-center">
                 <button
