@@ -140,6 +140,7 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
         orderDetailRepository.saveAll(orderDetails);
 
+        // 🔹 1 Order = 1 Payment duy nhất
         Payment payment = new Payment();
         payment.setOrder(order);
         payment.setPaymentMethod(Optional.ofNullable(req.getPaymentMethod()).orElse("CASH"));
@@ -165,11 +166,11 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderResponse> getAllOrders() {
         return orderRepository.findAll().stream()
-                .map(order -> orderMapper.toResponse(
-                        order,
-                        orderDetailRepository.findByOrder(order),
-                        paymentRepository.findByOrder(order)
-                ))
+                .map(order -> {
+                    List<OrderDetail> details = orderDetailRepository.findByOrder(order);
+                    Payment payment = paymentRepository.findByOrder(order);
+                    return orderMapper.toResponse(order, details, payment);
+                })
                 .toList();
     }
 
@@ -183,7 +184,6 @@ public class OrderServiceImpl implements OrderService {
         if (payment == null) throw new NoSuchElementException("Payment not found for order");
 
         if ("UNPAID".equalsIgnoreCase(order.getPaymentStatus())) {
-            // Hủy khi chưa trả tiền
             order.setOrderStatus("CANCELLED");
             order.setPaymentStatus("UNPAID");
             payment.setPaymentStatus("UNPAID");

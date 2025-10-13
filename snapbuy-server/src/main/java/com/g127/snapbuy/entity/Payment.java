@@ -2,37 +2,38 @@ package com.g127.snapbuy.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "payments")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor @Builder
 public class Payment {
 
     @Id
-    @Column(name = "payment_id", nullable = false)
+    @GeneratedValue
+    @UuidGenerator
+    @Column(name = "payment_id", nullable = false, updatable = false)
     private UUID paymentId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    @Column(name = "payment_method")
+    @Column(name = "payment_method", nullable = false)
     private String paymentMethod;
 
-    @Column(name = "payment_date")
+    @Column(name = "payment_date", nullable = false)
     private LocalDateTime paymentDate;
 
-    @Column(name = "amount")
+    @Column(name = "amount", nullable = false, precision = 18, scale = 2)
     private BigDecimal amount;
 
-    @Column(name = "payment_status")
+    @Column(name = "payment_status", nullable = false)
     private String paymentStatus;
 
     @Column(name = "transaction_reference")
@@ -41,6 +42,13 @@ public class Payment {
     @Column(name = "notes")
     private String notes;
 
-    @Column(name = "created_date")
-    private LocalDateTime createdDate = LocalDateTime.now();
+    @Column(name = "created_date", nullable = false)
+    private LocalDateTime createdDate;
+
+    @PrePersist
+    void prePersist() {
+        if (paymentDate == null) paymentDate = LocalDateTime.now();
+        if (createdDate == null) createdDate = LocalDateTime.now();
+        if (paymentStatus == null) paymentStatus = "PENDING";
+    }
 }
