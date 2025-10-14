@@ -1,22 +1,17 @@
 package com.g127.snapbuy.service;
 
-import com.g127.snapbuy.dto.request.*;
-import com.g127.snapbuy.dto.response.*;
+import com.g127.snapbuy.dto.request.OrderCreateRequest;
+import com.g127.snapbuy.dto.response.OrderResponse;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface OrderService {
-
     OrderResponse createOrder(OrderCreateRequest req);
-
-    OrderResponse getOrder(UUID orderId);
-
+    OrderResponse getOrder(UUID id);
     List<OrderResponse> getAllOrders();
-
-    void cancelOrder(UUID orderId);
-
-    void holdOrder(UUID id);
-
-    void completeOrder(UUID id);
+    OrderResponse holdOrder(UUID id);
+    OrderResponse completeOrder(UUID id);
+    OrderResponse cancelOrder(UUID id);
 }
+

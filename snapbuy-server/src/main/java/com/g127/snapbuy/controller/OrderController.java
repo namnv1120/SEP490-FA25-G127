@@ -1,10 +1,10 @@
 package com.g127.snapbuy.controller;
 
-import com.g127.snapbuy.dto.request.*;
-import com.g127.snapbuy.dto.response.*;
+import com.g127.snapbuy.dto.ApiResponse;
+import com.g127.snapbuy.dto.request.OrderCreateRequest;
+import com.g127.snapbuy.dto.response.OrderResponse;
 import com.g127.snapbuy.service.OrderService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,35 +18,50 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<OrderResponse> createOrder(@RequestBody OrderCreateRequest req) {
-        return ResponseEntity.ok(orderService.createOrder(req));
+    public ApiResponse<OrderResponse> createOrder(@RequestBody OrderCreateRequest req) {
+        ApiResponse<OrderResponse> response = new ApiResponse<>();
+        response.setResult(orderService.createOrder(req));
+        response.setMessage("Order created successfully");
+        return response;
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OrderResponse> getOrder(@PathVariable UUID id) {
-        return ResponseEntity.ok(orderService.getOrder(id));
+    public ApiResponse<OrderResponse> getOrder(@PathVariable UUID id) {
+        ApiResponse<OrderResponse> response = new ApiResponse<>();
+        response.setResult(orderService.getOrder(id));
+        response.setMessage("Order fetched successfully");
+        return response;
     }
 
     @GetMapping
-    public ResponseEntity<List<OrderResponse>> getAllOrders() {
-        return ResponseEntity.ok(orderService.getAllOrders());
+    public ApiResponse<List<OrderResponse>> getAllOrders() {
+        ApiResponse<List<OrderResponse>> response = new ApiResponse<>();
+        response.setResult(orderService.getAllOrders());
+        response.setMessage("Orders fetched successfully");
+        return response;
     }
 
     @PostMapping("/{id}/hold")
-    public ResponseEntity<Void> holdOrder(@PathVariable UUID id) {
-        orderService.holdOrder(id);
-        return ResponseEntity.ok().build();
+    public ApiResponse<OrderResponse> holdOrder(@PathVariable UUID id) {
+        ApiResponse<OrderResponse> response = new ApiResponse<>();
+        response.setResult(orderService.holdOrder(id));
+        response.setMessage("Order put on hold successfully");
+        return response;
     }
 
     @PostMapping("/{id}/complete")
-    public ResponseEntity<Void> completeOrder(@PathVariable UUID id) {
-        orderService.completeOrder(id);
-        return ResponseEntity.ok().build();
+    public ApiResponse<OrderResponse> completeOrder(@PathVariable UUID id) {
+        ApiResponse<OrderResponse> response = new ApiResponse<>();
+        response.setResult(orderService.completeOrder(id));
+        response.setMessage("Order completed successfully");
+        return response;
     }
 
     @PostMapping("/{id}/cancel")
-    public ResponseEntity<Void> cancelOrder(@PathVariable UUID id) {
-        orderService.cancelOrder(id);
-        return ResponseEntity.ok().build();
+    public ApiResponse<OrderResponse> cancelOrder(@PathVariable UUID id) {
+        ApiResponse<OrderResponse> response = new ApiResponse<>();
+        response.setResult(orderService.cancelOrder(id));
+        response.setMessage("Order cancelled successfully");
+        return response;
     }
 }

@@ -1,10 +1,10 @@
 package com.g127.snapbuy.controller;
 
+import com.g127.snapbuy.dto.ApiResponse;
 import com.g127.snapbuy.dto.request.PaymentRequest;
 import com.g127.snapbuy.dto.response.PaymentResponse;
 import com.g127.snapbuy.service.PaymentService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,22 +18,34 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping
-    public ResponseEntity<PaymentResponse> createPayment(@RequestBody PaymentRequest request) {
-        return ResponseEntity.ok(paymentService.createPayment(request));
+    public ApiResponse<PaymentResponse> createPayment(@RequestBody PaymentRequest request) {
+        ApiResponse<PaymentResponse> response = new ApiResponse<>();
+        response.setResult(paymentService.createPayment(request));
+        response.setMessage("Payment created successfully");
+        return response;
     }
 
     @PutMapping("/{id}/finalize")
-    public ResponseEntity<PaymentResponse> finalizePayment(@PathVariable UUID id) {
-        return ResponseEntity.ok(paymentService.finalizePayment(id));
+    public ApiResponse<PaymentResponse> finalizePayment(@PathVariable UUID id) {
+        ApiResponse<PaymentResponse> response = new ApiResponse<>();
+        response.setResult(paymentService.finalizePayment(id));
+        response.setMessage("Payment finalized successfully");
+        return response;
     }
 
     @PutMapping("/{id}/refund")
-    public ResponseEntity<PaymentResponse> refundPayment(@PathVariable UUID id) {
-        return ResponseEntity.ok(paymentService.refundPayment(id));
+    public ApiResponse<PaymentResponse> refundPayment(@PathVariable UUID id) {
+        ApiResponse<PaymentResponse> response = new ApiResponse<>();
+        response.setResult(paymentService.refundPayment(id));
+        response.setMessage("Payment refunded successfully");
+        return response;
     }
 
     @GetMapping("/order/{orderId}")
-    public ResponseEntity<List<PaymentResponse>> getPaymentsByOrder(@PathVariable UUID orderId) {
-        return ResponseEntity.ok(paymentService.getPaymentsByOrder(orderId));
+    public ApiResponse<List<PaymentResponse>> getPaymentsByOrder(@PathVariable UUID orderId) {
+        ApiResponse<List<PaymentResponse>> response = new ApiResponse<>();
+        response.setResult(paymentService.getPaymentsByOrder(orderId));
+        response.setMessage("Payments fetched successfully");
+        return response;
     }
 }

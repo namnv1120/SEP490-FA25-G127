@@ -7,7 +7,6 @@ import com.g127.snapbuy.exception.AppException;
 import com.g127.snapbuy.exception.ErrorCode;
 import com.g127.snapbuy.mapper.OrderMapper;
 import com.g127.snapbuy.repository.*;
-import com.g127.snapbuy.service.OrderService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +19,7 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class OrderServiceImpl implements OrderService {
+public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderDetailRepository orderDetailRepository;
@@ -36,11 +35,12 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderResponse createOrder(OrderCreateRequest req) {
-
-        if (req.getAccountId() == null)
+        if (req.getAccountId() == null) {
             throw new IllegalArgumentException("accountId is required");
-        if (req.getItems() == null || req.getItems().isEmpty())
+        }
+        if (req.getItems() == null || req.getItems().isEmpty()) {
             throw new IllegalArgumentException("Order must contain at least 1 item");
+        }
 
         Account creator = accountRepository.findById(req.getAccountId())
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
@@ -71,10 +71,12 @@ public class OrderServiceImpl implements OrderService {
         List<OrderDetail> orderDetails = new ArrayList<>();
 
         for (OrderDetailRequest item : req.getItems()) {
-            if (item.getProductId() == null)
+            if (item.getProductId() == null) {
                 throw new IllegalArgumentException("productId is required for each item");
-            if (item.getQuantity() == null || item.getQuantity() <= 0)
+            }
+            if (item.getQuantity() == null || item.getQuantity() <= 0) {
                 throw new IllegalArgumentException("quantity must be > 0");
+            }
 
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new NoSuchElementException("Product not found"));
@@ -83,8 +85,9 @@ public class OrderServiceImpl implements OrderService {
                     .orElseThrow(() -> new NoSuchElementException(
                             "Inventory not found for product: " + product.getProductName()));
 
-            if (inv.getQuantityInStock() < item.getQuantity())
+            if (inv.getQuantityInStock() < item.getQuantity()) {
                 throw new AppException(ErrorCode.INVALID_STOCK_OPERATION);
+            }
 
             BigDecimal unitPrice = item.getUnitPrice();
             if (unitPrice == null || unitPrice.compareTo(BigDecimal.ZERO) <= 0) {
@@ -96,8 +99,9 @@ public class OrderServiceImpl implements OrderService {
 
             BigDecimal discountPercent = item.getDiscount() != null ? item.getDiscount() : BigDecimal.ZERO;
             if (discountPercent.compareTo(BigDecimal.ZERO) < 0
-                    || discountPercent.compareTo(BigDecimal.valueOf(100)) > 0)
+                    || discountPercent.compareTo(BigDecimal.valueOf(100)) > 0) {
                 throw new IllegalArgumentException("Discount must be between 0 and 100 percent");
+            }
 
             BigDecimal discountMultiplier = BigDecimal.ONE.subtract(
                     discountPercent.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP));
@@ -136,11 +140,9 @@ public class OrderServiceImpl implements OrderService {
         order.setDiscountAmount(billDiscountAmount);
         order.setTaxAmount(taxAmount);
         order.setTotalAmount(grandTotal);
-
         orderRepository.save(order);
         orderDetailRepository.saveAll(orderDetails);
 
-        // 🔹 1 Order = 1 Payment duy nhất
         Payment payment = new Payment();
         payment.setOrder(order);
         payment.setPaymentMethod(Optional.ofNullable(req.getPaymentMethod()).orElse("CASH"));
@@ -148,7 +150,6 @@ public class OrderServiceImpl implements OrderService {
         payment.setPaymentStatus("UNPAID");
         payment.setPaymentDate(LocalDateTime.now());
         paymentRepository.save(payment);
-
         orderRepository.save(order);
 
         return orderMapper.toResponse(order, orderDetails, payment);
@@ -176,7 +177,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public void cancelOrder(UUID orderId) {
+    public OrderResponse cancelOrder(UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NoSuchElementException("Order not found"));
 
@@ -195,13 +196,58 @@ public class OrderServiceImpl implements OrderService {
 
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
         for (OrderDetail d : details) {
+            // trả hàng về kho
             adjustInventory(d.getProduct(), d.getQuantity(), order.getAccount());
         }
 
         order.setUpdatedDate(LocalDateTime.now());
         orderRepository.save(order);
         paymentRepository.save(payment);
+
+        return orderMapper.toResponse(order, details, payment);
     }
+
+    @Override
+    @Transactional
+    public OrderResponse holdOrder(UUID id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        order.setOrderStatus("HOLD");
+        order.setUpdatedDate(LocalDateTime.now());
+        orderRepository.save(order);
+
+        return orderMapper.toResponse(
+                order,
+                orderDetailRepository.findByOrder(order),
+                paymentRepository.findByOrder(order)
+        );
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse completeOrder(UUID id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        order.setOrderStatus("COMPLETED");
+        order.setPaymentStatus("PAID");
+
+        Payment payment = paymentRepository.findByOrder(order);
+        if (payment != null) {
+            payment.setPaymentStatus("PAID");
+            payment.setPaymentDate(LocalDateTime.now());
+            paymentRepository.save(payment);
+        }
+
+        order.setUpdatedDate(LocalDateTime.now());
+        orderRepository.save(order);
+
+        return orderMapper.toResponse(
+                order,
+                orderDetailRepository.findByOrder(order),
+                payment
+        );
+    }
+
 
     private String generateOrderNumber() {
         long count = orderRepository.count() + 1;
@@ -230,33 +276,5 @@ public class OrderServiceImpl implements OrderService {
         trx.setQuantity(Math.abs(quantityChange));
         trx.setTransactionDate(LocalDateTime.now());
         inventoryTransactionRepository.save(trx);
-    }
-
-    @Override
-    @Transactional
-    public void holdOrder(UUID id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-        order.setOrderStatus("HOLD");
-        order.setUpdatedDate(LocalDateTime.now());
-    }
-
-    @Override
-    @Transactional
-    public void completeOrder(UUID id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-        order.setOrderStatus("COMPLETED");
-        order.setPaymentStatus("PAID");
-
-        Payment payment = paymentRepository.findByOrder(order);
-        if (payment != null) {
-            payment.setPaymentStatus("PAID");
-            payment.setPaymentDate(LocalDateTime.now());
-            paymentRepository.save(payment);
-        }
-
-        order.setUpdatedDate(LocalDateTime.now());
-        orderRepository.save(order);
     }
 }

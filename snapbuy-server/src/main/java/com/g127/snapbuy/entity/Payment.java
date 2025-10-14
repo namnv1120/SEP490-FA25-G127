@@ -2,8 +2,7 @@ package com.g127.snapbuy.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.UuidGenerator;
-
+import org.hibernate.annotations.DynamicInsert;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -12,11 +11,11 @@ import java.util.UUID;
 @Table(name = "payments")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
+@DynamicInsert
 public class Payment {
 
     @Id
-    @GeneratedValue
-    @UuidGenerator
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "payment_id", nullable = false, updatable = false)
     private UUID paymentId;
 
@@ -52,3 +51,4 @@ public class Payment {
         if (paymentStatus == null) paymentStatus = "PENDING";
     }
 }
+
