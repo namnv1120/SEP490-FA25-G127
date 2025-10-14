@@ -14,7 +14,7 @@ const CommonSelect = ({
     <Dropdown
       value={value}
       options={Array.isArray(options) ? options : []}
-      onChange={(e) => onChange(e)}
+      onChange={(e) => onChange(e.value)}
       placeholder={placeholder}
       className={className}
       disabled={disabled}

@@ -27,6 +27,25 @@ export const getAllProducts = async () => {
   }
 };
 
+// 📋 Lấy chi tiết sản phẩm theo ID
+export const getProductById = async (id) => {
+  try {
+    const token = localStorage.getItem("authToken");
+    const tokenType = localStorage.getItem("authTokenType") || "Bearer";
+
+    const response = await axios.get(`${REST_API_BASE_URL}/${id}`, {
+      headers: {
+        Authorization: `${tokenType} ${token}`,
+      },
+    });
+
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Failed to fetch product by ID:", error);
+    throw error;
+  }
+};
+
 // ➕ Thêm sản phẩm
 export const createProduct = async (productData) => {
   try {

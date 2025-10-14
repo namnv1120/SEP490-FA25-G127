@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import {
   getAllProducts,
   deleteProduct,
-} from "../../services/ProductService"; // 👈 import service
+} from "../../services/productService"; // 👈 import service
 import Brand from "../../core/modals/inventory/brand";
 import { all_routes } from "../../routes/all_routes";
 import PrimeDataTable from "../../components/data-table";
@@ -76,7 +76,7 @@ const ProductList = () => {
       sortable: true,
       body: (data) => (
         <div className="d-flex align-items-center">
-          <img
+          {/* <img
             src={data.productImage || "/placeholder-image.png"}
             alt={data.products}
             style={{
@@ -89,8 +89,14 @@ const ProductList = () => {
             onError={(e) => {
               e.target.src = "/placeholder-image.png";
             }}
-          />
-          <span>{data.productName}</span>
+          /> */}
+          <Link
+            to={`/product-details/${data.productId}`}
+            className="text-primary fw-semibold text-decoration-none"
+          >
+            {data.productName}
+          </Link>
+
         </div>
       ),
     },
@@ -105,7 +111,7 @@ const ProductList = () => {
         <div className="d-flex">
           <Link
             className="btn btn-sm btn-outline-primary me-2"
-            to={`${all_routes.addproduct}/edit/${data.id}`}
+            to={`/edit-product/${data.productId}`}
           >
             Edit
           </Link>
@@ -113,7 +119,7 @@ const ProductList = () => {
             className="btn btn-sm btn-outline-danger"
             data-bs-toggle="modal"
             data-bs-target="#delete-modal"
-            onClick={() => handleDeleteClick(data.id)}
+            onClick={() => handleDeleteClick(data.productId)}
           >
             Delete
           </button>

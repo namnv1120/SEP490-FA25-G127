@@ -5,8 +5,8 @@ export const all_routes = {
   //  Product routes
   productlist: "/product-list",
   addproduct: "/add-product",
-  editproduct: "/product-list/edit",      
-  viewproduct: "/product-list/view",      
+  editproduct: "/edit-product",         
+  productdetails: "/product-details",
 
   expiredproduct: "/expired-products",
   lowstock: "/low-stocks",
@@ -18,7 +18,6 @@ export const all_routes = {
   warranty: "/warranty",
   barcode: "/barcode",
   qrcode: "/qrcode",
-  productdetails: "/product-details",
 
   // Orders & Sales
   orders: "/orders",
@@ -38,7 +37,6 @@ export const all_routes = {
 
   // Customers & Suppliers
   customers: "/customers",
-  customer: "/customer",
   suppliers: "/suppliers",
 
   // Reports

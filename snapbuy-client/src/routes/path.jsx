@@ -28,6 +28,10 @@ const Suppliers = lazy(() => import("../feature-module/people/Supplier"));
 // Lazy load Dashboard
 const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
 const ProductList = lazy(() => import("../feature-module/inventory/ProductList"));
+const ProductDetail = lazy(() => import("../feature-module/inventory/ProductDetail"));
+const EditProduct = lazy(() => import("../feature-module/inventory/EditProduct"));
+
+
 const Accounts = lazy(() => import("../feature-module/usermanagement/account"));
 const RolesPermissions = lazy(() =>
   import("../feature-module/usermanagement/Rolespermissions")
@@ -43,7 +47,7 @@ const routes = all_routes;
 export const authRoutes = [
   {
     id: 1,
-    path: routes.dashboard, 
+    path: routes.dashboard,
     name: "dashboard",
     element: <Dashboard />,
     route: Route,
@@ -56,21 +60,21 @@ export const authRoutes = [
   //   route: Route,
   // },
   {
-    id: 106,
+    id: 3,
     path: routes.profile,
     name: "profile",
     element: <Profile />,
     route: Route,
   },
   {
-    id: 104,
+    id: 4,
     path: routes.accounts,
     name: "accounts",
     element: <Accounts />,
     route: Route,
   },
   {
-    id: 105,
+    id: 5,
     path: routes.rolespermission,
     name: "rolespermission",
     element: <RolesPermissions />,
@@ -78,7 +82,7 @@ export const authRoutes = [
   },
 
   {
-    id: 230,
+    id: 6,
     path: routes.formhorizontal,
     name: "formhorizontal",
     element: <FormHorizontal />,
@@ -86,18 +90,32 @@ export const authRoutes = [
   },
 
   {
-    id: 231,
+    id: 7,
     path: routes.suppliers,
     name: "suppliers",
     element: <Suppliers />,
     route: Route,
   },
 
- {
-    id: 232,
-    path: "/product-list",
+  {
+    id: 8,
+    path: routes.productlist,
     name: "product-list",
     element: <ProductList />,
+    route: Route,
+  },
+  {
+    id: 9,
+    path: `${routes.productdetails}/:id`,
+    name: "product-details",
+    element: <ProductDetail />,
+    route: Route,
+  },
+  {
+    id: 10,
+    path: `${routes.editproduct}/:id`,
+    name: "edit-product",
+    element: <EditProduct />,
     route: Route,
   },
 
