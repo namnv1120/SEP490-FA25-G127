@@ -1,180 +1,147 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import TableTopHead from "../../components/table-top-head";
 import SearchFromApi from "../../components/data-table/search";
-import Datatable from "../../components/data-table";
+import PrimeDataTable from "../../components/data-table";
 import { permissionsData } from "../../core/json/permission-data";
 
 const Permissions = () => {
-  const [listData, setListData] = useState(permissionsData);
+  const [listData, _setListData] = useState(permissionsData);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, _setTotalRecords] = useState(5);
   const [rows, setRows] = useState(10);
   const [_searchQuery, setSearchQuery] = useState(undefined);
+
   const handleSearch = (value) => {
     setSearchQuery(value);
   };
+
   const columns = [
     {
-      title: "Modules",
-      dataIndex: "module",
+      header: "Modules",
+      field: "module",
       key: "module",
-      render: (text) => <span className="text-gray-9">{text}</span>,
+      body: (row) => <span className="text-gray-9">{row.module}</span>,
     },
     {
-      title: "Allow All",
-      dataIndex: "allowAll",
+      header: "Allow All",
+      field: "allowAll",
       key: "allowAll",
-      render: (text, row) => (
+      body: (row, idx, onChange) => (
         <div className="form-check form-check-md">
           <input
             className="form-check-input"
             type="checkbox"
-            checked={text}
-            onChange={(e) => {
-              const newListData = [...listData];
-              const dataIdx = listData.findIndex(r => r.module === row.module);
-              if (dataIdx !== -1) {
-                newListData[dataIdx].allowAll = e.target.checked;
-                setListData(newListData);
-              }
-            }}
+            checked={row.allowAll}
+            onChange={(e) =>
+              onChange && onChange(idx, "allowAll", e.target.checked)
+            }
           />
         </div>
       ),
     },
     {
-      title: "Read",
-      dataIndex: "read",
+      header: "Read",
+      field: "read",
       key: "read",
-      render: (text, row) => (
+      body: (row, idx, onChange) => (
         <div className="form-check form-check-md">
           <input
             className="form-check-input"
             type="checkbox"
-            checked={text}
-            onChange={(e) => {
-              const newListData = [...listData];
-              const dataIdx = listData.findIndex(r => r.module === row.module);
-              if (dataIdx !== -1) {
-                newListData[dataIdx].read = e.target.checked;
-                setListData(newListData);
-              }
-            }}
+            checked={row.read}
+            onChange={(e) => onChange && onChange(idx, "read", e.target.checked)}
           />
         </div>
       ),
     },
     {
-      title: "Write",
-      dataIndex: "write",
+      header: "Write",
+      field: "write",
       key: "write",
-      render: (text, row) => (
+      body: (row, idx, onChange) => (
         <div className="form-check form-check-md">
           <input
             className="form-check-input"
             type="checkbox"
-            checked={text}
-            onChange={(e) => {
-              const newListData = [...listData];
-              const dataIdx = listData.findIndex(r => r.module === row.module);
-              if (dataIdx !== -1) {
-                newListData[dataIdx].write = e.target.checked;
-                setListData(newListData);
-              }
-            }}
+            checked={row.write}
+            onChange={(e) =>
+              onChange && onChange(idx, "write", e.target.checked)
+            }
           />
         </div>
       ),
     },
     {
-      title: "Create",
-      dataIndex: "create",
+      header: "Create",
+      field: "create",
       key: "create",
-      render: (text, row) => (
+      body: (row, idx, onChange) => (
         <div className="form-check form-check-md">
           <input
             className="form-check-input"
             type="checkbox"
-            checked={text}
-            onChange={(e) => {
-              const newListData = [...listData];
-              const dataIdx = listData.findIndex(r => r.module === row.module);
-              if (dataIdx !== -1) {
-                newListData[dataIdx].create = e.target.checked;
-                setListData(newListData);
-              }
-            }}
+            checked={row.create}
+            onChange={(e) =>
+              onChange && onChange(idx, "create", e.target.checked)
+            }
           />
         </div>
       ),
     },
     {
-      title: "Delete",
-      dataIndex: "delete",
+      header: "Delete",
+      field: "delete",
       key: "delete",
-      render: (text, row) => (
+      body: (row, idx, onChange) => (
         <div className="form-check form-check-md">
           <input
             className="form-check-input"
             type="checkbox"
-            checked={text}
-            onChange={(e) => {
-              const newListData = [...listData];
-              const dataIdx = listData.findIndex(r => r.module === row.module);
-              if (dataIdx !== -1) {
-                newListData[dataIdx]["delete"] = e.target.checked;
-                setListData(newListData);
-              }
-            }}
+            checked={row.delete}
+            onChange={(e) =>
+              onChange && onChange(idx, "delete", e.target.checked)
+            }
           />
         </div>
       ),
     },
     {
-      title: "Import",
-      dataIndex: "import",
+      header: "Import",
+      field: "import",
       key: "import",
-      render: (text, row) => (
+      body: (row, idx, onChange) => (
         <div className="form-check form-check-md">
           <input
             className="form-check-input"
             type="checkbox"
-            checked={text}
-            onChange={(e) => {
-              const newListData = [...listData];
-              const dataIdx = listData.findIndex(r => r.module === row.module);
-              if (dataIdx !== -1) {
-                newListData[dataIdx]["import"] = e.target.checked;
-                setListData(newListData);
-              }
-            }}
+            checked={row.import}
+            onChange={(e) =>
+              onChange && onChange(idx, "import", e.target.checked)
+            }
           />
         </div>
       ),
     },
     {
-      title: "Export",
-      dataIndex: "export",
+      header: "Export",
+      field: "export",
       key: "export",
-      render: (text, row) => (
+      body: (row, idx, onChange) => (
         <div className="form-check form-check-md">
           <input
             className="form-check-input"
             type="checkbox"
-            checked={text}
-            onChange={(e) => {
-              const newListData = [...listData];
-              const dataIdx = listData.findIndex(r => r.module === row.module);
-              if (dataIdx !== -1) {
-                newListData[dataIdx]["export"] = e.target.checked;
-                setListData(newListData);
-              }
-            }}
+            checked={row.export}
+            onChange={(e) =>
+              onChange && onChange(idx, "export", e.target.checked)
+            }
           />
         </div>
       ),
     },
   ];
+
   return (
     <div className="page-wrapper">
       <div className="content">
@@ -187,6 +154,7 @@ const Permissions = () => {
           </div>
           <TableTopHead />
         </div>
+
         <div className="card">
           <div className="card-header">
             <div className="table-top mb-0">
@@ -202,9 +170,14 @@ const Permissions = () => {
             </div>
           </div>
           <div className="card-body p-0">
-            <Datatable
-              columns={columns}
-              dataSource={listData}
+            <PrimeDataTable
+              column={columns}
+              data={listData}
+              rows={rows}
+              setRows={setRows}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              totalRecords={totalRecords}
             />
           </div>
         </div>
