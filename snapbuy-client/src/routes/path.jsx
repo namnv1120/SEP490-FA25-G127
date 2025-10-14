@@ -24,8 +24,6 @@ import FormHorizontal from "../feature-module/uiinterface/forms/formelements/lay
 // import TablesBasic from "../feature-module/uiinterface/table/tables-basic";
 // import Pos from "../feature-module/pos/pos";
 const Suppliers = lazy(() => import("../feature-module/people/Supplier"));
-
-// Lazy load Dashboard
 const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
 const ProductList = lazy(() =>
   import("../feature-module/inventory/ProductList")
@@ -44,7 +42,6 @@ const Forgotpassword = lazy(() =>
 const Customers = lazy(() => import("../feature-module/people/Customer"));
 
 const routes = all_routes;
-
 export const authRoutes = [
   {
     id: 1,
