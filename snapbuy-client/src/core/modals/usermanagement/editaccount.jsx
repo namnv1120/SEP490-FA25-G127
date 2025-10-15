@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import CommonSelect from "../../../components/select/common-select";
 import { getAccount, updateAccount } from "../../../services/accountService";
 
@@ -23,7 +22,6 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
     description: "",
   });
 
-  // ✅ Load dữ liệu tài khoản
   useEffect(() => {
     if (accountId) {
       getAccount(accountId)
@@ -33,15 +31,17 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
           setAccountData({
             phone: data.phone || "",
             email: data.email || "",
-            password: "", // không hiển thị password thật (bảo mật)
+            password: "********",
             confirmPassword: "",
             description: data.description || "",
           });
 
-          const selectedRole =
-            statusOptions.find((opt) => opt.value === data.role) ||
-            statusOptions[0];
-          setSelectedStatus(selectedRole);
+          // Lấy role hiện tại từ dữ liệu và tìm option tương ứng
+          const currentRoleOption = statusOptions.find(
+            (opt) => opt.value === data.role
+          );
+          // Nếu không tìm thấy thì mặc định chọn "Choose"
+          setSelectedStatus(currentRoleOption || statusOptions[0]);
 
           if (data.avatarUrl) setAvatar(data.avatarUrl);
         })
@@ -49,11 +49,13 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
     }
   }, [accountId]);
 
-  // ✅ Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (accountData.password !== accountData.confirmPassword) {
+    if (
+      accountData.password !== "********" &&
+      accountData.password !== accountData.confirmPassword
+    ) {
       alert("Passwords do not match!");
       return;
     }
@@ -62,7 +64,8 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
       phone: accountData.phone,
       email: accountData.email,
       role: selectedStatus.value,
-      password: accountData.password, // sử dụng giá trị nhập mới
+      password:
+        accountData.password === "********" ? undefined : accountData.password,
       description: accountData.description,
       avatarUrl: avatar,
     };
@@ -83,10 +86,6 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
     if (file) setAvatar(URL.createObjectURL(file));
   };
 
-  const handleTogglePassword = () => setShowPassword((prev) => !prev);
-  const handleToggleConfirmPassword = () =>
-    setShowConfirmPassword((prev) => !prev);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setAccountData((prev) => ({ ...prev, [name]: value }));
@@ -99,7 +98,6 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
           <div className="modal-content">
             <div className="page-wrapper-new p-0">
               <div className="content">
-                {/* Modal Header */}
                 <div className="modal-header border-0 custom-modal-header">
                   <div className="page-title">
                     <h4>Edit Account</h4>
@@ -189,6 +187,7 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
                             value={selectedStatus}
                             onChange={(e) => setSelectedStatus(e)}
                             placeholder="Choose"
+                            filter={false}
                           />
                         </div>
                       </div>
@@ -210,7 +209,7 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
                               className={`ti toggle-password text-gray-9 ${
                                 showPassword ? "ti-eye" : "ti-eye-off"
                               }`}
-                              onClick={handleTogglePassword}
+                              onClick={() => setShowPassword(!showPassword)}
                             />
                           </div>
                         </div>
@@ -233,7 +232,9 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
                               className={`ti toggle-password ${
                                 showConfirmPassword ? "ti-eye" : "ti-eye-off"
                               }`}
-                              onClick={handleToggleConfirmPassword}
+                              onClick={() =>
+                                setShowConfirmPassword(!showConfirmPassword)
+                              }
                             />
                           </div>
                         </div>
