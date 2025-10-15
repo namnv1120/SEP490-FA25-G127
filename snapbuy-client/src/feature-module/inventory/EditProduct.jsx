@@ -7,6 +7,7 @@ import RefreshIcon from "../../components/tooltip-content/refresh";
 import CollapesIcon from "../../components/tooltip-content/collapes";
 import { getProductById, updateProduct } from "../../services/productService";
 import { getAllCategories } from "../../services/categoryService";
+import { message } from "antd";
 
 
 const EditProduct = () => {
@@ -113,11 +114,11 @@ const EditProduct = () => {
 
       await updateProduct(id, updatedProduct);
 
-      alert("Cập nhật sản phẩm thành công!");
+      message.success("Cập nhật sản phẩm thành công!");
       navigate(route.productlist);
     } catch (error) {
       console.error("❌ Lỗi khi cập nhật sản phẩm:", error);
-      alert("❌ Cập nhật thất bại!");
+      message.success("Cập nhật thất bại!");
     }
   };
 
@@ -220,13 +221,9 @@ const EditProduct = () => {
                                 className="w-100"
                                 options={categories}
                                 value={selectedCategory}
-                                onChange={(e) => {
-                                  setSelectedCategory(e.value);
+                                onChange={(selectedOption) => {  // ✅ Bây giờ nhận cả object rồi
+                                  setSelectedCategory(selectedOption);
                                   setSelectedSubCategory(null);
-                                  setProduct((prev) => ({
-                                    ...prev,
-                                    categoryId: e.value?.value || null,
-                                  }));
                                 }}
                                 placeholder="Choose Category"
                               />

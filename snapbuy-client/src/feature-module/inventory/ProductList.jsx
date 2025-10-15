@@ -8,6 +8,8 @@ import Brand from "../../core/modals/inventory/brand";
 import { all_routes } from "../../routes/all_routes";
 import PrimeDataTable from "../../components/data-table";
 import DeleteModal from "../../components/delete-modal";
+import { message } from "antd";
+
 import SearchFromApi from "../../components/data-table/search";
 
 const ProductList = () => {
@@ -58,14 +60,18 @@ const ProductList = () => {
     if (selectedId) {
       try {
         await deleteProduct(selectedId);
-        fetchProducts();
+        await fetchProducts();
+
+        message.success("Product deleted successfully!");
       } catch (err) {
         console.error("❌ Lỗi khi xóa sản phẩm:", err);
+        message.error("Failed to delete product!");
       } finally {
         setSelectedId(null);
       }
     }
   };
+
 
   // ✅ Cấu hình cột bảng
   const columns = [
@@ -181,9 +187,10 @@ const ProductList = () => {
 
       {/* Delete Modal */}
       <DeleteModal
-        productId={selectedId}
-        onDeleteSuccess={handleDeleteSuccess}
+        title="this product"
+        onConfirm={handleDeleteSuccess}
       />
+
     </>
   );
 };

@@ -1,4 +1,3 @@
-import React from "react";
 import { Dropdown } from "primereact/dropdown";
 
 const CommonSelect = ({
@@ -12,9 +11,12 @@ const CommonSelect = ({
 }) => {
   return (
     <Dropdown
-      value={value}
+      value={value?.value}
       options={Array.isArray(options) ? options : []}
-      onChange={(e) => onChange(e.value)}
+      onChange={(e) => {
+        const selectedOption = options.find(opt => opt.value === e.value);
+        onChange(selectedOption || null);
+      }}
       placeholder={placeholder}
       className={className}
       disabled={disabled}
