@@ -11,4 +11,5 @@ public interface PaymentService {
     PaymentResponse finalizePayment(UUID paymentId);
     PaymentResponse refundPayment(UUID paymentId);
     List<PaymentResponse> getPaymentsByOrder(UUID orderId);
+    void finalizePaymentByReference(String momoRequestId);
 }

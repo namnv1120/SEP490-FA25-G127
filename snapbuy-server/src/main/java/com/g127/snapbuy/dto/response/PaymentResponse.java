@@ -18,4 +18,5 @@ public class PaymentResponse {
     private String transactionReference;
     private String notes;
     private LocalDateTime paymentDate;
+    private String payUrl;
 }

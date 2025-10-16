@@ -5,14 +5,18 @@ import com.g127.snapbuy.dto.request.PaymentRequest;
 import com.g127.snapbuy.dto.response.PaymentResponse;
 import com.g127.snapbuy.service.PaymentService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentController {
 
     private final PaymentService paymentService;
@@ -47,5 +51,16 @@ public class PaymentController {
         response.setResult(paymentService.getPaymentsByOrder(orderId));
         response.setMessage("Payments fetched successfully");
         return response;
+    }
+
+    @PostMapping("/momo/notify")
+    public ResponseEntity<String> handleMomoNotify(@RequestBody Map<String, Object> payload) {
+        log.info("MoMo notify received: {}", payload);
+        String resultCode = String.valueOf(payload.get("resultCode"));
+        String requestId = String.valueOf(payload.get("requestId"));
+        if ("0".equals(resultCode)) {
+            paymentService.finalizePaymentByReference(requestId);
+        }
+        return ResponseEntity.ok("Received");
     }
 }

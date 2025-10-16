@@ -3,10 +3,9 @@ package com.g127.snapbuy.service.impl;
 import com.g127.snapbuy.dto.request.*;
 import com.g127.snapbuy.dto.response.*;
 import com.g127.snapbuy.entity.*;
-import com.g127.snapbuy.exception.AppException;
-import com.g127.snapbuy.exception.ErrorCode;
 import com.g127.snapbuy.mapper.OrderMapper;
 import com.g127.snapbuy.repository.*;
+import com.g127.snapbuy.service.MoMoService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,16 +30,15 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
     private final CustomerRepository customerRepository;
     private final ProductPriceRepository productPriceRepository;
     private final OrderMapper orderMapper;
+    private final MoMoService moMoService;
 
     @Override
     @Transactional
     public OrderResponse createOrder(OrderCreateRequest req) {
-        if (req.getAccountId() == null) {
+        if (req.getAccountId() == null)
             throw new IllegalArgumentException("accountId is required");
-        }
-        if (req.getItems() == null || req.getItems().isEmpty()) {
+        if (req.getItems() == null || req.getItems().isEmpty())
             throw new IllegalArgumentException("Order must contain at least 1 item");
-        }
 
         Account creator = accountRepository.findById(req.getAccountId())
                 .orElseThrow(() -> new NoSuchElementException("Account not found"));
@@ -71,12 +69,10 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         List<OrderDetail> orderDetails = new ArrayList<>();
 
         for (OrderDetailRequest item : req.getItems()) {
-            if (item.getProductId() == null) {
+            if (item.getProductId() == null)
                 throw new IllegalArgumentException("productId is required for each item");
-            }
-            if (item.getQuantity() == null || item.getQuantity() <= 0) {
+            if (item.getQuantity() == null || item.getQuantity() <= 0)
                 throw new IllegalArgumentException("quantity must be > 0");
-            }
 
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new NoSuchElementException("Product not found"));
@@ -85,9 +81,8 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                     .orElseThrow(() -> new NoSuchElementException(
                             "Inventory not found for product: " + product.getProductName()));
 
-            if (inv.getQuantityInStock() < item.getQuantity()) {
-                throw new AppException(ErrorCode.INVALID_STOCK_OPERATION);
-            }
+            if (inv.getQuantityInStock() < item.getQuantity())
+                throw new IllegalArgumentException("Not enough stock for product: " + product.getProductName());
 
             BigDecimal unitPrice = item.getUnitPrice();
             if (unitPrice == null || unitPrice.compareTo(BigDecimal.ZERO) <= 0) {
@@ -98,10 +93,8 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
             }
 
             BigDecimal discountPercent = item.getDiscount() != null ? item.getDiscount() : BigDecimal.ZERO;
-            if (discountPercent.compareTo(BigDecimal.ZERO) < 0
-                    || discountPercent.compareTo(BigDecimal.valueOf(100)) > 0) {
+            if (discountPercent.compareTo(BigDecimal.ZERO) < 0 || discountPercent.compareTo(BigDecimal.valueOf(100)) > 0)
                 throw new IllegalArgumentException("Discount must be between 0 and 100 percent");
-            }
 
             BigDecimal discountMultiplier = BigDecimal.ONE.subtract(
                     discountPercent.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP));
@@ -125,14 +118,12 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
 
         BigDecimal billDiscountPercent = req.getDiscountAmount() != null ? req.getDiscountAmount() : BigDecimal.ZERO;
         BigDecimal billDiscountAmount = total.multiply(
-                billDiscountPercent.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP)
-        );
+                billDiscountPercent.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP));
         BigDecimal afterDiscount = total.subtract(billDiscountAmount);
 
         BigDecimal taxPercent = req.getTaxAmount() != null ? req.getTaxAmount() : BigDecimal.ZERO;
         BigDecimal taxAmount = afterDiscount.multiply(
-                taxPercent.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP)
-        );
+                taxPercent.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP));
 
         BigDecimal grandTotal = afterDiscount.add(taxAmount);
         if (grandTotal.compareTo(BigDecimal.ZERO) < 0) grandTotal = BigDecimal.ZERO;
@@ -145,13 +136,30 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
 
         Payment payment = new Payment();
         payment.setOrder(order);
-        payment.setPaymentMethod(Optional.ofNullable(req.getPaymentMethod()).orElse("CASH"));
+        String method = Optional.ofNullable(req.getPaymentMethod()).orElse("CASH");
+        payment.setPaymentMethod(method);
         payment.setAmount(grandTotal);
         payment.setPaymentStatus("UNPAID");
         payment.setPaymentDate(LocalDateTime.now());
         paymentRepository.save(payment);
-        orderRepository.save(order);
 
+        if ("MOMO".equalsIgnoreCase(method)) {
+            try {
+                var momoResp = moMoService.createPayment(order.getOrderId());
+                if (momoResp != null && momoResp.getPayUrl() != null) {
+                    payment.setTransactionReference(momoResp.getRequestId());
+                    payment.setNotes("PAYURL:" + momoResp.getPayUrl());
+                    paymentRepository.save(payment);
+                    log.info("MoMo QR created for order {} - {}", orderNumber, momoResp.getPayUrl());
+                } else {
+                    log.warn("⚠MoMo response is null or missing payUrl for order {}", orderNumber);
+                }
+            } catch (Exception e) {
+                log.error("Failed to create MoMo payment for order {}: {}", orderNumber, e.getMessage(), e);
+            }
+        }
+
+        orderRepository.save(order);
         return orderMapper.toResponse(order, orderDetails, payment);
     }
 
@@ -196,7 +204,6 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
 
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
         for (OrderDetail d : details) {
-            // trả hàng về kho
             adjustInventory(d.getProduct(), d.getQuantity(), order.getAccount());
         }
 
@@ -248,7 +255,6 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         );
     }
 
-
     private String generateOrderNumber() {
         long count = orderRepository.count() + 1;
         return String.format("ORD-%05d", count);
@@ -260,9 +266,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                         "Inventory not found for product: " + product.getProductName()));
 
         int newQty = inv.getQuantityInStock() + quantityChange;
-        if (newQty < 0) {
-            throw new AppException(ErrorCode.INVALID_STOCK_OPERATION);
-        }
+        if (newQty < 0) throw new IllegalArgumentException("Not enough stock");
 
         inv.setQuantityInStock(newQty);
         inv.setLastUpdated(LocalDateTime.now());
