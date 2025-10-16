@@ -127,7 +127,13 @@ export const authRoutes = [
 ];
 
 export const posPages = [
-  // giữ nguyên pos nếu cần
+    {
+    id: 25,
+    path: routes.pos,
+    name: "pos",
+    element: <Pos />,
+    route: Route,
+  },
 ];
 
 export const unAuthRoutes = [
