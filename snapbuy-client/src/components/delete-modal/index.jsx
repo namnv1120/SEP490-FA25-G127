@@ -2,6 +2,19 @@ const DeleteModal = ({ title = "this item", onConfirm }) => {
   const handleConfirm = async () => {
     try {
       if (onConfirm) await onConfirm();
+
+      // ✅ Đóng modal thủ công
+      const modalElement = document.getElementById("delete-modal");
+      if (modalElement) {
+        modalElement.classList.remove("show");
+        modalElement.style.display = "none";
+        document.body.classList.remove("modal-open");
+        document.body.style.overflow = "";
+        document.body.style.paddingRight = "";
+        const backdrop = document.querySelector(".modal-backdrop");
+        if (backdrop) backdrop.remove();
+      }
+
     } catch (err) {
       console.error("❌ Error while deleting:", err);
     }

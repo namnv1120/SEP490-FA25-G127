@@ -13,6 +13,7 @@ import { message } from "antd";
 import SearchFromApi from "../../components/data-table/search";
 
 const ProductList = () => {
+  const route = all_routes;
   const [products, setProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -143,7 +144,7 @@ const ProductList = () => {
               <h4>Product List</h4>
               <h6>Manage your products</h6>
             </div>
-            <Link to={all_routes.addproduct} className="btn btn-primary">
+            <Link to={route.addproduct} className="btn btn-primary">
               + Add New Product
             </Link>
           </div>

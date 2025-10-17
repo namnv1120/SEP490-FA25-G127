@@ -29,6 +29,7 @@ const Suppliers = lazy(() => import("../feature-module/people/Supplier"));
 const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
 const ProductList = lazy(() => import("../feature-module/inventory/ProductList"));
 const ProductDetail = lazy(() => import("../feature-module/inventory/ProductDetail"));
+const AddProduct = lazy(() => import("../feature-module/inventory/AddProduct"));
 const EditProduct = lazy(() => import("../feature-module/inventory/EditProduct"));
 
 
@@ -113,6 +114,13 @@ export const authRoutes = [
   },
   {
     id: 10,
+    path: routes.addproduct,
+    name: "add-product",
+    element: <AddProduct />,
+    route: Route,
+  },
+  {
+    id: 11,
     path: `${routes.editproduct}/:id`,
     name: "edit-product",
     element: <EditProduct />,

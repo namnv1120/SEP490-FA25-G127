@@ -5,14 +5,13 @@ export const all_routes = {
   //  Product routes
   productlist: "/product-list",
   addproduct: "/add-product",
-  editproduct: "/edit-product",         
+  editproduct: "/edit-product",
   productdetails: "/product-details",
 
   expiredproduct: "/expired-products",
   lowstock: "/low-stocks",
   categorylist: "/category-list",
   subcategories: "/sub-categories",
-  brandlist: "/brand-list",
   units: "/units",
   variantattributes: "/variant-attributes",
   warranty: "/warranty",

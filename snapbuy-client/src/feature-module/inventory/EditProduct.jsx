@@ -124,7 +124,6 @@ const EditProduct = () => {
 
   const handleRemoveProduct = () => setIsImageVisible(false);
 
-
   return (
     <>
       <div className="page-wrapper">
@@ -132,8 +131,8 @@ const EditProduct = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>New Product</h4>
-                <h6>Create new product</h6>
+                <h4>Edit Product</h4>
+                <h6>Update product</h6>
               </div>
             </div>
             <ul className="table-top-head">
