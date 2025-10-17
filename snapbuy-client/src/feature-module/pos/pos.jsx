@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import PosModals from "../../core/modals/pos-modal/posModalst";
+import PosModals from "../../core/modals/pos-modal/posModals";
 import CounterTwo from "../../components/counter/counterTwo";
 import {
   category1,

@@ -22,7 +22,7 @@ import FormHorizontal from "../feature-module/uiinterface/forms/formelements/lay
 // import Leaflet from "../feature-module/uiinterface/map/leaflet";
 // import DataTables from "../feature-module/uiinterface/table/data-tables";
 // import TablesBasic from "../feature-module/uiinterface/table/tables-basic";
-// import Pos from "../feature-module/pos/pos";
+import Pos from "../feature-module/pos/pos";
 const Suppliers = lazy(() => import("../feature-module/people/Supplier"));
 
 // Lazy load Dashboard
@@ -47,6 +47,12 @@ const Login = lazy(() =>
 const Forgotpassword = lazy(() =>
   import("../feature-module/pages/authentication/ForgotPassword")
 );
+const PosSettings = lazy(
+  () => import("../feature-module/settings/websitesettings/possettings")
+);
+const PosOrder = lazy(
+  () => import("../feature-module/sales/pos-order/posOrder")
+);
 
 const routes = all_routes;
 
@@ -65,6 +71,13 @@ export const authRoutes = [
   //   element: <CustomerList />,
   //   route: Route,
   // },
+    {
+    id: 76,
+    path: routes.possettings,
+    name: "possettings",
+    element: <PosSettings />,
+    route: Route,
+  },
   {
     id: 106,
     path: routes.profile,
@@ -100,7 +113,13 @@ export const authRoutes = [
   //   element: <DeleteAccount />,
   //   route: Route,
   // },
-
+    {
+    id: 121,
+    path: routes.posorder,
+    name: "pos-orders",
+    element: <PosOrder />,
+    route: Route,
+  },
   {
     id: 230,
     path: routes.formhorizontal,
