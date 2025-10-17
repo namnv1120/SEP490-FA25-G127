@@ -120,7 +120,7 @@ public class PaymentServiceImpl implements PaymentService {
         order.setUpdatedDate(LocalDateTime.now());
         orderRepository.save(order);
 
-        log.info("✅ MoMo payment confirmed for order {}", order.getOrderNumber());
+        log.info("MoMo payment confirmed for order {}", order.getOrderNumber());
     }
 
     private PaymentResponse toResponse(Payment payment) {

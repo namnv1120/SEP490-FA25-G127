@@ -53,14 +53,4 @@ public class PaymentController {
         return response;
     }
 
-    @PostMapping("/momo/notify")
-    public ResponseEntity<String> handleMomoNotify(@RequestBody Map<String, Object> payload) {
-        log.info("MoMo notify received: {}", payload);
-        String resultCode = String.valueOf(payload.get("resultCode"));
-        String requestId = String.valueOf(payload.get("requestId"));
-        if ("0".equals(resultCode)) {
-            paymentService.finalizePaymentByReference(requestId);
-        }
-        return ResponseEntity.ok("Received");
-    }
 }
