@@ -40,6 +40,7 @@ const Forgotpassword = lazy(() =>
   import("../feature-module/pages/authentication/ForgotPassword")
 );
 const Customers = lazy(() => import("../feature-module/people/Customer"));
+const QRcode = lazy(() => import("../core/modals/inventory/qrcode"));
 
 const routes = all_routes;
 export const authRoutes = [
@@ -100,6 +101,13 @@ export const authRoutes = [
     path: "/product-list",
     name: "product-list",
     element: <ProductList />,
+    route: Route,
+  },
+  {
+    id: 67,
+    path: routes.qrcode,
+    name: "qrcode",
+    element: <QRcode />,
     route: Route,
   },
 ];

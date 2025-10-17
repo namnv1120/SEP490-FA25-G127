@@ -113,4 +113,5 @@ export const all_routes = {
   packagelist: "/packages",
   domain: "/domain",
   purchasetransaction: "/purchase-transaction",
+  qrcode: "/qrcode",
 };
