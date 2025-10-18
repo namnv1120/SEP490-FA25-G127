@@ -1,27 +1,89 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useSelector } from "react-redux";
-import EditCategoryList from "../../feature-module/inventory/EditCategoryList";
-import SubCategory from "../../feature-module/inventory/SubCategory";
 import CommonFooter from "../../components/footer/commonFooter";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
+import { getAllCategories } from "../../services/categoryService";
+import EditCategories from "../inventory/EditCategory";
 
 const CategoryList = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalRecords, _setTotalRecords] = useState(5);
+  const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
-  const [_searchQuery, setSearchQuery] = useState(undefined);
+  const [searchQuery, setSearchQuery] = useState(undefined);
+
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getAllCategories();
+
+      // Filter chỉ lấy category cha
+      const parentCategories = data.filter(
+        (category) =>
+          category.parentCategoryId === null ||
+          category.parent_category_id === null ||
+          !category.parentCategoryId
+      );
+
+      // Transform data
+      const transformedData = parentCategories.map((category) => ({
+        id: category.id || category.categoryId || category.category_id,
+        category: category.categoryName || category.category_name || category.name,
+        description: category.description || "",
+        createdon:
+          category.createdDate || category.created_at
+            ? new Date(category.createdDate || category.created_at).toLocaleDateString("vi-VN")
+            : new Date().toLocaleDateString("vi-VN"),
+        updatedon:
+          category.updatedDate || category.updated_at
+            ? new Date(category.updatedDate || category.updated_at).toLocaleDateString("vi-VN")
+            : new Date().toLocaleDateString("vi-VN"),
+        status: category.active === 1 || category.active === true ? "Active" : "Inactive",
+      }));
+
+      setCategories(transformedData);
+      setTotalRecords(transformedData.length);
+    } catch (err) {
+      console.error("Error fetching categories:", err);
+      setError(err.message || "Failed to load categories");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, [refreshKey]);
+
+
+  const handleEditSuccess = () => {
+    setRefreshKey(prev => prev + 1);
+    setSelectedCategoryId(null);
+  };
+
 
   const handleSearch = (value) => {
     setSearchQuery(value);
   };
 
-  const dataSource = useSelector(
-    (state) => state.rootReducer.categotylist_data
-  );
+  // Filter data based on search query
+  const filteredData = searchQuery
+    ? categories.filter((cat) =>
+      (cat?.category || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (cat?.description || "").toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    : categories;
 
   const columns = [
     {
@@ -47,15 +109,21 @@ const CategoryList = () => {
       sortable: true,
     },
     {
-      header: "Category Slug",
-      field: "categoryslug",
-      key: "categoryslug",
+      header: "Description",
+      field: "description",
+      key: "description",
       sortable: true,
     },
     {
-      header: "Created On",
+      header: "Created Date",
       field: "createdon",
       key: "createdon",
+      sortable: true,
+    },
+    {
+      header: "Updated Date",
+      field: "updatedon",
+      key: "updatedon",
       sortable: true,
     },
     {
@@ -64,7 +132,9 @@ const CategoryList = () => {
       key: "status",
       sortable: true,
       body: (data) => (
-        <span className="badge bg-success fw-medium fs-10">{data.status}</span>
+        <span className={`badge ${data.status === 'Active' ? 'bg-success' : 'bg-danger'} fw-medium fs-10`}>
+          {data.status}
+        </span>
       ),
     },
     {
@@ -72,16 +142,18 @@ const CategoryList = () => {
       field: "actions",
       key: "actions",
       sortable: false,
-      body: () => (
+      body: (rowData) => (
         <div className="edit-delete-action d-flex align-items-center">
           <Link
             className="me-2 p-2 d-flex align-items-center border rounded"
             to="#"
             data-bs-toggle="modal"
-            data-bs-target="#edit-customer"
+            data-bs-target="#edit-main-category"
+            onClick={() => setSelectedCategoryId(rowData.id)}
           >
             <i className="feather icon-edit"></i>
           </Link>
+
           <Link
             className="p-2 d-flex align-items-center border rounded"
             to="#"
@@ -91,7 +163,7 @@ const CategoryList = () => {
             <i className="feather icon-trash-2"></i>
           </Link>
         </div>
-      ),
+      )
     },
   ];
 
@@ -120,7 +192,7 @@ const CategoryList = () => {
             </div>
           </div>
 
-          {/* /product list */}
+          {/* product list */}
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
               <SearchFromApi
@@ -137,7 +209,7 @@ const CategoryList = () => {
                   >
                     Status
                   </Link>
-                  <ul className="dropdown-menu  dropdown-menu-end p-3">
+                  <ul className="dropdown-menu dropdown-menu-end p-3">
                     <li>
                       <Link to="#" className="dropdown-item rounded-1">
                         Active
@@ -158,7 +230,7 @@ const CategoryList = () => {
                   >
                     Sort By : Last 7 Days
                   </Link>
-                  <ul className="dropdown-menu  dropdown-menu-end p-3">
+                  <ul className="dropdown-menu dropdown-menu-end p-3">
                     <li>
                       <Link to="#" className="dropdown-item rounded-1">
                         Recently Added
@@ -171,7 +243,7 @@ const CategoryList = () => {
                     </li>
                     <li>
                       <Link to="#" className="dropdown-item rounded-1">
-                        Desending
+                        Descending
                       </Link>
                     </li>
                     <li>
@@ -190,17 +262,60 @@ const CategoryList = () => {
             </div>
 
             <div className="card-body">
-              <div className="table-responsive category-table">
-                <PrimeDataTable
-                  column={columns}
-                  data={dataSource}
-                  rows={rows}
-                  setRows={setRows}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalRecords={totalRecords}
-                />
-              </div>
+              {/* Loading State */}
+              {loading && (
+                <div className="text-center py-5">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <p className="mt-2">Đang tải danh mục...</p>
+                </div>
+              )}
+
+              {/* Error State */}
+              {error && !loading && (
+                <div className="alert alert-danger" role="alert">
+                  <i className="feather icon-alert-circle me-2"></i>
+                  {error}
+                  <button
+                    className="btn btn-sm btn-outline-danger ms-3"
+                    onClick={() => window.location.reload()}
+                  >
+                    Thử lại
+                  </button>
+                </div>
+              )}
+
+              {/* Data Table */}
+              {!loading && !error && (
+                <div className="table-responsive category-table">
+                  <PrimeDataTable
+                    column={columns}
+                    data={filteredData}
+                    rows={rows}
+                    setRows={setRows}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    totalRecords={filteredData.length}
+                  />
+                </div>
+              )}
+
+              {/* Empty State */}
+              {!loading && !error && categories.length === 0 && (
+                <div className="text-center py-5">
+                  <i className="feather icon-inbox fs-1 text-muted"></i>
+                  <p className="text-muted mt-2">Chưa có danh mục cha nào</p>
+                  <Link
+                    to="#"
+                    className="btn btn-primary mt-2"
+                    data-bs-toggle="modal"
+                    data-bs-target="#add-category"
+                  >
+                    Thêm danh mục đầu tiên
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
           {/* /product list */}
@@ -208,7 +323,7 @@ const CategoryList = () => {
         <CommonFooter />
       </div>
 
-      {/* Add Category */}
+      {/* Add Category Modal */}
       <div className="modal fade" id="add-category">
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
@@ -237,9 +352,9 @@ const CategoryList = () => {
                     </div>
                     <div className="mb-3">
                       <label className="form-label">
-                        Category Slug<span className="text-danger ms-1">*</span>
+                        Description<span className="text-danger ms-1">*</span>
                       </label>
-                      <input type="text" className="form-control" />
+                      <textarea className="form-control" rows="3"></textarea>
                     </div>
                     <div className="mb-0">
                       <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
@@ -278,10 +393,11 @@ const CategoryList = () => {
           </div>
         </div>
       </div>
-      {/* /Add Category */}
-
-      <EditCategoryList />
-      <SubCategory />
+      {/* /Add Category Modal */}
+      <EditCategories
+        categoryId={selectedCategoryId}
+        onSuccess={handleEditSuccess}
+      />
       <DeleteModal />
     </div>
   );

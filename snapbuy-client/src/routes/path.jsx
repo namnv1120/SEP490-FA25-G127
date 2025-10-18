@@ -2,35 +2,18 @@ import { Route } from "react-router-dom";
 import { lazy } from "react";
 import { all_routes } from "./all_routes";
 import FormHorizontal from "../feature-module/uiinterface/forms/formelements/layouts/form-horizontal";
-// import FormBasicInputs from "../feature-module/uiinterface/forms/formelements/basic-inputs";
-// import CheckboxRadios from "../feature-module/uiinterface/forms/formelements/checkbox-radios";
-// import FileUpload from "../feature-module/uiinterface/forms/formelements/fileupload";
-// import FormSelect from "../feature-module/uiinterface/forms/formelements/form-select";
-// import FormWizard from "../feature-module/uiinterface/forms/formelements/form-wizard";
-// import FormPikers from "../feature-module/uiinterface/forms/formelements/formpickers";
-// import GridGutters from "../feature-module/uiinterface/forms/formelements/grid-gutters";
-// import InputGroup from "../feature-module/uiinterface/forms/formelements/input-group";
-// import BootstrapIcons from "../feature-module/uiinterface/icons/bootstrapicons";
-// import FlagIcons from "../feature-module/uiinterface/icons/flagicons";
-// import FontawesomeIcons from "../feature-module/uiinterface/icons/fontawesome";
-// import MaterialIcons from "../feature-module/uiinterface/icons/materialicon";
-// import PE7Icons from "../feature-module/uiinterface/icons/pe7icons";
-// import RemixIcons from "../feature-module/uiinterface/icons/remixIcons";
-// import TablerIcon from "../feature-module/uiinterface/icons/tablericon";
-// import ThemifyIcons from "../feature-module/uiinterface/icons/themify";
-// import TypiconIcons from "../feature-module/uiinterface/icons/typicons";
-// import Leaflet from "../feature-module/uiinterface/map/leaflet";
-// import DataTables from "../feature-module/uiinterface/table/data-tables";
-// import TablesBasic from "../feature-module/uiinterface/table/tables-basic";
-// import Pos from "../feature-module/pos/pos";
+
+
 const Suppliers = lazy(() => import("../feature-module/people/Supplier"));
 
-// Lazy load Dashboard
 const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
 const ProductList = lazy(() => import("../feature-module/inventory/ProductList"));
 const ProductDetail = lazy(() => import("../feature-module/inventory/ProductDetail"));
 const AddProduct = lazy(() => import("../feature-module/inventory/AddProduct"));
 const EditProduct = lazy(() => import("../feature-module/inventory/EditProduct"));
+
+const CategoryList = lazy(() => import("../feature-module/inventory/CategoryList"));
+const SubCategories = lazy(() => import("../feature-module/inventory/SubCategory"));
 
 
 const Accounts = lazy(() => import("../feature-module/usermanagement/account"));
@@ -124,6 +107,20 @@ export const authRoutes = [
     path: `${routes.editproduct}/:id`,
     name: "edit-product",
     element: <EditProduct />,
+    route: Route,
+  },
+  {
+    id: 12,
+    path: routes.categorylist,
+    name: "category-list",
+    element: <CategoryList />,
+    route: Route,
+  },
+  {
+    id: 13,
+    path: routes.subcategories,
+    name: "sub-categories",
+    element: <SubCategories />,
     route: Route,
   },
 

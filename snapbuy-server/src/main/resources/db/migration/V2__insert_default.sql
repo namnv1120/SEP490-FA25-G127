@@ -92,7 +92,7 @@ VALUES
     ('CUST005', N'Hoàng Anh E', '0932123456', N'Male');
 
 -- Bước 1: Insert các danh mục cha (parent_category_id = NULL)
-INSERT INTO categories (category_name, [description], parent_category_id, active)
+INSERT INTO categories (category_name, description, parent_category_id, active)
 VALUES
     (N'Đồ gia dụng', N'Các sản phẩm gia dụng truyền thống như nồi, chảo, bộ nấu ăn', NULL, 1),
     (N'Điện gia dụng', N'Các thiết bị điện phục vụ sinh hoạt hàng ngày', NULL, 1);
@@ -104,7 +104,7 @@ DECLARE @DienGiaDungId UNIQUEIDENTIFIER;
 SELECT @DoGiaDungId = category_id FROM categories WHERE category_name = N'Đồ gia dụng';
 SELECT @DienGiaDungId = category_id FROM categories WHERE category_name = N'Điện gia dụng';
 
-INSERT INTO categories (category_name, [description], parent_category_id, active)
+INSERT INTO categories (category_name, description, parent_category_id, active)
 VALUES
     (N'Bộ nồi Anod', N'Bộ nồi cao cấp phủ Anodized', @DoGiaDungId, 1),
     (N'Chảo chống dính', N'Các loại chảo chống dính đa dạng kích thước', @DoGiaDungId, 1),
