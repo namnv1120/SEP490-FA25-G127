@@ -1,7 +1,8 @@
-package com.g127.snapbuy.service;
+package com.g127.snapbuy.service.impl;
 
 import com.g127.snapbuy.dto.response.RevenueResponse;
 import com.g127.snapbuy.repository.OrderRepository;
+import com.g127.snapbuy.service.RevenueService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
