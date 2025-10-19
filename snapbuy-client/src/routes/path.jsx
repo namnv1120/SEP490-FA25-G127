@@ -145,7 +145,7 @@ export const authRoutes = [
   },
 ];
 
-export const posPages = [
+export const posPage = [
     {
     id: 25,
     path: routes.pos,

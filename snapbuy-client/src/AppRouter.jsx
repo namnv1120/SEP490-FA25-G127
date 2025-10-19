@@ -1,7 +1,7 @@
 import { memo} from "react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import FeatureModule from "./feature-module/feature-module";
-import { authRoutes, posPages, unAuthRoutes } from "./routes/path";
+import { authRoutes, posPage, unAuthRoutes } from "./routes/path";
 import { base_path } from "./environment";
 
 const AppRouter = () => {
@@ -22,7 +22,7 @@ const AppRouter = () => {
             <Route index element={<Navigate to="/login" replace />} />
             {renderRoutes(unAuthRoutes)}
             {renderRoutes(authRoutes)}
-            {renderRoutes(posPages)}
+            {renderRoutes(posPage)}
           </Route>
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

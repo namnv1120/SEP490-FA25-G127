@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { all_routes } from "../../routes/all_routes";
-import PosHeader from "../../feature-module/pos/posHeader";
 import {
   arabicFlag,
   avatar01,
@@ -127,7 +126,7 @@ const Header = () => {
     "/reactjs/template/dream-pos/index-one",
   ];
   if (exclusionArray.indexOf(window.location.pathname) >= 0) {
-    return <PosHeader />;
+    return "";
   }
 
   const toggleFullscreen = (elem) => {

@@ -13,14 +13,14 @@ const PosHeader = () => {
       <div className="header pos-header">
         {/* Logo */}
         <div className="header-left active">
-          <Link to="/dashboard" className="logo logo-normal">
-            <img src={logoPng} alt="img" />
+          <Link to={all_routes.dashboard} className="logo logo-normal">
+            <img src="src/assets/img/logo.png" alt="Img" />
           </Link>
-          <Link to="/dashboard" className="logo logo-white">
-            <img src={logoWhitePng} alt="img" />
+          <Link to={all_routes.dashboard} className="logo logo-white">
+            <img src="src/assets/img/logo-white.png" alt="Img" />
           </Link>
-          <Link to="/dashboard" className="logo-small">
-            <img src={logoSmallPng} alt="img" />
+          <Link to={all_routes.dashboard} className="logo-small">
+            <img src="src/assets/img/logo-small.png" alt="Img" />
           </Link>
         </div>
         {/* /Logo */}
