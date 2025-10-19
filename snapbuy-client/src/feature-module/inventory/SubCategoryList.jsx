@@ -5,8 +5,8 @@ import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
-import { getAllCategories } from "../../services/categoryService";
-import EditSubcategories from "../inventory/EditSubCategory";
+import { getAllCategories } from "../../services/CategoryService";
+import EditSubcategories from "./EditSubCategory";
 
 const SubCategories = () => {
   const [currentPage, setCurrentPage] = useState(1);

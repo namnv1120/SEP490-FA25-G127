@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getCategoryById, updateCategory } from "../../services/categoryService";
+import { getCategoryById, updateCategory } from "../../services/CategoryService";
 import { Modal } from "bootstrap";
 import { message } from "antd";
 

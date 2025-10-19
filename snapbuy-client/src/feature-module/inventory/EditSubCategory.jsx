@@ -4,7 +4,7 @@ import {
   getCategoryById,
   updateCategory,
   getAllCategories,
-} from "../../services/categoryService";
+} from "../../services/CategoryService";
 import { Modal } from "bootstrap";
 import { message } from "antd";
 
