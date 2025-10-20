@@ -52,10 +52,8 @@ const MainReducer = (state = initialState, action) => {
       return { ...state, leavetypes_data: action.payload };
     case "Holiday_data":
       return { ...state, holiday_data: action.payload };
-    case "Expiredproduct_data":
-      return { ...state, expiredproduct_data: action.payload };
-    case "Lowstock_data":
-      return { ...state, lowstock_data: action.payload };
+    case "Inventory_Data":
+      return { ...state, inventory_data: action.payload };
     case "Categotylist_data":
       return { ...state, categotylist_data: action.payload };
     case "Layoutstyle_data":
