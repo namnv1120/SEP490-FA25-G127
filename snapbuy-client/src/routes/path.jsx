@@ -13,7 +13,7 @@ const AddProduct = lazy(() => import("../feature-module/inventory/AddProduct"));
 const EditProduct = lazy(() => import("../feature-module/inventory/EditProduct"));
 
 const CategoryList = lazy(() => import("../feature-module/inventory/CategoryList"));
-const SubCategories = lazy(() => import("../feature-module/inventory/SubCategory"));
+const SubCategories = lazy(() => import("../feature-module/inventory/SubCategoryList"));
 
 
 const Accounts = lazy(() => import("../feature-module/usermanagement/account"));

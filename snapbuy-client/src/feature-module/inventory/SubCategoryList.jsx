@@ -5,108 +5,136 @@ import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
-import { getAllCategories } from "../../services/CategoryService";
-import EditSubcategories from "./EditSubCategory";
+import { getAllCategories, deleteCategory } from "../../services/CategoryService";
+import { message } from "antd";
+import { Modal } from "bootstrap";
 
-const SubCategories = () => {
+// ✅ Import 2 component mới
+import AddSubCategory from "../inventory/AddSubCategory";
+import EditSubCategory from "../inventory/EditSubCategory";
+
+const SubCategoryList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
   const [searchQuery, setSearchQuery] = useState(undefined);
-
-  // State cho API data
   const [subCategories, setSubCategories] = useState([]);
   const [parentCategories, setParentCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedSubCategory, setSelectedSubCategory] = useState(null);
+  const [editSubCategoryId, setEditSubCategoryId] = useState(null);
 
-  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  // Function để refresh danh sách sau khi edit
-  const handleEditSuccess = () => {
-    setRefreshKey(prev => prev + 1); // Trigger reload
-    setSelectedSubcategoryId(null);
-  };
-
-  // Fetch categories từ API
+  // Fetch categories
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await getAllCategories();
+    fetchSubCategories();
+  }, []);
 
-        // Tách parent categories và sub categories
-        const parents = data.filter(
-          (cat) => cat.parentCategoryId === null ||
-            cat.parent_category_id === null ||
-            !cat.parentCategoryId
-        );
+  const fetchSubCategories = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getAllCategories();
 
-        // Filter chỉ lấy sub categories (có parent_category_id)
-        const children = data.filter(
-          (cat) => cat.parentCategoryId !== null &&
-            cat.parentCategoryId !== undefined &&
-            cat.parentCategoryId !== '' ||
-            (cat.parent_category_id !== null &&
-              cat.parent_category_id !== undefined &&
-              cat.parent_category_id !== '')
-        );
+      // ✅ Tách parent và sub categories
+      const parents = data.filter(
+        (cat) => !cat.parentCategoryId || cat.parentCategoryId === null
+      );
+      
+      const subs = data.filter(
+        (cat) => cat.parentCategoryId && cat.parentCategoryId !== null
+      );
 
-        // Tạo map để lookup parent name
-        const parentMap = {};
-        parents.forEach(parent => {
-          const id = parent.id || parent.categoryId || parent.category_id;
-          parentMap[id] = parent.categoryName || parent.category_name || parent.name;
-        });
+      setParentCategories(parents);
 
-        // Transform sub categories data
-        const transformedData = children.map((subCat) => {
-          const parentId = subCat.parentCategoryId || subCat.parent_category_id;
-          const parentName = parentMap[parentId] || 'N/A';
+      // ✅ Map sub categories với parent name
+      const mapped = subs.map((cat) => {
+        const parent = parents.find((p) => p.categoryId === cat.parentCategoryId);
+        
+        return {
+          categoryId: cat.categoryId,
+          categoryName: cat.name || cat.categoryName || "N/A",
+          parentCategoryName: parent ? (parent.name || parent.categoryName) : "N/A",
+          parentCategoryId: cat.parentCategoryId,
+          description: cat.description || "N/A",
+          createddate: cat.createdDate
+            ? new Date(cat.createdDate).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })
+            : "N/A",
+          updateddate: cat.updatedDate
+            ? new Date(cat.updatedDate).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })
+            : "N/A",
+          status: cat.active === 1 || cat.active === true ? "Active" : "Inactive",
+        };
+      });
 
-          return {
-            id: subCat.id || subCat.categoryId || subCat.category_id,
-            subcategory: subCat.categoryName || subCat.category_name || subCat.name,
-            parentcategory: parentName,
-            description: subCat.description || '',
-            createdon: subCat.created_date || subCat.createdDate
-              ? new Date(subCat.created_date || subCat.createdDate).toLocaleDateString('vi-VN')
-              : new Date().toLocaleDateString('vi-VN'),
-            updatedon: subCat.updatedDate || subCat.updatedDate
-              ? new Date(subCat.updatedDate || subCat.updatedDate).toLocaleDateString('vi-VN')
-              : new Date().toLocaleDateString('vi-VN'),
-            status: (subCat.active === 1 || subCat.active === true) ? "Active" : "Inactive",
-          };
-        });
-
-        setSubCategories(transformedData);
-        setParentCategories(parents);
-        setTotalRecords(transformedData.length);
-      } catch (err) {
-        console.error("Error fetching sub categories:", err);
-        setError(err.message || "Failed to load sub categories");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCategories();
-  }, [refreshKey]);
+      setSubCategories(mapped);
+      setTotalRecords(mapped.length);
+    } catch (err) {
+      console.error("❌ Error fetching sub categories:", err);
+      setError("Failed to load sub categories. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSearch = (value) => {
     setSearchQuery(value);
   };
 
-  // Filter data based on search query
-  const filteredData = searchQuery
-    ? subCategories.filter((cat) =>
-      (cat?.subcategory || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (cat?.parentcategory || "").toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    : subCategories;
+  const handleEditClick = (subCategory) => {
+    setEditSubCategoryId(subCategory.categoryId);
+  };
 
+  const handleDeleteClick = (subCategory) => {
+    setSelectedSubCategory(subCategory);
+    setTimeout(() => {
+      const modalElement = document.getElementById("delete-modal");
+      if (modalElement) {
+        const modal = new Modal(modalElement);
+        modal.show();
+      }
+    }, 0);
+  };
+
+  const handleDeleteConfirm = async (categoryId) => {
+    try {
+      await deleteCategory(categoryId);
+
+      const modalElement = document.getElementById("delete-modal");
+      const modal = Modal.getInstance(modalElement);
+
+      if (modal) {
+        modal.hide();
+      }
+
+      setTimeout(() => {
+        document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+        document.body.classList.remove("modal-open");
+        document.body.style.removeProperty("overflow");
+        document.body.style.removeProperty("padding-right");
+      }, 300);
+
+      await fetchSubCategories();
+      message.success("Sub category deleted successfully!");
+    } catch (err) {
+      console.error("❌ Error deleting sub category:", err);
+      message.error("Failed to delete sub category. Please try again.");
+    } finally {
+      setSelectedSubCategory(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setSelectedSubCategory(null);
+  };
 
   const columns = [
     {
@@ -126,305 +154,168 @@ const SubCategories = () => {
       key: "checked",
     },
     {
-      field: "subcategory",
       header: "Sub Category",
-      key: "subcategory",
+      field: "categoryName",
+      key: "categoryName",
       sortable: true,
     },
     {
-      field: "parentcategory",
       header: "Parent Category",
-      key: "parentcategory",
+      field: "parentCategoryName",
+      key: "parentCategoryName",
       sortable: true,
     },
     {
-      field: "description",
       header: "Description",
+      field: "description",
       key: "description",
       sortable: true,
     },
     {
-      field: "createdon",
-      header: "Created On",
-      key: "createdon",
+      header: "Created Date",
+      field: "createddate",
+      key: "createddate",
       sortable: true,
     },
     {
-      field: "updatedon",
-      header: "Updated On",
-      key: "updatedon",
+      header: "Updated Date",
+      field: "updateddate",
+      key: "updateddate",
       sortable: true,
     },
     {
-      field: "status",
       header: "Status",
+      field: "status",
       key: "status",
       sortable: true,
-      body: (rowData) => (
-        <span className={`badge ${rowData.status === 'Active' ? 'bg-success' : 'bg-danger'} fw-medium fs-10`}>
-          {rowData.status}
+      body: (data) => (
+        <span
+          className={`badge fw-medium fs-10 ${
+            data.status === "Active" ? "bg-success" : "bg-danger"
+          }`}
+        >
+          {data.status}
         </span>
       ),
     },
     {
       header: "",
-      field: "actions",
       key: "actions",
       sortable: false,
-      body: (rowData) => (
+      body: (row) => (
         <div className="edit-delete-action d-flex align-items-center">
-          <Link
-            className="me-2 p-2 d-flex align-items-center border rounded"
-            to="#"
-            data-bs-toggle="modal"
-            data-bs-target="#edit-category"
-            onClick={() => setSelectedSubcategoryId(rowData.id)}
+          <button
+            className="me-2 p-2 border rounded bg-transparent"
+            onClick={() => handleEditClick(row)}
           >
             <i className="feather icon-edit"></i>
-          </Link>
-          <Link
-            className="p-2 d-flex align-items-center border rounded"
-            to="#"
-            data-bs-toggle="modal"
-            data-bs-target="#delete-modal"
+          </button>
+          <button
+            className="p-2 border rounded bg-transparent"
+            onClick={() => handleDeleteClick(row)}
           >
             <i className="feather icon-trash-2"></i>
-          </Link>
+          </button>
         </div>
       ),
     },
   ];
 
   return (
-    <div className="page-wrapper">
-      <div className="content">
-        <div className="page-header">
-          <div className="add-item d-flex">
-            <div className="page-title">
-              <h4 className="fw-bold">Sub Categories</h4>
-              <h6>Manage your sub categories</h6>
-            </div>
-          </div>
-          <TableTopHead />
-          <div className="page-btn">
-            <Link
-              to="#"
-              className="btn btn-primary"
-              data-bs-toggle="modal"
-              data-bs-target="#add-category"
-            >
-              <i className="ti ti-circle-plus me-1"></i>
-              Add Sub Category
-            </Link>
-          </div>
-        </div>
-
-        <div className="card table-list-card">
-          <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-            <SearchFromApi
-              callback={handleSearch}
-              rows={rows}
-              setRows={setRows}
-            />
-            <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-              <div className="dropdown me-2">
-                <Link
-                  to="#"
-                  className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                  data-bs-toggle="dropdown"
-                >
-                  Status
-                </Link>
-                <ul className="dropdown-menu dropdown-menu-end p-3">
-                  <li>
-                    <Link to="#" className="dropdown-item rounded-1">
-                      Active
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="#" className="dropdown-item rounded-1">
-                      Inactive
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-              <div className="dropdown">
-                <Link
-                  to="#"
-                  className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                  data-bs-toggle="dropdown"
-                >
-                  Sort By : Last 7 Days
-                </Link>
-                <ul className="dropdown-menu dropdown-menu-end p-3">
-                  <li>
-                    <Link to="#" className="dropdown-item rounded-1">
-                      Recently Added
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="#" className="dropdown-item rounded-1">
-                      Ascending
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="#" className="dropdown-item rounded-1">
-                      Descending
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <div className="card-body">
-            {/* Loading State */}
-            {loading && (
-              <div className="text-center py-5">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </div>
-                <p className="mt-2">Đang tải danh mục con...</p>
-              </div>
-            )}
-
-            {/* Error State */}
-            {error && !loading && (
-              <div className="alert alert-danger" role="alert">
-                <i className="feather icon-alert-circle me-2"></i>
-                {error}
-                <button
-                  className="btn btn-sm btn-outline-danger ms-3"
-                  onClick={() => window.location.reload()}
-                >
-                  Thử lại
-                </button>
-              </div>
-            )}
-
-            {/* Data Table */}
-            {!loading && !error && (
-              <div className="table-responsive category-table">
-                <PrimeDataTable
-                  column={columns}
-                  data={filteredData}
-                  rows={rows}
-                  setRows={setRows}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalRecords={filteredData.length}
-                />
-              </div>
-            )}
-
-            {/* Empty State */}
-            {!loading && !error && subCategories.length === 0 && (
-              <div className="text-center py-5">
-                <i className="feather icon-inbox fs-1 text-muted"></i>
-                <p className="text-muted mt-2">Chưa có danh mục con nào</p>
-                <Link
-                  to="#"
-                  className="btn btn-primary mt-2"
-                  data-bs-toggle="modal"
-                  data-bs-target="#add-category"
-                >
-                  Thêm danh mục con đầu tiên
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      <CommonFooter />
-
-      {/* Add Sub Category Modal */}
-      <div className="modal fade" id="add-category">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
+    <div>
+      <div className="page-wrapper">
+        <div className="content">
+          <div className="page-header">
+            <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Add Sub Category</h4>
+                <h4 className="fw-bold">Sub Categories</h4>
+                <h6>Manage your sub categories</h6>
               </div>
-              <button
-                type="button"
-                className="close bg-danger text-white fs-16"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
             </div>
-            <div className="modal-body">
-              <form>
-                <div className="mb-3">
-                  <label className="form-label">
-                    Parent Category<span className="text-danger ms-1">*</span>
-                  </label>
-                  <select className="form-control">
-                    <option value="">Choose Parent Category</option>
-                    {parentCategories.map((parent) => (
-                      <option
-                        key={parent.id || parent.categoryId}
-                        value={parent.id || parent.categoryId}
-                      >
-                        {parent.categoryName || parent.category_name || parent.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">
-                    Sub Category Name<span className="text-danger ms-1">*</span>
-                  </label>
-                  <input type="text" className="form-control" />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Description</label>
-                  <textarea className="form-control" rows="3"></textarea>
-                </div>
-                <div className="mb-0">
-                  <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                    <span className="status-label">
-                      Status<span className="text-danger ms-1">*</span>
-                    </span>
-                    <input
-                      type="checkbox"
-                      id="subcategory-status"
-                      className="check"
-                      defaultChecked
-                    />
-                    <label htmlFor="subcategory-status" className="checktoggle" />
-                  </div>
-                </div>
-              </form>
-            </div>
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3 shadow-none"
-                data-bs-dismiss="modal"
-              >
-                Cancel
-              </button>
+            <TableTopHead />
+            <div className="page-btn">
               <Link
                 to="#"
-                data-bs-dismiss="modal"
-                className="btn btn-primary fs-13 fw-medium p-2 px-3"
+                className="btn btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#add-sub-category"
               >
+                <i className="ti ti-circle-plus me-1"></i>
                 Add Sub Category
               </Link>
             </div>
           </div>
 
+          {error && (
+            <div className="alert alert-danger" role="alert">
+              {error}
+            </div>
+          )}
+
+          {loading && (
+            <div className="text-center my-5">
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          )}
+
+          {!loading && (
+            <div className="card table-list-card">
+              <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+                <SearchFromApi
+                  callback={handleSearch}
+                  rows={rows}
+                  setRows={setRows}
+                />
+              </div>
+              <div className="card-body">
+                <div className="table-responsive category-table">
+                  <PrimeDataTable
+                    column={columns}
+                    data={subCategories}
+                    rows={rows}
+                    setRows={setRows}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    totalRecords={totalRecords}
+                    dataKey="categoryId"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+        <CommonFooter />
       </div>
-      <EditSubcategories
-        subcategoryId={selectedSubcategoryId}
-        onSuccess={handleEditSuccess}
+
+      {/* ✅ Add Sub Category Component */}
+      <AddSubCategory 
+        parentCategories={parentCategories}
+        onSuccess={fetchSubCategories} 
       />
-      <DeleteModal />
+
+      {/* ✅ Edit Sub Category Component */}
+      {editSubCategoryId && (
+        <EditSubCategory
+          categoryId={editSubCategoryId}
+          parentCategories={parentCategories}
+          onSuccess={() => {
+            fetchSubCategories();
+            setEditSubCategoryId(null);
+          }}
+        />
+      )}
+
+      {/* ✅ Delete Modal */}
+      <DeleteModal
+        itemId={selectedSubCategory?.categoryId}
+        itemName={selectedSubCategory?.categoryName}
+        onDelete={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
     </div>
   );
 };
 
-export default SubCategories;
+export default SubCategoryList;

@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { message } from "antd";
+import { Modal } from "bootstrap";
 
 const DeleteModal = ({ itemId, itemName, onDelete, onCancel }) => {
   const handleDelete = async () => {
@@ -7,13 +8,13 @@ const DeleteModal = ({ itemId, itemName, onDelete, onCancel }) => {
         await onDelete(itemId);
         // Close modal after successful deletion
         const modalElement = document.getElementById('delete-modal');
-        const modal = window.bootstrap.Modal.getInstance(modalElement);
+        const modal = Modal.getInstance(modalElement);
         if (modal) {
           modal.hide();
         }
       } catch (error) {
         console.error("Failed to delete item:", error);
-        alert("Failed to delete item. Please try again.");
+        message.error("Failed to delete item. Please try again.");
       }
     }
   };

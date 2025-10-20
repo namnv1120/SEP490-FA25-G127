@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { all_routes } from "../../routes/all_routes";
+import CommonFooter from "../../components/footer/commonFooter";
 import PrimeDataTable from "../../components/data-table";
 import { stockImg1 } from "../../utils/imagepath";
 import TableTopHead from "../../components/table-top-head";
@@ -8,6 +9,7 @@ import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
 import { getAllProducts, deleteProduct } from "../../services/ProductService";
 import { message } from "antd";
+import { Modal } from "bootstrap";
 
 const ProductList = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,7 +23,6 @@ const ProductList = () => {
 
   const route = all_routes;
 
-  // 🔥 Fetch products from API on component mount
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -34,16 +35,15 @@ const ProductList = () => {
 
       // Map API data to match table structure
       const mappedProducts = data.map((product, index) => ({
-        id: product.id || index + 1,
+        productId: product.productId || index + 1,
         productCode: product.code || product.productCode || "N/A",
         productName: product.name || product.productName || "N/A",
         productImage: product.image || product.imageUrl || stockImg1,
         category: product.category?.name || product.categoryName || "N/A",
-        unitprice: `$${product.unitPrice?.toFixed(2) || "0.00"}`,
+        unitprice: `${product.unitPrice?.toLocaleString() || "0.00"} đ`,
         unit: product.unit || "N/A",
         qty: product.quantity?.toString() || product.qty?.toString() || "0",
       }));
-
       setProducts(mappedProducts);
       setTotalRecords(mappedProducts.length);
     } catch (err) {
@@ -60,22 +60,38 @@ const ProductList = () => {
 
   const handleDeleteClick = (product) => {
     setSelectedProduct(product);
-    // Open modal using Bootstrap
-    const modalElement = document.getElementById('delete-modal');
-    const modal = new window.bootstrap.Modal(modalElement);
-    modal.show();
+    setTimeout(() => {
+      const modalElement = document.getElementById('delete-modal');
+      if (modalElement) {
+        const modal = new Modal(modalElement);
+        modal.show();
+      } else {
+        console.error("Delete modal not found in DOM");
+      }
+    }, 0);
   };
+
 
   const handleDeleteConfirm = async (productId) => {
     try {
       await deleteProduct(productId);
-      // Refresh product list after deletion
       fetchProducts();
       setSelectedProduct(null);
+
+      // 🔒 Đóng modal thủ công
+      const modalElement = document.getElementById("delete-modal");
+      if (modalElement) {
+        const modal = Modal.getInstance(modalElement);
+        if (modal) modal.hide();
+      }
+
+      message.success("Product deleted successfully!");
     } catch (error) {
       console.error("Delete failed:", error);
+      message.error("Failed to delete product.");
     }
   };
+
 
   const handleDeleteCancel = () => {
     setSelectedProduct(null);
@@ -99,7 +115,7 @@ const ProductList = () => {
       key: "checked",
     },
     {
-      header: "Product Code",
+      header: "Code",
       field: "productCode",
       key: "productCode",
       sortable: true,
@@ -114,7 +130,7 @@ const ProductList = () => {
           <Link to="#" className="avatar avatar-md me-2">
             <img alt="" src={data.productImage} />
           </Link>
-          <Link to="#">{data.productName}</Link>
+          <Link to={`${route.productdetails}/${data.productId}`}>{data.productName}</Link>
         </div>
       ),
     },
@@ -151,9 +167,7 @@ const ProductList = () => {
         <div className="edit-delete-action d-flex align-items-center">
           <Link
             className="me-2 p-2 d-flex align-items-center border rounded"
-            to="#"
-            data-bs-toggle="modal"
-            data-bs-target="#edit-customer"
+            to={`${route.editproduct}/${row.productId}`}
           >
             <i className="feather icon-edit"></i>
           </Link>
@@ -186,7 +200,7 @@ const ProductList = () => {
                 Add New Product
               </Link>
             </div>
-            <div className="page-btn import">
+            {/* <div className="page-btn import">
               <Link
                 to="#"
                 className="btn btn-secondary color"
@@ -196,7 +210,7 @@ const ProductList = () => {
                 <i className="feather icon-download feather me-2" />
                 Import Product
               </Link>
-            </div>
+            </div> */}
           </div>
 
           {/* Error Message */}
@@ -231,68 +245,6 @@ const ProductList = () => {
                       className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
                       data-bs-toggle="dropdown"
                     >
-                      Product
-                    </Link>
-                    <ul className="dropdown-menu dropdown-menu-end p-3">
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Lenovo IdeaPad 3
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Beats Pro
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Nike Jordan
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Apple Series 5 Watch
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="dropdown me-2">
-                    <Link
-                      to="#"
-                      className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                      data-bs-toggle="dropdown"
-                    >
-                      Created By
-                    </Link>
-                    <ul className="dropdown-menu dropdown-menu-end p-3">
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          James Kirwin
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Francis Chang
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Antonio Engle
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Leo Kelly
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="dropdown me-2">
-                    <Link
-                      to="#"
-                      className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                      data-bs-toggle="dropdown"
-                    >
                       Category
                     </Link>
                     <ul className="dropdown-menu dropdown-menu-end p-3">
@@ -314,37 +266,6 @@ const ProductList = () => {
                       <li>
                         <Link to="#" className="dropdown-item rounded-1">
                           Electronics
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="dropdown me-2">
-                    <Link
-                      to="#"
-                      className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                      data-bs-toggle="dropdown"
-                    >
-                      Brand
-                    </Link>
-                    <ul className="dropdown-menu dropdown-menu-end p-3">
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Lenovo
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Beats
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Nike
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Apple
                         </Link>
                       </li>
                     </ul>
@@ -397,16 +318,18 @@ const ProductList = () => {
                     currentPage={currentPage}
                     setCurrentPage={setCurrentPage}
                     totalRecords={totalRecords}
+                    dataKey="productId"
                   />
                 </div>
               </div>
             </div>
           )}
         </div>
+        <CommonFooter />
       </div>
       <DeleteModal
-        itemId={selectedProduct?.id}
-        itemName={selectedProduct?.product}
+        itemId={selectedProduct?.productId}
+        itemName={selectedProduct?.productName}
         onDelete={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
       />

@@ -1,14 +1,13 @@
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { barcodeImg1, printer, product69 } from "../../utils/imagepath";
-import { getProductById } from "../../services/productService";
+import { getProductById } from "../../services/ProductService";
 
 const ProductDetail = () => {
   const { id } = useParams(); // ✅ Lấy id từ URL
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Gọi API lấy chi tiết sản phẩm
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -77,7 +76,7 @@ const ProductDetail = () => {
                       <h6>{product.productCode}</h6>
                     </li>
                     <li>
-                      <h4>Product</h4>
+                      <h4>Product Name</h4>
                       <h6>{product.productName || "—"}</h6>
                     </li>
                     <li>
@@ -89,12 +88,48 @@ const ProductDetail = () => {
                       <h6>{product.unit || "—"}</h6>
                     </li>
                     <li>
-                      <h4>Price</h4>
+                      <h4>Dimension</h4>
+                      <h6>{product.dimensions || "—"}</h6>
+                    </li>
+                    <li>
+                      <h4>Unit Price</h4>
                       <h6>{product.unitPrice?.toLocaleString()} ₫</h6>
                     </li>
                     <li>
-                      <h4>Status</h4>
-                      <h6>{product.active ? "Active" : "Inactive"}</h6>
+                      <h4>Cost Price</h4>
+                      <h6>{product.costPrice?.toLocaleString()} ₫</h6>
+                    </li>
+                    <li>
+                      <h4>Supplier</h4>
+                      <h6>{product.supplierName || "—"}</h6>
+                    </li>
+                    <li>
+                      <h4>Created Date</h4>
+                      <h6>
+                        {product.createdDate
+                          ? new Date(product.createdDate).toLocaleString("vi-VN", {
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                          : "—"}
+                      </h6>
+                    </li>
+                    <li>
+                      <h4>Updated Date</h4>
+                      <h6>
+                        {product.updatedDate
+                          ? new Date(product.updatedDate).toLocaleString("vi-VN", {
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                          : "—"}
+                      </h6>
                     </li>
                     <li>
                       <h4>Description</h4>

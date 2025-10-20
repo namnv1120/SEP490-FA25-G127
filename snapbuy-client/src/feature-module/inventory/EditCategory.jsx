@@ -11,21 +11,27 @@ const EditCategory = ({ categoryId, onSuccess }) => {
     active: true,
   });
 
-  // Load dữ liệu category khi modal mở
+  // Khi categoryId thay đổi → load dữ liệu và mở modal
   useEffect(() => {
-    const loadCategoryData = async () => {
-      if (!categoryId) return;
+    if (!categoryId) return;
 
+    const loadCategoryData = async () => {
       try {
         setLoading(true);
         const category = await getCategoryById(categoryId);
-
         setFormData({
           categoryName:
             category.categoryName || category.category_name || "",
           description: category.description || "",
           active: category.active === 1 || category.active === true,
         });
+
+        // ✅ Mở modal sau khi dữ liệu được load
+        const modalElement = document.getElementById("edit-main-category");
+        if (modalElement) {
+          const modal = new Modal(modalElement);
+          modal.show();
+        }
       } catch (error) {
         console.error("Error loading category:", error);
         message.error("Không thể tải dữ liệu category");
@@ -37,7 +43,7 @@ const EditCategory = ({ categoryId, onSuccess }) => {
     loadCategoryData();
   }, [categoryId]);
 
-  // Handle input changes
+  // Xử lý thay đổi input
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -46,7 +52,7 @@ const EditCategory = ({ categoryId, onSuccess }) => {
     }));
   };
 
-  // Handle checkbox change
+  // Xử lý checkbox
   const handleStatusChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -54,11 +60,10 @@ const EditCategory = ({ categoryId, onSuccess }) => {
     }));
   };
 
-  // Submit form để update
+  // Gửi form cập nhật
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation
     if (!formData.categoryName.trim()) {
       message.warning("Vui lòng nhập tên danh mục");
       return;
@@ -71,12 +76,13 @@ const EditCategory = ({ categoryId, onSuccess }) => {
         categoryName: formData.categoryName,
         description: formData.description,
         active: formData.active ? 1 : 0,
+        parentCategoryId: null,
       };
 
       await updateCategory(categoryId, updateData);
       message.success("Cập nhật category thành công!");
 
-      // Đóng modal và dọn backdrop
+      // ✅ Đóng modal và dọn backdrop (giống AddCategory)
       const modalElement = document.getElementById("edit-main-category");
       let modal = Modal.getInstance(modalElement);
       if (!modal) modal = new Modal(modalElement);
@@ -94,7 +100,7 @@ const EditCategory = ({ categoryId, onSuccess }) => {
       console.error("Error updating category:", error);
       const errorMessage =
         error.response?.data?.message || "Không thể cập nhật category";
-      message.error(`${errorMessage}`);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -102,7 +108,7 @@ const EditCategory = ({ categoryId, onSuccess }) => {
 
   return (
     <div>
-      {/* Edit Main Category Modal */}
+      {/* Edit Category Modal */}
       <div className="modal fade" id="edit-main-category">
         <div className="modal-dialog modal-dialog-centered modal-md">
           <div className="modal-content">
@@ -159,12 +165,12 @@ const EditCategory = ({ categoryId, onSuccess }) => {
                       <span className="status-label">Status</span>
                       <input
                         type="checkbox"
-                        id="cat-status"
+                        id="edit-cat-status"
                         className="check"
                         checked={formData.active}
                         onChange={handleStatusChange}
                       />
-                      <label htmlFor="cat-status" className="checktoggle" />
+                      <label htmlFor="edit-cat-status" className="checktoggle" />
                     </div>
                   </div>
 
@@ -191,7 +197,7 @@ const EditCategory = ({ categoryId, onSuccess }) => {
           </div>
         </div>
       </div>
-      {/* /Edit Main Category Modal */}
+      {/* /Edit Category Modal */}
     </div>
   );
 };

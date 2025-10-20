@@ -3,15 +3,15 @@ import { Modal } from "bootstrap";
 import { message } from "antd";
 import { createCategory } from "../../services/CategoryService";
 
-const AddCategory = ({ onSuccess }) => {
+const AddSubCategory = ({ parentCategories, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     categoryName: "",
     description: "",
+    parentCategoryId: "",
     active: true,
   });
 
-  // Xử lý thay đổi input
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -20,7 +20,6 @@ const AddCategory = ({ onSuccess }) => {
     }));
   };
 
-  // Xử lý checkbox
   const handleStatusChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -28,53 +27,56 @@ const AddCategory = ({ onSuccess }) => {
     }));
   };
 
-  // Submit thêm mới category
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.categoryName.trim()) {
-      message.warning("Vui lòng nhập tên danh mục");
+      message.warning("Vui lòng nhập tên danh mục con");
+      return;
+    }
+
+    if (!formData.parentCategoryId) {
+      message.warning("Vui lòng chọn danh mục cha");
       return;
     }
 
     try {
       setLoading(true);
 
-      const newCategory = {
+      const newSubCategory = {
         categoryName: formData.categoryName,
         description: formData.description,
+        parentCategoryId: formData.parentCategoryId,
         active: formData.active ? 1 : 0,
-        parentCategoryId: null,
       };
 
-      await createCategory(newCategory);
-      message.success("Thêm category thành công!");
+      await createCategory(newSubCategory);
+      message.success("Thêm sub category thành công!");
 
-      // Đóng modal và dọn backdrop
-      const modalElement = document.getElementById("add-main-category");
+      const modalElement = document.getElementById("add-sub-category");
       let modal = Modal.getInstance(modalElement);
       if (!modal) modal = new Modal(modalElement);
       modal.hide();
 
       setTimeout(() => {
-        const backdrop = document.querySelector(".modal-backdrop");
-        if (backdrop) backdrop.remove();
+        document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
         document.body.classList.remove("modal-open");
-        document.body.style.overflow = "";
-      }, 100);
+        document.body.style.removeProperty("overflow");
+        document.body.style.removeProperty("padding-right");
+      }, 300);
 
-      // Reset form
       setFormData({
         categoryName: "",
         description: "",
+        parentCategoryId: "",
         active: true,
       });
 
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error("Error adding category:", error);
+      console.error("Error adding sub category:", error);
       const errorMessage =
-        error.response?.data?.message || "Không thể thêm category";
+        error.response?.data?.message || "Không thể thêm sub category";
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -83,13 +85,12 @@ const AddCategory = ({ onSuccess }) => {
 
   return (
     <div>
-      {/* Add Category Modal */}
-      <div className="modal fade" id="add-main-category">
+      <div className="modal fade" id="add-sub-category">
         <div className="modal-dialog modal-dialog-centered modal-md">
           <div className="modal-content">
             <div className="modal-header border-0 custom-modal-header">
               <div className="page-title">
-                <h4>Add Category</h4>
+                <h4>Add Sub Category</h4>
               </div>
               <button
                 type="button"
@@ -105,7 +106,27 @@ const AddCategory = ({ onSuccess }) => {
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
                   <label className="form-label">
-                    Category Name<span className="text-danger">*</span>
+                    Parent Category<span className="text-danger">*</span>
+                  </label>
+                  <select
+                    name="parentCategoryId"
+                    className="form-select"
+                    value={formData.parentCategoryId}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="">Select Parent Category</option>
+                    {parentCategories.map((parent) => (
+                      <option key={parent.categoryId} value={parent.categoryId}>
+                        {parent.name || parent.categoryName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label">
+                    Sub Category Name<span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
@@ -133,12 +154,12 @@ const AddCategory = ({ onSuccess }) => {
                     <span className="status-label">Status</span>
                     <input
                       type="checkbox"
-                      id="add-cat-status"
+                      id="add-subcat-status"
                       className="check"
                       checked={formData.active}
                       onChange={handleStatusChange}
                     />
-                    <label htmlFor="add-cat-status" className="checktoggle" />
+                    <label htmlFor="add-subcat-status" className="checktoggle" />
                   </div>
                 </div>
 
@@ -156,7 +177,7 @@ const AddCategory = ({ onSuccess }) => {
                     className="btn btn-submit"
                     disabled={loading}
                   >
-                    {loading ? "Saving..." : "Add Category"}
+                    {loading ? "Saving..." : "Add Sub Category"}
                   </button>
                 </div>
               </form>
@@ -164,9 +185,8 @@ const AddCategory = ({ onSuccess }) => {
           </div>
         </div>
       </div>
-      {/* /Add Category Modal */}
     </div>
   );
 };
 
-export default AddCategory;
+export default AddSubCategory;

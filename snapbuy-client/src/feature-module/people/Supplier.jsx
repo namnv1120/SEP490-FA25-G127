@@ -8,7 +8,7 @@ import TableTopHead from "../../components/table-top-head";
 import { editSupplier } from "../../utils/imagepath";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import supplierService from "../../services/supplierService";
+import supplierService from "../../services/SupplierService";
 
 const Suppliers = () => {
   const [listData, setListData] = useState([]);
