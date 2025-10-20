@@ -37,4 +37,34 @@ public class ReportServiceImpl implements ReportService {
         return result;
     }
 
+    @Override
+    public List<ProductRevenueReportResponse> getProductRevenueFlexible(
+            LocalDateTime from, LocalDateTime to,
+            UUID productId, UUID categoryId, UUID supplierId,
+            BigDecimal minRevenue, Integer limit,
+            String sortBy, String sortDir
+    ) {
+        int safeLimit = (limit == null || limit <= 0) ? 50 : limit;
+        String sb = (sortBy == null || (!sortBy.equals("sold") && !sortBy.equals("revenue"))) ? "revenue" : sortBy;
+        String sd = (sortDir == null || (!sortDir.equalsIgnoreCase("asc") && !sortDir.equalsIgnoreCase("desc"))) ? "desc" : sortDir.toLowerCase();
+
+        List<Object[]> rows = orderDetailRepository.reportProductRevenueFlexible(
+                from, to, productId, categoryId, supplierId, minRevenue, safeLimit, sb, sd
+        );
+
+        List<ProductRevenueReportResponse> result = new ArrayList<>();
+        for (Object[] r : rows) {
+            result.add(ProductRevenueReportResponse.builder()
+                    .productId(r[0] != null ? UUID.fromString(r[0].toString()) : null)
+                    .productName((String) r[1])
+                    .totalSold(r[2] != null ? ((Number) r[2]).intValue() : 0)
+                    .totalRevenue(r[3] != null ? (BigDecimal) r[3] : BigDecimal.ZERO)
+                    .categoryId(r[4] != null ? UUID.fromString(r[4].toString()) : null)
+                    .categoryName((String) r[5])
+                    .supplierId(r[6] != null ? UUID.fromString(r[6].toString()) : null)
+                    .supplierName((String) r[7])
+                    .build());
+        }
+        return result;
+    }
 }
