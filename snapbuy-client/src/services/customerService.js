@@ -1,9 +1,9 @@
 import axios from "axios";
 
-const REST_API_BASE_URL = "http://localhost:8080/api/products";
+const REST_API_BASE_URL = "http://localhost:8080/api/customers";
 
-// 🧾 Lấy danh sách sản phẩm
-export const getAllProducts = async () => {
+// Lấy danh sách khách hàng
+export const getAllCustomers = async () => {
   try {
     const token = localStorage.getItem("authToken");
     const tokenType = localStorage.getItem("authTokenType") || "Bearer";
@@ -14,21 +14,20 @@ export const getAllProducts = async () => {
       },
     });
 
-    // Backend có thể trả về { result: [...] } hoặc { products: [...] } hoặc mảng trực tiếp
     return (
       response.data?.result ||
-      response.data?.products ||
+      response.data?.customers ||
       response.data ||
       []
     );
   } catch (error) {
-    console.error("Failed to fetch products:", error);
+    console.error("Failed to fetch customers:", error);
     throw error;
   }
 };
 
-// 📋 Lấy chi tiết sản phẩm theo ID
-export const getProductById = async (id) => {
+// Lấy thông tin khách hàng theo ID
+export const getCustomerById = async (id) => {
   try {
     const token = localStorage.getItem("authToken");
     const tokenType = localStorage.getItem("authTokenType") || "Bearer";
@@ -41,18 +40,18 @@ export const getProductById = async (id) => {
 
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("Failed to fetch product by ID:", error);
+    console.error("Failed to fetch customer by ID:", error);
     throw error;
   }
 };
 
-// ➕ Thêm sản phẩm
-export const createProduct = async (productData) => {
+// Thêm khách hàng
+export const createCustomer = async (customerData) => {
   try {
     const token = localStorage.getItem("authToken");
     const tokenType = localStorage.getItem("authTokenType") || "Bearer";
 
-    const response = await axios.post(REST_API_BASE_URL, productData, {
+    const response = await axios.post(REST_API_BASE_URL, customerData, {
       headers: {
         Authorization: `${tokenType} ${token}`,
       },
@@ -60,20 +59,20 @@ export const createProduct = async (productData) => {
 
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("Failed to create product:", error);
+    console.error("Failed to create customer:", error);
     throw error;
   }
 };
 
-// ✏️ Sửa sản phẩm
-export const updateProduct = async (id, productData) => {
+// Cập nhật khách hàng
+export const updateCustomer = async (id, customerData) => {
   try {
     const token = localStorage.getItem("authToken");
     const tokenType = localStorage.getItem("authTokenType") || "Bearer";
 
     const response = await axios.put(
       `${REST_API_BASE_URL}/${id}`,
-      productData,
+      customerData,
       {
         headers: {
           Authorization: `${tokenType} ${token}`,
@@ -83,13 +82,13 @@ export const updateProduct = async (id, productData) => {
 
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("Failed to update product:", error);
+    console.error("Failed to update customer:", error);
     throw error;
   }
 };
 
-// 🗑️ Xoá sản phẩm
-export const deleteProduct = async (id) => {
+// Xóa khách hàng
+export const deleteCustomer = async (id) => {
   try {
     const token = localStorage.getItem("authToken");
     const tokenType = localStorage.getItem("authTokenType") || "Bearer";
@@ -100,7 +99,7 @@ export const deleteProduct = async (id) => {
       },
     });
   } catch (error) {
-    console.error("Failed to delete product:", error);
+    console.error("Failed to delete customer:", error);
     throw error;
   }
 };
