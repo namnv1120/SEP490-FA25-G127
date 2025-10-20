@@ -1,26 +1,28 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import EditCategoryList from "../../feature-module/inventory/EditCategoryList";
-import SubCategory from "../../feature-module/inventory/SubCategory";
+import EditCategoryList from "../../core/modals/inventory/editcategorylist";
 import CommonFooter from "../../components/footer/commonFooter";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
 
-const CategoryList = () => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalRecords, _setTotalRecords] = useState(5);
-  const [rows, setRows] = useState(10);
-  const [_searchQuery, setSearchQuery] = useState(undefined);
+// Interfaces removed as they are TypeScript specific
 
-  const handleSearch = (value) => {
+const CategoryList = () => { // Removed : React.FC
+  const [currentPage, setCurrentPage] = useState(1); // Removed <number>
+  const [totalRecords, _setTotalRecords] = useState(5); // Removed <any>, assuming 5 is a placeholder
+  const [rows, setRows] = useState(10); // Removed <number>
+  const [_searchQuery, setSearchQuery] = useState(undefined); // Removed <string | undefined>
+
+  const handleSearch = (value) => { // Removed : any
     setSearchQuery(value);
   };
 
+  // Data fetched from Redux store
   const dataSource = useSelector(
-    (state) => state.rootReducer.categotylist_data
+    (state) => state.rootReducer.categotylist_data // Removed : RootState and CategoryItem[] types
   );
 
   const columns = [
@@ -63,7 +65,9 @@ const CategoryList = () => {
       field: "status",
       key: "status",
       sortable: true,
-      body: (data) => (
+      body: (data) => ( // Removed : CategoryItem
+        // Consider dynamic class based on status if needed:
+        // className={`badge ${data.status === 'Active' ? 'bg-success' : 'bg-danger'} fw-medium fs-10`}
         <span className="badge bg-success fw-medium fs-10">{data.status}</span>
       ),
     },
@@ -72,13 +76,14 @@ const CategoryList = () => {
       field: "actions",
       key: "actions",
       sortable: false,
-      body: () => (
+      body: (rowData) => ( // Changed _row to rowData, removed : any
         <div className="edit-delete-action d-flex align-items-center">
           <Link
             className="me-2 p-2 d-flex align-items-center border rounded"
             to="#"
             data-bs-toggle="modal"
-            data-bs-target="#edit-customer"
+            data-bs-target="#edit-customer" // Target for Edit modal
+            // onClick={() => handleEditClick(rowData)} // Optional: Pass data on click
           >
             <i className="feather icon-edit"></i>
           </Link>
@@ -86,7 +91,8 @@ const CategoryList = () => {
             className="p-2 d-flex align-items-center border rounded"
             to="#"
             data-bs-toggle="modal"
-            data-bs-target="#delete-modal"
+            data-bs-target="#delete-modal" // Target for Delete modal
+             // onClick={() => handleDeleteClick(rowData.id)} // Optional: Pass ID on click
           >
             <i className="feather icon-trash-2"></i>
           </Link>
@@ -94,6 +100,16 @@ const CategoryList = () => {
       ),
     },
   ];
+
+   // Optional: Add handlers if needed
+  // const handleEditClick = (categoryData) => {
+  //   console.log("Editing:", categoryData);
+  //   // You might want to set state here to pass data to the EditCategoryList modal
+  // };
+  // const handleDeleteClick = (categoryId) => {
+  //   console.log("Deleting ID:", categoryId);
+  //   // You might want to set state here to pass the ID to the DeleteModal
+  // };
 
   return (
     <div>
@@ -112,14 +128,13 @@ const CategoryList = () => {
                 to="#"
                 className="btn btn-primary"
                 data-bs-toggle="modal"
-                data-bs-target="#add-category"
+                data-bs-target="#add-category" // Target for Add modal
               >
                 <i className="ti ti-circle-plus me-1"></i>
                 Add Category
               </Link>
             </div>
           </div>
-
           {/* /product list */}
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
@@ -129,6 +144,7 @@ const CategoryList = () => {
                 setRows={setRows}
               />
               <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
+                 {/* Filters remain the same */}
                 <div className="dropdown me-2">
                   <Link
                     to="#"
@@ -171,7 +187,7 @@ const CategoryList = () => {
                     </li>
                     <li>
                       <Link to="#" className="dropdown-item rounded-1">
-                        Desending
+                        Descending {/* Corrected typo */}
                       </Link>
                     </li>
                     <li>
@@ -188,17 +204,17 @@ const CategoryList = () => {
                 </div>
               </div>
             </div>
-
             <div className="card-body">
               <div className="table-responsive category-table">
                 <PrimeDataTable
                   column={columns}
-                  data={dataSource}
+                  data={dataSource || []} // Ensure dataSource is an array
                   rows={rows}
                   setRows={setRows}
                   currentPage={currentPage}
                   setCurrentPage={setCurrentPage}
-                  totalRecords={totalRecords}
+                  // Assuming totalRecords might come from Redux state or be dataSource.length
+                  totalRecords={dataSource ? dataSource.length : 0} // Use dataSource length or placeholder
                 />
               </div>
             </div>
@@ -208,8 +224,11 @@ const CategoryList = () => {
         <CommonFooter />
       </div>
 
-      {/* Add Category */}
+      {/* Add Category Modal (Assuming separate component or static HTML) */}
+      {/* Ensure this modal has id="add-category" */}
       <div className="modal fade" id="add-category">
+         {/* ... content of Add Category Modal ... */}
+         {/* Example structure - Replace with your actual Add Category Modal */}
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
             <div className="page-wrapper-new p-0">
@@ -218,60 +237,37 @@ const CategoryList = () => {
                   <div className="page-title">
                     <h4>Add Category</h4>
                   </div>
-                  <button
-                    type="button"
-                    className="close bg-danger text-white fs-16"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                  >
+                  <button type="button" className="close bg-danger text-white fs-16" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">×</span>
                   </button>
                 </div>
                 <div className="modal-body">
-                  <form>
+                  <form> {/* Add form submission logic here */}
                     <div className="mb-3">
-                      <label className="form-label">
-                        Category<span className="text-danger ms-1">*</span>
-                      </label>
-                      <input type="text" className="form-control" />
+                      <label className="form-label">Category<span className="text-danger ms-1">*</span></label>
+                      <input type="text" className="form-control" required />
                     </div>
                     <div className="mb-3">
-                      <label className="form-label">
-                        Category Slug<span className="text-danger ms-1">*</span>
-                      </label>
-                      <input type="text" className="form-control" />
+                      <label className="form-label">Category Slug<span className="text-danger ms-1">*</span></label>
+                      <input type="text" className="form-control" required />
                     </div>
                     <div className="mb-0">
                       <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                        <span className="status-label">
-                          Status<span className="text-danger ms-1">*</span>
-                        </span>
-                        <input
-                          type="checkbox"
-                          id="user2"
-                          className="check"
-                          defaultChecked
-                        />
-                        <label htmlFor="user2" className="checktoggle" />
+                        <span className="status-label">Status<span className="text-danger ms-1">*</span></span>
+                        <input type="checkbox" id="add-cat-status" className="check" defaultChecked />
+                        <label htmlFor="add-cat-status" className="checktoggle" />
                       </div>
                     </div>
+                     {/* Footer moved inside form */}
+                    <div className="modal-footer">
+                        <button type="button" className="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3 shadow-none" data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+                        <button type="submit" className="btn btn-primary fs-13 fw-medium p-2 px-3"> {/* Use button type submit */}
+                            Add Category
+                        </button>
+                    </div>
                   </form>
-                </div>
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3 shadow-none"
-                    data-bs-dismiss="modal"
-                  >
-                    Cancel
-                  </button>
-                  <Link
-                    to="#"
-                    data-bs-dismiss="modal"
-                    className="btn btn-primary fs-13 fw-medium p-2 px-3"
-                  >
-                    Add Category
-                  </Link>
                 </div>
               </div>
             </div>
@@ -280,8 +276,10 @@ const CategoryList = () => {
       </div>
       {/* /Add Category */}
 
-      <EditCategoryList />
-      <SubCategory />
+      {/* Edit Category Modal Component */}
+      <EditCategoryList /> {/* Ensure this component uses id="edit-customer" or update target */}
+
+      {/* Delete Modal Component */}
       <DeleteModal />
     </div>
   );
