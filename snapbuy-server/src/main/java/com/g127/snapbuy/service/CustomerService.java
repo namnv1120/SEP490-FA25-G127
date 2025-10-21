@@ -17,4 +17,6 @@ public interface CustomerService {
     CustomerResponse updateCustomer(UUID id, CustomerUpdateRequest request);
 
     void deleteCustomer(UUID id);
+
+    List<CustomerResponse> searchCustomer(String keyword);
 }
