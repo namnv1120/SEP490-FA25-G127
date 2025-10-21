@@ -1,17 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-const CounterTwo = ({ defaultValue = 0 }) => {
+const CounterTwo = ({ defaultValue = 0, onChange }) => {
   const [quantity, setQuantity] = useState(defaultValue);
+
+  // Đồng bộ nếu defaultValue thay đổi từ bên ngoài
+  useEffect(() => {
+    setQuantity(defaultValue);
+  }, [defaultValue]);
 
   const handleIncrement = () => {
     if (quantity < 99) {
-      setQuantity(quantity + 1);
+      const newVal = quantity + 1;
+      setQuantity(newVal);
+      onChange && onChange(newVal); // Gọi callback
     }
   };
 
   const handleDecrement = () => {
     if (quantity > 0) {
-      setQuantity(quantity - 1);
+      const newVal = quantity - 1;
+      setQuantity(newVal);
+      onChange && onChange(newVal); // Gọi callback
     }
   };
 
@@ -21,8 +30,10 @@ const CounterTwo = ({ defaultValue = 0 }) => {
 
     if (value === "") {
       setQuantity(0);
+      onChange && onChange(0);
     } else if (!isNaN(numericValue) && numericValue >= 0 && numericValue <= 99) {
       setQuantity(numericValue);
+      onChange && onChange(numericValue);
     }
   };
 

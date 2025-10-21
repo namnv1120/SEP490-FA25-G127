@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Tooltip } from "antd";
 import { Settings, User } from "react-feather";
@@ -6,6 +6,21 @@ import { all_routes } from "../../routes/all_routes";
 
 const PosHeader = () => {
   const [isFullscreen] = useState(false);
+  const [currentTime, setCurrentTime] = useState("");
+
+  // Cập nhật thời gian mỗi giây
+  useEffect(() => {
+    const updateClock = () => {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString("en-GB", { hour12: false }); // Định dạng HH:mm:ss
+      setCurrentTime(timeString);
+    };
+
+    updateClock(); // Cập nhật ngay khi load
+    const timer = setInterval(updateClock, 1000);
+
+    return () => clearInterval(timer); // Xóa timer khi component unmount
+  }, []);
 
   return (
     <>
@@ -43,7 +58,7 @@ const PosHeader = () => {
                 alt="img"
                 className="me-2"
               />
-              09:25:32
+              {currentTime || "00:00:00"}
             </span>
           </li>
 
