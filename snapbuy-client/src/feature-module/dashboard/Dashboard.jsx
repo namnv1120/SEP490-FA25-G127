@@ -485,10 +485,10 @@ const Dashboard = () => {
             <span className="input-icon-addon fs-16 text-gray-9">
               <i className="ti ti-calendar" />
             </span>
-           <CommonDateRangePicker/>
+            <CommonDateRangePicker />
           </div>
         </div>
-        <div className="alert bg-orange-transparent alert-dismissible fade show mb-4">
+        {/* <div className="alert bg-orange-transparent alert-dismissible fade show mb-4">
           <div>
             <span>
               {" "}
@@ -517,7 +517,7 @@ const Dashboard = () => {
           >
             <i className="ti ti-x" />
           </button>
-        </div>
+        </div> */}
         <div className="row">
           <div className="col-xl-3 col-sm-6 col-12 d-flex">
             <div className="card bg-primary sale-widget flex-fill">

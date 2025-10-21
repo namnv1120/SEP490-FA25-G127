@@ -40,7 +40,7 @@ const SubCategoryList = () => {
       const parents = data.filter(
         (cat) => !cat.parentCategoryId || cat.parentCategoryId === null
       );
-      
+
       const subs = data.filter(
         (cat) => cat.parentCategoryId && cat.parentCategoryId !== null
       );
@@ -50,7 +50,7 @@ const SubCategoryList = () => {
       // ✅ Map sub categories với parent name
       const mapped = subs.map((cat) => {
         const parent = parents.find((p) => p.categoryId === cat.parentCategoryId);
-        
+
         return {
           categoryId: cat.categoryId,
           categoryName: cat.name || cat.categoryName || "N/A",
@@ -59,17 +59,17 @@ const SubCategoryList = () => {
           description: cat.description || "N/A",
           createddate: cat.createdDate
             ? new Date(cat.createdDate).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            })
             : "N/A",
           updateddate: cat.updatedDate
             ? new Date(cat.updatedDate).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            })
             : "N/A",
           status: cat.active === 1 || cat.active === true ? "Active" : "Inactive",
         };
@@ -190,9 +190,8 @@ const SubCategoryList = () => {
       sortable: true,
       body: (data) => (
         <span
-          className={`badge fw-medium fs-10 ${
-            data.status === "Active" ? "bg-success" : "bg-danger"
-          }`}
+          className={`badge fw-medium fs-10 ${data.status === "Active" ? "bg-success" : "bg-danger"
+            }`}
         >
           {data.status}
         </span>
@@ -290,9 +289,9 @@ const SubCategoryList = () => {
       </div>
 
       {/* ✅ Add Sub Category Component */}
-      <AddSubCategory 
+      <AddSubCategory
         parentCategories={parentCategories}
-        onSuccess={fetchSubCategories} 
+        onSuccess={fetchSubCategories}
       />
 
       {/* ✅ Edit Sub Category Component */}
@@ -304,6 +303,7 @@ const SubCategoryList = () => {
             fetchSubCategories();
             setEditSubCategoryId(null);
           }}
+          onClose={() => setEditSubCategoryId(null)}
         />
       )}
 

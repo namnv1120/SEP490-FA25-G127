@@ -15,13 +15,66 @@ const getAuthHeaders = () => {
   };
 };
 
-// GET - Lấy tất cả categories
 export const getAllSuppliers = async () => {
   try {
     const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
     return response.data?.result || response.data || [];
   } catch (error) {
     console.error("❌ Failed to fetch suppliers:", error);
+    throw error;
+  }
+};
+
+export const getSupplierById = async (supplierId) => {
+  try {
+    const response = await axios.get(
+      `${REST_API_BASE_URL}/${supplierId}`,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error(`❌ Failed to fetch supplier ${supplierId}:`, error);
+    throw error;
+  }
+};
+
+export const createSupplier = async (supplierData) => {
+  try {
+    const response = await axios.post(
+      REST_API_BASE_URL,
+      supplierData,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Failed to add supplier:", error);
+    throw error;
+  }
+};
+
+export const updateSupplier = async (supplierId, supplierData) => {
+  try {
+    const response = await axios.put(
+      `${REST_API_BASE_URL}/${supplierId}`,
+      supplierData,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error(`❌ Failed to update supplier ${supplierId}:`, error);
+    throw error;
+  }
+};
+
+export const deleteSupplier = async (supplierId) => {
+  try {
+    const response = await axios.delete(
+      `${REST_API_BASE_URL}/${supplierId}`,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error(`❌ Failed to delete supplier ${supplierId}:`, error);
     throw error;
   }
 };

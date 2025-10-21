@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import CommonFooter from "../../components/footer/commonFooter";
 import PrimeDataTable from "../../components/data-table";
@@ -24,7 +24,6 @@ const CategoryList = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [editCategoryId, setEditCategoryId] = useState(null);
 
-  // Fetch categories
   useEffect(() => {
     fetchCategories();
   }, []);
@@ -35,7 +34,6 @@ const CategoryList = () => {
       setError(null);
       const data = await getAllCategories();
 
-      // ✅ Lọc chỉ lấy parent categories (không có parentCategoryId)
       const parentCategories = data.filter(
         (cat) => !cat.parentCategoryId || cat.parentCategoryId === null
       );
@@ -115,7 +113,7 @@ const CategoryList = () => {
         document.body.classList.remove("modal-open");
         document.body.style.removeProperty("overflow");
         document.body.style.removeProperty("padding-right");
-      }, 300);
+      }, 0);
 
       await fetchCategories();
       message.success("Category deleted successfully!");
@@ -286,6 +284,7 @@ const CategoryList = () => {
             fetchCategories();
             setEditCategoryId(null);
           }}
+          onClose={() => setEditCategoryId(null)}
         />
       )}
 

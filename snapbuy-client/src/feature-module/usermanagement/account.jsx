@@ -1,71 +1,83 @@
-import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import AddUsers from "../../core/modals/usermanagement/adduser";
-import EditUser from "../../core/modals/usermanagement/edituser";
-
+import { useState, useEffect } from "react";
+// import AddAccounts from "../../core/modals/accountmanagement/addaccounts";
+// import EditAccount from "../../core/modals/accountmanagement/editaccount";
 import TooltipIcons from "../../components/tooltip-content/tooltipIcons";
 import RefreshIcon from "../../components/tooltip-content/refresh";
 import CollapesIcon from "../../components/tooltip-content/collapes";
 import Table from "../../core/pagination/datatable";
-
-import { listAccounts, deleteAccount } from "../../services/accountService";
+import { getAllAccounts, deleteAccount } from "../../services/AccountService";
 
 const Accounts = () => {
-  const [accounts, setAccounts] = useState([]);
+  const [dataSource, setDataSource] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [selectedAccountId, setSelectedAccountId] = useState(null);
+
+  // Fetch accounts khi component mount
+  useEffect(() => {
+    fetchAccounts();
+  }, []);
 
   const fetchAccounts = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await listAccounts();
-      setAccounts(response || []);
+      const accountsData = await getAllAccounts();
+      setDataSource(accountsData);
     } catch (error) {
-      console.error("Failed to fetch accounts:", error);
+      console.error("Error fetching accounts:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchAccounts();
-  }, []);
-
   const handleDeleteAccount = async () => {
-    if (!selectedAccount) return;
+    if (!selectedAccountId) return;
+    
     try {
-      await deleteAccount(selectedAccount.id);
-      fetchAccounts();
+      await deleteAccount(selectedAccountId);
+      // Refresh lại danh sách sau khi xóa
+      await fetchAccounts();
+      setSelectedAccountId(null);
     } catch (error) {
-      console.error("Failed to delete user:", error);
+      console.error("Error deleting account:", error);
     }
   };
 
   const columns = [
     {
-      title: "Fullname",
-      dataIndex: "fullName",
-      sorter: (a, b) => a.fullName.localeCompare(b.fullName),
-    },
-    {
-      title: "Username",
+      title: "Account Name",
       dataIndex: "username",
-      sorter: (a, b) => a.username.localeCompare(b.username),
+      render: (text, record) => (
+        <span className="userimgname">
+          <Link to="#" className="avatar avatar-md me-2">
+            <img alt="" src={record.img || "/default-avatar.png"} />
+          </Link>
+          <div>
+            <Link to="#">{text}</Link>
+          </div>
+        </span>
+      ),
+      sorter: (a, b) => a.username.length - b.username.length,
     },
     {
       title: "Phone",
       dataIndex: "phone",
-      sorter: (a, b) => a.phone.localeCompare(b.phone),
+      sorter: (a, b) => a.phone.length - b.phone.length,
     },
     {
       title: "Email",
       dataIndex: "email",
-      sorter: (a, b) => a.email.localeCompare(b.email),
+      sorter: (a, b) => a.email.length - b.email.length,
     },
     {
       title: "Role",
-      dataIndex: "roles",
-      sorter: (a, b) => a.roles.localeCompare(b.roles),
+      dataIndex: "role",
+      sorter: (a, b) => a.role.length - b.role.length,
+    },
+    {
+      title: "Created On",
+      dataIndex: "createdon",
+      sorter: (a, b) => a.createdon.length - b.createdon.length,
     },
     {
       title: "Status",
@@ -74,26 +86,27 @@ const Accounts = () => {
         <div>
           {text === "Active" && (
             <span className="d-inline-flex align-items-center p-1 pe-2 rounded-1 text-white bg-success fs-10">
+              {" "}
               <i className="ti ti-point-filled me-1 fs-11"></i>
               {text}
             </span>
           )}
           {text === "Inactive" && (
             <span className="d-inline-flex align-items-center p-1 pe-2 rounded-1 text-white bg-danger fs-10">
+              {" "}
               <i className="ti ti-point-filled me-1 fs-11"></i>
               {text}
             </span>
           )}
         </div>
       ),
-      sorter: (a, b) => a.status.localeCompare(b.status),
+      sorter: (a, b) => a.status.length - b.status.length,
     },
     {
-      header: "",
-      field: "actions",
+      title: "Actions",
+      dataIndex: "actions",
       key: "actions",
-      align: "center",
-      render: (record) => (
+      render: (text, record) => (
         <div className="action-table-data">
           <div className="edit-delete-action">
             <Link className="me-2 p-2" to="#">
@@ -110,14 +123,17 @@ const Accounts = () => {
             >
               <i data-feather="edit" className="feather-edit"></i>
             </Link>
-            <Link
-              className="confirm-text p-2"
+            <Link 
+              className="confirm-text p-2" 
               to="#"
-              data-bs-toggle="modal"
-              data-bs-target="#delete-modal"
-              onClick={() => setSelectedAccount(record)}
+              onClick={() => setSelectedAccountId(record.id)}
             >
-              <i data-feather="trash-2" className="feather-trash-2"></i>
+              <i
+                data-feather="trash-2"
+                className="feather-trash-2"
+                data-bs-toggle="modal"
+                data-bs-target="#delete-modal"
+              ></i>
             </Link>
           </div>
         </div>
@@ -153,7 +169,7 @@ const Accounts = () => {
               </Link>
             </div>
           </div>
-
+          
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
               <div className="search-set"></div>
@@ -183,21 +199,21 @@ const Accounts = () => {
             </div>
 
             <div className="card-body">
-              <div className="table-responsive">
-                {loading ? (
-                  <div className="text-center p-4">Loading...</div>
-                ) : (
-                  <Table columns={columns} dataSource={accounts} />
-                )}
-              </div>
+              {loading ? (
+                <div className="text-center p-4">Loading accounts...</div>
+              ) : (
+                <div className="table-responsive">
+                  <Table columns={columns} dataSource={dataSource} />
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
-
-      {/* <AddAccount onCreated={fetchAccounts} />
-      <EditAccount user={selectedAccount} onUpdated={fetchAccounts} /> */}
-
+      
+      {/* <AddAccounts onSuccess={fetchAccounts} />
+      <EditAccount onSuccess={fetchAccounts} /> */}
+      
       <div className="modal fade" id="delete-modal">
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
@@ -206,9 +222,9 @@ const Accounts = () => {
                 <span className="rounded-circle d-inline-flex p-2 bg-danger-transparent mb-2">
                   <i className="ti ti-trash fs-24 text-danger" />
                 </span>
-                <h4 className="fs-20 fw-bold mb-2 mt-1">Delete User</h4>
+                <h4 className="fs-20 fw-bold mb-2 mt-1">Delete Account</h4>
                 <p className="mb-0 fs-16">
-                  Are you sure you want to delete user?
+                  Are you sure you want to delete this account?
                 </p>
                 <div className="modal-footer-btn mt-3 d-flex justify-content-center">
                   <button
@@ -220,8 +236,8 @@ const Accounts = () => {
                   </button>
                   <button
                     type="submit"
-                    onClick={handleDeleteAccount}
                     className="btn btn-primary fs-13 fw-medium p-2 px-3"
+                    onClick={handleDeleteAccount}
                     data-bs-dismiss="modal"
                   >
                     Yes Delete

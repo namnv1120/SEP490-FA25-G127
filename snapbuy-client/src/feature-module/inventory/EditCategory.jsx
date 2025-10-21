@@ -3,15 +3,14 @@ import { getCategoryById, updateCategory } from "../../services/CategoryService"
 import { Modal } from "bootstrap";
 import { message } from "antd";
 
-const EditCategory = ({ categoryId, onSuccess }) => {
+const EditCategory = ({ categoryId, onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     categoryName: "",
     description: "",
     active: true,
   });
-
-  // Khi categoryId thay đổi → load dữ liệu và mở modal
+  
   useEffect(() => {
     if (!categoryId) return;
 
@@ -20,13 +19,12 @@ const EditCategory = ({ categoryId, onSuccess }) => {
         setLoading(true);
         const category = await getCategoryById(categoryId);
         setFormData({
-          categoryName:
-            category.categoryName || category.category_name || "",
+          categoryName: category.categoryName || category.category_name || "",
           description: category.description || "",
           active: category.active === 1 || category.active === true,
         });
 
-        // ✅ Mở modal sau khi dữ liệu được load
+        // ✅ Mở modal sau khi load xong
         const modalElement = document.getElementById("edit-main-category");
         if (modalElement) {
           const modal = new Modal(modalElement);
@@ -35,15 +33,15 @@ const EditCategory = ({ categoryId, onSuccess }) => {
       } catch (error) {
         console.error("Error loading category:", error);
         message.error("Không thể tải dữ liệu category");
+        if (onClose) onClose(); // ✅ Đóng nếu lỗi
       } finally {
         setLoading(false);
       }
     };
 
     loadCategoryData();
-  }, [categoryId]);
+  }, [categoryId]); 
 
-  // Xử lý thay đổi input
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -52,7 +50,6 @@ const EditCategory = ({ categoryId, onSuccess }) => {
     }));
   };
 
-  // Xử lý checkbox
   const handleStatusChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -60,7 +57,6 @@ const EditCategory = ({ categoryId, onSuccess }) => {
     }));
   };
 
-  // Gửi form cập nhật
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -82,20 +78,22 @@ const EditCategory = ({ categoryId, onSuccess }) => {
       await updateCategory(categoryId, updateData);
       message.success("Cập nhật category thành công!");
 
-      // ✅ Đóng modal và dọn backdrop (giống AddCategory)
       const modalElement = document.getElementById("edit-main-category");
-      let modal = Modal.getInstance(modalElement);
-      if (!modal) modal = new Modal(modalElement);
-      modal.hide();
+      const modal = Modal.getInstance(modalElement);
+      if (modal) {
+        modal.hide();
+      }
 
+      // ✅ Cleanup backdrop
       setTimeout(() => {
-        const backdrop = document.querySelector(".modal-backdrop");
-        if (backdrop) backdrop.remove();
+        document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
         document.body.classList.remove("modal-open");
-        document.body.style.overflow = "";
+        document.body.style.removeProperty("overflow");
+        document.body.style.removeProperty("padding-right");
       }, 100);
 
       if (onSuccess) onSuccess();
+      if (onClose) onClose();
     } catch (error) {
       console.error("Error updating category:", error);
       const errorMessage =
@@ -106,10 +104,28 @@ const EditCategory = ({ categoryId, onSuccess }) => {
     }
   };
 
+  const handleModalClose = () => {
+    const modalElement = document.getElementById("edit-main-category");
+    const modal = Modal.getInstance(modalElement);
+    if (modal) {
+      modal.hide();
+    }
+
+    setTimeout(() => {
+      document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+      document.body.classList.remove("modal-open");
+      document.body.style.removeProperty("overflow");
+      document.body.style.removeProperty("padding-right");
+    }, 0);
+
+    if (onClose) onClose();
+  };
+
+  if (!categoryId) return null;
+
   return (
     <div>
-      {/* Edit Category Modal */}
-      <div className="modal fade" id="edit-main-category">
+      <div className="modal fade" id="edit-main-category" tabIndex="-1">
         <div className="modal-dialog modal-dialog-centered modal-md">
           <div className="modal-content">
             <div className="modal-header border-0 custom-modal-header">
@@ -119,7 +135,7 @@ const EditCategory = ({ categoryId, onSuccess }) => {
               <button
                 type="button"
                 className="close"
-                data-bs-dismiss="modal"
+                onClick={handleModalClose}
                 aria-label="Close"
               >
                 <span aria-hidden="true">×</span>
@@ -178,7 +194,7 @@ const EditCategory = ({ categoryId, onSuccess }) => {
                     <button
                       type="button"
                       className="btn btn-cancel me-2"
-                      data-bs-dismiss="modal"
+                      onClick={handleModalClose}
                       disabled={loading}
                     >
                       Cancel
@@ -197,7 +213,6 @@ const EditCategory = ({ categoryId, onSuccess }) => {
           </div>
         </div>
       </div>
-      {/* /Edit Category Modal */}
     </div>
   );
 };

@@ -3,7 +3,7 @@ import { getCategoryById, updateCategory } from "../../services/CategoryService"
 import { Modal } from "bootstrap";
 import { message } from "antd";
 
-const EditSubCategory = ({ categoryId, parentCategories, onSuccess }) => {
+const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     categoryName: "",
@@ -26,23 +26,23 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess }) => {
           active: category.active === 1 || category.active === true,
         });
 
-        setTimeout(() => {
-          const modalElement = document.getElementById("edit-sub-category");
-          if (modalElement) {
-            const modal = new Modal(modalElement);
-            modal.show();
-          }
-        }, 100);
+        // ✅ Mở modal sau khi load xong
+        const modalElement = document.getElementById("edit-sub-category");
+        if (modalElement) {
+          const modal = new Modal(modalElement);
+          modal.show();
+        }
       } catch (error) {
         console.error("Error loading sub category:", error);
         message.error("Không thể tải dữ liệu sub category");
+        if (onClose) onClose(); // ✅ Đóng nếu lỗi
       } finally {
         setLoading(false);
       }
     };
 
     loadCategoryData();
-  }, [categoryId]);
+  }, [categoryId]); // ✅ Không cần onClose trong dependency
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -85,21 +85,23 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess }) => {
       await updateCategory(categoryId, updateData);
       message.success("Cập nhật sub category thành công!");
 
+      // ✅ Đóng modal giống AddSubCategory
       const modalElement = document.getElementById("edit-sub-category");
       const modal = Modal.getInstance(modalElement);
-
       if (modal) {
         modal.hide();
       }
 
+      // ✅ Cleanup backdrop
       setTimeout(() => {
-        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-        document.body.classList.remove('modal-open');
-        document.body.style.removeProperty('overflow');
-        document.body.style.removeProperty('padding-right');
-      }, 300);
+        document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+        document.body.classList.remove("modal-open");
+        document.body.style.removeProperty("overflow");
+        document.body.style.removeProperty("padding-right");
+      }, 0);
 
       if (onSuccess) onSuccess();
+      if (onClose) onClose(); // ✅ Reset editSubCategoryId
     } catch (error) {
       console.error("Error updating sub category:", error);
       const errorMessage =
@@ -110,9 +112,30 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess }) => {
     }
   };
 
+  // ✅ Xử lý khi đóng modal bằng nút X hoặc Cancel
+  const handleModalClose = () => {
+    const modalElement = document.getElementById("edit-sub-category");
+    const modal = Modal.getInstance(modalElement);
+    if (modal) {
+      modal.hide();
+    }
+
+    setTimeout(() => {
+      document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+      document.body.classList.remove("modal-open");
+      document.body.style.removeProperty("overflow");
+      document.body.style.removeProperty("padding-right");
+    }, 0);
+
+    if (onClose) onClose();
+  };
+
+  // ✅ Không render gì nếu không có categoryId
+  if (!categoryId) return null;
+
   return (
     <div>
-      <div className="modal fade" id="edit-sub-category">
+      <div className="modal fade" id="edit-sub-category" tabIndex="-1">
         <div className="modal-dialog modal-dialog-centered modal-md">
           <div className="modal-content">
             <div className="modal-header border-0 custom-modal-header">
@@ -122,7 +145,7 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess }) => {
               <button
                 type="button"
                 className="close"
-                data-bs-dismiss="modal"
+                onClick={handleModalClose}
                 aria-label="Close"
               >
                 <span aria-hidden="true">×</span>
@@ -201,7 +224,7 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess }) => {
                     <button
                       type="button"
                       className="btn btn-cancel me-2"
-                      data-bs-dismiss="modal"
+                      onClick={handleModalClose}
                       disabled={loading}
                     >
                       Cancel
