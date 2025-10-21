@@ -33,10 +33,6 @@ public class ProductCreateRequest {
     @Size(max = 20, message = "Unit must be at most 20 characters")
     private String unit;
 
-    @DecimalMin(value = "0.0", inclusive = true, message = "Weight must be greater than or equal to 0")
-    @Digits(integer = 5, fraction = 3, message = "Weight must have at most 5 integer digits and 3 fractional digits")
-    private BigDecimal weight;
-
     @Size(max = 50, message = "Dimensions must be at most 50 characters")
     private String dimensions;
 

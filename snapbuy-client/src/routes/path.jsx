@@ -5,7 +5,6 @@ import FormHorizontal from "../feature-module/uiinterface/forms/formelements/lay
 // import FormBasicInputs from "../feature-module/uiinterface/forms/formelements/basic-inputs";
 // import CheckboxRadios from "../feature-module/uiinterface/forms/formelements/checkbox-radios";
 // import FileUpload from "../feature-module/uiinterface/forms/formelements/fileupload";
-
 // import FormSelect from "../feature-module/uiinterface/forms/formelements/form-select";
 // import FormWizard from "../feature-module/uiinterface/forms/formelements/form-wizard";
 // import FormPikers from "../feature-module/uiinterface/forms/formelements/formpickers";
@@ -24,39 +23,43 @@ import FormHorizontal from "../feature-module/uiinterface/forms/formelements/lay
 // import DataTables from "../feature-module/uiinterface/table/data-tables";
 // import TablesBasic from "../feature-module/uiinterface/table/tables-basic";
 // import Pos from "../feature-module/pos/pos";
+const Suppliers = lazy(() => import("../feature-module/people/Supplier"));
 
 // Lazy load Dashboard
-const Dashboard = lazy(() => import("../feature-module/dashboard/dashboard"));
+const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
+const ProductList = lazy(() =>
+  import("../feature-module/inventory/ProductList")
+);
 const Accounts = lazy(() => import("../feature-module/usermanagement/account"));
 const RolesPermissions = lazy(() =>
   import("../feature-module/usermanagement/Rolespermissions")
 );
 const Profile = lazy(() => import("../feature-module/usermanagement/Profile"));
-const Login = lazy(() => import("../feature-module/pages/authentication/Login"));
-const Register = lazy(() =>
-  import("../feature-module/pages/authentication/Register")
+const Login = lazy(() =>
+  import("../feature-module/pages/authentication/Login")
 );
 const Forgotpassword = lazy(() =>
   import("../feature-module/pages/authentication/ForgotPassword")
 );
+const Customers = lazy(() => import("../feature-module/people/Customer"));
 
 const routes = all_routes;
 
 export const authRoutes = [
   {
     id: 1,
-    path: routes.dashboard, // dùng routes.dashboard thay vì "/dashboard"
+    path: routes.dashboard,
     name: "dashboard",
     element: <Dashboard />,
     route: Route,
   },
-  // {
-  //   id: 2,
-  //   path: "/customers",
-  //   name: "customers",
-  //   element: <CustomerList />,
-  //   route: Route,
-  // },
+  {
+    id: 2,
+    path: "/customers",
+    name: "customers",
+    element: <Customers />,
+    route: Route,
+  },
   {
     id: 106,
     path: routes.profile,
@@ -86,6 +89,22 @@ export const authRoutes = [
     element: <FormHorizontal />,
     route: Route,
   },
+
+  {
+    id: 231,
+    path: routes.suppliers,
+    name: "suppliers",
+    element: <Suppliers />,
+    route: Route,
+  },
+
+  {
+    id: 232,
+    path: "/product-list",
+    name: "product-list",
+    element: <ProductList />,
+    route: Route,
+  },
 ];
 
 export const posPages = [
@@ -98,13 +117,6 @@ export const unAuthRoutes = [
     path: routes.login,
     name: "login",
     element: <Login />,
-    route: Route,
-  },
-  {
-    id: 2,
-    path: routes.register,
-    name: "register",
-    element: <Register />,
     route: Route,
   },
   {

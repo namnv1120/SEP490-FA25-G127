@@ -23,26 +23,6 @@ export const login = async (username, password) => {
   }
 };
 
-export const getUserProfile = async () => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    throw new Error("No token found");
-  }
-
-  try {
-    const response = await axios.get(`${REST_API_BASE_URL}/profile`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Fetching user profile failed:", error);
-    throw error;
-  }
-};
-
-// API logout (xoá token)
 export const logout = () => {
   // Xoá token khỏi localStorage
   localStorage.removeItem('authToken');

@@ -11,13 +11,13 @@ import java.util.UUID;
 @AllArgsConstructor
 public class SupplierResponse {
     private UUID supplierId;
+    private String supplierCode;
     private String supplierName;
-    private String contactPerson;
     private String phone;
     private String email;
     private String address;
     private String city;
-    private String taxCode;
+    private String ward;
     private Boolean active;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;

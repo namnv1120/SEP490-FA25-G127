@@ -1,14 +1,13 @@
 export const all_routes = {
   // Dashboard
   dashboard: "/dashboard",
-  superadmindashboard: "/dashboard",
-  salesdashboard: "/sales-dashboard",
-  newdashboard: "/new-dashboard",
 
-  // Products
+  //  Product routes
   productlist: "/product-list",
   addproduct: "/add-product",
-  editproduct: "/edit-product",
+  editproduct: "/product-list/edit",      
+  viewproduct: "/product-list/view",      
+
   expiredproduct: "/expired-products",
   lowstock: "/low-stocks",
   categorylist: "/category-list",
@@ -94,7 +93,6 @@ export const all_routes = {
 
   // Authentication
   login: "/login",
-  register: "/register",
   forgotpassword: "/forgot-password",
   resetpassword: "/reset-password",
   emailverification: "/email-verification",

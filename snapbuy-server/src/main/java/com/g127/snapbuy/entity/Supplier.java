@@ -22,30 +22,33 @@ public class Supplier {
     @Column(name = "supplier_id", columnDefinition = "uniqueidentifier")
     private UUID supplierId;
 
-    @Column(name = "supplier_name", nullable = false, length = 100)
+    @Column(name = "supplier_code", unique = true)
+    private String supplierCode;
+
+    @Column(name = "supplier_name", nullable = false)
     private String supplierName;
 
-    @Column(name = "phone", length = 20)
+    @Column(name = "phone")
     private String phone;
 
-    @Column(name = "email", length = 100)
+    @Column(name = "email")
     private String email;
 
-    @Column(name = "address", length = 100)
+    @Column(name = "address")
     private String address;
 
-    @Column(name = "city", length = 50)
+    @Column(name = "city")
     private String city;
 
-    @Builder.Default
-    @Column(name = "active", nullable = false)
+    @Column(name = "ward")
+    private String ward;
+
+    @Column(name = "active")
     private boolean active = true;
 
-    @CreationTimestamp
-    @Column(name = "created_date", nullable = false, updatable = false)
+    @Column(name = "created_date", updatable = false)
     private LocalDateTime createdDate;
 
-    @UpdateTimestamp
-    @Column(name = "updated_date", nullable = false)
+    @Column(name = "updated_date")
     private LocalDateTime updatedDate;
 }

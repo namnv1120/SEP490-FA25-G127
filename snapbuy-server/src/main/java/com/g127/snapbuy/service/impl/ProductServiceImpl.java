@@ -5,11 +5,13 @@ import com.g127.snapbuy.dto.request.ProductUpdateRequest;
 import com.g127.snapbuy.dto.response.ProductResponse;
 import com.g127.snapbuy.entity.Category;
 import com.g127.snapbuy.entity.Product;
+import com.g127.snapbuy.entity.ProductPrice;
 import com.g127.snapbuy.entity.Supplier;
 import com.g127.snapbuy.exception.AppException;
 import com.g127.snapbuy.exception.ErrorCode;
 import com.g127.snapbuy.mapper.ProductMapper;
 import com.g127.snapbuy.repository.CategoryRepository;
+import com.g127.snapbuy.repository.ProductPriceRepository;
 import com.g127.snapbuy.repository.ProductRepository;
 import com.g127.snapbuy.repository.SupplierRepository;
 import com.g127.snapbuy.service.ProductService;
@@ -23,9 +25,11 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
+
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final SupplierRepository supplierRepository;
+    private final ProductPriceRepository productPriceRepository;
     private final ProductMapper productMapper;
 
     @Override
@@ -41,6 +45,7 @@ public class ProductServiceImpl implements ProductService {
                     .orElseThrow(() -> new AppException(ErrorCode.SUPPLIER_NOT_FOUND));
             product.setSupplier(supplier);
         }
+
         product.setCreatedDate(LocalDateTime.now());
         product.setUpdatedDate(LocalDateTime.now());
         return productMapper.toResponse(productRepository.save(product));
@@ -74,14 +79,40 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse getProductById(UUID id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
-        return productMapper.toResponse(product);
+
+        ProductResponse response = productMapper.toResponse(product);
+
+        // ✅ Gắn giá mới nhất (nếu có)
+        ProductPrice latestPrice = productPriceRepository
+                .findTopByProduct_ProductIdOrderByValidFromDesc(product.getProductId())
+                .orElse(null);
+
+        if (latestPrice != null) {
+            response.setUnitPrice(latestPrice.getUnitPrice());
+            response.setCostPrice(latestPrice.getCostPrice());
+        }
+
+        return response;
     }
 
     @Override
     public List<ProductResponse> getAllProducts() {
         return productRepository.findAll()
                 .stream()
-                .map(productMapper::toResponse)
+                .map(product -> {
+                    ProductResponse response = productMapper.toResponse(product);
+
+                    ProductPrice latestPrice = productPriceRepository
+                            .findTopByProduct_ProductIdOrderByValidFromDesc(product.getProductId())
+                            .orElse(null);
+
+                    if (latestPrice != null) {
+                        response.setUnitPrice(latestPrice.getUnitPrice());
+                        response.setCostPrice(latestPrice.getCostPrice());
+                    }
+
+                    return response;
+                })
                 .toList();
     }
 
@@ -91,5 +122,4 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
         productRepository.delete(product);
     }
-
 }

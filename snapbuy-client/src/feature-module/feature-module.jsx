@@ -1,97 +1,129 @@
 import { useSelector } from "react-redux";
-import { Outlet, useLocation, matchPath } from "react-router-dom";
-import { useEffect, useState, startTransition } from "react";
+import { Outlet, useLocation, matchPath } from "react-router";
 import Header from "../components/layouts/header";
-import HorizontalSidebar from "../components/layouts/horizontalSidebar";
+import Sidebar from "../components/sidebar/sidebar";
+import ThemeSettings from "../components/layouts/themeSettings";
 import { authRoutes, posPages, unAuthRoutes } from "../routes/path";
+// import { useEffect, useState } from "react";
+import HorizontalSidebar from "../components/layouts/horizontalSidebar";
+// import PosHeader from "./pos/posHeader";
 
 const FeatureModule = () => {
   const location = useLocation();
   const { toggleHeader } = useSelector((state) => state.sidebar);
+
+  // const [showLoader, setShowLoader] = useState(true);
   const data = useSelector((state) => state.rootReducer.toggle_header);
-  const {
-    dataWidth,
-    dataLayout,
-    dataSidebarAll,
-    dataColorAll,
-    dataTopBarColorAll,
-    dataTopbarAll,
-  } = useSelector((state) => state.themeSetting);
+  const dataWidth = useSelector((state) => state.themeSetting.dataWidth);
+  const dataLayout = useSelector((state) => state.themeSetting.dataLayout);
+  const dataSidebarAll = useSelector(
+    (state) => state.themeSetting.dataSidebarAll
+  );
+  const dataColorAll = useSelector((state) => state.themeSetting.dataColorAll);
+  const dataTopBarColorAll = useSelector(
+    (state) => state.themeSetting.dataTopBarColorAll
+  );
+  const dataTopbarAll = useSelector(
+    (state) => state.themeSetting.dataTopbarAll
+  );
 
-  const [showLoader, setShowLoader] = useState(false);
+  // useEffect(() => {
+  //   // Hiện loader khi chuyển route
+  //   setShowLoader(true);
 
-  useEffect(() => {
-    setShowLoader(true);
-    const t = setTimeout(() => setShowLoader(false), 1000);
-    window.scrollTo(0, 0);
-    return () => clearTimeout(t);
-  }, [location.pathname]);
+  //   // Ẩn loader sau 2 giây
+  //   const timeoutId = setTimeout(() => {
+  //     setShowLoader(false);
+  //   }, 2000);
+
+  //   window.scrollTo(0, 0);
+  //   return () => clearTimeout(timeoutId);
+  // }, [location.pathname]);
 
   const Preloader = () => (
-    <div id="global-loader" style={{ pointerEvents: "none" }}>
-      <div className="whirly-loader" />
+    <div id="global-loader">
+      <div className="whirly-loader"></div>
     </div>
   );
 
-  const isUnAuthRoute = unAuthRoutes.some(
-    (r) => r.path && matchPath({ path: r.path, end: true }, location.pathname)
-  );
-  const isPosPage = posPages.some(
-    (r) => r.path && matchPath({ path: r.path, end: true }, location.pathname)
-  );
-  const isAuthRoute = authRoutes.some(
-    (r) => r.path && matchPath({ path: r.path, end: true }, location.pathname)
-  );
+  const safeMatch = (routeList) =>
+    routeList.some((route) => {
+      const path = typeof route === "string" ? route : route?.path;
+      if (!path) return false;
+      return matchPath({ path, end: true }, location.pathname);
+    });
 
-  if (isUnAuthRoute) return <Outlet />;
+  const isUnAuthRoute = safeMatch(unAuthRoutes);
+  // const isPosPage = safeMatch(posPages);
+  const isAuthRoute = safeMatch(authRoutes);
 
-  if (isPosPage)
+  if (isUnAuthRoute) {
     return (
-      <div className={`main-wrapper ${toggleHeader ? "header-collapse" : ""}`}>
-        {showLoader && <Preloader />}
+      <div>
         <Outlet />
       </div>
     );
+  }
 
-  if (isAuthRoute)
+  // if (isPosPage) {
+  //   return (
+  //     <div className={`main-wrapper ${toggleHeader ? "header-collapse" : ""}`}>
+  //       <PosHeader />
+  //       <ThemeSettings />
+  //       <Outlet />
+  //     </div>
+  //   );
+  // }
+
+  if (isAuthRoute) {
     return (
       <div className={`main-wrapper ${toggleHeader ? "header-collapse" : ""}`}>
-        <style>{`
-          :root{
-            --sidebar--rgb-picr:${dataSidebarAll};
-            --topbar--rgb-picr:${dataTopbarAll};
-            --topbarcolor--rgb-picr:${dataTopBarColorAll};
-            --primary-rgb-picr:${dataColorAll};
-          }
-        `}</style>
+        <>
+          <style>
+            {`
+              :root {
+                --sidebar--rgb-picr: ${dataSidebarAll};
+                --topbar--rgb-picr: ${dataTopbarAll};
+                --topbarcolor--rgb-picr: ${dataTopBarColorAll};
+                --primary-rgb-picr: ${dataColorAll};
+              }
+            `}
+          </style>
 
-        <div
-          className={`${
-            dataLayout === "mini" ||
-            dataLayout === "layout-hovered" ||
-            dataWidth === "box"
-              ? "mini-sidebar"
-              : ""
-          } ${
-            [
-              "horizontal",
-              "horizontal-single",
-              "horizontal-overlay",
-              "horizontal-box",
-            ].includes(dataLayout)
-              ? "menu-horizontal"
-              : ""
-          } ${dataWidth === "box" ? "layout-box-mode" : ""}`}
-        >
-          {/* {showLoader && <Preloader />} */}
-          <div className={`main-wrapper ${data ? "header-collapse" : ""}`}>
-            <Header />
-            <HorizontalSidebar />
-            <Outlet />
+          <div
+            className={`
+              ${dataLayout === "mini" ||
+                dataLayout === "layout-hovered" ||
+                dataWidth === "box"
+                ? "mini-sidebar"
+                : ""
+              }
+              ${dataLayout === "horizontal" ||
+                dataLayout === "horizontal-single" ||
+                dataLayout === "horizontal-overlay" ||
+                dataLayout === "horizontal-box"
+                ? "menu-horizontal"
+                : ""
+              }
+              ${dataWidth === "box" ? "layout-box-mode" : ""}
+            `}
+          >
+            {/* {showLoader && <Preloader />} */}
+            <div className={`main-wrapper ${data ? "header-collapse" : ""}`}>
+              <Header />
+              <Sidebar />
+              <HorizontalSidebar />
+              <Outlet />
+              <div style={{ display: "none" }}>
+                <ThemeSettings />
+              </div>
+
+            </div>
           </div>
-        </div>
+        </>
       </div>
     );
+  }
 
   return <Outlet />;
 };
