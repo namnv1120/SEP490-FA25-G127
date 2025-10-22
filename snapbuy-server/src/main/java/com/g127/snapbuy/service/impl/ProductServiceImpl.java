@@ -10,11 +10,9 @@ import com.g127.snapbuy.entity.Supplier;
 import com.g127.snapbuy.exception.AppException;
 import com.g127.snapbuy.exception.ErrorCode;
 import com.g127.snapbuy.mapper.ProductMapper;
-import com.g127.snapbuy.repository.CategoryRepository;
-import com.g127.snapbuy.repository.ProductPriceRepository;
-import com.g127.snapbuy.repository.ProductRepository;
-import com.g127.snapbuy.repository.SupplierRepository;
+import com.g127.snapbuy.repository.*;
 import com.g127.snapbuy.service.ProductService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +28,7 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
     private final SupplierRepository supplierRepository;
     private final ProductPriceRepository productPriceRepository;
+    private final InventoryRepository inventoryRepository;
     private final ProductMapper productMapper;
 
     @Override
@@ -117,9 +116,18 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public void deleteProduct(UUID id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+
+        // 🧹 Xoá dữ liệu phụ thuộc trước
+        productPriceRepository.deleteAllByProduct_ProductId(id);
+        inventoryRepository.deleteAllByProduct_ProductId(id);
+
+
+        // 🗑️ Cuối cùng xoá product
         productRepository.delete(product);
     }
+
 }

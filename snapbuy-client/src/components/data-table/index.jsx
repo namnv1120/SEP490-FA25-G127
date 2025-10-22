@@ -1,9 +1,7 @@
-
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import CustomPaginator from "./custom-paginator";
 import { Skeleton } from "primereact/skeleton";
-// import { noRecord } from "../../utils/imagepath";
 
 const PrimeDataTable = ({
   column,
@@ -35,7 +33,6 @@ const PrimeDataTable = ({
 
   const customEmptyMessage = () => (
     <div className="no-record-found">
-      {/* <img src={noRecord} alt="no-record"></img> */}
       <h4>No records found.</h4>
       <p>No records to show here...</p>
     </div>

@@ -40,11 +40,11 @@ const FeatureModule = () => {
   //   return () => clearTimeout(timeoutId);
   // }, [location.pathname]);
 
-  const Preloader = () => (
-    <div id="global-loader">
-      <div className="whirly-loader"></div>
-    </div>
-  );
+  // const Preloader = () => (
+  //   <div id="global-loader">
+  //     <div className="whirly-loader"></div>
+  //   </div>
+  // );
 
   const safeMatch = (routeList) =>
     routeList.some((route) => {

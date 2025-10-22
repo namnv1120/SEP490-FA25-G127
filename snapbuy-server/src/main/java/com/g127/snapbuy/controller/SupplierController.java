@@ -25,7 +25,7 @@ public class SupplierController {
         return response;
     }
 
-    @PutMapping
+    @PutMapping("{id}")
     public ApiResponse<SupplierResponse> updateSupplier(
             @PathVariable("id") UUID id,
             @RequestBody @Valid SupplierUpdateRequest request) {

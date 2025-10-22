@@ -8,6 +8,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ProductPriceRepository extends JpaRepository<ProductPrice, UUID> {
+    Optional<ProductPrice> findTopByProduct_ProductIdOrderByValidFromDesc(UUID productId);
+    void deleteAllByProduct_ProductId(UUID productId);
+
     @Query("""
         SELECT p FROM ProductPrice p
         WHERE p.product.productId = :productId

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import CommonFooter from "../../components/layouts/footer";
 import { user49 } from "../../utils/imagepath";
-import { getUser, updateUser } from "../../services/accountService";
+import { getAccount, updateAccount } from "../../services/accountService";
 
 const Profile = () => {
   const [isPasswordVisible, setPasswordVisible] = useState(false);
@@ -19,7 +19,7 @@ const Profile = () => {
 
   useEffect(() => {
     const userId = 1;
-    getUser(userId)
+    getAccount(userId)
       .then((res) => {
         const data = res.data;
         setUser({
@@ -51,7 +51,7 @@ const Profile = () => {
 
   const handleSave = () => {
     const userId = 1; // tạm thời fix cứng
-    updateUser(userId, { ...user, image: avatar })
+    updateAccount(userId, { ...user, image: avatar })
       .then(() => alert("Profile updated successfully!"))
       .catch(() => alert("Failed to update profile!"));
   };

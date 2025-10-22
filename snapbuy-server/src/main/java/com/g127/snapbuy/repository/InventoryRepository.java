@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface InventoryRepository extends JpaRepository<Inventory, UUID> {
+    void deleteAllByProduct_ProductId(UUID productId);
     Optional<Inventory> findByProduct(Product product);
     Optional<Inventory> findByProduct_ProductId(UUID productId);
 }

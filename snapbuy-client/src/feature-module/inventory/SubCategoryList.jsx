@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import CommonFooter from "../../components/footer/commonFooter";
 import PrimeDataTable from "../../components/data-table";
@@ -10,65 +10,76 @@ import { message } from "antd";
 import { Modal } from "bootstrap";
 
 // ✅ Import 2 component mới
-import AddCategory from "../inventory/AddCategory";
-import EditCategory from "../inventory/EditCategory";
+import AddSubCategory from "../inventory/AddSubCategory";
+import EditSubCategory from "../inventory/EditSubCategory";
 
-const CategoryList = () => {
+const SubCategoryList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
   const [searchQuery, setSearchQuery] = useState(undefined);
-  const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
+  const [parentCategories, setParentCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [editCategoryId, setEditCategoryId] = useState(null);
+  const [selectedSubCategory, setSelectedSubCategory] = useState(null);
+  const [editSubCategoryId, setEditSubCategoryId] = useState(null);
 
+  // Fetch categories
   useEffect(() => {
-    fetchCategories();
+    fetchSubCategories();
   }, []);
 
-  const fetchCategories = async () => {
+  const fetchSubCategories = async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await getAllCategories();
 
-      const parentCategories = data.filter(
+      // ✅ Tách parent và sub categories
+      const parents = data.filter(
         (cat) => !cat.parentCategoryId || cat.parentCategoryId === null
       );
 
-      const mapped = parentCategories.map((cat) => ({
-        categoryId: cat.categoryId,
-        categoryName: cat.name || cat.categoryName || "N/A",
-        description: cat.description || "N/A",
-        createddate: cat.createdDate
-          ? new Date(cat.createdDate).toLocaleDateString("vi-VN", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-          : "N/A",
-        updateddate: cat.updatedDate
-          ? new Date(cat.updatedDate).toLocaleDateString("vi-VN", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-          : "N/A",
-        status: cat.active === 1 || cat.active === true ? "Active" : "Inactive",
+      const subs = data.filter(
+        (cat) => cat.parentCategoryId && cat.parentCategoryId !== null
+      );
 
-      }));
+      setParentCategories(parents);
 
-      setCategories(mapped);
+      // ✅ Map sub categories với parent name
+      const mapped = subs.map((cat) => {
+        const parent = parents.find((p) => p.categoryId === cat.parentCategoryId);
+
+        return {
+          categoryId: cat.categoryId,
+          categoryName: cat.name || cat.categoryName || "N/A",
+          parentCategoryName: parent ? (parent.name || parent.categoryName) : "N/A",
+          parentCategoryId: cat.parentCategoryId,
+          description: cat.description || "N/A",
+          createddate: cat.createdDate
+            ? new Date(cat.createdDate).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            })
+            : "N/A",
+          updateddate: cat.updatedDate
+            ? new Date(cat.updatedDate).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            })
+            : "N/A",
+          status: cat.active === 1 || cat.active === true ? "Active" : "Inactive",
+        };
+      });
+
+      setSubCategories(mapped);
       setTotalRecords(mapped.length);
     } catch (err) {
-      console.error("❌ Error fetching categories:", err);
-      setError("Failed to load categories. Please try again.");
+      console.error("❌ Error fetching sub categories:", err);
+      setError("Failed to load sub categories. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -78,20 +89,17 @@ const CategoryList = () => {
     setSearchQuery(value);
   };
 
-  const handleEditClick = (category) => {
-    setEditCategoryId(category.categoryId);
+  const handleEditClick = (subCategory) => {
+    setEditSubCategoryId(subCategory.categoryId);
   };
 
-  // Xử lý khi click delete
-  const handleDeleteClick = (category) => {
-    setSelectedCategory(category);
+  const handleDeleteClick = (subCategory) => {
+    setSelectedSubCategory(subCategory);
     setTimeout(() => {
       const modalElement = document.getElementById("delete-modal");
       if (modalElement) {
         const modal = new Modal(modalElement);
         modal.show();
-      } else {
-        console.error("Delete modal not found in DOM");
       }
     }, 0);
   };
@@ -107,26 +115,25 @@ const CategoryList = () => {
         modal.hide();
       }
 
-      // ✅ Xóa backdrop
       setTimeout(() => {
         document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
         document.body.classList.remove("modal-open");
         document.body.style.removeProperty("overflow");
         document.body.style.removeProperty("padding-right");
-      }, 0);
+      }, 300);
 
-      await fetchCategories();
-      message.success("Category deleted successfully!");
+      await fetchSubCategories();
+      message.success("Sub category deleted successfully!");
     } catch (err) {
-      console.error("❌ Error deleting category:", err);
-      message.error("Failed to delete category. Please try again.");
+      console.error("❌ Error deleting sub category:", err);
+      message.error("Failed to delete sub category. Please try again.");
     } finally {
-      setSelectedCategory(null);
+      setSelectedSubCategory(null);
     }
   };
 
   const handleDeleteCancel = () => {
-    setSelectedCategory(null);
+    setSelectedSubCategory(null);
   };
 
   const columns = [
@@ -147,9 +154,15 @@ const CategoryList = () => {
       key: "checked",
     },
     {
-      header: "Category",
+      header: "Sub Category",
       field: "categoryName",
       key: "categoryName",
+      sortable: true,
+    },
+    {
+      header: "Parent Category",
+      field: "parentCategoryName",
+      key: "parentCategoryName",
       sortable: true,
     },
     {
@@ -208,14 +221,14 @@ const CategoryList = () => {
   ];
 
   return (
-    <>
+    <div>
       <div className="page-wrapper">
         <div className="content">
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4 className="fw-bold">Parent Categories</h4>
-                <h6>Manage your parent categories</h6>
+                <h4 className="fw-bold">Sub Categories</h4>
+                <h6>Manage your sub categories</h6>
               </div>
             </div>
             <TableTopHead />
@@ -224,10 +237,10 @@ const CategoryList = () => {
                 to="#"
                 className="btn btn-primary"
                 data-bs-toggle="modal"
-                data-bs-target="#add-main-category"
+                data-bs-target="#add-sub-category"
               >
                 <i className="ti ti-circle-plus me-1"></i>
-                Add Parent Category
+                Add Sub Category
               </Link>
             </div>
           </div>
@@ -259,7 +272,7 @@ const CategoryList = () => {
                 <div className="table-responsive category-table">
                   <PrimeDataTable
                     column={columns}
-                    data={categories}
+                    data={subCategories}
                     rows={rows}
                     setRows={setRows}
                     currentPage={currentPage}
@@ -271,31 +284,38 @@ const CategoryList = () => {
               </div>
             </div>
           )}
-
         </div>
         <CommonFooter />
       </div>
 
-      <AddCategory onSuccess={fetchCategories} />
-      {editCategoryId && (
-        <EditCategory
-          categoryId={editCategoryId}
+      {/* ✅ Add Sub Category Component */}
+      <AddSubCategory
+        parentCategories={parentCategories}
+        onSuccess={fetchSubCategories}
+      />
+
+      {/* ✅ Edit Sub Category Component */}
+      {editSubCategoryId && (
+        <EditSubCategory
+          categoryId={editSubCategoryId}
+          parentCategories={parentCategories}
           onSuccess={() => {
-            fetchCategories();
-            setEditCategoryId(null);
+            fetchSubCategories();
+            setEditSubCategoryId(null);
           }}
-          onClose={() => setEditCategoryId(null)}
+          onClose={() => setEditSubCategoryId(null)}
         />
       )}
 
+      {/* ✅ Delete Modal */}
       <DeleteModal
-        itemId={selectedCategory?.categoryId}
-        itemName={selectedCategory?.categoryName}
+        itemId={selectedSubCategory?.categoryId}
+        itemName={selectedSubCategory?.categoryName}
         onDelete={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
       />
-    </>
+    </div>
   );
 };
 
-export default CategoryList;
+export default SubCategoryList;

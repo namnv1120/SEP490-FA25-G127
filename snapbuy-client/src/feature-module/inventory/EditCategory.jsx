@@ -3,15 +3,14 @@ import { getCategoryById, updateCategory } from "../../services/CategoryService"
 import { Modal } from "bootstrap";
 import { message } from "antd";
 
-const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) => {
+const EditCategory = ({ categoryId, onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     categoryName: "",
     description: "",
-    parentCategoryId: "",
     active: true,
   });
-
+  
   useEffect(() => {
     if (!categoryId) return;
 
@@ -22,19 +21,18 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
         setFormData({
           categoryName: category.categoryName || category.category_name || "",
           description: category.description || "",
-          parentCategoryId: category.parentCategoryId || "",
           active: category.active === 1 || category.active === true,
         });
 
         // ✅ Mở modal sau khi load xong
-        const modalElement = document.getElementById("edit-sub-category");
+        const modalElement = document.getElementById("edit-main-category");
         if (modalElement) {
           const modal = new Modal(modalElement);
           modal.show();
         }
       } catch (error) {
-        console.error("Error loading sub category:", error);
-        message.error("Không thể tải dữ liệu sub category");
+        console.error("Error loading category:", error);
+        message.error("Không thể tải dữ liệu category");
         if (onClose) onClose(); // ✅ Đóng nếu lỗi
       } finally {
         setLoading(false);
@@ -42,7 +40,7 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
     };
 
     loadCategoryData();
-  }, [categoryId]); // ✅ Không cần onClose trong dependency
+  }, [categoryId]); 
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -63,12 +61,7 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
     e.preventDefault();
 
     if (!formData.categoryName.trim()) {
-      message.warning("Vui lòng nhập tên danh mục con");
-      return;
-    }
-
-    if (!formData.parentCategoryId) {
-      message.warning("Vui lòng chọn danh mục cha");
+      message.warning("Vui lòng nhập tên danh mục");
       return;
     }
 
@@ -78,15 +71,14 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
       const updateData = {
         categoryName: formData.categoryName,
         description: formData.description,
-        parentCategoryId: formData.parentCategoryId,
         active: formData.active ? 1 : 0,
+        parentCategoryId: null,
       };
 
       await updateCategory(categoryId, updateData);
-      message.success("Cập nhật sub category thành công!");
+      message.success("Cập nhật category thành công!");
 
-      // ✅ Đóng modal giống AddSubCategory
-      const modalElement = document.getElementById("edit-sub-category");
+      const modalElement = document.getElementById("edit-main-category");
       const modal = Modal.getInstance(modalElement);
       if (modal) {
         modal.hide();
@@ -98,23 +90,22 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
         document.body.classList.remove("modal-open");
         document.body.style.removeProperty("overflow");
         document.body.style.removeProperty("padding-right");
-      }, 0);
+      }, 100);
 
       if (onSuccess) onSuccess();
-      if (onClose) onClose(); // ✅ Reset editSubCategoryId
+      if (onClose) onClose();
     } catch (error) {
-      console.error("Error updating sub category:", error);
+      console.error("Error updating category:", error);
       const errorMessage =
-        error.response?.data?.message || "Không thể cập nhật sub category";
+        error.response?.data?.message || "Không thể cập nhật category";
       message.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Xử lý khi đóng modal bằng nút X hoặc Cancel
   const handleModalClose = () => {
-    const modalElement = document.getElementById("edit-sub-category");
+    const modalElement = document.getElementById("edit-main-category");
     const modal = Modal.getInstance(modalElement);
     if (modal) {
       modal.hide();
@@ -130,17 +121,16 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
     if (onClose) onClose();
   };
 
-  // ✅ Không render gì nếu không có categoryId
   if (!categoryId) return null;
 
   return (
     <div>
-      <div className="modal fade" id="edit-sub-category" tabIndex="-1">
+      <div className="modal fade" id="edit-main-category" tabIndex="-1">
         <div className="modal-dialog modal-dialog-centered modal-md">
           <div className="modal-content">
             <div className="modal-header border-0 custom-modal-header">
               <div className="page-title">
-                <h4>Edit Sub Category</h4>
+                <h4>Edit Category</h4>
               </div>
               <button
                 type="button"
@@ -163,27 +153,7 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
                     <label className="form-label">
-                      Parent Category<span className="text-danger">*</span>
-                    </label>
-                    <select
-                      name="parentCategoryId"
-                      className="form-select"
-                      value={formData.parentCategoryId}
-                      onChange={handleInputChange}
-                      required
-                    >
-                      <option value="">Select Parent Category</option>
-                      {parentCategories.map((parent) => (
-                        <option key={parent.categoryId} value={parent.categoryId}>
-                          {parent.name || parent.categoryName}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label">
-                      Sub Category Name<span className="text-danger">*</span>
+                      Category Name<span className="text-danger">*</span>
                     </label>
                     <input
                       type="text"
@@ -211,12 +181,12 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
                       <span className="status-label">Status</span>
                       <input
                         type="checkbox"
-                        id="edit-subcat-status"
+                        id="edit-cat-status"
                         className="check"
                         checked={formData.active}
                         onChange={handleStatusChange}
                       />
-                      <label htmlFor="edit-subcat-status" className="checktoggle" />
+                      <label htmlFor="edit-cat-status" className="checktoggle" />
                     </div>
                   </div>
 
@@ -247,4 +217,4 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
   );
 };
 
-export default EditSubCategory;
+export default EditCategory;
