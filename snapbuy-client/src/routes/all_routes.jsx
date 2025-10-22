@@ -2,14 +2,12 @@ export const all_routes = {
   // Dashboard
   dashboard: "/dashboard",
 
-  //  Product routes
+  // Product routes
   productlist: "/product-list",
   addproduct: "/add-product",
   editproduct: "/edit-product",
   productdetails: "/product-details",
-
-  expiredproduct: "/expired-products",
-  lowstock: "/low-stocks",
+ inventory: "/inventory",
   categorylist: "/category-list",
   subcategories: "/sub-categories",
   units: "/units",

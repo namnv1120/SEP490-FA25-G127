@@ -158,17 +158,15 @@ export const setholiday_data = (payload) => ({
   payload,
 });
 
-export const expiredproduct_data = () => ({ type: "Expiredproduct_data" });
-export const setexpiredproduct_data = (payload) => ({
-  type: "Expiredproduct_data",
+// ======================
+// THAY THẾ HOÀN TOÀN BẰNG INVENTORY
+// ======================
+export const inventory_data = () => ({ type: "Inventory_Data" });
+export const setinventory_data = (payload) => ({
+  type: "Inventory_Data",
   payload,
 });
-
-export const lowstock_data = () => ({ type: "Lowstock_data" });
-export const setlowstock_data = (payload) => ({
-  type: "Lowstock_data",
-  payload,
-});
+// ======================
 
 export const categotylist_data = () => ({ type: "Categotylist_data" });
 export const setcategotylist_data = (payload) => ({

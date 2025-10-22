@@ -332,17 +332,10 @@ export const SidebarData1 = [
         subRoutes: [],
       },
       {
-        tittle: "Expired Products",
+        tittle: "Inventory",
         hasSubRoute: false,
         showSubRoute: false,
-        route: "/expired-products",
-        subRoutes: [],
-      },
-      {
-        tittle: "Low Stocks",
-        hasSubRoute: false,
-        showSubRoute: false,
-        route: "/low-stocks",
+        route: "/inventory",
         subRoutes: [],
       },
       {

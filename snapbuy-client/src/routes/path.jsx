@@ -29,6 +29,9 @@ const Forgotpassword = lazy(() =>
 );
 const Customers = lazy(() => import("../feature-module/people/Customer"));
 
+// 🆕 Thêm Inventory
+const Inventory = lazy(() => import("../feature-module/inventory/Inventory"));
+
 const routes = all_routes;
 
 export const authRoutes = [
@@ -67,7 +70,6 @@ export const authRoutes = [
     element: <RolesPermissions />,
     route: Route,
   },
-
   {
     id: 6,
     path: routes.formhorizontal,
@@ -75,7 +77,6 @@ export const authRoutes = [
     element: <FormHorizontal />,
     route: Route,
   },
-
   {
     id: 7,
     path: routes.suppliers,
@@ -83,12 +84,20 @@ export const authRoutes = [
     element: <Suppliers />,
     route: Route,
   },
-
   {
     id: 8,
     path: routes.productlist,
     name: "product-list",
     element: <ProductList />,
+    route: Route,
+  },
+
+  // 🆕 Thêm route Inventory chính
+  {
+    id: 300,
+    path: routes.inventory, // đảm bảo trong all_routes có key inventory
+    name: "inventory",
+    element: <Inventory />,
     route: Route,
   },
   {
@@ -130,7 +139,7 @@ export const authRoutes = [
 ];
 
 export const posPages = [
-  // giữ nguyên pos nếu cần
+  // giữ nguyên nếu cần POS sau này
 ];
 
 export const unAuthRoutes = [
@@ -148,67 +157,4 @@ export const unAuthRoutes = [
     element: <Forgotpassword />,
     route: Route,
   },
-  // {
-  //   id: 4,
-  //   path: routes.resetpassword,
-  //   name: "resetpassword",
-  //   element: <Resetpassword />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 5,
-  //   path: routes.emailverification,
-  //   name: "emailverification",
-  //   element: <EmailVerification />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 6,
-  //   path: routes.twostepverification,
-  //   name: "twostepverification",
-  //   element: <Twostepverification />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 7,
-  //   path: routes.lockscreen,
-  //   name: "lockscreen",
-  //   element: <Lockscreen />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 8,
-  //   path: routes.error404,
-  //   name: "error404",
-  //   element: <Error404 />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 9,
-  //   path: routes.error500,
-  //   name: "error500",
-  //   element: <Error500 />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 10,
-  //   path: routes.comingsoon,
-  //   name: "comingsoon",
-  //   element: <Comingsoon />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 11,
-  //   path: routes.undermaintenance,
-  //   name: "undermaintenance",
-  //   element: <Undermaintainence />,
-  //   route: Route,
-  // },
-  // {
-  //   id: 12,
-  //   path: routes.success,
-  //   name: "success",
-  //   element: <Success />,
-  //   route: Route,
-  // },
 ];
