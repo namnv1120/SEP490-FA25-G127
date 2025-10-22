@@ -3,11 +3,19 @@ import { lazy } from "react";
 import { all_routes } from "./all_routes";
 import FormHorizontal from "../feature-module/uiinterface/forms/formelements/layouts/form-horizontal";
 
+
 const Suppliers = lazy(() => import("../feature-module/people/Supplier"));
+
 const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
-const ProductList = lazy(() =>
-  import("../feature-module/inventory/ProductList")
-);
+const ProductList = lazy(() => import("../feature-module/inventory/ProductList"));
+const ProductDetail = lazy(() => import("../feature-module/inventory/ProductDetail"));
+const AddProduct = lazy(() => import("../feature-module/inventory/AddProduct"));
+const EditProduct = lazy(() => import("../feature-module/inventory/EditProduct"));
+
+const CategoryList = lazy(() => import("../feature-module/inventory/CategoryList"));
+const SubCategories = lazy(() => import("../feature-module/inventory/SubCategoryList"));
+
+
 const Accounts = lazy(() => import("../feature-module/usermanagement/account"));
 const RolesPermissions = lazy(() =>
   import("../feature-module/usermanagement/Rolespermissions")
@@ -42,43 +50,43 @@ export const authRoutes = [
     route: Route,
   },
   {
-    id: 106,
+    id: 3,
     path: routes.profile,
     name: "profile",
     element: <Profile />,
     route: Route,
   },
   {
-    id: 104,
+    id: 4,
     path: routes.accounts,
     name: "accounts",
     element: <Accounts />,
     route: Route,
   },
   {
-    id: 105,
+    id: 5,
     path: routes.rolespermission,
     name: "rolespermission",
     element: <RolesPermissions />,
     route: Route,
   },
   {
-    id: 230,
+    id: 6,
     path: routes.formhorizontal,
     name: "formhorizontal",
     element: <FormHorizontal />,
     route: Route,
   },
   {
-    id: 231,
+    id: 7,
     path: routes.suppliers,
     name: "suppliers",
     element: <Suppliers />,
     route: Route,
   },
   {
-    id: 232,
-    path: "/product-list",
+    id: 8,
+    path: routes.productlist,
     name: "product-list",
     element: <ProductList />,
     route: Route,
@@ -92,6 +100,42 @@ export const authRoutes = [
     element: <Inventory />,
     route: Route,
   },
+  {
+    id: 9,
+    path: `${routes.productdetails}/:id`,
+    name: "product-details",
+    element: <ProductDetail />,
+    route: Route,
+  },
+  {
+    id: 10,
+    path: routes.addproduct,
+    name: "add-product",
+    element: <AddProduct />,
+    route: Route,
+  },
+  {
+    id: 11,
+    path: `${routes.editproduct}/:id`,
+    name: "edit-product",
+    element: <EditProduct />,
+    route: Route,
+  },
+  {
+    id: 12,
+    path: routes.categorylist,
+    name: "category-list",
+    element: <CategoryList />,
+    route: Route,
+  },
+  {
+    id: 13,
+    path: routes.subcategories,
+    name: "sub-categories",
+    element: <SubCategories />,
+    route: Route,
+  },
+
 ];
 
 export const posPages = [

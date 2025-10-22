@@ -5,21 +5,16 @@ export const all_routes = {
   // Product routes
   productlist: "/product-list",
   addproduct: "/add-product",
-  editproduct: "/product-list/edit",
-  viewproduct: "/product-list/view",
-
-  // ✅ Gộp expired + lowstock thành inventory
-  inventory: "/inventory",
-  // ✅
-
+  editproduct: "/edit-product",
+  productdetails: "/product-details",
+ inventory: "/inventory",
   categorylist: "/category-list",
   subcategories: "/sub-categories",
-  brandlist: "/brand-list",
   units: "/units",
   variantattributes: "/variant-attributes",
   warranty: "/warranty",
   barcode: "/barcode",
-  productdetails: "/product-details",
+  qrcode: "/qrcode",
 
   // Orders & Sales
   orders: "/orders",
@@ -39,7 +34,6 @@ export const all_routes = {
 
   // Customers & Suppliers
   customers: "/customers",
-  customer: "/customer",
   suppliers: "/suppliers",
 
   // Reports

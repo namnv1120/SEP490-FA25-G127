@@ -57,4 +57,10 @@ public class CustomerController {
         return response;
     }
 
+    @GetMapping("/search")
+    public ApiResponse<List<CustomerResponse>> searchCustomer(@RequestParam("keyword") String keyword) {
+        ApiResponse<List<CustomerResponse>> response = new ApiResponse<>();
+        response.setResult(customerService.searchCustomer(keyword));
+        return response;
+    }
 }

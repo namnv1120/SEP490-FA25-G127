@@ -2,31 +2,75 @@ import axios from 'axios';
 
 const REST_API_BASE_URL = 'http://localhost:8080/api/accounts';
 
-export const listAccounts = async () => {
-  const token = localStorage.getItem('authToken');
-  const tokenType = localStorage.getItem('authTokenType') || 'Bearer';
-  
-  if (!token) {
-    throw new Error('Unauthorized: No token found');
-  }
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("authToken");
+  const tokenType = localStorage.getItem("authTokenType") || "Bearer";
 
+  return {
+    headers: {
+      Authorization: `${tokenType} ${token}`,
+      "Content-Type": "application/json",
+    },
+  };
+};
+
+export const getAllAccounts = async () => {
   try {
-    const response = await axios.get(`${REST_API_BASE_URL}`, {
-      headers: {
-        Authorization: `${tokenType} ${token}`,
-      },
-    });
-    return response.data.result;
+    const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
+    return response.data?.result || response.data || [];
   } catch (error) {
-    console.error('Failed to fetch accounts:', error.response ? error.response.data : error.message);
-    throw new Error(error.response ? error.response.data.message : error.message);
+    console.error("❌ Failed to fetch accounts:", error);
+    throw error;
   }
 };
 
-export const createAccount = (userData) => axios.post(REST_API_BASE_URL, userData);
+export const getAccountById = async (id) => {
+  try {
+    const response = await axios.get(`${REST_API_BASE_URL}/${id}`, getAuthHeaders());
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Failed to fetch account by ID:", error);
+    throw error;
+  }
+};
 
-export const getAccount = (id) => axios.get(REST_API_BASE_URL + '/' + id);
+export const createAccount = async (accountData) => {
+  try {
+    const response = await axios.post(
+      REST_API_BASE_URL,
+      accountData,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Failed to create account:", error);
+    throw error;
+  }
+};
 
-export const updateAccount = (id, updatedData) => axios.put(REST_API_BASE_URL + '/' + id, updatedData);
+export const updateAccount = async (id, accountData) => {
+  try {
+    const response = await axios.put(
+      `${REST_API_BASE_URL}/${id}`,
+      accountData,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Failed to update account:", error);
+    throw error;
+  }
+};
 
-export const deleteAccount = (id) => axios.delete(REST_API_BASE_URL + '/' + id);
+export const deleteAccount = async (id) => {
+  try {
+    const response = await axios.delete(
+      `${REST_API_BASE_URL}/${id}`,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Failed to delete account:", error);
+    throw error;
+  }
+};  

@@ -1,27 +1,133 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useSelector } from "react-redux";
-import EditCategoryList from "../../feature-module/inventory/EditCategoryList";
-import SubCategory from "../../feature-module/inventory/SubCategory";
 import CommonFooter from "../../components/footer/commonFooter";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
+import { getAllCategories, deleteCategory } from "../../services/CategoryService";
+import { message } from "antd";
+import { Modal } from "bootstrap";
+
+// ✅ Import 2 component mới
+import AddCategory from "../inventory/AddCategory";
+import EditCategory from "../inventory/EditCategory";
 
 const CategoryList = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalRecords, _setTotalRecords] = useState(5);
+  const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
-  const [_searchQuery, setSearchQuery] = useState(undefined);
+  const [searchQuery, setSearchQuery] = useState(undefined);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [editCategoryId, setEditCategoryId] = useState(null);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getAllCategories();
+
+      const parentCategories = data.filter(
+        (cat) => !cat.parentCategoryId || cat.parentCategoryId === null
+      );
+
+      const mapped = parentCategories.map((cat) => ({
+        categoryId: cat.categoryId,
+        categoryName: cat.name || cat.categoryName || "N/A",
+        description: cat.description || "N/A",
+        createddate: cat.createdDate
+          ? new Date(cat.createdDate).toLocaleDateString("vi-VN", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+          : "N/A",
+        updateddate: cat.updatedDate
+          ? new Date(cat.updatedDate).toLocaleDateString("vi-VN", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+          : "N/A",
+        status: cat.active === 1 || cat.active === true ? "Active" : "Inactive",
+
+      }));
+
+      setCategories(mapped);
+      setTotalRecords(mapped.length);
+    } catch (err) {
+      console.error("❌ Error fetching categories:", err);
+      setError("Failed to load categories. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSearch = (value) => {
     setSearchQuery(value);
   };
 
-  const dataSource = useSelector(
-    (state) => state.rootReducer.categotylist_data
-  );
+  const handleEditClick = (category) => {
+    setEditCategoryId(category.categoryId);
+  };
+
+  // Xử lý khi click delete
+  const handleDeleteClick = (category) => {
+    setSelectedCategory(category);
+    setTimeout(() => {
+      const modalElement = document.getElementById("delete-modal");
+      if (modalElement) {
+        const modal = new Modal(modalElement);
+        modal.show();
+      } else {
+        console.error("Delete modal not found in DOM");
+      }
+    }, 0);
+  };
+
+  const handleDeleteConfirm = async (categoryId) => {
+    try {
+      await deleteCategory(categoryId);
+
+      const modalElement = document.getElementById("delete-modal");
+      const modal = Modal.getInstance(modalElement);
+
+      if (modal) {
+        modal.hide();
+      }
+
+      // ✅ Xóa backdrop
+      setTimeout(() => {
+        document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+        document.body.classList.remove("modal-open");
+        document.body.style.removeProperty("overflow");
+        document.body.style.removeProperty("padding-right");
+      }, 0);
+
+      await fetchCategories();
+      message.success("Category deleted successfully!");
+    } catch (err) {
+      console.error("❌ Error deleting category:", err);
+      message.error("Failed to delete category. Please try again.");
+    } finally {
+      setSelectedCategory(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setSelectedCategory(null);
+  };
 
   const columns = [
     {
@@ -42,20 +148,26 @@ const CategoryList = () => {
     },
     {
       header: "Category",
-      field: "category",
-      key: "category",
+      field: "categoryName",
+      key: "categoryName",
       sortable: true,
     },
     {
-      header: "Category Slug",
-      field: "categoryslug",
-      key: "categoryslug",
+      header: "Description",
+      field: "description",
+      key: "description",
       sortable: true,
     },
     {
-      header: "Created On",
-      field: "createdon",
-      key: "createdon",
+      header: "Created Date",
+      field: "createddate",
+      key: "createddate",
+      sortable: true,
+    },
+    {
+      header: "Updated Date",
+      field: "updateddate",
+      key: "updateddate",
       sortable: true,
     },
     {
@@ -64,46 +176,46 @@ const CategoryList = () => {
       key: "status",
       sortable: true,
       body: (data) => (
-        <span className="badge bg-success fw-medium fs-10">{data.status}</span>
+        <span
+          className={`badge fw-medium fs-10 ${data.status === "Active" ? "bg-success" : "bg-danger"
+            }`}
+        >
+          {data.status}
+        </span>
       ),
     },
     {
       header: "",
-      field: "actions",
       key: "actions",
       sortable: false,
-      body: () => (
+      body: (row) => (
         <div className="edit-delete-action d-flex align-items-center">
-          <Link
-            className="me-2 p-2 d-flex align-items-center border rounded"
-            to="#"
-            data-bs-toggle="modal"
-            data-bs-target="#edit-customer"
+          <button
+            className="me-2 p-2 border rounded bg-transparent"
+            onClick={() => handleEditClick(row)}
           >
             <i className="feather icon-edit"></i>
-          </Link>
-          <Link
-            className="p-2 d-flex align-items-center border rounded"
-            to="#"
-            data-bs-toggle="modal"
-            data-bs-target="#delete-modal"
+          </button>
+          <button
+            className="p-2 border rounded bg-transparent"
+            onClick={() => handleDeleteClick(row)}
           >
             <i className="feather icon-trash-2"></i>
-          </Link>
+          </button>
         </div>
       ),
     },
   ];
 
   return (
-    <div>
+    <>
       <div className="page-wrapper">
         <div className="content">
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4 className="fw-bold">Category</h4>
-                <h6>Manage your categories</h6>
+                <h4 className="fw-bold">Parent Categories</h4>
+                <h6>Manage your parent categories</h6>
               </div>
             </div>
             <TableTopHead />
@@ -112,178 +224,77 @@ const CategoryList = () => {
                 to="#"
                 className="btn btn-primary"
                 data-bs-toggle="modal"
-                data-bs-target="#add-category"
+                data-bs-target="#add-main-category"
               >
                 <i className="ti ti-circle-plus me-1"></i>
-                Add Category
+                Add Parent Category
               </Link>
             </div>
           </div>
 
-          {/* /product list */}
-          <div className="card table-list-card">
-            <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <SearchFromApi
-                callback={handleSearch}
-                rows={rows}
-                setRows={setRows}
-              />
-              <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                <div className="dropdown me-2">
-                  <Link
-                    to="#"
-                    className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                    data-bs-toggle="dropdown"
-                  >
-                    Status
-                  </Link>
-                  <ul className="dropdown-menu  dropdown-menu-end p-3">
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Active
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Inactive
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-                <div className="dropdown">
-                  <Link
-                    to="#"
-                    className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                    data-bs-toggle="dropdown"
-                  >
-                    Sort By : Last 7 Days
-                  </Link>
-                  <ul className="dropdown-menu  dropdown-menu-end p-3">
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Recently Added
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Ascending
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Desending
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Last Month
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Last 7 Days
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
+          {error && (
+            <div className="alert alert-danger" role="alert">
+              {error}
+            </div>
+          )}
+
+          {loading && (
+            <div className="text-center my-5">
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
               </div>
             </div>
+          )}
 
-            <div className="card-body">
-              <div className="table-responsive category-table">
-                <PrimeDataTable
-                  column={columns}
-                  data={dataSource}
+          {!loading && (
+            <div className="card table-list-card">
+              <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+                <SearchFromApi
+                  callback={handleSearch}
                   rows={rows}
                   setRows={setRows}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalRecords={totalRecords}
                 />
               </div>
+              <div className="card-body">
+                <div className="table-responsive category-table">
+                  <PrimeDataTable
+                    column={columns}
+                    data={categories}
+                    rows={rows}
+                    setRows={setRows}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    totalRecords={totalRecords}
+                    dataKey="categoryId"
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-          {/* /product list */}
+          )}
+
         </div>
         <CommonFooter />
       </div>
 
-      {/* Add Category */}
-      <div className="modal fade" id="add-category">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="page-wrapper-new p-0">
-              <div className="content">
-                <div className="modal-header">
-                  <div className="page-title">
-                    <h4>Add Category</h4>
-                  </div>
-                  <button
-                    type="button"
-                    className="close bg-danger text-white fs-16"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                  >
-                    <span aria-hidden="true">×</span>
-                  </button>
-                </div>
-                <div className="modal-body">
-                  <form>
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Category<span className="text-danger ms-1">*</span>
-                      </label>
-                      <input type="text" className="form-control" />
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Category Slug<span className="text-danger ms-1">*</span>
-                      </label>
-                      <input type="text" className="form-control" />
-                    </div>
-                    <div className="mb-0">
-                      <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                        <span className="status-label">
-                          Status<span className="text-danger ms-1">*</span>
-                        </span>
-                        <input
-                          type="checkbox"
-                          id="user2"
-                          className="check"
-                          defaultChecked
-                        />
-                        <label htmlFor="user2" className="checktoggle" />
-                      </div>
-                    </div>
-                  </form>
-                </div>
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3 shadow-none"
-                    data-bs-dismiss="modal"
-                  >
-                    Cancel
-                  </button>
-                  <Link
-                    to="#"
-                    data-bs-dismiss="modal"
-                    className="btn btn-primary fs-13 fw-medium p-2 px-3"
-                  >
-                    Add Category
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* /Add Category */}
+      <AddCategory onSuccess={fetchCategories} />
+      {editCategoryId && (
+        <EditCategory
+          categoryId={editCategoryId}
+          onSuccess={() => {
+            fetchCategories();
+            setEditCategoryId(null);
+          }}
+          onClose={() => setEditCategoryId(null)}
+        />
+      )}
 
-      <EditCategoryList />
-      <SubCategory />
-      <DeleteModal />
-    </div>
+      <DeleteModal
+        itemId={selectedCategory?.categoryId}
+        itemName={selectedCategory?.categoryName}
+        onDelete={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
+    </>
   );
 };
 

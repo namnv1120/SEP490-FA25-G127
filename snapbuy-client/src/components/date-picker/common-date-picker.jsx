@@ -1,4 +1,3 @@
-import React from "react";
 import { Calendar } from "primereact/calendar";
 
 //  Không dùng interface nữa, dùng PropTypes hoặc bỏ hoàn toàn

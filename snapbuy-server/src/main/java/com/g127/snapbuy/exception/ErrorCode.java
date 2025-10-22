@@ -18,6 +18,9 @@ public enum ErrorCode {
     PRODUCT_NOT_FOUND(2005, "Product not found"),
     PRICE_NOT_FOUND(2006, "Price not found"),
     INVENTORY_NOT_FOUND(2007, "Inventory not found"),
+    INVENTORY_ALREADY_EXISTS(2008, "Inventory record for this product already exists"),
+    INVALID_STOCK_OPERATION(2009, "Invalid stock operation — quantity cannot be negative"),
+    ORDER_NOT_FOUND(2010, "Order not found"),
 
     AUTH_INVALID(3001, "Invalid username or password"),
     TOKEN_INVALID(3002, "Invalid token"),

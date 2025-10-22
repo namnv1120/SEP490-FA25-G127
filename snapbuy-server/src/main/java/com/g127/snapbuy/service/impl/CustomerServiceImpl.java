@@ -64,4 +64,12 @@ public class CustomerServiceImpl implements CustomerService {
                 .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
         customerRepository.delete(customer);
     }
+
+    @Override
+    public List<CustomerResponse> searchCustomer(String keyword) {
+        var customers = customerRepository.searchByKeyword(keyword);
+        return customers.stream()
+                .map(customerMapper::toResponse)
+                .collect(Collectors.toList());
+    }
 }
