@@ -3,13 +3,11 @@ package com.g127.snapbuy.service.impl;
 import com.g127.snapbuy.dto.request.InventoryCreateRequest;
 import com.g127.snapbuy.dto.request.InventoryUpdateRequest;
 import com.g127.snapbuy.dto.response.InventoryResponse;
-import com.g127.snapbuy.entity.Inventory;
-import com.g127.snapbuy.entity.Product;
+import com.g127.snapbuy.entity.*;
 import com.g127.snapbuy.exception.AppException;
 import com.g127.snapbuy.exception.ErrorCode;
 import com.g127.snapbuy.mapper.InventoryMapper;
-import com.g127.snapbuy.repository.InventoryRepository;
-import com.g127.snapbuy.repository.ProductRepository;
+import com.g127.snapbuy.repository.*;
 import com.g127.snapbuy.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,18 +22,32 @@ public class InventoryServiceImpl implements InventoryService {
 
     private final InventoryRepository inventoryRepository;
     private final ProductRepository productRepository;
+    private final InventoryTransactionRepository inventoryTransactionRepository;
+    private final AccountRepository accountRepository;
     private final InventoryMapper inventoryMapper;
 
     @Override
     public InventoryResponse createInventory(InventoryCreateRequest request) {
-        Inventory inventory = inventoryMapper.toEntity(request);
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
 
+        if (inventoryRepository.findByProduct(product).isPresent()) {
+            throw new AppException(ErrorCode.CODE_EXISTED);
+        }
+
+        if (request.getQuantityInStock() < 0) {
+            throw new AppException(ErrorCode.INVALID_STOCK_OPERATION);
+        }
+
+        Inventory inventory = inventoryMapper.toEntity(request);
         inventory.setProduct(product);
         inventory.setLastUpdated(LocalDateTime.now());
 
-        return inventoryMapper.toResponse(inventoryRepository.save(inventory));
+        Inventory saved = inventoryRepository.save(inventory);
+
+        recordTransaction(product, request.getQuantityInStock(), "IMPORT", null, "Initial stock setup");
+
+        return inventoryMapper.toResponse(saved);
     }
 
     @Override
@@ -43,10 +55,23 @@ public class InventoryServiceImpl implements InventoryService {
         Inventory inventory = inventoryRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
 
+        int oldQty = inventory.getQuantityInStock();
         inventoryMapper.updateEntity(request, inventory);
-        inventory.setLastUpdated(LocalDateTime.now());
 
-        return inventoryMapper.toResponse(inventoryRepository.save(inventory));
+        if (inventory.getQuantityInStock() < 0) {
+            throw new AppException(ErrorCode.INVALID_STOCK_OPERATION);
+        }
+
+        inventory.setLastUpdated(LocalDateTime.now());
+        Inventory saved = inventoryRepository.save(inventory);
+
+        int diff = inventory.getQuantityInStock() - oldQty;
+        if (diff != 0) {
+            String type = diff > 0 ? "ADJUSTMENT_IN" : "ADJUSTMENT_OUT";
+            recordTransaction(inventory.getProduct(), Math.abs(diff), type, null, "Manual stock adjustment");
+        }
+
+        return inventoryMapper.toResponse(saved);
     }
 
     @Override
@@ -69,5 +94,19 @@ public class InventoryServiceImpl implements InventoryService {
         Inventory inventory = inventoryRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
         inventoryRepository.delete(inventory);
+
+        recordTransaction(inventory.getProduct(), 0, "DELETE", null, "Inventory deleted");
+    }
+
+    private void recordTransaction(Product product, int quantity, String type, Account account, String notes) {
+        InventoryTransaction trx = new InventoryTransaction();
+        trx.setTransactionId(UUID.randomUUID());
+        trx.setProduct(product);
+        trx.setAccount(account);
+        trx.setTransactionType(type);
+        trx.setQuantity(quantity);
+        trx.setTransactionDate(LocalDateTime.now());
+        trx.setNotes(notes);
+        inventoryTransactionRepository.save(trx);
     }
 }

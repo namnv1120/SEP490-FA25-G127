@@ -1,32 +1,26 @@
 package com.g127.snapbuy.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.GenericGenerator;
+import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "inventory")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Data
 public class Inventory {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "inventory_id", columnDefinition = "uniqueidentifier")
+    @Column(name = "inventory_id")
     private UUID inventoryId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
+    @OneToOne
+    @JoinColumn(name = "product_id", nullable = false, unique = true)
     private Product product;
 
     @Column(name = "quantity_in_stock", nullable = false)
-    private Integer quantityInStock = 0;
+    private Integer quantityInStock;
 
     @Column(name = "minimum_stock")
     private Integer minimumStock;
@@ -38,5 +32,5 @@ public class Inventory {
     private Integer reorderPoint;
 
     @Column(name = "last_updated")
-    private LocalDateTime lastUpdated = LocalDateTime.now();
+    private LocalDateTime lastUpdated;
 }

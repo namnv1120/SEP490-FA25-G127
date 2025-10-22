@@ -21,10 +21,13 @@ const RolesPermissions = lazy(() =>
   import("../feature-module/usermanagement/Rolespermissions")
 );
 const Profile = lazy(() => import("../feature-module/usermanagement/Profile"));
-const Login = lazy(() => import("../feature-module/pages/authentication/Login"));
+const Login = lazy(() =>
+  import("../feature-module/pages/authentication/Login")
+);
 const Forgotpassword = lazy(() =>
   import("../feature-module/pages/authentication/ForgotPassword")
 );
+const Customers = lazy(() => import("../feature-module/people/Customer"));
 
 const routes = all_routes;
 
@@ -36,13 +39,13 @@ export const authRoutes = [
     element: <Dashboard />,
     route: Route,
   },
-  // {
-  //   id: 2,
-  //   path: "/customers",
-  //   name: "customers",
-  //   element: <CustomerList />,
-  //   route: Route,
-  // },
+  {
+    id: 2,
+    path: "/customers",
+    name: "customers",
+    element: <Customers />,
+    route: Route,
+  },
   {
     id: 3,
     path: routes.profile,

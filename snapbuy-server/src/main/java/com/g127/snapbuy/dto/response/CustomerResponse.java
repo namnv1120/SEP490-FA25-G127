@@ -26,4 +26,3 @@ public class CustomerResponse {
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
 }
-
