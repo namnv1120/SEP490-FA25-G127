@@ -167,6 +167,7 @@ const Pos = () => {
                       <i className="ti ti-reload me-1" />
                       Tải lại
                     </Link>
+                    {/*
                     <Link
                       to="#"
                       className="btn btn-md btn-info"
@@ -176,6 +177,7 @@ const Pos = () => {
                       <i className="ti ti-refresh-dot me-1" />
                       Giao dịch
                     </Link>
+                    */}
                   </div>
                 </div>
 
@@ -447,6 +449,24 @@ const Pos = () => {
                         </tr>
                       </tbody>
                     </table>
+                  </div>
+                </div>
+
+                {/* Payment Methods */}
+                <div className="block-section payment-method">
+                  <h4>Payment Method</h4>
+                  <div className="row align-items-center justify-content-center methods g-3">
+                    <div className="col-sm-6 col-md-4">
+                      <Link
+                        to="#"
+                        className="payment-item"
+                        data-bs-toggle="modal"
+                        data-bs-target="#scan-payment"
+                      >
+                        <i className="ti ti-scan fs-18" />
+                        <span>Scan</span>
+                      </Link>
+                    </div>
                   </div>
                 </div>
 
