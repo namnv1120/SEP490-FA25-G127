@@ -17,6 +17,10 @@ import {
   user22,
   user27,
 } from "../../../utils/imagepath";
+import {
+  createCustomer,
+  getCustomerByPhone,
+} from "../../../services/customerService";
 
 const PosModals = () => {
   const [selectedTaxType, setSelectedTaxType] = useState(null);
@@ -29,6 +33,67 @@ const PosModals = () => {
   const [selectedPaymentType, setSelectedPaymentType] = useState(null);
 
   const [input, setInput] = useState("");
+
+  // State lưu thông tin khách hàng
+  const [customer, setCustomer] = useState({
+    customerName: "",
+    phone: "",
+    email: "",
+    address: "",
+    city: "",
+    country: "",
+  });
+  const [loading, setLoading] = useState(false);
+
+  // Khi thay đổi input
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setCustomer({ ...customer, [name]: value });
+  };
+
+  // Khi nhấn Submit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Kiểm tra dữ liệu đầu vào
+    if (!customer.customerName.trim() || !customer.phone.trim()) {
+      alert("⚠️ Vui lòng nhập đầy đủ họ tên và số điện thoại!");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Kiểm tra trùng số điện thoại
+      const existing = await getCustomerByPhone(customer.phone);
+      if (existing) {
+        alert(`⚠️ Số điện thoại ${customer.phone} đã tồn tại trong hệ thống!`);
+        setLoading(false);
+        return;
+      }
+
+      // Gửi yêu cầu tạo khách hàng mới
+      const newCustomer = await createCustomer(customer);
+      alert("Tạo khách hàng thành công!");
+
+      // Cập nhật lại POS nếu cần
+      if (onCustomerCreated) onCustomerCreated(newCustomer);
+
+      // Reset form
+      setCustomer({
+        customerName: "",
+        phone: "",
+        email: "",
+        address: "",
+        city: "",
+        country: "",
+      });
+    } catch (error) {
+      console.error("Lỗi khi tạo khách hàng:", error);
+      alert("Không thể tạo khách hàng. Vui lòng thử lại!");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleButtonClick = (value) => {
     setInput((prev) => prev + value);
@@ -82,18 +147,6 @@ const PosModals = () => {
       { value: "15", label: "@15" },
       { value: "vat", label: "VAT" },
       { value: "sltax", label: "SLTAX" },
-    ],
-    couponCodes: [
-      { value: "select", label: "Select" },
-      { value: "newyear30", label: "NEWYEAR30" },
-      { value: "christmas100", label: "CHRISTMAS100" },
-      { value: "halloween20", label: "HALLOWEEN20" },
-      { value: "blackfriday50", label: "BLACKFRIDAY50" },
-    ],
-    discountMode: [
-      { value: "select", label: "Select" },
-      { value: "flat", label: "Flat" },
-      { value: "percentage", label: "Percentage" },
     ],
     paymentMethods: [
       { value: "cash", label: "Cash" },
@@ -168,8 +221,8 @@ const PosModals = () => {
                 </Link>
               </div>
               <div className="text-center info text-center">
-                <h6>Dreamguys Technologies Pvt Ltd.,</h6>
-                <p className="mb-0">Phone Number: +1 5656665656</p>
+                <h6>SnapBuy</h6>
+                <p className="mb-0">Phone Number</p>
                 <p className="mb-0">
                   Email:{" "}
                   <Link to="mailto:example@gmail.com">example@gmail.com</Link>
@@ -371,75 +424,127 @@ const PosModals = () => {
         >
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title">Create</h5>
+              <h5 className="modal-title">Thêm khách hàng mới</h5>
               <button
                 type="button"
                 className="close"
                 data-bs-dismiss="modal"
-                aria-label="Close"
+                aria-label="Đóng"
               >
                 <span aria-hidden="true">×</span>
               </button>
             </div>
-            <form>
+
+            <form onSubmit={handleSubmit}>
               <div className="modal-body pb-1">
                 <div className="row">
                   <div className="col-lg-6 col-sm-12 col-12">
                     <div className="mb-3">
                       <label className="form-label">
-                        Customer Name <span className="text-danger">*</span>
+                        Họ tên <span className="text-danger">*</span>
                       </label>
-                      <input type="text" className="form-control" />
+                      <input
+                        type="text"
+                        name="customerName"
+                        value={customer.customerName}
+                        onChange={handleChange}
+                        className="form-control"
+                        placeholder="Nhập họ tên khách hàng"
+                        required
+                      />
                     </div>
                   </div>
+
                   <div className="col-lg-6 col-sm-12 col-12">
                     <div className="mb-3">
                       <label className="form-label">
-                        Phone <span className="text-danger">*</span>
+                        Số điện thoại <span className="text-danger">*</span>
                       </label>
-                      <input type="text" className="form-control" />
+                      <input
+                        type="text"
+                        name="phone"
+                        value={customer.phone}
+                        onChange={handleChange}
+                        className="form-control"
+                        placeholder="Nhập số điện thoại"
+                        required
+                      />
                     </div>
                   </div>
+
                   <div className="col-lg-12">
                     <div className="mb-3">
                       <label className="form-label">Email</label>
-                      <input type="email" className="form-control" />
+                      <input
+                        type="email"
+                        name="email"
+                        value={customer.email}
+                        onChange={handleChange}
+                        className="form-control"
+                        placeholder="example@email.com"
+                      />
                     </div>
                   </div>
+
                   <div className="col-lg-12">
                     <div className="mb-3">
-                      <label className="form-label">Address</label>
-                      <input type="text" className="form-control" />
+                      <label className="form-label">Địa chỉ</label>
+                      <input
+                        type="text"
+                        name="address"
+                        value={customer.address}
+                        onChange={handleChange}
+                        className="form-control"
+                        placeholder="Nhập địa chỉ"
+                      />
                     </div>
                   </div>
+
                   <div className="col-lg-6 col-sm-12 col-12">
                     <div className="mb-3">
-                      <label className="form-label">City</label>
-                      <input type="text" className="form-control" />
+                      <label className="form-label">Thành phố</label>
+                      <input
+                        type="text"
+                        name="city"
+                        value={customer.city}
+                        onChange={handleChange}
+                        className="form-control"
+                        placeholder="Nhập tên thành phố"
+                      />
                     </div>
                   </div>
+
                   <div className="col-lg-6 col-sm-12 col-12">
                     <div className="mb-3">
-                      <label className="form-label">Country</label>
-                      <input type="text" className="form-control" />
+                      <label className="form-label">Quốc gia</label>
+                      <input
+                        type="text"
+                        name="country"
+                        value={customer.country}
+                        onChange={handleChange}
+                        className="form-control"
+                        placeholder="Nhập tên quốc gia"
+                      />
                     </div>
                   </div>
                 </div>
               </div>
+
               <div className="modal-footer d-flex justify-content-end gap-2 flex-wrap">
                 <button
                   type="button"
                   className="btn btn-md btn-secondary"
                   data-bs-dismiss="modal"
                 >
-                  Cancel
+                  Hủy
                 </button>
                 <button
-                  type="button"
-                  data-bs-dismiss="modal"
+                  type="submit"
                   className="btn btn-md btn-primary"
+                  disabled={loading}
+                  data-bs-dismiss={loading ? "" : "modal"}
                 >
-                  Submit
+                  {loading ? "Đang lưu..." : "Lưu khách hàng"}
                 </button>
               </div>
             </form>
@@ -2216,51 +2321,6 @@ const PosModals = () => {
         </div>
       </div>
       {/* /Order Tax */}
-      {/* Shipping Cost */}
-      <div className="modal fade modal-default" id="shipping-cost">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Shipping Cost</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="mb-3">
-                  <label className="form-label">
-                    Shipping Cost <span className="text-danger">*</span>
-                  </label>
-                  <input type="text" className="form-control" />
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {/* /Shipping Cost */}
       {/* Coupon Code */}
       <div className="modal fade modal-default" id="coupon-code">
         <div className="modal-dialog modal-dialog-centered">

@@ -288,7 +288,6 @@ const Pos = () => {
                 <div className="order-head bg-light d-flex align-items-center justify-content-between w-100">
                   <div>
                     <h3>Order List</h3>
-                    <span>Transaction ID : #65565</span>
                   </div>
                   <div>
                     <Link
@@ -425,12 +424,6 @@ const Pos = () => {
                           <td>Tax (GST {selectedGST}%)</td>
                           <td className="text-end">
                             {taxAmount.toLocaleString()}₫
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>Shipping</td>
-                          <td className="text-end">
-                            {selectedShipping.toLocaleString()}₫
                           </td>
                         </tr>
                         <tr>

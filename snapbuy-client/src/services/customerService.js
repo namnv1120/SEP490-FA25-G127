@@ -2,18 +2,22 @@ import axios from "axios";
 
 const REST_API_BASE_URL = "http://localhost:8080/api/customers";
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("authToken");
+  const tokenType = localStorage.getItem("authTokenType") || "Bearer";
+
+  return {
+    headers: {
+      Authorization: `${tokenType} ${token}`,
+      "Content-Type": "application/json",
+    },
+  };
+};
+
 // Lấy danh sách khách hàng
 export const getAllCustomers = async () => {
   try {
-    const token = localStorage.getItem("authToken");
-    const tokenType = localStorage.getItem("authTokenType") || "Bearer";
-
-    const response = await axios.get(REST_API_BASE_URL, {
-      headers: {
-        Authorization: `${tokenType} ${token}`,
-      },
-    });
-
+    const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
     return (
       response.data?.result ||
       response.data?.customers ||
@@ -21,7 +25,7 @@ export const getAllCustomers = async () => {
       []
     );
   } catch (error) {
-    console.error("Failed to fetch customers:", error);
+    console.error(" Lỗi khi lấy danh sách khách hàng:", error);
     throw error;
   }
 };
@@ -29,18 +33,28 @@ export const getAllCustomers = async () => {
 // Lấy thông tin khách hàng theo ID
 export const getCustomerById = async (id) => {
   try {
-    const token = localStorage.getItem("authToken");
-    const tokenType = localStorage.getItem("authTokenType") || "Bearer";
-
-    const response = await axios.get(`${REST_API_BASE_URL}/${id}`, {
-      headers: {
-        Authorization: `${tokenType} ${token}`,
-      },
-    });
-
+    const response = await axios.get(
+      `${REST_API_BASE_URL}/${id}`,
+      getAuthHeaders()
+    );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("Failed to fetch customer by ID:", error);
+    console.error(" Lỗi khi lấy khách hàng theo ID:", error);
+    throw error;
+  }
+};
+
+// Lấy khách hàng theo số điện thoại
+export const getCustomerByPhone = async (phone) => {
+  try {
+    const response = await axios.get(
+      `${REST_API_BASE_URL}/search?phone=${encodeURIComponent(phone)}`,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data || null;
+  } catch (error) {
+    if (error.response?.status === 404) return null;
+    console.error(" Lỗi khi tìm khách hàng theo số điện thoại:", error);
     throw error;
   }
 };
@@ -48,18 +62,14 @@ export const getCustomerById = async (id) => {
 // Thêm khách hàng
 export const createCustomer = async (customerData) => {
   try {
-    const token = localStorage.getItem("authToken");
-    const tokenType = localStorage.getItem("authTokenType") || "Bearer";
-
-    const response = await axios.post(REST_API_BASE_URL, customerData, {
-      headers: {
-        Authorization: `${tokenType} ${token}`,
-      },
-    });
-
+    const response = await axios.post(
+      REST_API_BASE_URL,
+      customerData,
+      getAuthHeaders()
+    );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("Failed to create customer:", error);
+    console.error(" Lỗi khi tạo khách hàng:", error);
     throw error;
   }
 };
@@ -67,22 +77,14 @@ export const createCustomer = async (customerData) => {
 // Cập nhật khách hàng
 export const updateCustomer = async (id, customerData) => {
   try {
-    const token = localStorage.getItem("authToken");
-    const tokenType = localStorage.getItem("authTokenType") || "Bearer";
-
     const response = await axios.put(
       `${REST_API_BASE_URL}/${id}`,
       customerData,
-      {
-        headers: {
-          Authorization: `${tokenType} ${token}`,
-        },
-      }
+      getAuthHeaders()
     );
-
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("Failed to update customer:", error);
+    console.error(" Lỗi khi cập nhật khách hàng:", error);
     throw error;
   }
 };
@@ -90,16 +92,13 @@ export const updateCustomer = async (id, customerData) => {
 // Xóa khách hàng
 export const deleteCustomer = async (id) => {
   try {
-    const token = localStorage.getItem("authToken");
-    const tokenType = localStorage.getItem("authTokenType") || "Bearer";
-
-    await axios.delete(`${REST_API_BASE_URL}/${id}`, {
-      headers: {
-        Authorization: `${tokenType} ${token}`,
-      },
-    });
+    const response = await axios.delete(
+      `${REST_API_BASE_URL}/${id}`,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
   } catch (error) {
-    console.error("Failed to delete customer:", error);
+    console.error(" Lỗi khi xóa khách hàng:", error);
     throw error;
   }
 };
