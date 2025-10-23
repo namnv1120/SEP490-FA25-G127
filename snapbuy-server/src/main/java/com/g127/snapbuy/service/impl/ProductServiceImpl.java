@@ -1,6 +1,7 @@
 package com.g127.snapbuy.service.impl;
 
 import com.g127.snapbuy.dto.request.ProductCreateRequest;
+import com.g127.snapbuy.dto.request.ProductImportRequest;
 import com.g127.snapbuy.dto.request.ProductUpdateRequest;
 import com.g127.snapbuy.dto.response.ProductResponse;
 import com.g127.snapbuy.entity.Category;
@@ -14,14 +15,17 @@ import com.g127.snapbuy.repository.*;
 import com.g127.snapbuy.service.ProductService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
@@ -81,7 +85,6 @@ public class ProductServiceImpl implements ProductService {
 
         ProductResponse response = productMapper.toResponse(product);
 
-        // ✅ Gắn giá mới nhất (nếu có)
         ProductPrice latestPrice = productPriceRepository
                 .findTopByProduct_ProductIdOrderByValidFromDesc(product.getProductId())
                 .orElse(null);
@@ -128,6 +131,82 @@ public class ProductServiceImpl implements ProductService {
 
         // 🗑️ Cuối cùng xoá product
         productRepository.delete(product);
+    }
+
+    @Override
+    @Transactional
+    public List<ProductResponse> importProducts(List<ProductImportRequest> requests) {
+        log.info("📦 Starting import of {} products", requests.size());
+
+        List<ProductResponse> importedProducts = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
+
+        for (int i = 0; i < requests.size(); i++) {
+            ProductImportRequest request = requests.get(i);
+            int rowNumber = i + 1;
+
+            try {
+                // 1. Check duplicate product code
+                if (productRepository.existsByProductCode(request.getProductCode())) {
+                    String error = String.format("Row %d: Product code '%s' already exists",
+                            rowNumber, request.getProductCode());
+                    log.warn("⚠️ {}", error);
+                    errors.add(error);
+                    continue;
+                }
+
+                // 2. Find category by name (case-insensitive)
+                Category category = categoryRepository.findByCategoryNameIgnoreCase(request.getCategoryName())
+                        .orElseThrow(() -> {
+                            String error = String.format("Row %d: Category '%s' not found",
+                                    rowNumber, request.getCategoryName());
+                            log.error("❌ {}", error);
+                            return new RuntimeException(error);
+                        });
+
+                // 3. Find supplier by name (case-insensitive)
+                Supplier supplier = supplierRepository.findBySupplierNameIgnoreCase(request.getSupplierName())
+                        .orElseThrow(() -> {
+                            String error = String.format("Row %d: Supplier '%s' not found",
+                                    rowNumber, request.getSupplierName());
+                            log.error("❌ {}", error);
+                            return new RuntimeException(error);
+                        });
+
+                // 4. Create product entity
+                Product product = new Product();
+                product.setProductCode(request.getProductCode());
+                product.setProductName(request.getProductName());
+                product.setDescription(request.getDescription());
+                product.setCategory(category);
+                product.setSupplier(supplier);
+                product.setUnit(request.getUnit());
+                product.setDimensions(request.getDimensions());
+                product.setImageUrl(request.getImageUrl());
+
+                // 5. Save product
+                Product savedProduct = productRepository.save(product);
+                importedProducts.add(productMapper.toResponse(savedProduct));
+
+                log.info("✅ Row {}: Product '{}' imported successfully", rowNumber, request.getProductCode());
+
+            } catch (Exception e) {
+                String error = String.format("Row %d: %s", rowNumber, e.getMessage());
+                log.error("❌ {}", error);
+                errors.add(error);
+            }
+        }
+
+        // Log summary
+        if (!errors.isEmpty()) {
+            log.warn("⚠️ Import completed with {} errors:", errors.size());
+            errors.forEach(log::warn);
+        }
+
+        log.info("✅ Import summary: {} successful, {} failed out of {} total",
+                importedProducts.size(), errors.size(), requests.size());
+
+        return importedProducts;
     }
 
 }

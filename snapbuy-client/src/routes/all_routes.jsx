@@ -7,7 +7,7 @@ export const all_routes = {
   addproduct: "/add-product",
   editproduct: "/edit-product",
   productdetails: "/product-details",
- inventory: "/inventory",
+  inventory: "/inventory",
   categorylist: "/category-list",
   subcategories: "/sub-categories",
   units: "/units",

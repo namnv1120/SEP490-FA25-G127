@@ -76,3 +76,17 @@ export const deleteProduct = async (id) => {
     throw error;
   }
 };
+
+export const importProducts = async (products) => {
+  try {
+    const response = await axios.post(
+      `${REST_API_BASE_URL}/import`,
+      products,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Failed to import products:", error);
+    throw error;
+  }
+};

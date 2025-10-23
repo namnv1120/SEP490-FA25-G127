@@ -7,7 +7,8 @@ import { stockImg1 } from "../../utils/imagepath";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
-import { getAllProducts, deleteProduct } from "../../services/ProductService";
+import { getAllProducts, deleteProduct, importProducts } from "../../services/ProductService";
+import ImportProductModal from "./ImportProduct";
 import { message } from "antd";
 import { Modal } from "bootstrap";
 
@@ -20,6 +21,7 @@ const ProductList = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const route = all_routes;
 
@@ -53,6 +55,18 @@ const ProductList = () => {
       setLoading(false);
     }
   };
+
+  const handleImport = async (data) => {
+  try {
+    console.log("📦 Importing products:", data);
+    await importProducts(data); // Gọi API
+    await fetchProducts(); // Refresh list
+    return Promise.resolve();
+  } catch (error) {
+    console.error("❌ Import error:", error);
+    return Promise.reject(error);
+  }
+};
 
   const handleSearch = (value) => {
     setSearchQuery(value);
@@ -193,24 +207,22 @@ const ProductList = () => {
                 <h6>Manage your products</h6>
               </div>
             </div>
-            <TableTopHead />
+            {/* <TableTopHead /> */}
             <div className="page-btn">
               <Link to={route.addproduct} className="btn btn-primary">
                 <i className="ti ti-circle-plus me-1"></i>
                 Add New Product
               </Link>
             </div>
-            {/* <div className="page-btn import">
-              <Link
-                to="#"
+            <div className="page-btn import">
+              <button
                 className="btn btn-secondary color"
-                data-bs-toggle="modal"
-                data-bs-target="#view-notes"
+                onClick={() => setShowImportModal(true)}
               >
                 <i className="feather icon-download feather me-2" />
                 Import Product
-              </Link>
-            </div> */}
+              </button>
+            </div>
           </div>
 
           {/* Error Message */}
@@ -332,6 +344,11 @@ const ProductList = () => {
         itemName={selectedProduct?.productName}
         onDelete={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
+      />
+      <ImportProductModal
+        visible={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={handleImport}
       />
     </>
   );

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import CommonFooter from "../../components/layouts/footer";
 import { user49 } from "../../utils/imagepath";
-import { getAccount, updateAccount } from "../../services/accountService";
+import { getAllAccounts, updateAccount } from "../../services/accountService";
 
 const Profile = () => {
   const [isPasswordVisible, setPasswordVisible] = useState(false);
@@ -19,7 +19,7 @@ const Profile = () => {
 
   useEffect(() => {
     const userId = 1;
-    getAccount(userId)
+    getAllAccounts(userId)
       .then((res) => {
         const data = res.data;
         setUser({
