@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public record PurchaseOrderReceiveRequest(
         @NotNull UUID accountId,
-        @NotEmpty List<ReceivedItem> items,
+        List<ReceivedItem> items,
         String notes
 ) {
     public record ReceivedItem(
