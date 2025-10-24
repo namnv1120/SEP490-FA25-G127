@@ -11,6 +11,7 @@ import { getAllProducts, deleteProduct, importProducts } from "../../services/Pr
 import ImportProductModal from "./ImportProduct";
 import { message } from "antd";
 import { Modal } from "bootstrap";
+import { exportToExcel } from "../../utils/excelUtils";
 
 const ProductList = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,6 +43,10 @@ const ProductList = () => {
         productName: product.name || product.productName || "N/A",
         productImage: product.image || product.imageUrl || stockImg1,
         category: product.category?.name || product.categoryName || "N/A",
+        description: product.description || "N/A",
+        supplier: product.supplier?.name || product.supplierName || "N/A",
+        dimensions: product.dimensions || "N/A",
+        imageUrl: product.image || product.imageUrl || "",
         unitprice: `${product.unitPrice?.toLocaleString() || "0.00"} đ`,
         unit: product.unit || "N/A",
         qty: product.quantity?.toString() || product.qty?.toString() || "0",
@@ -56,17 +61,42 @@ const ProductList = () => {
     }
   };
 
+  const handleExportExcel = () => {
+    if (!products || products.length === 0) {
+      message.warning("No product data to export!");
+      return;
+    }
+
+    const exportData = products.map(p => ({
+      Code: p.productCode,
+      Name: p.productName,
+      Description: p.description || "",
+      Category: p.category,
+      Supplier: p.supplier || "",
+      Unit: p.unit,
+      Dimension: p.dimensions || "",
+      Image: p.imageUrl
+    }));
+
+    exportToExcel(exportData, "Product_List");
+  };
+
   const handleImport = async (data) => {
-  try {
-    console.log("📦 Importing products:", data);
-    await importProducts(data); // Gọi API
-    await fetchProducts(); // Refresh list
-    return Promise.resolve();
-  } catch (error) {
-    console.error("❌ Import error:", error);
-    return Promise.reject(error);
-  }
-};
+    try {
+      console.log("📦 Importing products:", data);
+      await importProducts(data); // Gọi API
+      await fetchProducts(); // Refresh list
+      return Promise.resolve();
+    } catch (error) {
+      console.error("❌ Import error:", error);
+      return Promise.reject(error);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchProducts();
+    message.success("Product list refreshed!");
+  };
 
   const handleSearch = (value) => {
     setSearchQuery(value);
@@ -207,7 +237,10 @@ const ProductList = () => {
                 <h6>Manage your products</h6>
               </div>
             </div>
-            {/* <TableTopHead /> */}
+            <TableTopHead
+              onExportExcel={handleExportExcel}
+              onRefresh={handleRefresh}
+            />
             <div className="page-btn">
               <Link to={route.addproduct} className="btn btn-primary">
                 <i className="ti ti-circle-plus me-1"></i>

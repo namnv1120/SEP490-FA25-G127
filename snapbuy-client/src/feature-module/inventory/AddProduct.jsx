@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { message } from "antd"; 
 import { all_routes } from "../../routes/all_routes";
-import { createProduct } from "../../services/productService";
+import { createProduct } from "../../services/ProductService";
 import { getAllCategories } from "../../services/categoryService";
 import CommonSelect from "../../components/select/common-select";
 import DeleteModal from "../../components/delete-modal";
@@ -387,12 +387,12 @@ const AddProduct = () => {
 
         <div className="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
           <p className="mb-0 text-gray-9">
-            2014 - 2025 © DreamsPOS. All Right Reserved
+            2025 © SnapBuy.
           </p>
           <p>
-            Designed & Developed by{" "}
+            Thiết kế & Phát triển bởi{" "}
             <Link to="#" className="text-primary">
-              Dreams
+              G127
             </Link>
           </p>
         </div>

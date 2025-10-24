@@ -8,8 +8,8 @@ import { Link } from "react-router-dom";
 import { getAllSuppliers, deleteSupplier } from "../../services/SupplierService";
 import { message } from "antd";
 import { Modal } from "bootstrap";
+import { exportToExcel } from "../../utils/excelUtils";
 
-// ✅ Import 2 component mới
 import AddSupplier from "./AddSupplier";
 import EditSupplier from "./EditSupplier";
 
@@ -36,12 +36,37 @@ const Suppliers = () => {
       setListData(data);
       setTotalRecords(data.length);
     } catch (err) {
-      console.error("Error fetching suppliers:", err);
-      setError("Failed to load suppliers");
+      console.error("Lỗi khi tải danh sách nhà cung cấp:", err);
+      setError("Lỗi khi tải danh sách nhà cung cấp. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
   };
+
+  const handleExportExcel = () => {
+    if (!listData || listData.length === 0) {
+      message.warning("Không có dữ liệu để xuất!");
+      return;
+    }
+
+    const exportData = listData.map(row => ({
+      Mã: row.supplierCode,
+      "Nhà cung cấp": row.supplierName,
+      "Số điện thoại": row.phone,
+      Email: row.email,
+      "Quận, phường": row.ward,
+      Tỉnh: row.city,
+      "Địa chỉ": row.address,
+
+    }));
+
+    exportToExcel(exportData, "Danh sách nhà cung cấp");
+  };
+
+  const handleRefresh = () => {
+    fetchSuppliers();
+    message.success("Supplier list refreshed!");
+  }
 
   const handleSearch = (value) => {
     setSearchQuery(value);
@@ -81,10 +106,10 @@ const Suppliers = () => {
       }, 0);
 
       await fetchSuppliers();
-      message.success("Supplier deleted successfully!");
+      message.success("Xoá nhà cung cấp thành công!");
     } catch (err) {
-      console.error("❌ Error deleting supplier:", err);
-      message.error("Failed to delete supplier. Please try again.");
+      console.error("❌ Lỗi khi xoá nhà cung cấp:", err);
+      message.error("Lỗi khi xoá nhà cung cấp. Vui lòng thử lại.");
     } finally {
       setSelectedSupplier(null);
     }
@@ -111,9 +136,9 @@ const Suppliers = () => {
       sortable: false,
       key: "checked",
     },
-    { header: "Code", field: "supplierCode", key: "supplierCode" },
+    { header: "Mã", field: "supplierCode", key: "supplierCode" },
     {
-      header: "Supplier Name",
+      header: "Nhà cung cấp",
       field: "supplierName",
       key: "supplierName",
       body: (data) => (
@@ -127,10 +152,10 @@ const Suppliers = () => {
       ),
     },
     { header: "Email", field: "email", key: "email" },
-    { header: "Phone", field: "phone", key: "phone" },
-    { header: "Address", field: "address", key: "address" },
-    { header: "Ward", field: "ward", key: "ward" },
-    { header: "City", field: "city", key: "city" },
+    { header: "Số điện thoại", field: "phone", key: "phone" },
+    { header: "Quận/Phường", field: "ward", key: "ward" },
+    { header: "Thành phố", field: "city", key: "city" },
+    { header: "Địa chỉ", field: "address", key: "address" },
     {
       header: "",
       field: "actions",
@@ -169,7 +194,10 @@ const Suppliers = () => {
                 <h6>Manage your suppliers</h6>
               </div>
             </div>
-            <TableTopHead />
+            <TableTopHead
+              onExportExcel={handleExportExcel}
+              onRefresh={handleRefresh}
+            />
             <div className="page-btn">
               <Link
                 to="#"
@@ -178,7 +206,7 @@ const Suppliers = () => {
                 data-bs-target="#add-supplier"
               >
                 <i className="ti ti-circle-plus me-1" />
-                Add Supplier
+                Thêm nhà cung cấp
               </Link>
             </div>
           </div>

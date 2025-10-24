@@ -10,31 +10,28 @@ import {
 } from "react-bootstrap";
 import { all_routes } from "../../routes/all_routes";
 import {
-  arabicFlag,
   avatar_02,
   avatar_03,
   avatar_13,
   avatar_17,
   avator1,
   commandSvg,
-  englishFlag,
   logoPng,
   logoSmallPng,
   logoWhitePng,
-  usFlag,
 } from "../../utils/imagepath";
 
 const Header = () => {
   const route = all_routes;
   const [toggle, SetToggle] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [flagImage, _setFlagImage] = useState(usFlag);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const navigate = useNavigate();
 
-  // const changeLanguage = (_lng) => {
-  //   // Chức năng đổi ngôn ngữ
-  // };
+  const { expandMenus } = useSelector(
+    (state) => state.themeSetting.expandMenus
+  );
+  const dataLayout = useSelector((state) => state.themeSetting.dataLayout);
 
   const isElementVisible = (element) => {
     return element.offsetWidth > 0 || element.offsetHeight > 0;
@@ -148,11 +145,6 @@ const Header = () => {
     }
   };
 
-  const { expandMenus } = useSelector(
-    (state) => state.themeSetting.expandMenus
-  );
-  const dataLayout = useSelector((state) => state.themeSetting.dataLayout);
-
   const expandMenu = () => {
     document.body.classList.remove("expand-menu");
   };
@@ -211,10 +203,8 @@ const Header = () => {
           </span>
         </Link>
 
-        {/* Header Menu với React Bootstrap */}
         <Nav as="ul" className="nav user-menu">
 
-          {/* Search Dropdown */}
           <Nav.Item as="li" className="nav-searchinputs">
             <div className="top-nav-search">
               <Link to="#" className="responsive-search">
@@ -246,121 +236,6 @@ const Header = () => {
             </div>
           </Nav.Item>
 
-          {/* Add New Dropdown */}
-          <Dropdown as="li" className="nav-item dropdown link-nav">
-            <Dropdown.Toggle
-              as={Button}
-              variant="primary"
-              size="md"
-              className="d-inline-flex align-items-center"
-            >
-              <i className="ti ti-circle-plus me-1" />
-              Add New
-            </Dropdown.Toggle>
-
-            <Dropdown.Menu className="dropdown-xl dropdown-menu-center">
-              <div className="row g-2">
-                <div className="col-md-2">
-                  <Link to={route.categorylist} className="link-item">
-                    <span className="link-icon">
-                      <i className="ti ti-brand-codepen" />
-                    </span>
-                    <p>Category</p>
-                  </Link>
-                </div>
-                <div className="col-md-2">
-                  <Link to={route.addproduct} className="link-item">
-                    <span className="link-icon">
-                      <i className="ti ti-square-plus" />
-                    </span>
-                    <p>Product</p>
-                  </Link>
-                </div>
-                <div className="col-md-2">
-                  <Link to={route.categorylist} className="link-item">
-                    <span className="link-icon">
-                      <i className="ti ti-shopping-bag" />
-                    </span>
-                    <p>Purchase</p>
-                  </Link>
-                </div>
-                <div className="col-md-2">
-                  <Link to={route.onlineorder} className="link-item">
-                    <span className="link-icon">
-                      <i className="ti ti-shopping-cart" />
-                    </span>
-                    <p>Sale</p>
-                  </Link>
-                </div>
-                <div className="col-md-2">
-                  <Link to={route.expenselist} className="link-item">
-                    <span className="link-icon">
-                      <i className="ti ti-file-text" />
-                    </span>
-                    <p>Expense</p>
-                  </Link>
-                </div>
-                <div className="col-md-2">
-                  <Link to={route.quotationlist} className="link-item">
-                    <span className="link-icon">
-                      <i className="ti ti-device-floppy" />
-                    </span>
-                    <p>Quotation</p>
-                  </Link>
-                </div>
-                <div className="col-md-2">
-                  <Link to={route.salesreturn} className="link-item">
-                    <span className="link-icon">
-                      <i className="ti ti-copy" />
-                    </span>
-                    <p>Return</p>
-                  </Link>
-                </div>
-                <div className="col-md-2">
-                  <Link to={route.users} className="link-item">
-                    <span className="link-icon">
-                      <i className="ti ti-user" />
-                    </span>
-                    <p>User</p>
-                  </Link>
-                </div>
-                <div className="col-md-2">
-                  <Link to={route.customer} className="link-item">
-                    <span className="link-icon">
-                      <i className="ti ti-users" />
-                    </span>
-                    <p>Customer</p>
-                  </Link>
-                </div>
-                <div className="col-md-2">
-                  <Link to={route.salesreport} className="link-item">
-                    <span className="link-icon">
-                      <i className="ti ti-shield" />
-                    </span>
-                    <p>Biller</p>
-                  </Link>
-                </div>
-                <div className="col-md-2">
-                  <Link to={route.suppliers} className="link-item">
-                    <span className="link-icon">
-                      <i className="ti ti-user-check" />
-                    </span>
-                    <p>Supplier</p>
-                  </Link>
-                </div>
-                <div className="col-md-2">
-                  <Link to={route.stocktransfer} className="link-item">
-                    <span className="link-icon">
-                      <i className="ti ti-truck" />
-                    </span>
-                    <p>Transfer</p>
-                  </Link>
-                </div>
-              </div>
-            </Dropdown.Menu>
-          </Dropdown>
-
-          {/* POS Button */}
           <Nav.Item as="li" className="nav-item pos-nav">
             <Link
               to={route.pos}
@@ -371,33 +246,6 @@ const Header = () => {
             </Link>
           </Nav.Item>
 
-          {/* Flag Dropdown */}
-          <NavDropdown
-            as="li"
-            className="nav-item dropdown has-arrow flag-nav nav-item-box"
-            title={<img src={flagImage} alt="img" height={16} />}
-            id="flag-dropdown"
-            align="end"
-          >
-            <NavDropdown.Item
-              as={Link}
-              to="#"
-              active
-              onClick={() => changeLanguage("en")}
-            >
-              <img src={englishFlag} alt="img" height={16} />
-              English
-            </NavDropdown.Item>
-            <NavDropdown.Item
-              as={Link}
-              to="#"
-              onClick={() => changeLanguage("fr")}
-            >
-              <img src={arabicFlag} alt="img" height={16} /> Arabic
-            </NavDropdown.Item>
-          </NavDropdown>
-
-          {/* Fullscreen Button */}
           <Nav.Item as="li" className="nav-item nav-item-box">
             <Nav.Link
               href="#"
@@ -409,14 +257,12 @@ const Header = () => {
             </Nav.Link>
           </Nav.Item>
 
-          {/* Email Link */}
-          <Nav.Item as="li" className="nav-item nav-item-box">
+          {/* <Nav.Item as="li" className="nav-item nav-item-box">
             <Nav.Link as={Link} to="/email">
               <i className="ti ti-mail"></i>
             </Nav.Link>
-          </Nav.Item>
+          </Nav.Item> */}
 
-          {/* Notifications Dropdown */}
           <NavDropdown
             as="li"
             className="nav-item dropdown nav-item-box"
@@ -514,7 +360,6 @@ const Header = () => {
             </Nav.Link>
           </Nav.Item>
 
-          {/* Profile Dropdown */}
           <NavDropdown
             as="li"
             className="nav-item dropdown has-arrow main-drop profile-nav"
@@ -539,15 +384,11 @@ const Header = () => {
             </div>
             <NavDropdown.Item as={Link} to={route.profile}>
               <i className="ti ti-user-circle me-2" />
-              MyProfile
-            </NavDropdown.Item>
-            <NavDropdown.Item as={Link} to={route.salesreport}>
-              <i className="ti ti-file-text me-2" />
-              Reports
+              Thông tin cá nhân
             </NavDropdown.Item>
             <NavDropdown.Item as={Link} to={route.generalsettings}>
               <i className="ti ti-settings-2 me-2" />
-              Settings
+              Cài đặt
             </NavDropdown.Item>
             <NavDropdown.Divider />
             <NavDropdown.Item
@@ -556,7 +397,7 @@ const Header = () => {
               onClick={handleLogout}
             >
               <i className="ti ti-logout me-2" />
-              Logout
+              Đăng xuất
             </NavDropdown.Item>
           </NavDropdown>
         </Nav>
