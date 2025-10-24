@@ -141,19 +141,6 @@ const PosHeader = () => {
             </Link>
           </li>
 
-          {/* Fullscreen */}
-          <li className="nav-item nav-item-box">
-            <Tooltip title="Maximize" placement="right">
-              <Link
-                to="#"
-                id="btnFullscreen"
-                className={isFullscreen ? "Exit Fullscreen" : "Go Fullscreen"}
-              >
-                <i className="ti ti-maximize" />
-              </Link>
-            </Tooltip>
-          </li>
-
           {/* Cash Register */}
           <li className="nav-item nav-item-box">
             <Tooltip title="Cash Register" placement="right">
@@ -163,15 +150,6 @@ const PosHeader = () => {
                 data-bs-target="#cash-register"
               >
                 <i className="ti ti-cash" />
-              </Link>
-            </Tooltip>
-          </li>
-
-          {/* Print Last Receipt */}
-          <li className="nav-item nav-item-box">
-            <Tooltip title="Print Last Receipt" placement="right">
-              <Link to="#">
-                <i className="ti ti-printer" />
               </Link>
             </Tooltip>
           </li>
@@ -235,11 +213,11 @@ const PosHeader = () => {
                 <hr className="m-0" />
                 <Link className="dropdown-item" to={all_routes.profile}>
                   <User className="me-2" />
-                  My Profile
+                  Thông tin cá nhân
                 </Link>
                 <Link className="dropdown-item" to={all_routes.generalsettings}>
                   <Settings className="me-2" />
-                  Settings
+                  Cài đặt
                 </Link>
                 <hr className="m-0" />
                 <Link
@@ -251,7 +229,7 @@ const PosHeader = () => {
                     className="me-2"
                     alt="img"
                   />
-                  Logout
+                  Đăng xuất
                 </Link>
               </div>
             </div>
@@ -271,13 +249,13 @@ const PosHeader = () => {
           </Link>
           <div className="dropdown-menu dropdown-menu-right">
             <Link className="dropdown-item" to={all_routes.profile}>
-              My Profile
+              Thông tin cá nhân
             </Link>
             <Link className="dropdown-item" to={all_routes.generalsettings}>
-              Settings
+              Cài đặt
             </Link>
             <Link className="dropdown-item" to={all_routes.signin}>
-              Logout
+              Đăng xuất
             </Link>
           </div>
         </div>

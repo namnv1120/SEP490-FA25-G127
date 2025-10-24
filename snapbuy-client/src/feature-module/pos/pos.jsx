@@ -118,7 +118,7 @@ const Pos = () => {
   );
   const taxAmount = (subTotal * selectedGST) / 100;
   const discountAmount = (subTotal * selectedDiscount) / 100;
-  const total = subTotal + taxAmount + selectedShipping - discountAmount;
+  const total = subTotal + taxAmount - discountAmount;
 
   // Giữ class body
   useEffect(() => {
@@ -167,17 +167,6 @@ const Pos = () => {
                       <i className="ti ti-reload me-1" />
                       Tải lại
                     </Link>
-                    {/*
-                    <Link
-                      to="#"
-                      className="btn btn-md btn-info"
-                      data-bs-toggle="modal"
-                      data-bs-target="#recents"
-                    >
-                      <i className="ti ti-refresh-dot me-1" />
-                      Giao dịch
-                    </Link>
-                    */}
                   </div>
                 </div>
 
@@ -287,7 +276,7 @@ const Pos = () => {
               <aside className="product-order-list">
                 <div className="order-head bg-light d-flex align-items-center justify-content-between w-100">
                   <div>
-                    <h3>Order List</h3>
+                    <h3>Danh sách đặt hàng</h3>
                   </div>
                   <div>
                     <Link
@@ -302,7 +291,7 @@ const Pos = () => {
 
                 {/* Customer input */}
                 <div className="customer-info block-section">
-                  <h4 className="mb-3">Customer Information</h4>
+                  <h4 className="mb-3">Thông tin khách hàng</h4>
                   <div className="input-block d-flex align-items-center">
                     <div className="flex-grow-1">
                       <input
@@ -328,7 +317,7 @@ const Pos = () => {
                 <div className="product-added block-section">
                   <div className="head-text d-flex align-items-center justify-content-between">
                     <h5 className="d-flex align-items-center mb-0">
-                      Product Added
+                      Sản phẩm đã thêm
                       <span className="count">{selectedProducts.length}</span>
                     </h5>
                     <Link
@@ -339,7 +328,7 @@ const Pos = () => {
                       <span className="me-2">
                         <i className="feather icon-x feather-16" />
                       </span>
-                      Clear all
+                      Xóa tất cả
                     </Link>
                   </div>
 
@@ -349,7 +338,7 @@ const Pos = () => {
                         <div className="fs-24 mb-1">
                           <i className="ti ti-shopping-cart" />
                         </div>
-                        <p className="fw-bold">No Products Selected</p>
+                        <p className="fw-bold">Không sản phẩm nào được chọn</p>
                       </div>
                     ) : (
                       selectedProducts.map((product) => (
@@ -415,27 +404,25 @@ const Pos = () => {
                     <table className="table table-responsive table-borderless">
                       <tbody>
                         <tr>
-                          <td>Sub Total</td>
+                          <td>Tổng tiền hàng</td>
                           <td className="text-end">
                             {subTotal.toLocaleString()}₫
                           </td>
                         </tr>
                         <tr>
-                          <td>Tax (GST {selectedGST}%)</td>
+                          <td>Thuế</td>
                           <td className="text-end">
                             {taxAmount.toLocaleString()}₫
                           </td>
                         </tr>
                         <tr>
-                          <td className="text-danger">
-                            Discount ({selectedDiscount}%)
-                          </td>
+                          <td className="text-danger">Giảm giá</td>
                           <td className="text-danger text-end">
                             -{discountAmount.toLocaleString()}₫
                           </td>
                         </tr>
                         <tr>
-                          <td className="fw-bold">Total</td>
+                          <td className="fw-bold">Tổng thanh toán</td>
                           <td className="text-end fw-bold text-success">
                             {total.toLocaleString()}₫
                           </td>
@@ -447,8 +434,19 @@ const Pos = () => {
 
                 {/* Payment Methods */}
                 <div className="block-section payment-method">
-                  <h4>Payment Method</h4>
+                  <h4>Phương thức thanh toán</h4>
                   <div className="row align-items-center justify-content-center methods g-3">
+                    <div className="col-sm-6 col-md-4">
+                      <Link
+                        to="#"
+                        className="payment-item"
+                        data-bs-toggle="modal"
+                        data-bs-target="#payment-cash"
+                      >
+                        <i className="ti ti-cash-banknote fs-18" />
+                        <span>Tiền mặt</span>
+                      </Link>
+                    </div>
                     <div className="col-sm-6 col-md-4">
                       <Link
                         to="#"
@@ -457,7 +455,7 @@ const Pos = () => {
                         data-bs-target="#scan-payment"
                       >
                         <i className="ti ti-scan fs-18" />
-                        <span>Scan</span>
+                        <span>Quét mã</span>
                       </Link>
                     </div>
                   </div>
@@ -467,28 +465,12 @@ const Pos = () => {
                 <div className="btn-row d-sm-flex align-items-center justify-content-between">
                   <Link
                     to="#"
-                    className="btn btn-purple d-flex align-items-center justify-content-center flex-fill"
-                    data-bs-toggle="modal"
-                    data-bs-target="#hold-order"
-                  >
-                    <i className="ti ti-player-pause me-1" />
-                    Hold
-                  </Link>
-                  <Link
-                    to="#"
-                    className="btn btn-danger d-flex align-items-center justify-content-center flex-fill"
-                  >
-                    <i className="ti ti-trash me-1" />
-                    Void
-                  </Link>
-                  <Link
-                    to="#"
                     className="btn btn-success d-flex align-items-center justify-content-center flex-fill"
                     data-bs-toggle="modal"
                     data-bs-target="#payment-completed"
                   >
                     <i className="ti ti-cash-banknote me-1" />
-                    Payment
+                    Thanh toán
                   </Link>
                 </div>
               </aside>

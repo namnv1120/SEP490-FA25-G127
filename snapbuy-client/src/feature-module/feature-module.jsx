@@ -69,7 +69,9 @@ const FeatureModule = () => {
     return (
       <div className={`main-wrapper ${toggleHeader ? "header-collapse" : ""}`}>
         <PosHeader />
-        <ThemeSettings />
+        <div style={{ display: "none" }}>
+          <ThemeSettings />
+        </div>
         <Outlet />
       </div>
     );
@@ -115,7 +117,9 @@ const FeatureModule = () => {
               <Sidebar />
               <HorizontalSidebar />
               <Outlet />
-              {!location.pathname.includes("layout") && <ThemeSettings />}
+              <div style={{ display: "none" }}>
+                <ThemeSettings />
+              </div>
             </div>
           </div>
         </>
