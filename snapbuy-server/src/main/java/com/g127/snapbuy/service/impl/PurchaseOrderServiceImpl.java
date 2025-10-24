@@ -37,12 +37,10 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         String number = generateNumber();
         LocalDateTime now = LocalDateTime.now();
 
-        // Subtotal theo planned
         BigDecimal plannedSubtotal = req.items().stream()
                 .map(i -> BigDecimal.valueOf(i.unitPrice()).multiply(BigDecimal.valueOf(i.quantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Thuế suất % nhập từ request (ví dụ 10 -> 10%)
         BigDecimal taxRatePct = Optional.ofNullable(req.taxAmount()).map(BigDecimal::valueOf).orElse(BigDecimal.ZERO);
         BigDecimal plannedTax = plannedSubtotal.multiply(taxRatePct)
                 .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
@@ -55,13 +53,12 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 .accountId(req.accountId())
                 .orderDate(now)
                 .status("PENDING")
-                .totalAmount(plannedTotal)  // subtotal + tax
-                .taxAmount(plannedTax)      // lưu số tiền thuế
+                .totalAmount(plannedTotal)
+                .taxAmount(plannedTax)
                 .notes(req.notes())
                 .build();
         purchaseOrderRepo.save(po);
 
-        // Mặc định nhận đủ để totalPrice (received * unit) phản ánh đủ hàng
         List<PurchaseOrderDetail> details = req.items().stream().map(i ->
                 PurchaseOrderDetail.builder()
                         .id(UUID.randomUUID())
@@ -69,7 +66,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                         .productId(i.productId())
                         .quantity(i.quantity())
                         .unitPrice(BigDecimal.valueOf(i.unitPrice()))
-                        .receivedQuantity(i.quantity())
+                        .receivedQuantity(0)
                         .build()
         ).toList();
         detailRepo.saveAll(details);
@@ -85,54 +82,69 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         if (Objects.equals(po.getStatus(), "CANCELLED")) {
             throw new IllegalStateException("Cannot receive a cancelled purchase order");
         }
+        if (Objects.equals(po.getStatus(), "RECEIVED")) {
+            throw new IllegalStateException("Purchase order already received and cannot be modified");
+        }
 
-        // Load details và "before" map
         List<PurchaseOrderDetail> details = detailRepo.findByPurchaseOrderId(poId);
         Map<UUID, PurchaseOrderDetail> byId = details.stream()
                 .collect(Collectors.toMap(PurchaseOrderDetail::getId, d -> d));
-        Map<UUID, Integer> beforeMap = details.stream()
-                .collect(Collectors.toMap(PurchaseOrderDetail::getId,
-                        d -> Optional.ofNullable(d.getReceivedQuantity()).orElse(0)));
 
-        // Map 'target' theo giá trị tuyệt đối (mặc định = current, payload ghi đè)
-        Map<UUID, Integer> targetReceived = new HashMap<>(beforeMap);
+        Map<UUID, Integer> importQtyByDetail = new HashMap<>();
+        for (PurchaseOrderDetail d : details) {
+            int planned = Optional.ofNullable(d.getQuantity()).orElse(0);
+            int receivedSoFar = Optional.ofNullable(d.getReceivedQuantity()).orElse(0);
+            int remaining = Math.max(planned - receivedSoFar, 0);
+            importQtyByDetail.put(d.getId(), remaining);
+        }
         if (req.items() != null) {
             for (var it : req.items()) {
-                targetReceived.put(it.purchaseOrderDetailId(), it.receivedQuantity());
+                importQtyByDetail.put(it.purchaseOrderDetailId(), it.receivedQuantity());
             }
         }
 
-        // Validate & GHI ĐÈ receivedQuantity
-        for (var entry : targetReceived.entrySet()) {
-            UUID detailId = entry.getKey();
-            int newReceived = entry.getValue();
+        for (var e : importQtyByDetail.entrySet()) {
+            UUID detailId = e.getKey();
+            int importQty = e.getValue();
             PurchaseOrderDetail d = Optional.ofNullable(byId.get(detailId))
                     .orElseThrow(() -> new NoSuchElementException("Detail not found: " + detailId));
 
             int planned = Optional.ofNullable(d.getQuantity()).orElse(0);
-            if (newReceived < 0) throw new IllegalArgumentException("receivedQuantity must be >= 0");
-            if (newReceived > planned) {
-                throw new IllegalStateException("Received exceeds planned quantity");
+            int receivedSoFar = Optional.ofNullable(d.getReceivedQuantity()).orElse(0);
+            int remaining = Math.max(planned - receivedSoFar, 0);
+
+            if (importQty < 0) throw new IllegalArgumentException("receivedQuantity must be >= 0");
+            if (importQty > remaining) {
+                throw new IllegalStateException("Import quantity exceeds remaining planned quantity");
             }
-            d.setReceivedQuantity(newReceived);
+
+            d.setReceivedQuantity(receivedSoFar + importQty);
         }
         detailRepo.saveAll(details);
 
-        // Cập nhật tồn kho & transaction theo delta (after - before)
         LocalDateTime now = LocalDateTime.now();
         var account = accountRepo.findById(req.accountId())
                 .orElseThrow(() -> new NoSuchElementException("Account not found: " + req.accountId()));
 
-        for (PurchaseOrderDetail d : details) {
-            int before = Optional.ofNullable(beforeMap.get(d.getId())).orElse(0);
-            int after = Optional.ofNullable(d.getReceivedQuantity()).orElse(0);
-            int delta = after - before;
-            if (delta == 0) continue;
+        Map<UUID, Integer> importByProduct = new HashMap<>();
+        Map<UUID, BigDecimal> unitPriceByProduct = new HashMap<>();
+        for (var e : importQtyByDetail.entrySet()) {
+            PurchaseOrderDetail d = byId.get(e.getKey());
+            int importQty = e.getValue();
+            if (importQty <= 0) continue;
+            importByProduct.merge(d.getProductId(), importQty, Integer::sum);
+            unitPriceByProduct.putIfAbsent(d.getProductId(),
+                    Optional.ofNullable(d.getUnitPrice()).orElse(BigDecimal.ZERO));
+        }
 
-            var product = productRepo.findById(d.getProductId())
-                    .orElseThrow(() -> new NoSuchElementException("Product not found: " + d.getProductId()));
+        for (var e : importByProduct.entrySet()) {
+            UUID productId = e.getKey();
+            int qty = e.getValue();
 
-            Optional<Inventory> invOpt = inventoryRepo.lockByProductId(d.getProductId());
+            var product = productRepo.findById(productId)
+                    .orElseThrow(() -> new NoSuchElementException("Product not found: " + productId));
+
+            Optional<Inventory> invOpt = inventoryRepo.lockByProductId(productId);
             Inventory inv = invOpt.orElseGet(() -> {
                 Inventory i = new Inventory();
                 i.setInventoryId(UUID.randomUUID());
@@ -141,18 +153,17 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 i.setLastUpdated(now);
                 return i;
             });
-            inv.setQuantityInStock(inv.getQuantityInStock() + delta);
+            inv.setQuantityInStock(inv.getQuantityInStock() + qty);
             inv.setLastUpdated(now);
             inventoryRepo.save(inv);
 
-            String txnType = delta >= 0 ? "IMPORT" : "EXPORT";
             InventoryTransaction txn = InventoryTransaction.builder()
                     .transactionId(UUID.randomUUID())
                     .product(product)
                     .account(account)
-                    .transactionType(txnType)
-                    .quantity(Math.abs(delta))
-                    .unitPrice(d.getUnitPrice())
+                    .transactionType("IMPORT")
+                    .quantity(qty)
+                    .unitPrice(unitPriceByProduct.getOrDefault(productId, BigDecimal.ZERO))
                     .referenceType("PURCHASE_ORDER")
                     .referenceId(poId)
                     .notes(req.notes())
@@ -161,7 +172,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             inventoryTxnRepo.save(txn);
         }
 
-        // TÍNH LẠI THUẾ & TỔNG theo thực nhận, giữ thuế suất như lúc tạo
         BigDecimal receivedSubtotal = details.stream()
                 .map(d -> Optional.ofNullable(d.getUnitPrice()).orElse(BigDecimal.ZERO)
                         .multiply(BigDecimal.valueOf(Optional.ofNullable(d.getReceivedQuantity()).orElse(0))))
@@ -178,13 +188,13 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                     .multiply(BigDecimal.valueOf(100))
                     .divide(plannedSubtotal, 6, java.math.RoundingMode.HALF_UP);
         }
-
         BigDecimal taxAmount = receivedSubtotal.multiply(taxRatePct)
                 .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
         BigDecimal receivedTotal = receivedSubtotal.add(taxAmount);
 
         po.setTaxAmount(taxAmount);
         po.setTotalAmount(receivedTotal);
+
         po.setStatus("RECEIVED");
         po.setReceivedDate(now);
         purchaseOrderRepo.save(po);
@@ -196,13 +206,28 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     @Transactional
     public PurchaseOrderResponse cancel(UUID poId) {
         PurchaseOrder po = purchaseOrderRepo.findById(poId)
-                .orElseThrow(() -> new NoSuchElementException("Purchase order not found"));
+                .orElseThrow(() -> new NoSuchElementException("Purchase order not found")); // [attached_file:3]
+
         if (Objects.equals(po.getStatus(), "RECEIVED")) {
             throw new IllegalStateException("Cannot cancel a received purchase order");
         }
-        po.setStatus("CANCELLED");
-        purchaseOrderRepo.save(po);
+
         List<PurchaseOrderDetail> details = detailRepo.findByPurchaseOrderId(poId);
+        for (PurchaseOrderDetail d : details) {
+            d.setReceivedQuantity(0);
+        }
+        detailRepo.saveAll(details);
+
+        BigDecimal receivedSubtotal = BigDecimal.ZERO;
+        BigDecimal taxAmount = BigDecimal.ZERO;
+        BigDecimal total = BigDecimal.ZERO;
+
+        po.setTaxAmount(taxAmount);
+        po.setTotalAmount(total);
+        po.setStatus("CANCELLED");
+        po.setReceivedDate(null);
+        purchaseOrderRepo.save(po);
+
         return toResponse(po, details);
     }
 
