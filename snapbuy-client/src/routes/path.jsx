@@ -3,18 +3,26 @@ import { lazy } from "react";
 import { all_routes } from "./all_routes";
 import FormHorizontal from "../feature-module/uiinterface/forms/formelements/layouts/form-horizontal";
 
-
 const Suppliers = lazy(() => import("../feature-module/people/Supplier"));
 
 const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
-const ProductList = lazy(() => import("../feature-module/inventory/ProductList"));
-const ProductDetail = lazy(() => import("../feature-module/inventory/ProductDetail"));
+const ProductList = lazy(() =>
+  import("../feature-module/inventory/ProductList")
+);
+const ProductDetail = lazy(() =>
+  import("../feature-module/inventory/ProductDetail")
+);
 const AddProduct = lazy(() => import("../feature-module/inventory/AddProduct"));
-const EditProduct = lazy(() => import("../feature-module/inventory/EditProduct"));
+const EditProduct = lazy(() =>
+  import("../feature-module/inventory/EditProduct")
+);
 
-const CategoryList = lazy(() => import("../feature-module/inventory/CategoryList"));
-const SubCategories = lazy(() => import("../feature-module/inventory/SubCategoryList"));
-
+const CategoryList = lazy(() =>
+  import("../feature-module/inventory/CategoryList")
+);
+const SubCategories = lazy(() =>
+  import("../feature-module/inventory/SubCategoryList")
+);
 
 const Accounts = lazy(() => import("../feature-module/usermanagement/account"));
 const RolesPermissions = lazy(() =>
@@ -31,6 +39,10 @@ const Customers = lazy(() => import("../feature-module/people/Customer"));
 
 // 🆕 Thêm Inventory
 const Inventory = lazy(() => import("../feature-module/inventory/Inventory"));
+// import ở trên
+const PurchaseOrder = lazy(() =>
+  import("../feature-module/purchases/PurchaseOrder")
+);
 
 const routes = all_routes;
 
@@ -135,7 +147,13 @@ export const authRoutes = [
     element: <SubCategories />,
     route: Route,
   },
-
+  {
+    id: 301,
+    path: routes.purchaseorder, // đảm bảo trong all_routes có key purchaseorder
+    name: "purchaseorder",
+    element: <PurchaseOrder />,
+    route: Route,
+  },
 ];
 
 export const posPages = [
