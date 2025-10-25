@@ -14,18 +14,18 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ProductPriceCreateRequest {
 
-    @NotNull(message = "Product ID is required")
+    @NotNull(message = "Vui lòng chọn sản phẩm.")
     private UUID productId;
 
-    @NotNull(message = "Unit price is required")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Unit price must be greater than 0")
+    @NotNull(message = "Vui lòng nhập đơn giá.")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Đơn giá phải lớn hơn 0.")
     private BigDecimal unitPrice;
 
-    @DecimalMin(value = "0.0", inclusive = true, message = "Cost price must not be negative")
+    @DecimalMin(value = "0.0", inclusive = true, message = "Giá vốn không được âm.")
     private BigDecimal costPrice;
 
-    @DecimalMin(value = "0.0", inclusive = true, message = "Tax rate cannot be negative")
-    @DecimalMax(value = "100.0", message = "Tax rate cannot exceed 100")
+    @DecimalMin(value = "0.0", inclusive = true, message = "Thuế suất không được âm.")
+    @DecimalMax(value = "100.0", message = "Thuế suất không được vượt quá 100%.")
     private BigDecimal taxRate;
 
     private LocalDateTime validFrom;

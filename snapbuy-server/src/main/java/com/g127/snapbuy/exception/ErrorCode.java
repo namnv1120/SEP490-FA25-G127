@@ -6,27 +6,27 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum ErrorCode {
-    UNCATEGORIZED_ERROR(9999, "Uncategorized error"),
-    EMAIL_EXISTED(1001, "Email existed"),
-    NAME_EXISTED(1002, "Name existed"),
-    CODE_EXISTED(1003, "Code existed"),
+    UNCATEGORIZED_ERROR(9999, "Lỗi không phân loại"),
+    EMAIL_EXISTED(1001, "Email đã tồn tại"),
+    NAME_EXISTED(1002, "Tên đã tồn tại"),
+    CODE_EXISTED(1003, "Mã đã tồn tại"),
 
-    CUSTOMER_NOT_FOUND(2001, "Customer not found"),
-    CATEGORY_NOT_FOUND(2002, "Category not found"),
-    PARENT_NOT_FOUND(2003, "Parent not found"),
-    SUPPLIER_NOT_FOUND(2004, "Supplier not found"),
-    PRODUCT_NOT_FOUND(2005, "Product not found"),
-    PRICE_NOT_FOUND(2006, "Price not found"),
-    INVENTORY_NOT_FOUND(2007, "Inventory not found"),
-    INVENTORY_ALREADY_EXISTS(2008, "Inventory record for this product already exists"),
-    INVALID_STOCK_OPERATION(2009, "Invalid stock operation — quantity cannot be negative"),
-    ORDER_NOT_FOUND(2010, "Order not found"),
+    CUSTOMER_NOT_FOUND(2001, "Không tìm thấy khách hàng"),
+    CATEGORY_NOT_FOUND(2002, "Không tìm thấy danh mục"),
+    PARENT_NOT_FOUND(2003, "Không tìm thấy danh mục cha"),
+    SUPPLIER_NOT_FOUND(2004, "Không tìm thấy nhà cung cấp"),
+    PRODUCT_NOT_FOUND(2005, "Không tìm thấy sản phẩm"),
+    PRICE_NOT_FOUND(2006, "Không tìm thấy giá"),
+    INVENTORY_NOT_FOUND(2007, "Không tìm thấy tồn kho"),
+    INVENTORY_ALREADY_EXISTS(2008, "Tồn kho cho sản phẩm này đã tồn tại"),
+    INVALID_STOCK_OPERATION(2009, "Thao tác tồn kho không hợp lệ — số lượng không được âm"),
+    ORDER_NOT_FOUND(2010, "Không tìm thấy đơn hàng"),
 
-    AUTH_INVALID(3001, "Invalid username or password"),
-    TOKEN_INVALID(3002, "Invalid token"),
-    TOKEN_REVOKED(3003, "Token revoked"),
-    ACCOUNT_LOCKED(3004, "Account is locked");
-   
+    AUTH_INVALID(3001, "Tên đăng nhập hoặc mật khẩu không đúng"),
+    TOKEN_INVALID(3002, "Token không hợp lệ"),
+    TOKEN_REVOKED(3003, "Token đã bị thu hồi"),
+    ACCOUNT_LOCKED(3004, "Tài khoản đã bị khóa");
+
     private final int code;
     private final String message;
 }

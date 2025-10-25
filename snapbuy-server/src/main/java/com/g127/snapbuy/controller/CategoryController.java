@@ -52,7 +52,7 @@ public class CategoryController {
     public ApiResponse<String> deleteCategoryById(@PathVariable("id") UUID id) {
         categoryService.deleteCategory(id);
         ApiResponse<String> response = new ApiResponse<>();
-        response.setResult("Category deleted");
+        response.setResult("Danh mục đã được xoá");
         return response;
     }
 }

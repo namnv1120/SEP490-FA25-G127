@@ -11,14 +11,14 @@ public class PosServiceImpl implements PosService {
     @Override
     public PosOrderResponse createPosOrder(PosOrderRequest request) {
         PosOrderResponse response = new PosOrderResponse();
-        response.setMessage("POS order created successfully (mock data)");
+        response.setMessage("Tạo đơn POS thành công (dữ liệu mô phỏng)");
         return response;
     }
 
     @Override
     public PosOrderResponse getOrderSummary(String orderId) {
         PosOrderResponse response = new PosOrderResponse();
-        response.setMessage("POS order summary (mock data)");
+        response.setMessage("Tổng quan đơn POS (dữ liệu mô phỏng)");
         return response;
     }
 }

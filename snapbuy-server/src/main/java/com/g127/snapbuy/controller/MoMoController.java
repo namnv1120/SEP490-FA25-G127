@@ -28,15 +28,15 @@ public class MoMoController {
 
             if ("0".equals(resultCode)) {
                 paymentService.finalizePaymentByReference(requestId);
-                log.info("Payment confirmed for MoMo request {}", requestId);
-                response.setResult("Payment success");
+                log.info("Xác nhận thanh toán cho yêu cầu MoMo {}", requestId);
+                response.setResult("Thanh toán thành công.");
             } else {
-                log.warn("MoMo payment failed, resultCode={}", resultCode);
-                response.setResult("Payment failed");
+                log.warn("Thanh toán MoMo thất bại, resultCode={}", resultCode);
+                response.setResult("Thanh toán thất bại.");
             }
         } catch (Exception e) {
-            log.error("Error handling MoMo notify: {}", e.getMessage(), e);
-            response.setResult("Error processing payment");
+            log.error("Lỗi khi xử lý notify MoMo: {}", e.getMessage(), e);
+            response.setResult("Đã xảy ra lỗi khi xử lý thanh toán.");
         }
         return response;
     }
@@ -51,13 +51,13 @@ public class MoMoController {
 
             if ("0".equals(resultCode)) {
                 paymentService.finalizePaymentByReference(requestId);
-                response.setResult("Thanh toán thành công!");
+                response.setResult("Thanh toán thành công.");
             } else {
                 response.setResult("Thanh toán thất bại, vui lòng thử lại.");
             }
         } catch (Exception e) {
-            log.error("Error handling MoMo return: {}", e.getMessage(), e);
-            response.setResult("Đã xảy ra lỗi trong quá trình xử lý thanh toán.");
+            log.error("Lỗi khi xử lý return MoMo: {}", e.getMessage(), e);
+            response.setResult("Đã xảy ra lỗi khi xử lý thanh toán.");
         }
         return response;
     }

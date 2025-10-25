@@ -54,7 +54,7 @@ public class InventoryController {
     public ApiResponse<String> deleteInventory(@PathVariable("id") UUID id) {
         inventoryService.deleteInventory(id);
         ApiResponse<String> response = new ApiResponse<>();
-        response.setResult("Inventory deleted successfully");
+        response.setResult("Hàng tồn kho đã được xoá");
         return response;
     }
 }

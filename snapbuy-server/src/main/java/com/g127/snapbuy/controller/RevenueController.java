@@ -18,43 +18,43 @@ public class RevenueController {
     private final RevenueService revenueService;
 
     @GetMapping("/daily")
-    @PreAuthorize("hasAnyRole('Admin', 'Shop Owner')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<RevenueResponse> getDailyRevenue(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         ApiResponse<RevenueResponse> response = new ApiResponse<>();
         response.setResult(revenueService.getDailyRevenue(date));
-        response.setMessage("Daily revenue fetched successfully");
+        response.setMessage("Lấy doanh thu theo ngày thành công.");
         return response;
     }
 
     @GetMapping("/monthly")
-    @PreAuthorize("hasAnyRole('Admin', 'Shop Owner')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<RevenueResponse> getMonthlyRevenue(
             @RequestParam int year,
             @RequestParam int month) {
         ApiResponse<RevenueResponse> response = new ApiResponse<>();
         response.setResult(revenueService.getMonthlyRevenue(year, month));
-        response.setMessage("Monthly revenue fetched successfully");
+        response.setMessage("Lấy doanh thu theo tháng thành công.");
         return response;
     }
 
     @GetMapping("/yearly")
-    @PreAuthorize("hasAnyRole('Admin', 'Shop Owner')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<RevenueResponse> getYearlyRevenue(@RequestParam int year) {
         ApiResponse<RevenueResponse> response = new ApiResponse<>();
         response.setResult(revenueService.getYearlyRevenue(year));
-        response.setMessage("Yearly revenue fetched successfully");
+        response.setMessage("Lấy doanh thu theo năm thành công.");
         return response;
     }
 
     @GetMapping("/custom")
-    @PreAuthorize("hasAnyRole('Admin', 'Shop Owner')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<RevenueResponse> getCustomRevenue(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         ApiResponse<RevenueResponse> response = new ApiResponse<>();
         response.setResult(revenueService.getCustomRevenue(startDate, endDate));
-        response.setMessage("Custom period revenue fetched successfully");
+        response.setMessage("Lấy doanh thu theo khoảng thời gian thành công.");
         return response;
     }
 }

@@ -81,7 +81,6 @@ public class ProductServiceImpl implements ProductService {
 
         ProductResponse response = productMapper.toResponse(product);
 
-        // ✅ Gắn giá mới nhất (nếu có)
         ProductPrice latestPrice = productPriceRepository
                 .findTopByProduct_ProductIdOrderByValidFromDesc(product.getProductId())
                 .orElse(null);
@@ -121,12 +120,8 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        // 🧹 Xoá dữ liệu phụ thuộc trước
         productPriceRepository.deleteAllByProduct_ProductId(id);
         inventoryRepository.deleteAllByProduct_ProductId(id);
-
-
-        // 🗑️ Cuối cùng xoá product
         productRepository.delete(product);
     }
 

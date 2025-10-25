@@ -1,8 +1,8 @@
 INSERT INTO roles (role_name, [description], active)
-VALUES (N'Admin', N'System Administrator - Full access rights', 1),
-       (N'Shop Owner', N'Shop Owner - Manages all business operations', 1),
-       (N'Warehouse Staff', N'Warehouse Staff - Manages inventory receipts and issues', 1),
-       (N'Sales Staff', N'Sales Staff - Processes orders and manages customers', 1);
+VALUES (N'Quản trị viên', N'System Administrator - Full access rights', 1),
+       (N'Chủ cửa hàng', N'Shop Owner - Manages all business operations', 1),
+       (N'Nhân viên kho', N'Warehouse Staff - Manages inventory receipts and issues', 1),
+       (N'Nhân viên bán hàng', N'Sales Staff - Processes orders and manages customers', 1);
 
 INSERT INTO [permissions] ([permission_name], [description], module, active)
 VALUES
@@ -77,7 +77,7 @@ VALUES (
        );
 
 DECLARE @roleAdmin UNIQUEIDENTIFIER =
-        (SELECT TOP 1 role_id FROM roles WHERE role_name = N'Admin');
+        (SELECT TOP 1 role_id FROM roles WHERE role_name = N'Quản trị viên');
 
     IF @roleAdmin IS NOT NULL
         INSERT INTO account_roles(account_id, role_id) VALUES (@adminId, @roleAdmin);

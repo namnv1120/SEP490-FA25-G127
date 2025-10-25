@@ -54,7 +54,7 @@ public class ProductPriceController {
     public ApiResponse<String> deletePrice(@PathVariable("id") UUID id) {
         productPriceService.deletePrice(id);
         ApiResponse<String> response = new ApiResponse<>();
-        response.setResult("Product price deleted");
+        response.setResult("Giá sản phẩm đã được xoá");
         return response;
     }
 }

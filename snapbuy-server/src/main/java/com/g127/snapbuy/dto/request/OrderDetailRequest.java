@@ -12,17 +12,17 @@ import java.util.UUID;
 @Builder
 public class OrderDetailRequest {
 
-    @NotNull(message = "Product ID is required")
+    @NotNull(message = "Vui lòng chọn sản phẩm.")
     private UUID productId;
 
-    @NotNull(message = "Quantity is required")
-    @Min(value = 1, message = "Quantity must be at least 1")
+    @NotNull(message = "Vui lòng nhập số lượng.")
+    @Min(value = 1, message = "Số lượng phải ít nhất là 1.")
     private Integer quantity;
 
-    @NotNull(message = "Unit price is required")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Unit price must be greater than 0")
+    @NotNull(message = "Vui lòng nhập đơn giá.")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Đơn giá phải lớn hơn 0.")
     private BigDecimal unitPrice;
 
-    @DecimalMin(value = "0.0", message = "Discount must be non-negative")
+    @DecimalMin(value = "0.0", message = "Giảm giá không được âm.")
     private BigDecimal discount;
 }

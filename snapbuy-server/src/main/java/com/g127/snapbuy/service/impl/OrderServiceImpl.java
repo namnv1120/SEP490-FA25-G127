@@ -36,21 +36,21 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
     @Transactional
     public OrderResponse createOrder(OrderCreateRequest req) {
         if (req.getAccountId() == null)
-            throw new IllegalArgumentException("accountId is required");
+            throw new IllegalArgumentException("Thiếu accountId");
         if (req.getItems() == null || req.getItems().isEmpty())
-            throw new IllegalArgumentException("Order must contain at least 1 item");
+            throw new IllegalArgumentException("Đơn hàng phải có ít nhất 1 sản phẩm");
 
         Account creator = accountRepository.findById(req.getAccountId())
-                .orElseThrow(() -> new NoSuchElementException("Account not found"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
 
         Customer customer;
         if (req.getCustomerId() == null) {
             UUID defaultCustomerId = UUID.fromString("00000000-0000-0000-0000-000000000001");
             customer = customerRepository.findById(defaultCustomerId)
-                    .orElseThrow(() -> new NoSuchElementException("Default walk-in customer not found"));
+                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy khách vãng lai mặc định"));
         } else {
             customer = customerRepository.findById(req.getCustomerId())
-                    .orElseThrow(() -> new NoSuchElementException("Customer not found"));
+                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy khách hàng"));
         }
 
         String orderNumber = generateOrderNumber();
@@ -59,8 +59,8 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         order.setAccount(creator);
         order.setCustomer(customer);
         order.setOrderDate(LocalDateTime.now());
-        order.setOrderStatus("PENDING");
-        order.setPaymentStatus("UNPAID");
+        order.setOrderStatus("Chờ xác nhận");
+        order.setPaymentStatus("Chưa thanh toán");
         order.setNotes(req.getNotes());
         order.setCreatedDate(LocalDateTime.now());
         order.setUpdatedDate(LocalDateTime.now());
@@ -70,31 +70,31 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
 
         for (OrderDetailRequest item : req.getItems()) {
             if (item.getProductId() == null)
-                throw new IllegalArgumentException("productId is required for each item");
+                throw new IllegalArgumentException("Thiếu productId cho mặt hàng");
             if (item.getQuantity() == null || item.getQuantity() <= 0)
-                throw new IllegalArgumentException("quantity must be > 0");
+                throw new IllegalArgumentException("Số lượng phải > 0");
 
             Product product = productRepository.findById(item.getProductId())
-                    .orElseThrow(() -> new NoSuchElementException("Product not found"));
+                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy sản phẩm"));
 
             Inventory inv = inventoryRepository.findByProduct(product)
                     .orElseThrow(() -> new NoSuchElementException(
-                            "Inventory not found for product: " + product.getProductName()));
+                            "Không tìm thấy tồn kho cho sản phẩm: " + product.getProductName()));
 
             if (inv.getQuantityInStock() < item.getQuantity())
-                throw new IllegalArgumentException("Not enough stock for product: " + product.getProductName());
+                throw new IllegalArgumentException("Không đủ tồn kho cho sản phẩm: " + product.getProductName());
 
             BigDecimal unitPrice = item.getUnitPrice();
             if (unitPrice == null || unitPrice.compareTo(BigDecimal.ZERO) <= 0) {
                 ProductPrice price = productPriceRepository.findCurrentPriceByProductId(product.getProductId())
                         .orElseThrow(() -> new NoSuchElementException(
-                                "No active price found for product: " + product.getProductName()));
+                                "Không tìm thấy giá đang hiệu lực cho sản phẩm: " + product.getProductName()));
                 unitPrice = price.getUnitPrice();
             }
 
             BigDecimal discountPercent = item.getDiscount() != null ? item.getDiscount() : BigDecimal.ZERO;
             if (discountPercent.compareTo(BigDecimal.ZERO) < 0 || discountPercent.compareTo(BigDecimal.valueOf(100)) > 0)
-                throw new IllegalArgumentException("Discount must be between 0 and 100 percent");
+                throw new IllegalArgumentException("Giảm giá phải trong khoảng 0–100%");
 
             BigDecimal discountMultiplier = BigDecimal.ONE.subtract(
                     discountPercent.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP));
@@ -139,23 +139,23 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         String method = Optional.ofNullable(req.getPaymentMethod()).orElse("CASH");
         payment.setPaymentMethod(method);
         payment.setAmount(grandTotal);
-        payment.setPaymentStatus("UNPAID");
+        payment.setPaymentStatus("Chưa thanh toán");
         payment.setPaymentDate(LocalDateTime.now());
         paymentRepository.save(payment);
 
-        if ("MOMO".equalsIgnoreCase(method)) {
+        if ("MOMO".equalsIgnoreCase(method) || "Ví điện tử".equalsIgnoreCase(method)) {
             try {
                 var momoResp = moMoService.createPayment(order.getOrderId());
                 if (momoResp != null && momoResp.getPayUrl() != null) {
                     payment.setTransactionReference(momoResp.getRequestId());
                     payment.setNotes("PAYURL:" + momoResp.getPayUrl());
                     paymentRepository.save(payment);
-                    log.info("MoMo QR created for order {} - {}", orderNumber, momoResp.getPayUrl());
+                    log.info("Tạo MoMo QR cho đơn {} - {}", orderNumber, momoResp.getPayUrl());
                 } else {
-                    log.warn("⚠MoMo response is null or missing payUrl for order {}", orderNumber);
+                    log.warn("Phản hồi MoMo rỗng hoặc thiếu payUrl cho đơn {}", orderNumber);
                 }
             } catch (Exception e) {
-                log.error("Failed to create MoMo payment for order {}: {}", orderNumber, e.getMessage(), e);
+                log.error("Tạo thanh toán MoMo thất bại cho đơn {}: {}", orderNumber, e.getMessage(), e);
             }
         }
 
@@ -166,7 +166,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
     @Override
     public OrderResponse getOrder(UUID orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new NoSuchElementException("Order not found"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
         Payment payment = paymentRepository.findByOrder(order);
         return orderMapper.toResponse(order, details, payment);
@@ -187,19 +187,19 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
     @Transactional
     public OrderResponse cancelOrder(UUID orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new NoSuchElementException("Order not found"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
 
         Payment payment = paymentRepository.findByOrder(order);
-        if (payment == null) throw new NoSuchElementException("Payment not found for order");
+        if (payment == null) throw new NoSuchElementException("Không tìm thấy thanh toán của đơn hàng");
 
-        if ("UNPAID".equalsIgnoreCase(order.getPaymentStatus())) {
-            order.setOrderStatus("CANCELLED");
-            order.setPaymentStatus("UNPAID");
-            payment.setPaymentStatus("UNPAID");
-        } else if ("PAID".equalsIgnoreCase(order.getPaymentStatus())) {
-            order.setOrderStatus("COMPLETED");
-            order.setPaymentStatus("REFUNDED");
-            payment.setPaymentStatus("REFUNDED");
+        if ("Chưa thanh toán".equalsIgnoreCase(order.getPaymentStatus())) {
+            order.setOrderStatus("Đã hủy");
+            order.setPaymentStatus("Chưa thanh toán");
+            payment.setPaymentStatus("Chưa thanh toán");
+        } else if ("Đã thanh toán".equalsIgnoreCase(order.getPaymentStatus())) {
+            order.setOrderStatus("Hoàn tất");
+            order.setPaymentStatus("Đã hoàn tiền");
+            payment.setPaymentStatus("Đã hoàn tiền");
         }
 
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
@@ -218,8 +218,8 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
     @Transactional
     public OrderResponse holdOrder(UUID id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-        order.setOrderStatus("HOLD");
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+        order.setOrderStatus("Chờ xử lý");
         order.setUpdatedDate(LocalDateTime.now());
         orderRepository.save(order);
 
@@ -234,13 +234,13 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
     @Transactional
     public OrderResponse completeOrder(UUID id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-        order.setOrderStatus("COMPLETED");
-        order.setPaymentStatus("PAID");
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+        order.setOrderStatus("Hoàn tất");
+        order.setPaymentStatus("Đã thanh toán");
 
         Payment payment = paymentRepository.findByOrder(order);
         if (payment != null) {
-            payment.setPaymentStatus("PAID");
+            payment.setPaymentStatus("Đã thanh toán");
             payment.setPaymentDate(LocalDateTime.now());
             paymentRepository.save(payment);
         }
@@ -263,10 +263,10 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
     private void adjustInventory(Product product, int quantityChange, Account account) {
         Inventory inv = inventoryRepository.findByProduct(product)
                 .orElseThrow(() -> new NoSuchElementException(
-                        "Inventory not found for product: " + product.getProductName()));
+                        "Không tìm thấy tồn kho cho sản phẩm: " + product.getProductName()));
 
         int newQty = inv.getQuantityInStock() + quantityChange;
-        if (newQty < 0) throw new IllegalArgumentException("Not enough stock");
+        if (newQty < 0) throw new IllegalArgumentException("Không đủ tồn kho");
 
         inv.setQuantityInStock(newQty);
         inv.setLastUpdated(LocalDateTime.now());
@@ -276,7 +276,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         trx.setTransactionId(UUID.randomUUID());
         trx.setProduct(product);
         trx.setAccount(account);
-        trx.setTransactionType(quantityChange < 0 ? "SALE_OUT" : "SALE_CANCEL");
+        trx.setTransactionType(quantityChange < 0 ? "Bán ra" : "Hủy bán");
         trx.setQuantity(Math.abs(quantityChange));
         trx.setTransactionDate(LocalDateTime.now());
         inventoryTransactionRepository.save(trx);

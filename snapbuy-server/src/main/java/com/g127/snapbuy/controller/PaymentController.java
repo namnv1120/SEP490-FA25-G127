@@ -6,11 +6,9 @@ import com.g127.snapbuy.dto.response.PaymentResponse;
 import com.g127.snapbuy.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -25,7 +23,7 @@ public class PaymentController {
     public ApiResponse<PaymentResponse> createPayment(@RequestBody PaymentRequest request) {
         ApiResponse<PaymentResponse> response = new ApiResponse<>();
         response.setResult(paymentService.createPayment(request));
-        response.setMessage("Payment created successfully");
+        response.setMessage("Tạo thanh toán thành công.");
         return response;
     }
 
@@ -33,7 +31,7 @@ public class PaymentController {
     public ApiResponse<PaymentResponse> finalizePayment(@PathVariable UUID id) {
         ApiResponse<PaymentResponse> response = new ApiResponse<>();
         response.setResult(paymentService.finalizePayment(id));
-        response.setMessage("Payment finalized successfully");
+        response.setMessage("Hoàn tất thanh toán thành công.");
         return response;
     }
 
@@ -41,7 +39,7 @@ public class PaymentController {
     public ApiResponse<PaymentResponse> refundPayment(@PathVariable UUID id) {
         ApiResponse<PaymentResponse> response = new ApiResponse<>();
         response.setResult(paymentService.refundPayment(id));
-        response.setMessage("Payment refunded successfully");
+        response.setMessage("Hoàn tiền thành công.");
         return response;
     }
 
@@ -49,7 +47,7 @@ public class PaymentController {
     public ApiResponse<List<PaymentResponse>> getPaymentsByOrder(@PathVariable UUID orderId) {
         ApiResponse<List<PaymentResponse>> response = new ApiResponse<>();
         response.setResult(paymentService.getPaymentsByOrder(orderId));
-        response.setMessage("Payments fetched successfully");
+        response.setMessage("Lấy danh sách thanh toán theo đơn hàng thành công.");
         return response;
     }
 

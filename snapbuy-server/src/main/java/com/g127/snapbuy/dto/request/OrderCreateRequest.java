@@ -15,12 +15,12 @@ public class OrderCreateRequest {
 
     private UUID customerId;
 
-    @NotNull(message = "Account ID is required")
+    @NotNull(message = "Vui lòng chọn tài khoản tạo đơn.")
     private UUID accountId;
 
     private String notes;
 
-    @NotEmpty(message = "Order must have at least one item")
+    @NotEmpty(message = "Đơn hàng phải có ít nhất 1 sản phẩm.")
     private List<OrderDetailRequest> items;
 
     private BigDecimal discountAmount;

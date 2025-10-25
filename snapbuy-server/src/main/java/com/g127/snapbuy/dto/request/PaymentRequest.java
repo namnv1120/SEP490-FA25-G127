@@ -12,14 +12,14 @@ import java.util.UUID;
 @Builder
 public class PaymentRequest {
 
-    @NotNull(message = "Order ID is required")
+    @NotNull(message = "Vui lòng chọn đơn hàng.")
     private UUID orderId;
 
-    @NotBlank(message = "Payment method is required")
+    @NotBlank(message = "Vui lòng chọn phương thức thanh toán.")
     private String paymentMethod;
 
-    @NotNull(message = "Amount is required")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Amount must be greater than 0")
+    @NotNull(message = "Vui lòng nhập số tiền.")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Số tiền phải lớn hơn 0.")
     private BigDecimal amount;
 
     private String transactionReference;

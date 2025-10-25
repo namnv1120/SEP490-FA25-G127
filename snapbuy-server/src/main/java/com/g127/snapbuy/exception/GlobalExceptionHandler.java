@@ -58,14 +58,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<?>> handleJsonParseExceptions(HttpMessageNotReadableException ex) {
-        String message = "Invalid request format";
+        String message = "Định dạng yêu cầu không hợp lệ";
 
         if (ex.getCause() instanceof InvalidFormatException invalidFormat) {
             if (invalidFormat.getTargetType().isEnum()) {
-                message = "Invalid value for field. Accepted values: " +
+                message = "Giá trị không hợp lệ cho trường. Giá trị được chấp nhận: " +
                         Arrays.toString(invalidFormat.getTargetType().getEnumConstants());
             } else if (invalidFormat.getTargetType() == UUID.class) {
-                message = "UUID format error. Please provide a valid UUID.";
+                message = "Lỗi định dạng UUID. Vui lòng cung cấp UUID hợp lệ.";
             }
         }
 

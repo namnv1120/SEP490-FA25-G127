@@ -14,10 +14,8 @@ import org.springframework.security.authentication.*;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.Date;
 import java.util.List;
-
 
 @Service
 @RequiredArgsConstructor
@@ -51,7 +49,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             List<String> roles = user.getAuthorities().stream().map(a -> a.getAuthority()).toList();
             return IntrospectResponse.builder().valid(valid).username(username).exp(exp).roles(roles).build();
         } catch (Exception e) {
-            return IntrospectResponse.builder().valid(false).error("Invalid token").build();
+            return IntrospectResponse.builder().valid(false).error("Token không hợp lệ").build();
         }
     }
 
@@ -60,21 +58,22 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         try {
             String username = jwtUtil.extractUsername(req.getToken());
             UserDetails user = userDetailsService.loadUserByUsername(username);
-            if (!jwtUtil.validateToken(req.getToken(), user)) throw new BadCredentialsException("Invalid token");
+            if (!jwtUtil.validateToken(req.getToken(), user)) {
+                throw new BadCredentialsException("Token không hợp lệ");
+            }
             String newToken = jwtUtil.generateToken(user);
             long exp = new Date().getTime() + 60L * 60 * 1000;
             return AuthenticationResponse.builder().token(newToken).tokenType("Bearer").expiresAt(exp).build();
         } catch (Exception e) {
-            throw new BadCredentialsException("Invalid token");
+            throw new BadCredentialsException("Token không hợp lệ");
         }
     }
-
 
     @Override
     public void logout(LogoutRequest req) {
         String raw = req.getToken();
         if (raw == null || raw.isBlank()) {
-            throw new IllegalArgumentException("Token is required");
+            throw new IllegalArgumentException("Thiếu token");
         }
 
         String token = raw.startsWith("Bearer ") ? raw.substring(7) : raw;
@@ -82,12 +81,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String jti = jwtUtil.extractJti(token);
 
         if (tokenBlacklistService.isBlacklisted(jti)) {
-            throw new IllegalArgumentException("Token already revoked");
+            throw new IllegalArgumentException("Token đã bị thu hồi");
         }
 
         long expMs = jwtUtil.extractExpiration(token).getTime();
         tokenBlacklistService.blacklist(jti, expMs);
     }
-
-
 }

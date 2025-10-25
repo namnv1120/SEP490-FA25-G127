@@ -1,19 +1,18 @@
 package com.g127.snapbuy.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 @Data
 public class PermissionCreateRequest {
-    @NotBlank(message = "Permission name is required")
-    @Size(max = 50, message = "Permission name must be <= 50 characters")
+    @NotBlank(message = "Vui lòng nhập tên quyền.")
+    @Size(max = 50, message = "Tên quyền không được vượt quá 50 ký tự.")
     private String permissionName;
 
-    @Size(max = 200)
+    @Size(max = 200, message = "Mô tả không được vượt quá 200 ký tự.")
     private String description;
 
-    @Size(max = 50)
+    @Size(max = 50, message = "Module không được vượt quá 50 ký tự.")
     private String module;
 
     private Boolean isActive;

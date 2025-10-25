@@ -2,12 +2,7 @@ package com.g127.snapbuy.dto.request;
 
 import com.g127.snapbuy.entity.Customer;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
+import lombok.*;
 
 @Getter
 @Setter
@@ -16,14 +11,14 @@ import lombok.Setter;
 @Builder
 public class CustomerCreateRequest {
 
-    @Size(min = 2, max = 50, message = "Full name must be between 2 and 50 characters.")
+    @Size(min = 2, max = 50, message = "Họ và tên phải từ 2 đến 50 ký tự.")
     private String fullName;
 
-    @Size(max = 20, message = "Phone must be at most 20 characters")
-    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Phone number must be valid.")
+    @Size(max = 20, message = "Số điện thoại không được vượt quá 20 ký tự.")
+    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Số điện thoại không đúng định dạng.")
     private String phone;
 
-    @NotNull(message = "Gender must not be null.")
+    @NotNull(message = "Vui lòng chọn giới tính.")
     private Customer.Gender gender;
 
     @Builder.Default

@@ -52,7 +52,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 .supplierId(req.supplierId())
                 .accountId(req.accountId())
                 .orderDate(now)
-                .status("PENDING")
+                .status("Chờ duyệt")
                 .totalAmount(plannedTotal)
                 .taxAmount(plannedTax)
                 .notes(req.notes())
@@ -78,12 +78,12 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     @Transactional
     public PurchaseOrderResponse receive(UUID poId, PurchaseOrderReceiveRequest req) {
         PurchaseOrder po = purchaseOrderRepo.findById(poId)
-                .orElseThrow(() -> new NoSuchElementException("Purchase order not found"));
-        if (Objects.equals(po.getStatus(), "CANCELLED")) {
-            throw new IllegalStateException("Cannot receive a cancelled purchase order");
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu nhập hàng"));
+        if (Objects.equals(po.getStatus(), "Đã hủy")) {
+            throw new IllegalStateException("Không thể xác nhận nhập hàng cho phiếu đã hủy");
         }
-        if (Objects.equals(po.getStatus(), "RECEIVED")) {
-            throw new IllegalStateException("Purchase order already received and cannot be modified");
+        if (Objects.equals(po.getStatus(), "Đã nhận hàng")) {
+            throw new IllegalStateException("Phiếu nhập đã hoàn tất, không thể chỉnh sửa");
         }
 
         List<PurchaseOrderDetail> details = detailRepo.findByPurchaseOrderId(poId);
@@ -107,15 +107,15 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             UUID detailId = e.getKey();
             int importQty = e.getValue();
             PurchaseOrderDetail d = Optional.ofNullable(byId.get(detailId))
-                    .orElseThrow(() -> new NoSuchElementException("Detail not found: " + detailId));
+                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy dòng chi tiết: " + detailId));
 
             int planned = Optional.ofNullable(d.getQuantity()).orElse(0);
             int receivedSoFar = Optional.ofNullable(d.getReceivedQuantity()).orElse(0);
             int remaining = Math.max(planned - receivedSoFar, 0);
 
-            if (importQty < 0) throw new IllegalArgumentException("receivedQuantity must be >= 0");
+            if (importQty < 0) throw new IllegalArgumentException("Số lượng nhận phải ≥ 0");
             if (importQty > remaining) {
-                throw new IllegalStateException("Import quantity exceeds remaining planned quantity");
+                throw new IllegalStateException("Số lượng nhận vượt quá số lượng còn lại theo kế hoạch");
             }
 
             d.setReceivedQuantity(receivedSoFar + importQty);
@@ -124,7 +124,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
         LocalDateTime now = LocalDateTime.now();
         var account = accountRepo.findById(req.accountId())
-                .orElseThrow(() -> new NoSuchElementException("Account not found: " + req.accountId()));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản: " + req.accountId()));
 
         Map<UUID, Integer> importByProduct = new HashMap<>();
         Map<UUID, BigDecimal> unitPriceByProduct = new HashMap<>();
@@ -142,7 +142,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             int qty = e.getValue();
 
             var product = productRepo.findById(productId)
-                    .orElseThrow(() -> new NoSuchElementException("Product not found: " + productId));
+                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy sản phẩm: " + productId));
 
             Optional<Inventory> invOpt = inventoryRepo.lockByProductId(productId);
             Inventory inv = invOpt.orElseGet(() -> {
@@ -161,10 +161,10 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                     .transactionId(UUID.randomUUID())
                     .product(product)
                     .account(account)
-                    .transactionType("IMPORT")
+                    .transactionType("Nhập kho")
                     .quantity(qty)
                     .unitPrice(unitPriceByProduct.getOrDefault(productId, BigDecimal.ZERO))
-                    .referenceType("PURCHASE_ORDER")
+                    .referenceType("Phiếu nhập hàng")
                     .referenceId(poId)
                     .notes(req.notes())
                     .transactionDate(now)
@@ -195,7 +195,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         po.setTaxAmount(taxAmount);
         po.setTotalAmount(receivedTotal);
 
-        po.setStatus("RECEIVED");
+        po.setStatus("Đã nhận hàng");
         po.setReceivedDate(now);
         purchaseOrderRepo.save(po);
 
@@ -206,10 +206,10 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     @Transactional
     public PurchaseOrderResponse cancel(UUID poId) {
         PurchaseOrder po = purchaseOrderRepo.findById(poId)
-                .orElseThrow(() -> new NoSuchElementException("Purchase order not found")); // [attached_file:3]
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu nhập hàng"));
 
-        if (Objects.equals(po.getStatus(), "RECEIVED")) {
-            throw new IllegalStateException("Cannot cancel a received purchase order");
+        if (Objects.equals(po.getStatus(), "Đã nhận hàng")) {
+            throw new IllegalStateException("Không thể hủy phiếu đã hoàn tất");
         }
 
         List<PurchaseOrderDetail> details = detailRepo.findByPurchaseOrderId(poId);
@@ -218,13 +218,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         }
         detailRepo.saveAll(details);
 
-        BigDecimal receivedSubtotal = BigDecimal.ZERO;
-        BigDecimal taxAmount = BigDecimal.ZERO;
-        BigDecimal total = BigDecimal.ZERO;
-
-        po.setTaxAmount(taxAmount);
-        po.setTotalAmount(total);
-        po.setStatus("CANCELLED");
+        po.setTaxAmount(BigDecimal.ZERO);
+        po.setTotalAmount(BigDecimal.ZERO);
+        po.setStatus("Đã hủy");
         po.setReceivedDate(null);
         purchaseOrderRepo.save(po);
 

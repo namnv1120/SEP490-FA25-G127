@@ -20,30 +20,30 @@ public class PurchaseOrderController {
     private final PurchaseOrderService service;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('Admin','Shop Owner','Warehouse Staff')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<PurchaseOrderResponse> create(@Valid @RequestBody PurchaseOrderCreateRequest req) {
         ApiResponse<PurchaseOrderResponse> response = new ApiResponse<>();
         response.setResult(service.create(req));
-        response.setMessage("Purchase order created");
+        response.setMessage("Tạo phiếu nhập hàng thành công.");
         return response;
     }
 
     @PutMapping("/{id}/receive")
-    @PreAuthorize("hasAnyRole('Admin','Shop Owner','Warehouse Staff')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<PurchaseOrderResponse> receive(@PathVariable UUID id,
                                                       @Valid @RequestBody PurchaseOrderReceiveRequest req) {
         ApiResponse<PurchaseOrderResponse> response = new ApiResponse<>();
         response.setResult(service.receive(id, req));
-        response.setMessage("Goods received and inventory updated");
+        response.setMessage("Đã xác nhận nhập hàng và cập nhật tồn kho.");
         return response;
     }
 
     @PutMapping("/{id}/cancel")
-    @PreAuthorize("hasAnyRole('Admin','Shop Owner', 'Warehouse Staff')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<PurchaseOrderResponse> cancel(@PathVariable UUID id) {
         ApiResponse<PurchaseOrderResponse> response = new ApiResponse<>();
         response.setResult(service.cancel(id));
-        response.setMessage("Purchase order cancelled");
+        response.setMessage("Đã hủy phiếu nhập hàng.");
         return response;
     }
 }

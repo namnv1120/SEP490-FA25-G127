@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 public class LogoutRequest {
-    @NotBlank(message = "Token is required")
+    @NotBlank(message = "Vui lòng nhập Token")
     private String token;
 }

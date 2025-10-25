@@ -53,7 +53,7 @@ public class ProductController {
     public ApiResponse<String> deleteProduct(@PathVariable("id") UUID id) {
         productService.deleteProduct(id);
         ApiResponse<String> response = new ApiResponse<>();
-        response.setResult("Product deleted");
+        response.setResult("Sản phẩm đã được xoá");
         return response;
     }
 }

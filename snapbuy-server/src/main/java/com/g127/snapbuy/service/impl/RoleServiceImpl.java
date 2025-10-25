@@ -16,7 +16,6 @@ import com.g127.snapbuy.service.RoleService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -31,10 +30,9 @@ public class RoleServiceImpl implements RoleService {
     private final PermissionRepository permissionRepository;
     private final AccountRepository accountRepository;
 
-    private static final String ADMIN = "Admin";
-    private static final String OWNER = "Shop Owner";
+    private static final String ADMIN = "Quản trị viên";
+    private static final String OWNER = "Chủ cửa hàng";
 
-    // ======= ROLE CHECKERS =======
     private boolean isAdmin() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null) return false;
@@ -62,13 +60,13 @@ public class RoleServiceImpl implements RoleService {
 
     private void ensureActive(Role r) {
         if (Boolean.FALSE.equals(r.getIsActive())) {
-            throw new IllegalStateException("Role is inactive");
+            throw new IllegalStateException("Vai trò đang ở trạng thái không hoạt động");
         }
     }
 
     private void ensureActive(Permission p) {
         if (Boolean.FALSE.equals(p.getIsActive())) {
-            throw new IllegalStateException("Permission is inactive");
+            throw new IllegalStateException("Quyền đang ở trạng thái không hoạt động");
         }
     }
 
@@ -95,13 +93,12 @@ public class RoleServiceImpl implements RoleService {
                 .build();
     }
 
-
     @Override
     @Transactional
     public RoleResponse createRole(RoleCreateRequest req) {
         String name = req.getRoleName().trim();
         if (ADMIN.equalsIgnoreCase(name)) {
-            throw new IllegalArgumentException("Cannot create 'Admin' role");
+            throw new IllegalArgumentException("Không thể tạo vai trò 'Quản trị viên'");
         }
         if (roleRepository.existsByRoleNameIgnoreCase(name)) {
             throw new AppException(ErrorCode.NAME_EXISTED);
@@ -133,7 +130,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public RoleResponse getRoleById(UUID roleId) {
         Role r = roleRepository.findById(roleId)
-                .orElseThrow(() -> new NoSuchElementException("Role not found"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò"));
         return toResponse(r);
     }
 
@@ -141,19 +138,19 @@ public class RoleServiceImpl implements RoleService {
     @Transactional
     public RoleResponse updateRole(UUID roleId, RoleUpdateRequest req) {
         Role r = roleRepository.findById(roleId)
-                .orElseThrow(() -> new NoSuchElementException("Role not found"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò"));
 
         ensureNotSystemRole(r,
-                "Cannot update 'Admin' role",
-                "Shop Owner cannot modify 'Shop Owner' role");
+                "Không thể cập nhật vai trò 'Quản trị viên'",
+                "Chủ cửa hàng không được phép chỉnh sửa vai trò 'Chủ cửa hàng'");
 
         boolean admin = isAdmin();
 
         if (req.getRoleName() != null) {
-            if (!admin) throw new IllegalArgumentException("Only Admin can rename role");
+            if (!admin) throw new IllegalArgumentException("Chỉ 'Quản trị viên' mới được đổi tên vai trò");
             String newName = req.getRoleName().trim();
             if (ADMIN.equalsIgnoreCase(newName))
-                throw new IllegalArgumentException("Cannot rename to 'Admin'");
+                throw new IllegalArgumentException("Không thể đổi tên thành 'Quản trị viên'");
             roleRepository.findByRoleNameIgnoreCase(newName)
                     .filter(other -> !other.getRoleId().equals(roleId))
                     .ifPresent(other -> {
@@ -163,7 +160,7 @@ public class RoleServiceImpl implements RoleService {
         }
 
         if (req.getDescription() != null) {
-            if (!admin) throw new IllegalArgumentException("Only Admin can update description");
+            if (!admin) throw new IllegalArgumentException("Chỉ 'Quản trị viên' mới được cập nhật mô tả");
             r.setDescription(req.getDescription());
         }
 
@@ -187,19 +184,19 @@ public class RoleServiceImpl implements RoleService {
     @Transactional
     public void deleteRole(UUID roleId) {
         Role r = roleRepository.findById(roleId)
-                .orElseThrow(() -> new NoSuchElementException("Role not found"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò"));
 
         ensureNotSystemRole(r,
-                "Cannot delete 'Admin' role",
-                "Shop Owner cannot delete 'Shop Owner' role");
+                "Không thể xóa vai trò 'Quản trị viên'",
+                "Chủ cửa hàng không được phép xóa vai trò 'Chủ cửa hàng'");
 
         if (currentUserHasRole(r)) {
-            throw new IllegalStateException("You cannot delete a role that you currently have");
+            throw new IllegalStateException("Bạn không thể xóa vai trò mà chính bạn đang sở hữu");
         }
 
         long inUse = accountRepository.countAccountsByRoleId(roleId);
         if (inUse > 0) {
-            throw new IllegalStateException("Role is used by " + inUse + " account(s). Unassign it first.");
+            throw new IllegalStateException("Vai trò đang được sử dụng bởi " + inUse + " tài khoản. Hãy gỡ gán trước.");
         }
         roleRepository.deleteById(roleId);
     }
@@ -207,7 +204,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public List<PermissionResponse> listPermissions(UUID roleId) {
         Role r = roleRepository.findById(roleId)
-                .orElseThrow(() -> new NoSuchElementException("Role not found"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò"));
         return r.getPermissions().stream().map(this::toPermissionResponse).toList();
     }
 
@@ -215,14 +212,14 @@ public class RoleServiceImpl implements RoleService {
     @Transactional
     public void addPermission(UUID roleId, UUID permissionId) {
         Role r = roleRepository.findById(roleId)
-                .orElseThrow(() -> new NoSuchElementException("Role not found"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò"));
         ensureNotSystemRole(r,
-                "Cannot modify 'Admin' role",
-                "Shop Owner cannot modify 'Shop Owner' role");
+                "Không thể chỉnh sửa vai trò 'Chủ hệ thống'",
+                "Chủ cửa hàng không được phép chỉnh sửa vai trò 'Chủ cửa hàng'");
         ensureActive(r);
 
         Permission p = permissionRepository.findById(permissionId)
-                .orElseThrow(() -> new NoSuchElementException("Permission not found"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy quyền"));
         ensureActive(p);
 
         r.getPermissions().add(p);
@@ -233,14 +230,14 @@ public class RoleServiceImpl implements RoleService {
     @Transactional
     public void removePermission(UUID roleId, UUID permissionId) {
         Role r = roleRepository.findById(roleId)
-                .orElseThrow(() -> new NoSuchElementException("Role not found"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò"));
         ensureNotSystemRole(r,
-                "Cannot modify 'Admin' role",
-                "Shop Owner cannot modify 'Shop Owner' role");
+                "Không thể chỉnh sửa vai trò 'Chủ hệ thống'",
+                "Chủ cửa hàng không được phép chỉnh sửa vai trò 'Chủ cửa hàng'");
         ensureActive(r);
 
         Permission p = permissionRepository.findById(permissionId)
-                .orElseThrow(() -> new NoSuchElementException("Permission not found"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy quyền"));
         ensureActive(p);
 
         r.getPermissions().remove(p);
@@ -251,17 +248,17 @@ public class RoleServiceImpl implements RoleService {
     @Transactional
     public RoleResponse setPermissions(UUID roleId, RolePermissionUpdateRequest req) {
         Role r = roleRepository.findById(roleId)
-                .orElseThrow(() -> new NoSuchElementException("Role not found"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò"));
         ensureNotSystemRole(r,
-                "Cannot modify 'Admin' role",
-                "Shop Owner cannot modify 'Shop Owner' role");
+                "Không thể chỉnh sửa vai trò 'Quản trị viên'",
+                "Chủ cửa hàng không được phép chỉnh sửa vai trò 'Chủ cửa hàng'");
         ensureActive(r);
 
         Set<Permission> newSet = new HashSet<>();
         if (req.getPermissionIds() != null) {
             for (UUID pid : new HashSet<>(req.getPermissionIds())) {
                 Permission p = permissionRepository.findById(pid)
-                        .orElseThrow(() -> new NoSuchElementException("Permission not found: " + pid));
+                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy quyền: " + pid));
                 ensureActive(p);
                 newSet.add(p);
             }
