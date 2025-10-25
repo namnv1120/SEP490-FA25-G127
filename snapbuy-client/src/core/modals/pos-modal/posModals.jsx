@@ -4,18 +4,10 @@ import TableTopHead from "../../../components/table-top-head";
 import CommonSelect from "../../../components/select/common-select";
 import {
   barcodeImg3,
-  giftCard,
   logo,
   posProduct16,
   posProduct17,
   scanImg,
-  user02,
-  user03,
-  user05,
-  user06,
-  user12,
-  user22,
-  user27,
 } from "../../../utils/imagepath";
 import {
   createCustomer,
@@ -27,12 +19,12 @@ const PosModals = () => {
   const [selectedDiscountType, setSelectedDiscountType] = useState(null);
   const [selectedWeightUnit, setSelectedWeightUnit] = useState(null);
   const [selectedTaxRate, setSelectedTaxRate] = useState(null);
-  const [selectedCouponCode, setSelectedCouponCode] = useState(null);
   const [selectedDiscountMode, setSelectedDiscountMode] = useState(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const [selectedPaymentType, setSelectedPaymentType] = useState(null);
-
   const [input, setInput] = useState("");
+  const [receivedAmount, setReceivedAmount] = useState("");
+  const [payingAmount, setPayingAmount] = useState("");
+  const [changeAmount, setChangeAmount] = useState(0);
 
   // State lưu thông tin khách hàng
   const [customer, setCustomer] = useState({
@@ -125,6 +117,43 @@ const PosModals = () => {
     }
   };
 
+  const handleReceivedChange = (e) => {
+    let value = e.target.value.replace(/[^\d]/g, "");
+    if (value === "") {
+      setReceivedAmount("");
+      setChangeAmount(0);
+      return;
+    }
+
+    const numericValue = parseInt(value, 10);
+    setReceivedAmount(numericValue);
+
+    if (payingAmount) {
+      setChangeAmount(Math.max(numericValue - parseInt(payingAmount, 10), 0));
+    }
+  };
+
+  const handlePayingChange = (e) => {
+    let value = e.target.value.replace(/[^\d]/g, "");
+    if (value === "") {
+      setPayingAmount("");
+      setChangeAmount(0);
+      return;
+    }
+
+    const numericValue = parseInt(value, 10);
+    setPayingAmount(numericValue);
+
+    if (receivedAmount) {
+      setChangeAmount(Math.max(parseInt(receivedAmount, 10) - numericValue, 0));
+    }
+  };
+
+  const handleQuickCash = (amount) => {
+    setReceivedAmount(amount);
+    setChangeAmount(Math.max(amount - payingAmount, 0));
+  };
+
   const options = {
     taxType: [
       { value: "exclusive", label: "Exclusive" },
@@ -175,10 +204,8 @@ const PosModals = () => {
                   <div className="icon-success bg-success text-white mb-2">
                     <i className="ti ti-check" />
                   </div>
-                  <h3 className="mb-2">Payment Completed</h3>
-                  <p className="mb-3">
-                    Do you want to Print Receipt for the Completed Order
-                  </p>
+                  <h3 className="mb-2">Hoàn thành thanh toán</h3>
+                  <p className="mb-3">Bạn muốn in hóa đơn hay đơn hàng mới?</p>
                   <div className="d-flex align-items-center justify-content-center gap-2 flex-wrap">
                     <button
                       type="button"
@@ -186,7 +213,7 @@ const PosModals = () => {
                       data-bs-toggle="modal"
                       data-bs-target="#print-receipt"
                     >
-                      Print Receipt
+                      In hóa đơn
                       <i className="feather-arrow-right-circle icon-me-5" />
                     </button>
                     <button
@@ -194,7 +221,7 @@ const PosModals = () => {
                       data-bs-dismiss="modal"
                       className="btn btn-md btn-primary"
                     >
-                      Next Order
+                      Đơn hàng mới
                     </button>
                   </div>
                 </form>
@@ -270,12 +297,6 @@ const PosModals = () => {
                     <td className="text-end">$100</td>
                   </tr>
                   <tr>
-                    <td>3. Apple Series 8</td>
-                    <td>$50</td>
-                    <td>3</td>
-                    <td className="text-end">$150</td>
-                  </tr>
-                  <tr>
                     <td colSpan={4}>
                       <table className="table-borderless w-100 table-fit">
                         <tbody>
@@ -292,7 +313,7 @@ const PosModals = () => {
                             <td className="text-end">0.00</td>
                           </tr>
                           <tr>
-                            <td className="fw-bold">Tax (5%) :</td>
+                            <td className="fw-bold">Tax :</td>
                             <td className="text-end">$5.00</td>
                           </tr>
                           <tr>
@@ -382,24 +403,6 @@ const PosModals = () => {
                         </div>
                       </div>
                       <p className="text-teal fw-bold">$2000</p>
-                    </div>
-                    <div className="product-list bg-white align-items-center justify-content-between">
-                      <div
-                        className="d-flex align-items-center product-info"
-                        data-bs-toggle="modal"
-                        data-bs-target="#products"
-                      >
-                        <Link to="#" className="pro-img">
-                          <img src={posProduct17} alt="Products" />
-                        </Link>
-                        <div className="info">
-                          <h6>
-                            <Link to="#">Iphone 11S</Link>
-                          </h6>
-                          <p>Quantity : 04</p>
-                        </div>
-                      </div>
-                      <p className="text-teal fw-bold">$3000</p>
                     </div>
                   </div>
                 </div>
@@ -769,985 +772,6 @@ const PosModals = () => {
         </div>
       </div>
       {/* /Reset */}
-      {/* Recent Transactions */}
-      <div
-        className="modal fade pos-modal"
-        id="recents"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-lg modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Recent Transactions</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="tabs-sets">
-                <ul className="nav nav-tabs" id="myTab" role="tablist">
-                  <li className="nav-item" role="presentation">
-                    <button
-                      className="nav-link active"
-                      id="purchase-tab"
-                      data-bs-toggle="tab"
-                      data-bs-target="#purchase"
-                      type="button"
-                      aria-controls="purchase"
-                      aria-selected="true"
-                      role="tab"
-                    >
-                      Purchase
-                    </button>
-                  </li>
-                  <li className="nav-item" role="presentation">
-                    <button
-                      className="nav-link"
-                      id="payment-tab"
-                      data-bs-toggle="tab"
-                      data-bs-target="#payment"
-                      type="button"
-                      aria-controls="payment"
-                      aria-selected="false"
-                      role="tab"
-                    >
-                      Payment
-                    </button>
-                  </li>
-                  <li className="nav-item" role="presentation">
-                    <button
-                      className="nav-link"
-                      id="return-tab"
-                      data-bs-toggle="tab"
-                      data-bs-target="#return"
-                      type="button"
-                      aria-controls="return"
-                      aria-selected="false"
-                      role="tab"
-                    >
-                      Return
-                    </button>
-                  </li>
-                </ul>
-                <div className="tab-content">
-                  <div
-                    className="tab-pane fade show active"
-                    id="purchase"
-                    role="tabpanel"
-                    aria-labelledby="purchase-tab"
-                  >
-                    <div className="card table-list-card mb-0">
-                      <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-                        <div className="search-set">
-                          <div className="search-input">
-                            <Link to="#" className="btn btn-searchset">
-                              <i className="ti ti-search fs-14 feather-search" />
-                            </Link>
-                            <div
-                              id="DataTables_Table_0_filter"
-                              className="dataTables_filter"
-                            >
-                              <label>
-                                {" "}
-                                <input
-                                  type="search"
-                                  className="form-control form-control-sm"
-                                  placeholder="Search"
-                                  aria-controls="DataTables_Table_0"
-                                />
-                              </label>
-                            </div>
-                          </div>
-                        </div>
-                        <TableTopHead />
-                      </div>
-                      <div className="card-body">
-                        <div className="custom-datatable-filter table-responsive">
-                          <table className="table datatable">
-                            <thead>
-                              <tr>
-                                <th className="no-sort">
-                                  <label className="checkboxs">
-                                    <input
-                                      type="checkbox"
-                                      className="select-all"
-                                    />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </th>
-                                <th>Customer</th>
-                                <th>Reference</th>
-                                <th>Date</th>
-                                <th>Amount </th>
-                                <th className="no-sort">Action</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user27} alt="product" />
-                                    </Link>
-                                    <Link to="#">Carl Evans</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0101</td>
-                                <td>24 Dec 2024</td>
-                                <td>$1000</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user02} alt="product" />
-                                    </Link>
-                                    <Link to="#">Minerva Rameriz</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0102</td>
-                                <td>10 Dec 2024</td>
-                                <td>$1500</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user05} alt="product" />
-                                    </Link>
-                                    <Link to="#">Robert Lamon</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0103</td>
-                                <td>27 Nov 2024</td>
-                                <td>$1500</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user22} alt="product" />
-                                    </Link>
-                                    <Link to="#">Patricia Lewis</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0104</td>
-                                <td>18 Nov 2024</td>
-                                <td>$2000</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user03} alt="product" />
-                                    </Link>
-                                    <Link to="#">Mark Joslyn</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0105</td>
-                                <td>06 Nov 2024</td>
-                                <td>$800</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user12} alt="product" />
-                                    </Link>
-                                    <Link to="#">Marsha Betts</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0106</td>
-                                <td>25 Oct 2024</td>
-                                <td>$750</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user06} alt="product" />
-                                    </Link>
-                                    <Link to="#">Daniel Jude</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0107</td>
-                                <td>14 Oct 2024</td>
-                                <td>$1300</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="tab-pane fade" id="payment" role="tabpanel">
-                    <div className="card table-list-card mb-0">
-                      <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-                        <div className="search-set">
-                          <div className="search-input">
-                            <Link to="#" className="btn btn-searchset">
-                              <i className="ti ti-search fs-14 feather-search" />
-                            </Link>
-                            <div
-                              id="DataTables_Table_0_filter"
-                              className="dataTables_filter"
-                            >
-                              <label>
-                                {" "}
-                                <input
-                                  type="search"
-                                  className="form-control form-control-sm"
-                                  placeholder="Search"
-                                  aria-controls="DataTables_Table_0"
-                                />
-                              </label>
-                            </div>
-                          </div>
-                        </div>
-                        <TableTopHead />
-                      </div>
-                      <div className="card-body">
-                        <div className="custom-datatable-filter table-responsive">
-                          <table className="table datatable">
-                            <thead>
-                              <tr>
-                                <th className="no-sort">
-                                  <label className="checkboxs">
-                                    <input
-                                      type="checkbox"
-                                      className="select-all"
-                                    />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </th>
-                                <th>Customer</th>
-                                <th>Reference</th>
-                                <th>Date</th>
-                                <th>Amount </th>
-                                <th className="no-sort">Action</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user27} alt="product" />
-                                    </Link>
-                                    <Link to="#">Carl Evans</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0101</td>
-                                <td>24 Dec 2024</td>
-                                <td>$1000</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user02} alt="product" />
-                                    </Link>
-                                    <Link to="#">Minerva Rameriz</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0102</td>
-                                <td>10 Dec 2024</td>
-                                <td>$1500</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user05} alt="product" />
-                                    </Link>
-                                    <Link to="#">Robert Lamon</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0103</td>
-                                <td>27 Nov 2024</td>
-                                <td>$1500</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user22} alt="product" />
-                                    </Link>
-                                    <Link to="#">Patricia Lewis</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0104</td>
-                                <td>18 Nov 2024</td>
-                                <td>$2000</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user03} alt="product" />
-                                    </Link>
-                                    <Link to="#">Mark Joslyn</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0105</td>
-                                <td>06 Nov 2024</td>
-                                <td>$800</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user12} alt="product" />
-                                    </Link>
-                                    <Link to="#">Marsha Betts</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0106</td>
-                                <td>25 Oct 2024</td>
-                                <td>$750</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user06} alt="product" />
-                                    </Link>
-                                    <Link to="#">Daniel Jude</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0107</td>
-                                <td>14 Oct 2024</td>
-                                <td>$1300</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="tab-pane fade" id="return" role="tabpanel">
-                    <div className="card table-list-card mb-0">
-                      <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-                        <div className="search-set">
-                          <div className="search-input">
-                            <Link to="#" className="btn btn-searchset">
-                              <i className="ti ti-search fs-14 feather-search" />
-                            </Link>
-                            <div
-                              id="DataTables_Table_0_filter"
-                              className="dataTables_filter"
-                            >
-                              <label>
-                                {" "}
-                                <input
-                                  type="search"
-                                  className="form-control form-control-sm"
-                                  placeholder="Search"
-                                  aria-controls="DataTables_Table_0"
-                                />
-                              </label>
-                            </div>
-                          </div>
-                        </div>
-                        <TableTopHead />
-                      </div>
-                      <div className="card-body">
-                        <div className="custom-datatable-filter table-responsive">
-                          <table className="table datatable">
-                            <thead>
-                              <tr>
-                                <th className="no-sort">
-                                  <label className="checkboxs">
-                                    <input
-                                      type="checkbox"
-                                      className="select-all"
-                                    />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </th>
-                                <th>Customer</th>
-                                <th>Reference</th>
-                                <th>Date</th>
-                                <th>Amount </th>
-                                <th className="no-sort">Action</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user27} alt="product" />
-                                    </Link>
-                                    <Link to="#">Carl Evans</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0101</td>
-                                <td>24 Dec 2024</td>
-                                <td>$1000</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user02} alt="product" />
-                                    </Link>
-                                    <Link to="#">Minerva Rameriz</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0102</td>
-                                <td>10 Dec 2024</td>
-                                <td>$1500</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user05} alt="product" />
-                                    </Link>
-                                    <Link to="#">Robert Lamon</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0103</td>
-                                <td>27 Nov 2024</td>
-                                <td>$1500</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user22} alt="product" />
-                                    </Link>
-                                    <Link to="#">Patricia Lewis</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0104</td>
-                                <td>18 Nov 2024</td>
-                                <td>$2000</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user03} alt="product" />
-                                    </Link>
-                                    <Link to="#">Mark Joslyn</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0105</td>
-                                <td>06 Nov 2024</td>
-                                <td>$800</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user12} alt="product" />
-                                    </Link>
-                                    <Link to="#">Marsha Betts</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0106</td>
-                                <td>25 Oct 2024</td>
-                                <td>$750</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <label className="checkboxs">
-                                    <input type="checkbox" />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </td>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <Link
-                                      to="#"
-                                      className="avatar avatar-md me-2"
-                                    >
-                                      <img src={user06} alt="product" />
-                                    </Link>
-                                    <Link to="#">Daniel Jude</Link>
-                                  </div>
-                                </td>
-                                <td>INV/SL0107</td>
-                                <td>14 Oct 2024</td>
-                                <td>$1300</td>
-                                <td className="action-table-data">
-                                  <div className="edit-delete-action">
-                                    <Link className="me-2 edit-icon p-2" to="#">
-                                      <i className="feather icon-eye" />
-                                    </Link>
-                                    <Link className="me-2 p-2" to="#">
-                                      <i className="feather icon-edit"></i>
-                                    </Link>
-                                    <Link className="p-2" to="#">
-                                      <i className="feather icon-trash-2"></i>
-                                    </Link>
-                                  </div>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* /Recent Transactions */}
       {/* Orders */}
       <div
         className="modal fade pos-modal"
@@ -2243,58 +1267,6 @@ const PosModals = () => {
         </div>
       </div>
       {/* /Order Tax */}
-      {/* Coupon Code */}
-      <div className="modal fade modal-default" id="coupon-code">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Coupon Code</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="mb-3">
-                  <label className="form-label">
-                    Coupon Code <span className="text-danger">*</span>
-                  </label>
-                  <CommonSelect
-                    className="w-100"
-                    options={options.couponCodes}
-                    value={selectedCouponCode}
-                    onChange={(e) => setSelectedCouponCode(e.value)}
-                    placeholder="Select Coupon Code"
-                    filter={false}
-                  />
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {/* /Coupon Code */}
       {/* Discount */}
       <div className="modal fade modal-default" id="discount">
         <div className="modal-dialog modal-dialog-centered">
@@ -2431,426 +1403,209 @@ const PosModals = () => {
         </div>
       </div>
       {/* /Cash Payment */}
-      {/* Active Gift Card */}
-      <div
-        className="modal fade pos-modal"
-        id="gift-payment"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-md modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Pay By Gift Card</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <div className="modal-body pb-1">
-              <div className="mb-3">
-                <img src={giftCard} alt="img" />
-              </div>
-              <div className="resend-form mb-3">
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Scan Barcode / Enter Number"
-                />
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-primary btn-xs"
-                  data-bs-toggle="modal"
-                  data-bs-target="#redeem-value"
-                >
-                  Check
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* /Active Gift Card */}
-      {/* Redeem Value */}
-      <div
-        className="modal fade pos-modal"
-        id="redeem-value"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-md modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Redeem Value</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body">
-                <div className="bg-info-transparent p-2 br-8 mb-3">
-                  <p className="text-info">
-                    Balance isn’t enough to pay, you can still make a partial
-                    payment
-                  </p>
-                </div>
-                <div className="card bg-light shadow-none text-center">
-                  <div className="card-body">
-                    <p className="text-gray-5 mb-1">Gift Card Number</p>
-                    <h2 className="display-1">5698</h2>
-                  </div>
-                </div>
-                <div className="bg-danger-transparent p-2 mb-3 br-5 border-start border-danger d-flex align-items-center">
-                  <span className="avatar avatar-sm bg-danger rounded-circle fs-16 me-2">
-                    <i className="ti ti-gift" />
-                  </span>
-                  <p className="fs-16 text-gray-9">
-                    Available gift card balance : $45.56
-                  </p>
-                </div>
-                <div>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Enter Bill Amount"
-                  />
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end gap-2 flex-wrap">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Make Partial Payment
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {/* /Redeem Value */}
-      {/* Redeem Value */}
-      <div
-        className="modal fade pos-modal"
-        id="redeem-fullpayment"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-md modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Redeem Value</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body">
-                <div className="card bg-light shadow-none text-center">
-                  <div className="card-body">
-                    <p className="text-gray-5 mb-1">Gift Card Number</p>
-                    <h2 className="display-1">5698</h2>
-                  </div>
-                </div>
-                <div className="bg-success-transparent p-2 mb-3 br-5 border-start border-success">
-                  <span className="avatar avatar-sm bg-success rounded-circle fs-16 me-2">
-                    <i className="ti ti-gift" />
-                  </span>
-                  <p className="fs-16 text-gray-9">
-                    Available gift card balance : $45.56
-                  </p>
-                </div>
-                <div>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Enter Bill Amount"
-                  />
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end gap-2 flex-wrap">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Make Payment
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {/* /Redeem Value */}
       {/* Payment Cash */}
       <div className="modal fade modal-default" id="payment-cash">
         <div className="modal-dialog modal-dialog-centered modal-lg">
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title">Finalize Sale</h5>
+              <h5 className="modal-title">Hoàn tất thanh toán</h5>
               <button
                 type="button"
                 className="close"
                 data-bs-dismiss="modal"
-                aria-label="Close"
+                aria-label="Đóng"
               >
                 <span aria-hidden="true">×</span>
               </button>
             </div>
+
             <form>
               <div className="modal-body pb-1">
                 <div className="row">
                   <div className="col-md-4">
                     <div className="mb-3">
                       <label className="form-label">
-                        Received Amount <span className="text-danger">*</span>
+                        Số tiền nhận <span className="text-danger">*</span>
                       </label>
                       <div className="input-icon-start position-relative">
                         <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
+                          <i className="ti ti-currency-dong" />
                         </span>
                         <input
                           type="text"
                           className="form-control"
-                          defaultValue={1800}
+                          value={
+                            receivedAmount
+                              ? receivedAmount.toLocaleString("vi-VN")
+                              : ""
+                          }
+                          onChange={handleReceivedChange}
+                          placeholder="Nhập số tiền nhận..."
                         />
                       </div>
                     </div>
                   </div>
+
                   <div className="col-md-4">
                     <div className="mb-3">
                       <label className="form-label">
-                        Paying Amount <span className="text-danger">*</span>
+                        Số tiền cần thanh toán{" "}
+                        <span className="text-danger">*</span>
                       </label>
                       <div className="input-icon-start position-relative">
                         <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
+                          <i className="ti ti-currency-dong" />
                         </span>
                         <input
                           type="text"
                           className="form-control"
-                          defaultValue={1800}
+                          value={
+                            payingAmount
+                              ? payingAmount.toLocaleString("vi-VN")
+                              : ""
+                          }
+                          onChange={handlePayingChange}
+                          placeholder="Nhập số tiền cần thanh toán..."
                         />
                       </div>
                     </div>
                   </div>
+
                   <div className="col-md-4">
                     <div className="change-item mb-3">
-                      <label className="form-label">Change</label>
+                      <label className="form-label">Số tiền cần trả lại</label>
                       <div className="input-icon-start position-relative">
                         <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
+                          <i className="ti ti-currency-dong" />
                         </span>
                         <input
                           type="text"
                           className="form-control"
-                          defaultValue={0.0}
+                          value={
+                            changeAmount > 0
+                              ? changeAmount.toLocaleString("vi-VN")
+                              : "0"
+                          }
+                          readOnly
                         />
                       </div>
                     </div>
-                    {/* <div className="point-item mb-3">
-                  <label className="form-label">Balance Point</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    defaultValue={200}
-                  />
-                </div> */}
                   </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Payment Type <span className="text-danger">*</span>
-                      </label>
 
-                      <CommonSelect
-                        className="w-100"
-                        options={options.paymentTypes}
-                        value={selectedPaymentType}
-                        onChange={(e) => setSelectedPaymentType(e.value)}
-                        placeholder="Select Payment Type"
-                        filter={false}
-                      />
-                    </div>
+                  {/* Quick cash */}
+                  <div className="col-md-12">
                     <div className="quick-cash payment-content bg-light d-block mb-3">
-                      <div className="d-flex align-items-center flex-wra gap-4">
-                        <h5 className="text-nowrap">Quick Cash</h5>
+                      <div className="d-flex align-items-center flex-wrap gap-4">
+                        <h5 className="text-nowrap mb-0">Tiền mặt nhanh</h5>
                         <div className="d-flex align-items-center flex-wrap gap-3">
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash1"
-                              defaultChecked
-                            />
-                            <label className="btn btn-white" htmlFor="cash1">
-                              10
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash2"
-                            />
-                            <label className="btn btn-white" htmlFor="cash2">
-                              20
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash3"
-                            />
-                            <label className="btn btn-white" htmlFor="cash3">
-                              50
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash4"
-                            />
-                            <label className="btn btn-white" htmlFor="cash4">
-                              100
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash5"
-                            />
-                            <label className="btn btn-white" htmlFor="cash5">
-                              500
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash6"
-                            />
-                            <label className="btn btn-white" htmlFor="cash6">
-                              1000
-                            </label>
-                          </div>
+                          {[10000, 20000, 50000, 100000, 500000, 1000000].map(
+                            (amount, idx) => (
+                              <div className="form-check" key={amount}>
+                                <input
+                                  type="radio"
+                                  className="btn-check"
+                                  name="cash"
+                                  id={`cash${idx + 1}`}
+                                  onChange={() => handleQuickCash(amount)}
+                                />
+                                <label
+                                  className="btn btn-white"
+                                  htmlFor={`cash${idx + 1}`}
+                                >
+                                  {amount.toLocaleString()}₫
+                                </label>
+                              </div>
+                            )
+                          )}
                         </div>
                       </div>
                     </div>
+
+                    {/* Điểm thưởng */}
                     <div className="point-wrap payment-content mb-3">
-                      <div className=" bg-success-transparent d-flex align-items-center justify-content-between flex-wrap p-2 gap-2 br-5">
-                        <h6 className="fs-14 fw-bold text-success">
-                          You have 2000 Points to Use
+                      <div className="bg-success-transparent d-flex align-items-center justify-content-between flex-wrap p-2 gap-2 br-5">
+                        <h6 className="fs-14 fw-bold text-success mb-0">
+                          Bạn có 2.000 điểm có thể sử dụng
                         </h6>
                         <Link to="#" className="btn btn-dark btn-md">
-                          Use for this Purchase
+                          Dùng cho đơn hàng này
                         </Link>
                       </div>
                     </div>
                   </div>
+
+                  {/* Người nhận thanh toán */}
                   <div className="col-md-12">
                     <div className="mb-3">
-                      <label className="form-label">Payment Receiver</label>
-                      <input type="text" className="form-control" />
+                      <label className="form-label">
+                        Người nhận thanh toán
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Nhập tên nhân viên thu tiền"
+                      />
                     </div>
                   </div>
+
+                  {/* Ghi chú thanh toán */}
                   <div className="col-md-12">
                     <div className="mb-3">
-                      <label className="form-label">Payment Note</label>
+                      <label className="form-label">Ghi chú thanh toán</label>
                       <textarea
                         className="form-control"
                         rows={3}
-                        placeholder="Type your message"
+                        placeholder="Nhập ghi chú (nếu có)"
                         defaultValue={""}
                       />
                     </div>
                   </div>
+
+                  {/* Ghi chú bán hàng */}
                   <div className="col-md-12">
                     <div className="mb-3">
-                      <label className="form-label">Sale Note</label>
+                      <label className="form-label">Ghi chú bán hàng</label>
                       <textarea
                         className="form-control"
                         rows={3}
-                        placeholder="Type your message"
+                        placeholder="Nhập ghi chú bán hàng"
                         defaultValue={""}
                       />
                     </div>
                   </div>
+
+                  {/* Ghi chú nhân viên */}
                   <div className="col-md-12">
                     <div className="mb-3">
-                      <label className="form-label">Staff Note</label>
+                      <label className="form-label">
+                        Ghi chú của nhân viên
+                      </label>
                       <textarea
                         className="form-control"
                         rows={3}
-                        placeholder="Type your message"
+                        placeholder="Nhập ghi chú nội bộ"
                         defaultValue={""}
                       />
                     </div>
                   </div>
                 </div>
               </div>
+
+              {/* Footer */}
               <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
                 <button
                   type="button"
                   className="btn btn-md btn-secondary"
                   data-bs-dismiss="modal"
                 >
-                  Cancel
+                  Hủy
                 </button>
                 <button
                   type="button"
                   data-bs-dismiss="modal"
                   className="btn btn-md btn-primary"
                 >
-                  Submit
+                  Xác nhận thanh toán
                 </button>
               </div>
             </form>
@@ -2858,242 +1613,6 @@ const PosModals = () => {
         </div>
       </div>
       {/* /Payment Cash  */}
-      {/*  Payment Deposit */}
-      <div className="modal fade modal-default" id="payment-deposit">
-        <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Finalize Sale</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="row">
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Received Amount <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={1800}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Paying Amount <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={1800}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="change-item mb-3">
-                      <label className="form-label">Change</label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={0.0}
-                        />
-                      </div>
-                    </div>
-                    {/* <div className="point-item mb-3">
-                  <label className="form-label">Balance Point</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    defaultValue={200}
-                  />
-                </div> */}
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Payment Type <span className="text-danger">*</span>
-                      </label>
-                      <CommonSelect
-                        className="w-100"
-                        options={options.paymentTypes}
-                        value={selectedPaymentType}
-                        onChange={(e) => setSelectedPaymentType(e.value)}
-                        placeholder="Select Payment Type"
-                        filter={false}
-                      />
-                    </div>
-                    <div className="quick-cash payment-content bg-light  mb-3">
-                      <div className="d-flex align-items-center flex-wra gap-4">
-                        <h5 className="text-nowrap">Quick Cash</h5>
-                        <div className="d-flex align-items-center flex-wrap gap-3">
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash31"
-                              defaultChecked
-                            />
-                            <label className="btn btn-white" htmlFor="cash31">
-                              10
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash32"
-                            />
-                            <label className="btn btn-white" htmlFor="cash32">
-                              20
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash33"
-                            />
-                            <label className="btn btn-white" htmlFor="cash33">
-                              50
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash34"
-                            />
-                            <label className="btn btn-white" htmlFor="cash34">
-                              100
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash35"
-                            />
-                            <label className="btn btn-white" htmlFor="cash35">
-                              500
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash36"
-                            />
-                            <label className="btn btn-white" htmlFor="cash36">
-                              1000
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="point-wrap payment-content mb-3">
-                      <div className=" bg-success-transparent d-flex align-items-center justify-content-between flex-wrap p-2 gap-2 br-5">
-                        <h6 className="fs-14 fw-bold text-success">
-                          You have 2000 Points to Use
-                        </h6>
-                        <Link to="#" className="btn btn-dark btn-md">
-                          Use for this Purchase
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Payment Receiver</label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Payment Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Sale Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Staff Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {/* /Payment Deposit */}
       {/* Payment Point */}
       <div className="modal fade modal-default" id="payment-points">
         <div className="modal-dialog modal-dialog-centered modal-lg">
