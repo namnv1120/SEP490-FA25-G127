@@ -24,14 +24,13 @@ const EditCategory = ({ categoryId, onSuccess, onClose }) => {
           active: category.active === 1 || category.active === true,
         });
 
-        // ✅ Mở modal sau khi load xong
         const modalElement = document.getElementById("edit-main-category");
         if (modalElement) {
           const modal = new Modal(modalElement);
           modal.show();
         }
       } catch (error) {
-        console.error("Error loading category:", error);
+        console.error("Lỗi tại category:", error);
         message.error("Không thể tải dữ liệu category");
         if (onClose) onClose(); // ✅ Đóng nếu lỗi
       } finally {
@@ -130,7 +129,7 @@ const EditCategory = ({ categoryId, onSuccess, onClose }) => {
           <div className="modal-content">
             <div className="modal-header border-0 custom-modal-header">
               <div className="page-title">
-                <h4>Edit Category</h4>
+                <h4>Sửa danh mục</h4>
               </div>
               <button
                 type="button"
@@ -153,7 +152,7 @@ const EditCategory = ({ categoryId, onSuccess, onClose }) => {
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
                     <label className="form-label">
-                      Category Name<span className="text-danger">*</span>
+                      Tên danh mục<span className="text-danger">*</span>
                     </label>
                     <input
                       type="text"
@@ -166,7 +165,7 @@ const EditCategory = ({ categoryId, onSuccess, onClose }) => {
                   </div>
 
                   <div className="mb-3 input-blocks">
-                    <label className="form-label">Description</label>
+                    <label className="form-label">Mô tả</label>
                     <textarea
                       name="description"
                       className="form-control"
@@ -178,7 +177,7 @@ const EditCategory = ({ categoryId, onSuccess, onClose }) => {
 
                   <div className="mb-0">
                     <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                      <span className="status-label">Status</span>
+                      <span className="status-label">Trạng thái</span>
                       <input
                         type="checkbox"
                         id="edit-cat-status"
@@ -197,7 +196,7 @@ const EditCategory = ({ categoryId, onSuccess, onClose }) => {
                       onClick={handleModalClose}
                       disabled={loading}
                     >
-                      Cancel
+                      Huỷ
                     </button>
                     <button
                       type="submit"

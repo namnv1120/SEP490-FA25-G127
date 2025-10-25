@@ -3,142 +3,120 @@ import { Link } from "react-router-dom";
 import { all_routes } from "../../routes/all_routes";
 import CommonFooter from "../../components/footer/commonFooter";
 import PrimeDataTable from "../../components/data-table";
-import { stockImg1 } from "../../utils/imagepath";
 import TableTopHead from "../../components/table-top-head";
-import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
-import { getAllProducts, deleteProduct, importProducts } from "../../services/ProductService";
-import ImportProductModal from "./ImportProduct";
 import { message } from "antd";
-import { Modal } from "bootstrap";
 import { exportToExcel } from "../../utils/excelUtils";
+// Import services - bạn cần tạo ProductPriceService
+import { getAllProductPrices } from "../../services/ProductPriceService";
 
-const ProductList = () => {
+const ProductPriceList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
   const [searchQuery, setSearchQuery] = useState(undefined);
-  const [products, setProducts] = useState([]);
+  const [productPrices, setProductPrices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [showImportModal, setShowImportModal] = useState(false);
 
   const route = all_routes;
 
   useEffect(() => {
-    fetchProducts();
+    fetchProductPrices();
   }, []);
 
-  const fetchProducts = async () => {
+  const fetchProductPrices = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getAllProducts();
+      const data = await getAllProductPrices();
 
       // Map API data to match table structure
-      const mappedProducts = data.map((product, index) => ({
-        productId: product.productId || index + 1,
-        productCode: product.code || product.productCode || "N/A",
-        productName: product.name || product.productName || "N/A",
-        productImage: product.image || product.imageUrl || stockImg1,
-        category: product.category?.name || product.categoryName || "N/A",
-        description: product.description || "N/A",
-        supplier: product.supplier?.name || product.supplierName || "N/A",
-        dimensions: product.dimensions || "N/A",
-        imageUrl: product.image || product.imageUrl || "",
-        unitprice: `${product.unitPrice?.toLocaleString() || "0.00"} đ`,
-        unit: product.unit || "N/A",
-        qty: product.quantityInStock?.toString() || product.qty?.toString() || "0",
+      const mappedPrices = data.map((price) => ({
+        priceId: price.priceId,
+        productId: price.productId,
+        productName: price.productName || "N/A",
+        unitPrice: `${price.unitPrice?.toLocaleString() || "0.00"} đ`,
+        costPrice: `${price.costPrice?.toLocaleString() || "0.00"} đ`,
+        taxRate: price.taxRate ? `${(price.taxRate * 100).toFixed(2)}%` : "0%",
+        validFrom: price.validFrom
+          ? new Date(price.validFrom).toLocaleDateString("vi-VN")
+          : "N/A",
+        validTo: price.validTo
+          ? new Date(price.validTo).toLocaleDateString("vi-VN")
+          : "N/A",
+        createdDate: price.createdDate
+          ? new Date(price.createdDate).toLocaleString("vi-VN")
+          : "N/A",
+        status: getStatus(price.validFrom, price.validTo),
+        // Raw values for filtering/sorting
+        rawUnitPrice: price.unitPrice,
+        rawCostPrice: price.costPrice,
+        rawTaxRate: price.taxRate,
+        rawValidFrom: price.validFrom,
+        rawValidTo: price.validTo,
       }));
-      setProducts(mappedProducts);
-      setTotalRecords(mappedProducts.length);
+
+      setProductPrices(mappedPrices);
+      setTotalRecords(mappedPrices.length);
     } catch (err) {
-      console.error("❌ Error fetching products:", err);
-      setError("Failed to load products. Please try again.");
+      console.error("❌ Error fetching product prices:", err);
+      setError("Failed to load product prices. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  // Determine price status based on validity period
+  const getStatus = (validFrom, validTo) => {
+    if (!validFrom) return "draft";
+
+    const now = new Date();
+    const from = new Date(validFrom);
+    const to = validTo ? new Date(validTo) : null;
+
+    if (from > now) return "upcoming";
+    if (to && to < now) return "expired";
+    return "active";
+  };
+
+  const getStatusBadge = (status) => {
+    const badges = {
+      active: <span className="badge badge-linesuccess">Active</span>,
+      expired: <span className="badge badge-linedanger">Expired</span>,
+      upcoming: <span className="badge badge-linewarning">Upcoming</span>,
+      draft: <span className="badge badge-linesecondary">Draft</span>,
+    };
+    return badges[status] || badges.draft;
+  };
+
   const handleExportExcel = () => {
-    if (!products || products.length === 0) {
-      message.warning("No product data to export!");
+    if (!productPrices || productPrices.length === 0) {
+      message.warning("No price data to export!");
       return;
     }
 
-    const exportData = products.map(p => ({
-      Code: p.productCode,
-      Name: p.productName,
-      Description: p.description || "",
-      Category: p.category,
-      Supplier: p.supplier || "",
-      Unit: p.unit,
-      Dimension: p.dimensions || "",
-      Image: p.imageUrl
+    const exportData = productPrices.map((p) => ({
+      "Product Name": p.productName,
+      "Unit Price": p.unitPrice,
+      "Cost Price": p.costPrice,
+      "Tax Rate": p.taxRate,
+      "Valid From": p.validFrom,
+      "Valid To": p.validTo,
+      "Status": p.status,
+      "Created Date": p.createdDate,
     }));
 
-    exportToExcel(exportData, "Product_List");
-  };
-
-  const handleImport = async (data) => {
-    try {
-      console.log("📦 Importing products:", data);
-      await importProducts(data); // Gọi API
-      await fetchProducts(); // Refresh list
-      return Promise.resolve();
-    } catch (error) {
-      console.error("❌ Import error:", error);
-      return Promise.reject(error);
-    }
+    exportToExcel(exportData, "Product_Price_List");
   };
 
   const handleRefresh = () => {
-    fetchProducts();
-    message.success("Product list refreshed!");
+    fetchProductPrices();
+    message.success("Product price list refreshed!");
   };
 
   const handleSearch = (value) => {
     setSearchQuery(value);
-  };
-
-  const handleDeleteClick = (product) => {
-    setSelectedProduct(product);
-    setTimeout(() => {
-      const modalElement = document.getElementById('delete-modal');
-      if (modalElement) {
-        const modal = new Modal(modalElement);
-        modal.show();
-      } else {
-        console.error("Delete modal not found in DOM");
-      }
-    }, 0);
-  };
-
-
-  const handleDeleteConfirm = async (productId) => {
-    try {
-      await deleteProduct(productId);
-      fetchProducts();
-      setSelectedProduct(null);
-
-      // 🔒 Đóng modal thủ công
-      const modalElement = document.getElementById("delete-modal");
-      if (modalElement) {
-        const modal = Modal.getInstance(modalElement);
-        if (modal) modal.hide();
-      }
-
-      message.success("Product deleted successfully!");
-    } catch (error) {
-      console.error("Delete failed:", error);
-      message.error("Failed to delete product.");
-    }
-  };
-
-
-  const handleDeleteCancel = () => {
-    setSelectedProduct(null);
   };
 
   const columns = [
@@ -159,48 +137,52 @@ const ProductList = () => {
       key: "checked",
     },
     {
-      header: "Code",
-      field: "productCode",
-      key: "productCode",
-      sortable: true,
-    },
-    {
       header: "Product Name",
       field: "productName",
       key: "productName",
       sortable: true,
       body: (data) => (
-        <div className="d-flex align-items-center">
-          <Link to="#" className="avatar avatar-md me-2">
-            <img alt="" src={data.productImage} />
-          </Link>
-          <Link to={`${route.productdetails}/${data.productId}`}>{data.productName}</Link>
-        </div>
+        <Link to={`${route.productdetails}/${data.productId}`}>
+          {data.productName}
+        </Link>
       ),
     },
     {
-      header: "Category",
-      field: "category",
-      key: "category",
+      header: "Unit Price",
+      field: "unitPrice",
+      key: "unitPrice",
       sortable: true,
     },
     {
-      header: "Price",
-      field: "unitprice",
-      key: "unitprice",
+      header: "Cost Price",
+      field: "costPrice",
+      key: "costPrice",
       sortable: true,
     },
     {
-      header: "Unit",
-      field: "unit",
-      key: "unit",
+      header: "Tax Rate",
+      field: "taxRate",
+      key: "taxRate",
       sortable: true,
     },
     {
-      header: "Qty",
-      field: "qty",
-      key: "qty",
+      header: "Valid From",
+      field: "validFrom",
+      key: "validFrom",
       sortable: true,
+    },
+    {
+      header: "Valid To",
+      field: "validTo",
+      key: "validTo",
+      sortable: true,
+    },
+    {
+      header: "Status",
+      field: "status",
+      key: "status",
+      sortable: true,
+      body: (data) => getStatusBadge(data.status),
     },
     {
       header: "",
@@ -211,16 +193,10 @@ const ProductList = () => {
         <div className="edit-delete-action d-flex align-items-center">
           <Link
             className="me-2 p-2 d-flex align-items-center border rounded"
-            to={route.editproduct.replace(":id", row.productId)}
+            to={route.editproductprice.replace(":id", row.priceId)}
           >
             <i className="feather icon-edit"></i>
           </Link>
-          <button
-            className="p-2 d-flex align-items-center border rounded bg-transparent"
-            onClick={() => handleDeleteClick(row)}
-          >
-            <i className="feather icon-trash-2"></i>
-          </button>
         </div>
       ),
     },
@@ -233,8 +209,8 @@ const ProductList = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Product List</h4>
-                <h6>Manage your products</h6>
+                <h4>Product Price List</h4>
+                <h6>Manage product pricing</h6>
               </div>
             </div>
             <TableTopHead
@@ -242,19 +218,10 @@ const ProductList = () => {
               onRefresh={handleRefresh}
             />
             <div className="page-btn">
-              <Link to={route.addproduct} className="btn btn-primary">
+              <Link to={route.addproductprice} className="btn btn-primary">
                 <i className="ti ti-circle-plus me-1"></i>
-                Add New Product
+                Add New Price
               </Link>
-            </div>
-            <div className="page-btn import">
-              <button
-                className="btn btn-secondary color"
-                onClick={() => setShowImportModal(true)}
-              >
-                <i className="feather icon-download feather me-2" />
-                Import Product
-              </button>
             </div>
           </div>
 
@@ -274,7 +241,7 @@ const ProductList = () => {
             </div>
           )}
 
-          {/* Product List Table */}
+          {/* Product Price List Table */}
           {!loading && (
             <div className="card table-list-card">
               <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
@@ -290,27 +257,27 @@ const ProductList = () => {
                       className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
                       data-bs-toggle="dropdown"
                     >
-                      Category
+                      Status
                     </Link>
                     <ul className="dropdown-menu dropdown-menu-end p-3">
                       <li>
                         <Link to="#" className="dropdown-item rounded-1">
-                          Computers
+                          Active
                         </Link>
                       </li>
                       <li>
                         <Link to="#" className="dropdown-item rounded-1">
-                          Electronics
+                          Expired
                         </Link>
                       </li>
                       <li>
                         <Link to="#" className="dropdown-item rounded-1">
-                          Shoe
+                          Upcoming
                         </Link>
                       </li>
                       <li>
                         <Link to="#" className="dropdown-item rounded-1">
-                          Electronics
+                          Draft
                         </Link>
                       </li>
                     </ul>
@@ -321,7 +288,7 @@ const ProductList = () => {
                       className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
                       data-bs-toggle="dropdown"
                     >
-                      Sort By : Last 7 Days
+                      Sort By : Latest
                     </Link>
                     <ul className="dropdown-menu dropdown-menu-end p-3">
                       <li>
@@ -331,22 +298,17 @@ const ProductList = () => {
                       </li>
                       <li>
                         <Link to="#" className="dropdown-item rounded-1">
-                          Ascending
+                          Price: Low to High
                         </Link>
                       </li>
                       <li>
                         <Link to="#" className="dropdown-item rounded-1">
-                          Desending
+                          Price: High to Low
                         </Link>
                       </li>
                       <li>
                         <Link to="#" className="dropdown-item rounded-1">
-                          Last Month
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Last 7 Days
+                          Expiring Soon
                         </Link>
                       </li>
                     </ul>
@@ -357,13 +319,13 @@ const ProductList = () => {
                 <div className="table-responsive">
                   <PrimeDataTable
                     column={columns}
-                    data={products}
+                    data={productPrices}
                     rows={rows}
                     setRows={setRows}
                     currentPage={currentPage}
                     setCurrentPage={setCurrentPage}
                     totalRecords={totalRecords}
-                    dataKey="productId"
+                    dataKey="priceId"
                   />
                 </div>
               </div>
@@ -372,19 +334,8 @@ const ProductList = () => {
         </div>
         <CommonFooter />
       </div>
-      <DeleteModal
-        itemId={selectedProduct?.productId}
-        itemName={selectedProduct?.productName}
-        onDelete={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
-      />
-      <ImportProductModal
-        visible={showImportModal}
-        onClose={() => setShowImportModal(false)}
-        onImport={handleImport}
-      />
     </>
   );
 };
 
-export default ProductList;
+export default ProductPriceList;

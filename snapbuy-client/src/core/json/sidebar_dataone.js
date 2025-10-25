@@ -35,7 +35,7 @@ export const SidebarData1 = [
         tittle: "Sản phẩm",
         hasSubRoute: false,
         showSubRoute: true,
-        route: "/product-list",
+        route: "/products",
         subRoutes: [],
       },
       {
@@ -56,7 +56,7 @@ export const SidebarData1 = [
         tittle: "Danh mục",
         hasSubRoute: false,
         showSubRoute: false,
-        route: "/category-list",
+        route: "/categories",
         subRoutes: [],
       },
       {

@@ -13,8 +13,8 @@ const DeleteModal = ({ itemId, itemName, onDelete, onCancel }) => {
           modal.hide();
         }
       } catch (error) {
-        console.error("Failed to delete item:", error);
-        message.error("Failed to delete item. Please try again.");
+        console.error("Lỗi khi xoá mục:", error);
+        message.error("Lỗi khi xoá mục. Vui lòng thử lại.");
       }
     }
   };
@@ -36,11 +36,11 @@ const DeleteModal = ({ itemId, itemName, onDelete, onCancel }) => {
                   <i className="ti ti-trash fs-24 text-danger" />
                 </span>
                 <h4 className="mb-0 delete-account-font">
-                  Are you sure you want to delete this?
+                  Bạn có chắc chắn muốn xoá?
                 </h4>
                 {itemName && (
                   <p className="text-muted mt-2">
-                    You are about to delete: <strong>{itemName}</strong>
+                    Bạn muốn xoá: <strong>{itemName}</strong>
                   </p>
                 )}
                 <div className="modal-footer-btn mt-3 d-flex justify-content-center">
@@ -50,14 +50,14 @@ const DeleteModal = ({ itemId, itemName, onDelete, onCancel }) => {
                     data-bs-dismiss="modal"
                     onClick={handleCancel}
                   >
-                    Cancel
+                    Huỷ
                   </button>
                   <button
                     type="button"
                     className="btn btn-primary fs-13 fw-medium p-2 px-3"
                     onClick={handleDelete}
                   >
-                    Yes, Delete
+                    Đồng ý xoá
                   </button>
                 </div>
               </div>

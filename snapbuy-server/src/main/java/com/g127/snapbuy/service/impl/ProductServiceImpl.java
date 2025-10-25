@@ -104,19 +104,22 @@ public class ProductServiceImpl implements ProductService {
                 .map(product -> {
                     ProductResponse response = productMapper.toResponse(product);
 
-                    ProductPrice latestPrice = productPriceRepository
-                            .findTopByProduct_ProductIdOrderByValidFromDesc(product.getProductId())
-                            .orElse(null);
+                    productPriceRepository.findTopByProduct_ProductIdOrderByValidFromDesc(product.getProductId())
+                            .ifPresent(latestPrice -> {
+                                response.setUnitPrice(latestPrice.getUnitPrice());
+                                response.setCostPrice(latestPrice.getCostPrice());
+                            });
 
-                    if (latestPrice != null) {
-                        response.setUnitPrice(latestPrice.getUnitPrice());
-                        response.setCostPrice(latestPrice.getCostPrice());
-                    }
+                    inventoryRepository.findByProduct_ProductId(product.getProductId())
+                            .ifPresent(inventory ->
+                                    response.setQuantityInStock(inventory.getQuantityInStock())
+                            );
 
                     return response;
                 })
                 .toList();
     }
+
 
     @Override
     @Transactional

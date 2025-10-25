@@ -11,6 +11,9 @@ const ProductList = lazy(() => import("../feature-module/inventory/ProductList")
 const ProductDetail = lazy(() => import("../feature-module/inventory/ProductDetail"));
 const AddProduct = lazy(() => import("../feature-module/inventory/AddProduct"));
 const EditProduct = lazy(() => import("../feature-module/inventory/EditProduct"));
+const ProductPriceList = lazy(() => import("../feature-module/inventory/ProductPriceList"));
+const AddProductPrice = lazy(() => import("../feature-module/inventory/AddProductPrice"));
+const EditProductPrice = lazy(() => import("../feature-module/inventory/EditProductPrice"));
 
 const CategoryList = lazy(() => import("../feature-module/inventory/CategoryList"));
 const SubCategories = lazy(() => import("../feature-module/inventory/SubCategoryList"));
@@ -29,8 +32,7 @@ const Forgotpassword = lazy(() =>
 );
 const Customers = lazy(() => import("../feature-module/people/Customer"));
 
-// 🆕 Thêm Inventory
-const Inventory = lazy(() => import("../feature-module/inventory/Inventory"));
+const InventoryList = lazy(() => import("../feature-module/inventory/InventoryList"));
 
 const routes = all_routes;
 
@@ -44,7 +46,7 @@ export const authRoutes = [
   },
   {
     id: 2,
-    path: "/customers",
+    path: routes.customers,
     name: "customers",
     element: <Customers />,
     route: Route,
@@ -86,23 +88,14 @@ export const authRoutes = [
   },
   {
     id: 8,
-    path: routes.productlist,
-    name: "product-list",
+    path: routes.products,
+    name: "products",
     element: <ProductList />,
-    route: Route,
-  },
-
-  // 🆕 Thêm route Inventory chính
-  {
-    id: 300,
-    path: routes.inventory, // đảm bảo trong all_routes có key inventory
-    name: "inventory",
-    element: <Inventory />,
     route: Route,
   },
   {
     id: 9,
-    path: `${routes.productdetails}/:id`,
+    path: routes.productdetails,
     name: "product-details",
     element: <ProductDetail />,
     route: Route,
@@ -116,15 +109,15 @@ export const authRoutes = [
   },
   {
     id: 11,
-    path: `${routes.editproduct}/:id`,
+    path: routes.editproduct,
     name: "edit-product",
     element: <EditProduct />,
     route: Route,
   },
   {
     id: 12,
-    path: routes.categorylist,
-    name: "category-list",
+    path: routes.categories,
+    name: "categories",
     element: <CategoryList />,
     route: Route,
   },
@@ -135,7 +128,34 @@ export const authRoutes = [
     element: <SubCategories />,
     route: Route,
   },
-
+  {
+    id: 14,
+    path: routes.inventories,
+    name: "inventories",
+    element: <InventoryList />,
+    route: Route,
+  },
+  {
+    id: 15,
+    path: routes.productprices,
+    name: "product-prices",
+    element: <ProductPriceList />,
+    route: Route,
+  },
+  {
+    id: 16,
+    path: routes.addproductprice,
+    name: "add-product-price",
+    element: <AddProductPrice />,
+    route: Route,
+  },
+  {
+    id: 15,
+    path: routes.editproductprice,
+    name: "edit-product-price",
+    element: <EditProductPrice />,
+    route: Route,
+  },
 ];
 
 export const posPages = [

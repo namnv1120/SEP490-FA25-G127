@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { message } from "antd"; 
 import { all_routes } from "../../routes/all_routes";
 import { createProduct } from "../../services/ProductService";
-import { getAllCategories } from "../../services/categoryService";
+import { getAllCategories } from "../../services/CategoryService";
 import CommonSelect from "../../components/select/common-select";
 import DeleteModal from "../../components/delete-modal";
 import RefreshIcon from "../../components/tooltip-content/refresh";
@@ -65,7 +65,7 @@ const AddProduct = () => {
           }));
         setSubCategories(subs);
       } catch (error) {
-        console.error("❌ Lỗi tải subcategory:", error);
+        console.error("❌ Lỗi tải danh mục con:", error);
       }
     };
 
@@ -80,7 +80,7 @@ const AddProduct = () => {
     e.preventDefault();
 
     if (!product.productCode || !product.productName || !selectedCategory  || !product.unit)  {
-      message.warning("Please fill in all required fields (*)");
+      message.warning("Làm ơn điền tất cả trường có dấu (*)");
       return;
     }
 
@@ -101,10 +101,10 @@ const AddProduct = () => {
     try {
       setIsSubmitting(true);
       const created = await createProduct(productData);
-      message.success(`✅ Product "${created.productName}" created successfully!`);
-      navigate(route.productlist);
+      message.success(`Sản phẩm "${created.productName}" tạo thành công!`);
+      navigate(route.products);
     } catch (error) {
-      console.error("❌ Failed to create product:", error);
+      console.error("❌ Lỗi tạo sản phẩm:", error);
       const res = error.response?.data;
 
       if (res?.code === 4000 && res?.message) {
@@ -117,7 +117,7 @@ const AddProduct = () => {
       }
 
       else {
-        message.error("Failed to create product. Please try again.");
+        message.error("Lỗi tạo sản phẩm. Vui lòng thử lại.");
       }
     } finally {
       setIsSubmitting(false);
@@ -131,8 +131,8 @@ const AddProduct = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Create Product</h4>
-                <h6>Create new product</h6>
+                <h4>Tạo sản phẩm</h4>
+                <h6>Tạo sản phẩm mới</h6>
               </div>
             </div>
             <ul className="table-top-head">
@@ -140,9 +140,9 @@ const AddProduct = () => {
               <CollapesIcon />
               <li>
                 <div className="page-btn">
-                  <Link to={route.productlist} className="btn btn-secondary">
+                  <Link to={route.products} className="btn btn-secondary">
                     <i className="feather icon-arrow-left me-2" />
-                    Back to Product
+                    Trở về danh sách sản phẩm
                   </Link>
                 </div>
               </li>
@@ -163,7 +163,7 @@ const AddProduct = () => {
                     <div className="d-flex align-items-center justify-content-between flex-fill">
                       <h5 className="d-flex align-items-center">
                         <i className="feather icon-info text-primary me-2" />
-                        <span>Product Information</span>
+                        <span>Thông tin sản phẩm</span>
                       </h5>
                     </div>
                   </div>
@@ -178,7 +178,7 @@ const AddProduct = () => {
                       <div className="col-sm-6 col-12">
                         <div className="mb-3">
                           <label className="form-label">
-                            Product Code<span className="text-danger ms-1">*</span>
+                            Mã sản phẩm<span className="text-danger ms-1">*</span>
                           </label>
                           <input
                             type="text"
@@ -193,7 +193,7 @@ const AddProduct = () => {
                       <div className="col-sm-6 col-12">
                         <div className="mb-3">
                           <label className="form-label">
-                            Product Name<span className="text-danger ms-1">*</span>
+                            Tên sản phẩm<span className="text-danger ms-1">*</span>
                           </label>
                           <input
                             type="text"
@@ -211,7 +211,7 @@ const AddProduct = () => {
                       <div className="col-sm-6 col-12">
                         <div className="mb-3">
                           <label className="form-label">
-                            Category
+                            Danh mục
                             <span className="text-danger ms-1">*</span>
                           </label>
                           <CommonSelect
@@ -230,7 +230,7 @@ const AddProduct = () => {
                       <div className="col-sm-6 col-12">
                         <div className="mb-3">
                           <label className="form-label">
-                            Sub Category
+                            Danh mục con
                             <span className="text-danger ms-1">*</span>
                           </label>
                           <CommonSelect
@@ -248,7 +248,7 @@ const AddProduct = () => {
                       <div className="col-sm-6 col-12">
                         <div className="mb-3">
                           <label className="form-label">
-                            Unit<span className="text-danger ms-1">*</span>
+                            Đơn vị<span className="text-danger ms-1">*</span>
                           </label>
                           <input
                             type="text"
@@ -263,7 +263,7 @@ const AddProduct = () => {
                       </div>
                       <div className="col-sm-6 col-12">
                         <div className="mb-3">
-                          <label className="form-label">Supplier Name</label>
+                          <label className="form-label">Nhà cung cấp</label>
                           <input
                             type="text"
                             value={product.supplierName}
@@ -279,7 +279,7 @@ const AddProduct = () => {
                     <div className="row">
                       <div className="col-lg-6 col-sm-6 col-12">
                         <div className="mb-3">
-                          <label className="form-label">Dimensions</label>
+                          <label className="form-label">Kích thước</label>
                           <input
                             type="text"
                             value={product.dimensions}
@@ -294,7 +294,7 @@ const AddProduct = () => {
 
                     <div className="col-lg-12">
                       <div className="summer-description-box">
-                        <label className="form-label">Description</label>
+                        <label className="form-label">Mô tả</label>
                         <textarea
                           value={product.description}
                           onChange={(e) =>
@@ -322,7 +322,7 @@ const AddProduct = () => {
                     <div className="d-flex align-items-center justify-content-between flex-fill">
                       <h5 className="d-flex align-items-center">
                         <i className="feather icon-image text-primary me-2" />
-                        <span>Image</span>
+                        <span>Ảnh</span>
                       </h5>
                     </div>
                   </div>
@@ -341,7 +341,7 @@ const AddProduct = () => {
                               <input type="file" />
                               <div className="image-uploads">
                                 <i className="feather icon-plus-circle plus-down-add me-0" />
-                                <h4>Add Image</h4>
+                                <h4>Thêm ảnh</h4>
                               </div>
                             </div>
                           </div>
@@ -368,9 +368,9 @@ const AddProduct = () => {
                   <button
                     type="button"
                     className="btn btn-secondary me-2"
-                    onClick={() => navigate(route.productlist)}
+                    onClick={() => navigate(route.products)}
                   >
-                    Cancel
+                    Huỷ
                   </button>
                   <button
                     type="submit"

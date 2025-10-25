@@ -140,7 +140,7 @@ const EditProduct = () => {
               <CollapesIcon />
               <li>
                 <div className="page-btn">
-                  <Link to={route.productlist} className="btn btn-secondary">
+                  <Link to={route.products} className="btn btn-secondary">
                     <i className="feather icon-arrow-left me-2" />
                     Back to Product
                   </Link>
@@ -368,7 +368,7 @@ const EditProduct = () => {
                 <button
                   type="button"
                   className="btn btn-cancel me-2"
-                  onClick={() => navigate(route.productlist)}
+                  onClick={() => navigate(route.products)}
                 >
                   Cancel
                 </button>

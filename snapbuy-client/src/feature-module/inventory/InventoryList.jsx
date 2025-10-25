@@ -1,11 +1,10 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import PrimeDataTable from "../../components/data-table";
 import CommonFooter from "../../components/footer/commonFooter";
 import TableTopHead from "../../components/table-top-head";
 import CommonDatePicker from "../../components/date-picker/common-date-picker";
 import CommonSelect from "../../components/select/common-select";
-import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
 
 export const inventoryData = [
@@ -41,7 +40,7 @@ export const inventoryData = [
   },
 ];
 
-const Inventory = () => {
+const InventoryList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, _setTotalRecords] = useState(5);
   const [rows, setRows] = useState(10);
@@ -160,14 +159,6 @@ const Inventory = () => {
             data-bs-target="#edit-inventory"
           >
             <i className="feather icon-edit"></i>
-          </Link>
-          <Link
-            className="p-2 d-flex align-items-center border rounded"
-            to="#"
-            data-bs-toggle="modal"
-            data-bs-target="#delete-modal"
-          >
-            <i className="feather icon-trash-2"></i>
           </Link>
         </div>
       ),
@@ -294,10 +285,8 @@ const Inventory = () => {
           </div>
         </div>
       </div>
-
-      <DeleteModal />
     </div>
   );
 };
 
-export default Inventory;
+export default InventoryList;

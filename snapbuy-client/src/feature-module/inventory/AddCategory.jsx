@@ -89,7 +89,7 @@ const AddCategory = ({ onSuccess }) => {
           <div className="modal-content">
             <div className="modal-header border-0 custom-modal-header">
               <div className="page-title">
-                <h4>Add Category</h4>
+                <h4>Thêm danh mục</h4>
               </div>
               <button
                 type="button"
@@ -105,7 +105,7 @@ const AddCategory = ({ onSuccess }) => {
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
                   <label className="form-label">
-                    Category Name<span className="text-danger">*</span>
+                    Tên danh mục<span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
@@ -118,7 +118,7 @@ const AddCategory = ({ onSuccess }) => {
                 </div>
 
                 <div className="mb-3 input-blocks">
-                  <label className="form-label">Description</label>
+                  <label className="form-label">Mô tả</label>
                   <textarea
                     name="description"
                     className="form-control"
@@ -130,7 +130,7 @@ const AddCategory = ({ onSuccess }) => {
 
                 <div className="mb-0">
                   <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                    <span className="status-label">Status</span>
+                    <span className="status-label">Trạng thái</span>
                     <input
                       type="checkbox"
                       id="add-cat-status"
@@ -149,7 +149,7 @@ const AddCategory = ({ onSuccess }) => {
                     data-bs-dismiss="modal"
                     disabled={loading}
                   >
-                    Cancel
+                    Huỷ
                   </button>
                   <button
                     type="submit"
