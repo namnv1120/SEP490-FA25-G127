@@ -6,7 +6,6 @@ import {
   barcodeImg3,
   logo,
   posProduct16,
-  posProduct17,
   scanImg,
 } from "../../../utils/imagepath";
 import {
@@ -918,45 +917,6 @@ const PosModals = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="card bg-light mb-0">
-                        <div className="card-body">
-                          <span className="badge bg-dark fs-12 mb-2">
-                            Order ID : #666659
-                          </span>
-                          <div className="mb-3">
-                            <div className="row g-3">
-                              <div className="col-md-6">
-                                <p className="fs-15 mb-1">
-                                  <span className="fs-14 fw-bold text-gray-9">
-                                    Cashier :
-                                  </span>{" "}
-                                  admin
-                                </p>
-                                <p className="fs-15">
-                                  <span className="fs-14 fw-bold text-gray-9">
-                                    Total :
-                                  </span>{" "}
-                                  $900
-                                </p>
-                              </div>
-                              <div className="col-md-6">
-                                <p className="fs-15 mb-1">
-                                  <span className="fs-14 fw-bold text-gray-9">
-                                    Customer :
-                                  </span>{" "}
-                                  Botsford
-                                </p>
-                                <p className="fs-15">
-                                  <span className="fs-14 fw-bold text-gray-9">
-                                    Date :
-                                  </span>{" "}
-                                  24 Dec 2024 13:39:11
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </div>
                   <div className="tab-pane fade" id="unpaid" role="tabpanel">
@@ -1030,43 +990,6 @@ const PosModals = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="card bg-light mb-0">
-                        <div className="card-body">
-                          <span className="badge bg-dark fs-12 mb-2">
-                            Order ID : #666659
-                          </span>
-                          <div className="row g-3">
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Cashier :
-                                </span>{" "}
-                                admin
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Total :
-                                </span>{" "}
-                                $900
-                              </p>
-                            </div>
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Customer :
-                                </span>{" "}
-                                Lucia
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Date :
-                                </span>{" "}
-                                24 Dec 2024 13:39:11
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </div>
                   <div className="tab-pane fade" id="paid" role="tabpanel">
@@ -1137,43 +1060,6 @@ const PosModals = () => {
                             <Link to="#" className="btn btn-md btn-indigo">
                               Print
                             </Link>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="card bg-light mb-0">
-                        <div className="card-body">
-                          <span className="badge bg-dark fs-12 mb-2">
-                            Order ID : #666659
-                          </span>
-                          <div className="row g-3">
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Cashier :
-                                </span>{" "}
-                                admin
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Total :
-                                </span>{" "}
-                                $9100
-                              </p>
-                            </div>
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Customer :
-                                </span>{" "}
-                                Antonio
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Date :
-                                </span>{" "}
-                                23 Dec 2024 13:39:11
-                              </p>
-                            </div>
                           </div>
                         </div>
                       </div>

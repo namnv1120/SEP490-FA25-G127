@@ -18,7 +18,6 @@ const Pos = () => {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState("");
   const [selectedGST] = useState(5);
-  const [selectedShipping] = useState(40.21);
   const [selectedDiscount] = useState(10);
   const [editingProduct, setEditingProduct] = useState(null);
   const location = useLocation();
