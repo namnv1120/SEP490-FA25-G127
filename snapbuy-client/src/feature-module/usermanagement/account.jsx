@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import AddAccount from "../../core/modals/usermanagement/addaccount";
 import EditAccount from "../../core/modals/usermanagement/editaccount";
@@ -7,29 +6,29 @@ import TooltipIcons from "../../components/tooltip-content/tooltipIcons";
 import RefreshIcon from "../../components/tooltip-content/refresh";
 import CollapesIcon from "../../components/tooltip-content/collapes";
 import Table from "../../core/pagination/datatable";
-
-import { listAccounts, deleteAccount } from "../../services/accountService";
+import { getAllAccounts, deleteAccount } from "../../services/AccountService";
 
 const Accounts = () => {
-  const [accounts, setAccounts] = useState([]);
+  const [dataSource, setDataSource] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [selectedAccountId, setSelectedAccountId] = useState(null);
+
+  // Fetch accounts khi component mount
+  useEffect(() => {
+    fetchAccounts();
+  }, []);
 
   const fetchAccounts = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await listAccounts();
-      setAccounts(response || []);
+      const accountsData = await getAllAccounts();
+      setDataSource(accountsData);
     } catch (error) {
-      console.error("Failed to fetch accounts:", error);
+      console.error("Error fetching accounts:", error);
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchAccounts();
-  }, []);
 
   const handleDeleteAccount = async () => {
     if (!selectedAccount) return;
@@ -43,29 +42,39 @@ const Accounts = () => {
 
   const columns = [
     {
-      title: "Fullname",
-      dataIndex: "fullName",
-      sorter: (a, b) => a.fullName.localeCompare(b.fullName),
-    },
-    {
-      title: "Username",
+      title: "Account Name",
       dataIndex: "username",
-      sorter: (a, b) => a.username.localeCompare(b.username),
+      render: (text, record) => (
+        <span className="userimgname">
+          <Link to="#" className="avatar avatar-md me-2">
+            <img alt="" src={record.img || "/default-avatar.png"} />
+          </Link>
+          <div>
+            <Link to="#">{text}</Link>
+          </div>
+        </span>
+      ),
+      sorter: (a, b) => a.username.length - b.username.length,
     },
     {
       title: "Phone",
       dataIndex: "phone",
-      sorter: (a, b) => a.phone.localeCompare(b.phone),
+      sorter: (a, b) => a.phone.length - b.phone.length,
     },
     {
       title: "Email",
       dataIndex: "email",
-      sorter: (a, b) => a.email.localeCompare(b.email),
+      sorter: (a, b) => a.email.length - b.email.length,
     },
     {
       title: "Role",
-      dataIndex: "roles",
-      sorter: (a, b) => a.roles.localeCompare(b.roles),
+      dataIndex: "role",
+      sorter: (a, b) => a.role.length - b.role.length,
+    },
+    {
+      title: "Created On",
+      dataIndex: "createdon",
+      sorter: (a, b) => a.createdon.length - b.createdon.length,
     },
     {
       title: "Status",
@@ -74,26 +83,27 @@ const Accounts = () => {
         <div>
           {text === "Active" && (
             <span className="d-inline-flex align-items-center p-1 pe-2 rounded-1 text-white bg-success fs-10">
+              {" "}
               <i className="ti ti-point-filled me-1 fs-11"></i>
               {text}
             </span>
           )}
           {text === "Inactive" && (
             <span className="d-inline-flex align-items-center p-1 pe-2 rounded-1 text-white bg-danger fs-10">
+              {" "}
               <i className="ti ti-point-filled me-1 fs-11"></i>
               {text}
             </span>
           )}
         </div>
       ),
-      sorter: (a, b) => a.status.localeCompare(b.status),
+      sorter: (a, b) => a.status.length - b.status.length,
     },
     {
-      header: "",
-      field: "actions",
+      title: "Actions",
+      dataIndex: "actions",
       key: "actions",
-      align: "center",
-      render: (record) => (
+      render: (text, record) => (
         <div className="action-table-data">
           <div className="edit-delete-action">
             <Link className="me-2 p-2" to="#">
@@ -111,14 +121,17 @@ const Accounts = () => {
             >
               <i data-feather="edit" className="feather-edit"></i>
             </Link>
-            <Link
-              className="confirm-text p-2"
+            <Link 
+              className="confirm-text p-2" 
               to="#"
-              data-bs-toggle="modal"
-              data-bs-target="#delete-modal"
-              onClick={() => setSelectedAccount(record)}
+              onClick={() => setSelectedAccountId(record.id)}
             >
-              <i data-feather="trash-2" className="feather-trash-2"></i>
+              <i
+                data-feather="trash-2"
+                className="feather-trash-2"
+                data-bs-toggle="modal"
+                data-bs-target="#delete-modal"
+              ></i>
             </Link>
           </div>
         </div>
@@ -154,7 +167,7 @@ const Accounts = () => {
               </Link>
             </div>
           </div>
-
+          
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
               <div className="search-set"></div>
@@ -184,13 +197,13 @@ const Accounts = () => {
             </div>
 
             <div className="card-body">
-              <div className="table-responsive">
-                {loading ? (
-                  <div className="text-center p-4">Loading...</div>
-                ) : (
-                  <Table columns={columns} dataSource={accounts} />
-                )}
-              </div>
+              {loading ? (
+                <div className="text-center p-4">Loading accounts...</div>
+              ) : (
+                <div className="table-responsive">
+                  <Table columns={columns} dataSource={dataSource} />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -226,8 +239,8 @@ const Accounts = () => {
                   </button>
                   <button
                     type="submit"
-                    onClick={handleDeleteAccount}
                     className="btn btn-primary fs-13 fw-medium p-2 px-3"
+                    onClick={handleDeleteAccount}
                     data-bs-dismiss="modal"
                   >
                     Yes Delete

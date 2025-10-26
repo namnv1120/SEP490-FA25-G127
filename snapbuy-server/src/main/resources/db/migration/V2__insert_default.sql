@@ -91,13 +91,32 @@ VALUES
     ('CUST004', N'Phạm Ngọc D', '0987456123', N'Female'),
     ('CUST005', N'Hoàng Anh E', '0932123456', N'Male');
 
-INSERT INTO categories (category_name, [description])
+-- Bước 1: Insert các danh mục cha (parent_category_id = NULL)
+INSERT INTO categories (category_name, description, parent_category_id, active)
 VALUES
-    (N'Bếp điện & bếp từ', N'Các loại bếp điện, bếp từ Sunhouse'),
-    (N'Nồi & chảo', N'Nồi inox, chảo chống dính, chảo sâu lòng Sunhouse'),
-    (N'Đồ điện gia dụng', N'Ấm siêu tốc, quạt điện, máy xay Sunhouse'),
-    (N'Dụng cụ nhà bếp', N'Dụng cụ nấu ăn, dao thớt, hộp bảo quản'),
-    (N'Máy lọc nước', N'Máy lọc nước RO và thiết bị lọc của Sunhouse');
+    (N'Đồ gia dụng', N'Các sản phẩm gia dụng truyền thống như nồi, chảo, bộ nấu ăn', NULL, 1),
+    (N'Điện gia dụng', N'Các thiết bị điện phục vụ sinh hoạt hàng ngày', NULL, 1);
+
+-- Bước 2: Lấy ID của các danh mục cha vừa tạo
+DECLARE @DoGiaDungId UNIQUEIDENTIFIER;
+DECLARE @DienGiaDungId UNIQUEIDENTIFIER;
+
+SELECT @DoGiaDungId = category_id FROM categories WHERE category_name = N'Đồ gia dụng';
+SELECT @DienGiaDungId = category_id FROM categories WHERE category_name = N'Điện gia dụng';
+
+INSERT INTO categories (category_name, description, parent_category_id, active)
+VALUES
+    (N'Bộ nồi Anod', N'Bộ nồi cao cấp phủ Anodized', @DoGiaDungId, 1),
+    (N'Chảo chống dính', N'Các loại chảo chống dính đa dạng kích thước', @DoGiaDungId, 1),
+    (N'Nồi áp suất', N'Nồi áp suất tiết kiệm thời gian nấu ăn', @DoGiaDungId, 1),
+    (N'Bộ nồi Inox', N'Bộ nồi inox cao cấp bền đẹp', @DoGiaDungId, 1),
+
+    -- Con của Điện gia dụng
+    (N'Nồi cơm điện', N'Nồi cơm điện đa năng các dung tích', @DienGiaDungId, 1),
+    (N'Máy xay sinh tố', N'Máy xay sinh tố công suất mạnh', @DienGiaDungId, 1),
+    (N'Quạt đứng', N'Quạt đứng tiết kiệm điện', @DienGiaDungId, 1),
+    (N'Bếp điện từ', N'Bếp điện từ an toàn hiện đại', @DienGiaDungId, 1);
+
 
 INSERT INTO suppliers (supplier_code, supplier_name, phone, email, [address], city, ward)
 VALUES
@@ -109,33 +128,88 @@ VALUES
 
 INSERT INTO products (product_name, product_code, [description], category_id, supplier_id, unit, dimensions, image_url)
 VALUES
-    (N'Bếp từ đôi Sunhouse SHB9101', 'PRD001', N'Bếp từ đôi Sunhouse 2100W, mặt kính chịu nhiệt',
-     (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Bếp điện & bếp từ'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Chiếc', N'73x43x6cm', N'https://sunhouse.com.vn/images/products/shb9101.jpg'),
+    -- Sản phẩm thuộc danh mục "Bộ nồi Inox"
+    (N'Bộ nồi Inox 3 đáy Sunhouse SH333', 'PRD001', N'Bộ nồi inox 3 đáy cao cấp, dùng được cho bếp từ',
+     (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Bộ nồi Inox'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Bộ', N'16cm-20cm-24cm', N'https://sunhouse.com.vn/images/products/sh333.jpg'),
 
-    (N'Nồi inox 3 đáy Sunhouse SH334', 'PRD002', N'Nồi inox 3 đáy dung tích 5L, dùng cho bếp từ',
-     (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Nồi & chảo'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'28cm', N'https://sunhouse.com.vn/images/products/sh334.jpg'),
+    -- Sản phẩm thuộc danh mục "Bộ nồi Anod"
+    (N'Bộ nồi Anod Sunhouse AN668', 'PRD002', N'Bộ nồi Anod phủ chống dính, nấu nhanh chín đều',
+     (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Bộ nồi Anod'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Bộ', N'18cm-22cm-26cm', N'https://sunhouse.com.vn/images/products/an668.jpg'),
 
+    -- Sản phẩm thuộc danh mục "Chảo chống dính"
     (N'Chảo chống dính Sunhouse CS26', 'PRD003', N'Chảo chống dính sâu lòng 26cm, lớp phủ Whitford',
-     (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Nồi & chảo'),
+     (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Chảo chống dính'),
      (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'26cm', N'https://sunhouse.com.vn/images/products/cs26.jpg'),
 
-    (N'Ấm siêu tốc Sunhouse SHD1182', 'PRD004', N'Ấm siêu tốc 1.8L, vỏ inox, công suất 1500W',
-     (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Đồ điện gia dụng'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'20x25cm', N'https://sunhouse.com.vn/images/products/shd1182.jpg'),
+    -- Sản phẩm thuộc danh mục "Nồi áp suất"
+    (N'Nồi áp suất Sunhouse SH735', 'PRD004', N'Nồi áp suất 7L, tiết kiệm thời gian nấu ăn',
+     (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Nồi áp suất'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'24cm', N'https://sunhouse.com.vn/images/products/sh735.jpg'),
 
-    (N'Máy lọc nước RO Sunhouse SHR76210CK', 'PRD005', N'Máy lọc nước RO 10 lõi, công suất 10L/h',
-     (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Máy lọc nước'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'45x35x90cm', N'https://sunhouse.com.vn/images/products/shr76210ck.jpg');
+    -- Sản phẩm thuộc danh mục "Nồi cơm điện"
+    (N'Nồi cơm điện Sunhouse SHD8955', 'PRD005', N'Nồi cơm điện 1.8L, công nghệ nấu 3D',
+     (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Nồi cơm điện'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'28x28x30cm', N'https://sunhouse.com.vn/images/products/shd8955.jpg'),
+
+    -- Sản phẩm thuộc danh mục "Máy xay sinh tố"
+    (N'Máy xay sinh tố Sunhouse SHD5115', 'PRD006', N'Máy xay sinh tố 1.5L, công suất 500W',
+     (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Máy xay sinh tố'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'35x20x40cm', N'https://sunhouse.com.vn/images/products/shd5115.jpg'),
+
+    -- Sản phẩm thuộc danh mục "Bếp điện từ"
+    (N'Bếp điện từ đơn Sunhouse SHB9100', 'PRD007', N'Bếp điện từ đơn 2000W, mặt kính chịu nhiệt',
+     (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Bếp điện từ'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Chiếc', N'30x37x6cm', N'https://sunhouse.com.vn/images/products/shb9100.jpg'),
+
+    -- Sản phẩm thuộc danh mục "Quạt đứng"
+    (N'Quạt đứng Sunhouse SHD7728', 'PRD008', N'Quạt đứng 3 cánh, 3 tốc độ gió',
+     (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Quạt đứng'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'40x40x120cm', N'https://sunhouse.com.vn/images/products/shd7728.jpg'),
+
+    -- Thêm sản phẩm mới - Chảo chống dính thêm
+    (N'Chảo chống dính Sunhouse CS28', 'PRD009', N'Chảo chống dính đáy từ 28cm, an toàn sức khỏe',
+     (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Chảo chống dính'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'28cm', N'https://sunhouse.com.vn/images/products/cs28.jpg'),
+
+    -- Thêm sản phẩm mới - Nồi cơm điện thêm
+    (N'Nồi cơm điện cao tần Sunhouse SHD8858', 'PRD010', N'Nồi cơm điện cao tần 1.5L, nấu nhanh thơm ngon',
+     (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Nồi cơm điện'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'26x26x28cm', N'https://sunhouse.com.vn/images/products/shd8858.jpg');
 
 INSERT INTO product_price (product_id, unit_price, cost_price, tax_rate)
 VALUES
-    ((SELECT product_id FROM products WHERE product_code = 'PRD001'), 4500000, 3800000, 10),
-    ((SELECT product_id FROM products WHERE product_code = 'PRD002'), 650000, 500000, 10),
+    -- PRD001: Bộ nồi Inox 3 đáy Sunhouse SH333
+    ((SELECT product_id FROM products WHERE product_code = 'PRD001'), 1850000, 1500000, 10),
+
+    -- PRD002: Bộ nồi Anod Sunhouse AN668
+    ((SELECT product_id FROM products WHERE product_code = 'PRD002'), 2200000, 1800000, 10),
+
+    -- PRD003: Chảo chống dính Sunhouse CS26
     ((SELECT product_id FROM products WHERE product_code = 'PRD003'), 490000, 350000, 10),
-    ((SELECT product_id FROM products WHERE product_code = 'PRD004'), 420000, 300000, 10),
-    ((SELECT product_id FROM products WHERE product_code = 'PRD005'), 7800000, 6400000, 10);
+
+    -- PRD004: Nồi áp suất Sunhouse SH735
+    ((SELECT product_id FROM products WHERE product_code = 'PRD004'), 1650000, 1300000, 10),
+
+    -- PRD005: Nồi cơm điện Sunhouse SHD8955
+    ((SELECT product_id FROM products WHERE product_code = 'PRD005'), 2890000, 2300000, 10),
+
+    -- PRD006: Máy xay sinh tố Sunhouse SHD5115
+    ((SELECT product_id FROM products WHERE product_code = 'PRD006'), 890000, 650000, 10),
+
+    -- PRD007: Bếp điện từ đơn Sunhouse SHB9100
+    ((SELECT product_id FROM products WHERE product_code = 'PRD007'), 1590000, 1200000, 10),
+
+    -- PRD008: Quạt đứng Sunhouse SHD7728
+    ((SELECT product_id FROM products WHERE product_code = 'PRD008'), 750000, 550000, 10),
+
+    -- PRD009: Chảo chống dính Sunhouse CS28
+    ((SELECT product_id FROM products WHERE product_code = 'PRD009'), 550000, 400000, 10),
+
+    -- PRD010: Nồi cơm điện cao tần Sunhouse SHD8858
+    ((SELECT product_id FROM products WHERE product_code = 'PRD010'), 3290000, 2600000, 10);
+
 
 INSERT INTO purchase_order (purchase_order_number, supplier_id, account_id, order_date, [status], total_amount, tax_amount, notes)
 VALUES

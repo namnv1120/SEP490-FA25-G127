@@ -2,17 +2,15 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <div>
-      <div className="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-        <p className="mb-0">2014 - 2025 © DreamsPOS. All Right Reserved</p>
-        <p>
-          Designed &amp; Developed by{" "}
-          <Link to="#" className="text-primary">
-            Dreams
-          </Link>
-        </p>
-      </div>
-    </div>
+    <footer className="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
+      <p className="mb-0">2025 © SnapBuy.</p>
+      <p>
+        Thiết kế &amp; Phát triển bởi{" "}
+        <Link to="#" className="text-primary">
+          G127
+        </Link>
+      </p>
+    </footer>
   );
 };
 

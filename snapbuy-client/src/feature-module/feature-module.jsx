@@ -12,7 +12,7 @@ const FeatureModule = () => {
   const location = useLocation();
   const { toggleHeader } = useSelector((state) => state.sidebar);
 
-  const [showLoader, setShowLoader] = useState(true);
+  // const [showLoader, setShowLoader] = useState(true);
   const data = useSelector((state) => state.rootReducer.toggle_header);
   const dataWidth = useSelector((state) => state.themeSetting.dataWidth);
   const dataLayout = useSelector((state) => state.themeSetting.dataLayout);
@@ -27,24 +27,24 @@ const FeatureModule = () => {
     (state) => state.themeSetting.dataTopbarAll
   );
 
-  useEffect(() => {
-    // Hiện loader khi chuyển route
-    setShowLoader(true);
+  // useEffect(() => {
+  //   // Hiện loader khi chuyển route
+  //   setShowLoader(true);
 
-    // Ẩn loader sau 2 giây
-    const timeoutId = setTimeout(() => {
-      setShowLoader(false);
-    }, 2000);
+  //   // Ẩn loader sau 2 giây
+  //   const timeoutId = setTimeout(() => {
+  //     setShowLoader(false);
+  //   }, 2000);
 
-    window.scrollTo(0, 0);
-    return () => clearTimeout(timeoutId);
-  }, [location.pathname]);
+  //   window.scrollTo(0, 0);
+  //   return () => clearTimeout(timeoutId);
+  // }, [location.pathname]);
 
-  const Preloader = () => (
-    <div id="global-loader">
-      <div className="whirly-loader"></div>
-    </div>
-  );
+  // const Preloader = () => (
+  //   <div id="global-loader">
+  //     <div className="whirly-loader"></div>
+  //   </div>
+  // );
 
   const safeMatch = (routeList) =>
     routeList.some((route) => {
@@ -94,20 +94,18 @@ const FeatureModule = () => {
 
           <div
             className={`
-              ${
-                dataLayout === "mini" ||
+              ${dataLayout === "mini" ||
                 dataLayout === "layout-hovered" ||
                 dataWidth === "box"
-                  ? "mini-sidebar"
-                  : ""
+                ? "mini-sidebar"
+                : ""
               }
-              ${
-                dataLayout === "horizontal" ||
+              ${dataLayout === "horizontal" ||
                 dataLayout === "horizontal-single" ||
                 dataLayout === "horizontal-overlay" ||
                 dataLayout === "horizontal-box"
-                  ? "menu-horizontal"
-                  : ""
+                ? "menu-horizontal"
+                : ""
               }
               ${dataWidth === "box" ? "layout-box-mode" : ""}
             `}
@@ -120,6 +118,7 @@ const FeatureModule = () => {
               <div style={{ display: "none" }}>
                 <ThemeSettings />
               </div>
+
             </div>
           </div>
         </>

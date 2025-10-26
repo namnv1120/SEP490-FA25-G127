@@ -17,6 +17,7 @@ import "./assets/css/feather.css";
 import "./assets/icons/boxicons/css/boxicons.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./customStyle.scss";
+import "antd/dist/reset.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

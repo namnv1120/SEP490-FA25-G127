@@ -118,7 +118,7 @@ const themeSettingSlice = createSlice({
       state.dataColor = "primary";
       state.dataLoader = "enable";
       state.isRtl = "";
-      localStorage.setItem("dataLayout", "default");
+      localStorage.setItem("dataLayout", "horizontal");
       localStorage.setItem("dataWidth", "fluid");
       localStorage.setItem("dataCard", "bordered");
       localStorage.setItem("dataSidebar", "light");

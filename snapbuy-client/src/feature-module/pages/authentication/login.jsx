@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { login } from "../../../services/authService";
+import { Link } from "react-router-dom";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -75,10 +76,14 @@ const Login = () => {
                   />
                 </div>
 
-                <div className="mb-3 text-end">
-                  <a href="#" className="text-decoration-none small">
+                {/* ✅ Quên mật khẩu và Đăng ký hiển thị cùng dòng */}
+                <div className="mb-3 d-flex justify-content-between">
+                  <Link
+                    to="/forgot-password"
+                    className="text-decoration-none small"
+                  >
                     Quên mật khẩu?
-                  </a>
+                  </Link>
                 </div>
 
                 <button type="submit" className="btn btn-primary btn-lg w-100">
