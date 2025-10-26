@@ -591,7 +591,7 @@ export const SidebarData1 = [
             tittle: "Purchase Return",
             hasSubRoute: false,
             showSubRoute: false,
-            route: "/purchase-returns",
+            route: "/purchase-order-detail",
             subRoutes: [],
           },
           {

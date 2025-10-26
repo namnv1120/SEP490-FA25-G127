@@ -43,6 +43,9 @@ const Inventory = lazy(() => import("../feature-module/inventory/Inventory"));
 const PurchaseOrder = lazy(() =>
   import("../feature-module/purchases/PurchaseOrder")
 );
+const PurchaseOrderDetail = lazy(() =>
+  import("../feature-module/purchases/PurchaseOrderDetail")
+);
 
 const routes = all_routes;
 
@@ -152,6 +155,13 @@ export const authRoutes = [
     path: routes.purchaseorder, // đảm bảo trong all_routes có key purchaseorder
     name: "purchaseorder",
     element: <PurchaseOrder />,
+    route: Route,
+  },
+  {
+    id: 302,
+    path: routes.purchaseorderdetail, // thêm key này trong all_routes
+    name: "purchaseorderdetail",
+    element: <PurchaseOrderDetail />,
     route: Route,
   },
 ];
