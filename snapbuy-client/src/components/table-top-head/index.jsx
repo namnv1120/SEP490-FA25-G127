@@ -5,9 +5,9 @@ import { useSelector, useDispatch } from "react-redux";
 import { setToggleHeader } from "../../core/redux/sidebarSlice";
 
 const TableTopHead = ({
-  onExportExcel,    // 📤 callback export Excel
-  onRefresh,        // 🔄 callback refresh dữ liệu
-  showExcel = true, // ẩn/hiện icon Excel
+  onExportExcel,
+  onRefresh,
+  showExcel = true,
   showRefresh = true
 }) => {
   const dispatch = useDispatch();
@@ -26,7 +26,7 @@ const TableTopHead = ({
             <Link
               to="#"
               className="pr-tooltip"
-              data-pr-tooltip="Export Excel"
+              data-pr-tooltip="Xuất Excel"
               data-pr-position="top"
               onClick={onExportExcel}
             >
@@ -39,7 +39,7 @@ const TableTopHead = ({
             <Link
               to="#"
               className="pr-tooltip"
-              data-pr-tooltip="Refresh"
+              data-pr-tooltip="Tải lại trang"
               data-pr-position="top"
               onClick={onRefresh}
             >
@@ -57,9 +57,8 @@ const TableTopHead = ({
             onClick={handleToggleHeader}
           >
             <i
-              className={`ti ${
-                toggleHeader ? "ti-chevron-down" : "ti-chevron-up"
-              }`}
+              className={`ti ${toggleHeader ? "ti-chevron-down" : "ti-chevron-up"
+                }`}
             />
           </Link>
         </li>

@@ -36,23 +36,23 @@ const AddSupplier = ({ onSuccess }) => {
     e.preventDefault();
 
     if (!formData.supplierCode.trim()) {
-      message.warning("Please enter supplier code");
+      message.warning("Hãy nhập mã nhà cung cấp");
       return;
     }
     if (!formData.supplierName.trim()) {
-      message.warning("Please enter supplier name");
+      message.warning("Hãy nhập tên nhà cung cấp");
       return;
     }
     if (!formData.email.trim()) {
-      message.warning("Please enter email");
+      message.warning("Hãy nhập email");
       return;
     }
     if (!formData.phone.trim()) {
-      message.warning("Please enter phone");
+      message.warning("Hãy nhập số điện thoại");
       return;
     }
     if (!formData.address.trim()) {
-      message.warning("Please enter address");
+      message.warning("Hãy nhập địa chỉ");
       return;
     }
 
@@ -72,7 +72,7 @@ const AddSupplier = ({ onSuccess }) => {
       };
 
       await createSupplier(submitData);
-      message.success("Supplier added successfully!");
+      message.success("Thêm nhà cung cấp thành công!");
 
       const modalElement = document.getElementById("add-supplier");
       let modal = Modal.getInstance(modalElement);
@@ -99,9 +99,9 @@ const AddSupplier = ({ onSuccess }) => {
 
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error("Error adding supplier:", error);
+      console.error("Lỗi khi thêm nhà cung cấp", error);
       const errorMessage =
-        error.response?.data?.message || "Failed to add supplier";
+        error.response?.data?.message || "Lỗi khi thêm nhà cung cấp";
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -116,7 +116,7 @@ const AddSupplier = ({ onSuccess }) => {
           <div className="modal-content">
             <div className="modal-header border-0 custom-modal-header">
               <div className="page-title">
-                <h4>Add Supplier</h4>
+                <h4>Thêm nhà cung cấp</h4>
               </div>
               <button
                 type="button"
@@ -133,7 +133,7 @@ const AddSupplier = ({ onSuccess }) => {
                   <div className="col-lg-6">
                     <div className="mb-3">
                       <label className="form-label">
-                        Supplier Code <span className="text-danger">*</span>
+                        Mã nhà cung cấp <span className="text-danger">*</span>
                       </label>
                       <input
                         type="text"
@@ -141,7 +141,7 @@ const AddSupplier = ({ onSuccess }) => {
                         className="form-control"
                         value={formData.supplierCode}
                         onChange={handleInputChange}
-                        placeholder="Enter supplier code"
+                        placeholder="Nhập mã nhà cung cấp"
                         required
                       />
                     </div>
@@ -150,7 +150,7 @@ const AddSupplier = ({ onSuccess }) => {
                   <div className="col-lg-6">
                     <div className="mb-3">
                       <label className="form-label">
-                        Supplier Name <span className="text-danger">*</span>
+                        Tên nhà cung cấp <span className="text-danger">*</span>
                       </label>
                       <input
                         type="text"
@@ -158,7 +158,7 @@ const AddSupplier = ({ onSuccess }) => {
                         className="form-control"
                         value={formData.supplierName}
                         onChange={handleInputChange}
-                        placeholder="Enter supplier name"
+                        placeholder="Nhập tên nhà cung cấp"
                         required
                       />
                     </div>
@@ -175,7 +175,7 @@ const AddSupplier = ({ onSuccess }) => {
                         className="form-control"
                         value={formData.email}
                         onChange={handleInputChange}
-                        placeholder="Enter email"
+                        placeholder="Nhập email"
                         required
                       />
                     </div>
@@ -184,7 +184,7 @@ const AddSupplier = ({ onSuccess }) => {
                   <div className="col-lg-6">
                     <div className="mb-3">
                       <label className="form-label">
-                        Phone <span className="text-danger">*</span>
+                        Số điện thoại <span className="text-danger">*</span>
                       </label>
                       <input
                         type="text"
@@ -192,7 +192,7 @@ const AddSupplier = ({ onSuccess }) => {
                         className="form-control"
                         value={formData.phone}
                         onChange={handleInputChange}
-                        placeholder="Enter phone number"
+                        placeholder="Nhập số điện thoại"
                         required
                       />
                     </div>
@@ -201,7 +201,7 @@ const AddSupplier = ({ onSuccess }) => {
                   <div className="col-lg-12">
                     <div className="mb-3">
                       <label className="form-label">
-                        Address <span className="text-danger">*</span>
+                        Địa chỉ <span className="text-danger">*</span>
                       </label>
                       <input
                         type="text"
@@ -209,7 +209,7 @@ const AddSupplier = ({ onSuccess }) => {
                         className="form-control"
                         value={formData.address}
                         onChange={handleInputChange}
-                        placeholder="Enter address"
+                        placeholder="Nhập địa chỉ"
                         required
                       />
                     </div>
@@ -217,28 +217,28 @@ const AddSupplier = ({ onSuccess }) => {
 
                   <div className="col-lg-6">
                     <div className="mb-3">
-                      <label className="form-label">Ward</label>
+                      <label className="form-label">Quận/Phường</label>
                       <input
                         type="text"
                         name="ward"
                         className="form-control"
                         value={formData.ward}
                         onChange={handleInputChange}
-                        placeholder="Enter ward"
+                        placeholder="Nhập quận/phường"
                       />
                     </div>
                   </div>
 
                   <div className="col-lg-6">
                     <div className="mb-3">
-                      <label className="form-label">City</label>
+                      <label className="form-label">Thành phố</label>
                       <input
                         type="text"
                         name="city"
                         className="form-control"
                         value={formData.city}
                         onChange={handleInputChange}
-                        placeholder="Enter city"
+                        placeholder="Nhập thành phố"
                       />
                     </div>
                   </div>
@@ -246,7 +246,7 @@ const AddSupplier = ({ onSuccess }) => {
                   <div className="col-md-12">
                     <div className="mb-0">
                       <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                        <span className="status-label">Status</span>
+                        <span className="status-label">Trạng thái</span>
                         <input
                           type="checkbox"
                           id="add-supplier-status"
@@ -267,10 +267,10 @@ const AddSupplier = ({ onSuccess }) => {
                   data-bs-dismiss="modal"
                   disabled={loading}
                 >
-                  Cancel
+                  Huỷ
                 </button>
                 <button type="submit" className="btn btn-submit" disabled={loading}>
-                  {loading ? "Saving..." : "Add Supplier"}
+                  {loading ? "Đang lưu ..." : "Thêm nhà cung cấp"}
                 </button>
               </div>
             </form>

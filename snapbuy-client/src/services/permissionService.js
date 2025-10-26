@@ -8,7 +8,6 @@ const getAuthHeader = () => {
   if (!token) throw new Error("Unauthorized: No token found");
   return { Authorization: `${tokenType} ${token}` };
 };
-
 export const getAllPermissions = async (activeFilter) => {
   try {
     const headers = getAuthHeader();

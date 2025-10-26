@@ -48,7 +48,7 @@ const AddCategory = ({ onSuccess }) => {
       };
 
       await createCategory(newCategory);
-      message.success("Thêm category thành công!");
+      message.success("Thêm danh mục thành công!");
 
       // Đóng modal và dọn backdrop
       const modalElement = document.getElementById("add-main-category");
@@ -72,9 +72,9 @@ const AddCategory = ({ onSuccess }) => {
 
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error("Error adding category:", error);
+      console.error("Lỗi khi thêm danh mục", error);
       const errorMessage =
-        error.response?.data?.message || "Không thể thêm category";
+        error.response?.data?.message || "Không thể thêm danh mục";
       message.error(errorMessage);
     } finally {
       setLoading(false);

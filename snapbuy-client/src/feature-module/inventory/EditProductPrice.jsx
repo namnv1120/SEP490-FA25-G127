@@ -38,8 +38,8 @@ const EditProductPrice = () => {
       const data = await getAllProducts();
       setProducts(data);
     } catch (error) {
-      console.error("Error fetching products:", error);
-      message.error("Failed to load products");
+      console.error("Lỗi khi tải sản phẩm:", error);
+      message.error("Lỗi khi tải danh sách sản phẩm");
     } finally {
       setLoadingProducts(false);
     }
@@ -50,11 +50,10 @@ const EditProductPrice = () => {
       setInitialLoading(true);
       const data = await getProductPriceById(id);
 
-      // Format datetime for input fields
       const formatDateTime = (dateTime) => {
         if (!dateTime) return "";
         const date = new Date(dateTime);
-        return date.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
+        return date.toLocaleDateString("vi-VN");
       };
 
       setFormData({
@@ -66,8 +65,8 @@ const EditProductPrice = () => {
         validTo: formatDateTime(data.validTo),
       });
     } catch (error) {
-      console.error("Error fetching product price:", error);
-      message.error("Failed to load product price");
+      console.error("Lỗi khi tải giá sản phẩm:", error);
+      message.error("Lỗi khi tải thông tin giá sản phẩm");
       navigate(route.productprices);
     } finally {
       setInitialLoading(false);
@@ -94,32 +93,32 @@ const EditProductPrice = () => {
     const newErrors = {};
 
     if (!formData.productId) {
-      newErrors.productId = "Please select a product";
+      newErrors.productId = "Làm ơn chọn sản phẩm";
     }
 
     if (!formData.unitPrice || parseFloat(formData.unitPrice) <= 0) {
-      newErrors.unitPrice = "Unit price must be greater than 0";
+      newErrors.unitPrice = "Giá bán phải lớn hơn 0";
     }
 
     if (!formData.costPrice || parseFloat(formData.costPrice) <= 0) {
-      newErrors.costPrice = "Cost price must be greater than 0";
+      newErrors.costPrice = "Giá nhập phải lớn hơn 0";
     }
 
     if (formData.taxRate && (parseFloat(formData.taxRate) < 0 || parseFloat(formData.taxRate) > 1)) {
-      newErrors.taxRate = "Tax rate must be between 0 and 1 (e.g., 0.10 for 10%)";
+      newErrors.taxRate = "Thuế suất phải từ 0 đến 1 (như 0.10 cho 10%)";
     }
 
-    if (!formData.validFrom) {
-      newErrors.validFrom = "Valid from date is required";
-    }
+    // if (!formData.validFrom) {
+    //   newErrors.validFrom = "Vui lòng chọn ngày bắt đầu hiệu lực";
+    // }
 
-    if (formData.validTo && formData.validFrom) {
-      const from = new Date(formData.validFrom);
-      const to = new Date(formData.validTo);
-      if (to <= from) {
-        newErrors.validTo = "Valid to must be after valid from";
-      }
-    }
+    // if (formData.validTo && formData.validFrom) {
+    //   const from = new Date(formData.validFrom);
+    //   const to = new Date(formData.validTo);
+    //   if (to <= from) {
+    //     newErrors.validTo = "Ngày kết thúc phải sau ngày bắt đầu";
+    //   }
+    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -129,7 +128,7 @@ const EditProductPrice = () => {
     e.preventDefault();
 
     if (!validateForm()) {
-      message.error("Please fix the errors in the form");
+      message.error("Vui lòng sửa các lỗi trong biểu mẫu trước khi gửi.");
       return;
     }
 
@@ -146,11 +145,11 @@ const EditProductPrice = () => {
       };
 
       await updateProductPrice(id, priceData);
-      message.success("Product price updated successfully!");
+      message.success("Cập nhật giá sản phẩm thành công!");
       navigate(route.productprices);
     } catch (error) {
-      console.error("Error updating product price:", error);
-      message.error(error.response?.data?.message || "Failed to update product price");
+      console.error("❌ Lỗi cập nhật giá sản phẩm:", error);
+      message.error(error.response?.data?.message || "Lỗi khi cập nhật giá sản phẩm. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -160,7 +159,7 @@ const EditProductPrice = () => {
     navigate(route.productprices);
   };
 
-  const selectedProduct = products.find((p) => p.productId === formData.productId);
+  // const selectedProduct = products.find((p) => p.productId === formData.productId);
 
   if (initialLoading) {
     return (
@@ -168,9 +167,9 @@ const EditProductPrice = () => {
         <div className="content">
           <div className="text-center my-5">
             <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
+              <span className="visually-hidden">Đang tải ...</span>
             </div>
-            <p className="mt-2">Loading product price...</p>
+            <p className="mt-2">Đang tải giá sản phẩm ...</p>
           </div>
         </div>
       </div>
@@ -184,14 +183,14 @@ const EditProductPrice = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Edit Product Price</h4>
-                <h6>Update product pricing information</h6>
+                <h4>Sửa giá sản phẩm</h4>
+                <h6>Cập nhật thông tin giá sản phẩm</h6>
               </div>
             </div>
             <div className="page-btn">
               <Link to={route.productprices} className="btn btn-secondary">
                 <i className="ti ti-arrow-left me-1"></i>
-                Back to List
+                Quay lại danh sách giá sản phẩm
               </Link>
             </div>
           </div>
@@ -205,7 +204,7 @@ const EditProductPrice = () => {
                       <span>
                         <i className="ti ti-info-circle me-2"></i>
                       </span>
-                      Price Information
+                      Thông tin giá sản phẩm
                     </h6>
                   </div>
 
@@ -214,7 +213,7 @@ const EditProductPrice = () => {
                     <div className="col-lg-6 col-md-6">
                       <div className="mb-3">
                         <label className="form-label">
-                          Product <span className="text-danger">*</span>
+                          Sản phẩm <span className="text-danger">*</span>
                         </label>
                         {loadingProducts ? (
                           <div className="spinner-border spinner-border-sm" role="status">
@@ -228,7 +227,7 @@ const EditProductPrice = () => {
                             onChange={handleChange}
                             disabled
                           >
-                            <option value="">Select Product</option>
+                            <option value="">Chọn sản phẩm</option>
                             {products.map((product) => (
                               <option key={product.productId} value={product.productId}>
                                 {product.productCode} - {product.productName}
@@ -239,15 +238,14 @@ const EditProductPrice = () => {
                         {errors.productId && (
                           <div className="invalid-feedback d-block">{errors.productId}</div>
                         )}
-                        <small className="text-muted">Product cannot be changed</small>
+                        <small className="text-muted">Sản phẩm không thể thay đổi</small>
                       </div>
                     </div>
 
-                    {/* Unit Price */}
                     <div className="col-lg-4 col-md-6">
                       <div className="mb-3">
                         <label className="form-label">
-                          Unit Price (đ) <span className="text-danger">*</span>
+                          Giá bán (đ) <span className="text-danger">*</span>
                         </label>
                         <input
                           type="number"
@@ -255,7 +253,7 @@ const EditProductPrice = () => {
                           name="unitPrice"
                           value={formData.unitPrice}
                           onChange={handleChange}
-                          placeholder="Enter unit price"
+                          placeholder="Nhập giá bán"
                           step="0.01"
                           min="0"
                         />
@@ -265,11 +263,10 @@ const EditProductPrice = () => {
                       </div>
                     </div>
 
-                    {/* Cost Price */}
                     <div className="col-lg-4 col-md-6">
                       <div className="mb-3">
                         <label className="form-label">
-                          Cost Price (đ) <span className="text-danger">*</span>
+                          Giá nhập (đ) <span className="text-danger">*</span>
                         </label>
                         <input
                           type="number"
@@ -277,7 +274,7 @@ const EditProductPrice = () => {
                           name="costPrice"
                           value={formData.costPrice}
                           onChange={handleChange}
-                          placeholder="Enter cost price"
+                          placeholder="Nhập giá nhập"
                           step="0.01"
                           min="0"
                         />
@@ -290,14 +287,14 @@ const EditProductPrice = () => {
                     {/* Tax Rate */}
                     <div className="col-lg-4 col-md-6">
                       <div className="mb-3">
-                        <label className="form-label">Tax Rate (0-1)</label>
+                        <label className="form-label">Thuế suất (0-1)</label>
                         <input
                           type="number"
                           className={`form-control ${errors.taxRate ? "is-invalid" : ""}`}
                           name="taxRate"
                           value={formData.taxRate}
                           onChange={handleChange}
-                          placeholder="e.g., 0.10 for 10%"
+                          placeholder="ví dụ: 0.10 cho 10%"
                           step="0.01"
                           min="0"
                           max="1"
@@ -305,12 +302,11 @@ const EditProductPrice = () => {
                         {errors.taxRate && (
                           <div className="invalid-feedback">{errors.taxRate}</div>
                         )}
-                        <small className="text-muted">Enter as decimal (e.g., 0.10 = 10%)</small>
+                        <small className="text-muted">Nhập dưới dạng thập phân (ví dụ: 0,10 = 10%)</small>
                       </div>
                     </div>
 
-                    {/* Valid From */}
-                    <div className="col-lg-6 col-md-6">
+                    {/* <div className="col-lg-6 col-md-6">
                       <div className="mb-3">
                         <label className="form-label">
                           Valid From <span className="text-danger">*</span>
@@ -328,7 +324,7 @@ const EditProductPrice = () => {
                       </div>
                     </div>
 
-                    {/* Valid To */}
+
                     <div className="col-lg-6 col-md-6">
                       <div className="mb-3">
                         <label className="form-label">Valid To</label>
@@ -344,22 +340,22 @@ const EditProductPrice = () => {
                         )}
                         <small className="text-muted">Leave empty for no expiration</small>
                       </div>
-                    </div>
+                    </div> */}
 
                     {/* Price Calculation Preview */}
                     {formData.unitPrice && formData.taxRate && (
                       <div className="col-12">
                         <div className="alert alert-info">
-                          <strong>Price Preview:</strong>
+                          <strong>Xem trước:</strong>
                           <ul className="mb-0 mt-2">
-                            <li>Unit Price: {parseFloat(formData.unitPrice).toLocaleString()} đ</li>
+                            <li>Giá bán: {parseFloat(formData.unitPrice).toLocaleString()} đ</li>
                             <li>
-                              Tax ({(parseFloat(formData.taxRate) * 100).toFixed(2)}%):{" "}
+                              Thuế ({(parseFloat(formData.taxRate) * 100).toFixed(2)}%):{" "}
                               {(parseFloat(formData.unitPrice) * parseFloat(formData.taxRate)).toLocaleString()} đ
                             </li>
                             <li>
                               <strong>
-                                Total with Tax:{" "}
+                                Tổng với thuế:{" "}
                                 {(
                                   parseFloat(formData.unitPrice) *
                                   (1 + parseFloat(formData.taxRate))
@@ -369,7 +365,7 @@ const EditProductPrice = () => {
                             </li>
                             {formData.costPrice && (
                               <li className="mt-2">
-                                Profit Margin:{" "}
+                                Biên lợi nhuận:{" "}
                                 {(
                                   ((parseFloat(formData.unitPrice) - parseFloat(formData.costPrice)) /
                                     parseFloat(formData.costPrice)) *
@@ -395,18 +391,18 @@ const EditProductPrice = () => {
                 onClick={handleCancel}
                 disabled={loading}
               >
-                Cancel
+                Huỷ
               </button>
               <button type="submit" className="btn btn-primary" disabled={loading}>
                 {loading ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                    Updating...
+                    Đang cập nhật ...
                   </>
                 ) : (
                   <>
                     <i className="ti ti-device-floppy me-1"></i>
-                    Update Price
+                    Cập nhật
                   </>
                 )}
               </button>

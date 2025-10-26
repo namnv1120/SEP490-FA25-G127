@@ -9,7 +9,7 @@ const getAuthHeader = () => {
   return { Authorization: `${tokenType} ${token}` };
 };
 
-export const listAccounts = async () => {
+export const getAllAccounts = async () => {
   try {
     const response = await axios.get(REST_API_BASE_URL, {
       headers: getAuthHeader(),
@@ -33,7 +33,7 @@ export const createAccount = async (userData) => {
   }
 };
 
-export const getAccount = async (id) => {
+export const getAccountById = async (id) => {
   try {
     const response = await axios.get(`${REST_API_BASE_URL}/${id}`, {
       headers: getAuthHeader(),

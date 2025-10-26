@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { updateRole } from "../../../services/roleService";
+import { updateRole } from "../../../services/RoleService";
 
 const EditRole = ({ id = "edit-role", role, roleId, onUpdated, onClose }) => {
   const [roleName, setRoleName] = useState("");

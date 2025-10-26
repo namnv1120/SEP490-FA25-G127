@@ -14,7 +14,6 @@ const getAuthHeaders = () => {
   };
 };
 
-// Lấy danh sách khách hàng
 export const getAllCustomers = async () => {
   try {
     const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
@@ -30,7 +29,6 @@ export const getAllCustomers = async () => {
   }
 };
 
-// Lấy thông tin khách hàng theo ID
 export const getCustomerById = async (id) => {
   try {
     const response = await axios.get(
@@ -44,7 +42,6 @@ export const getCustomerById = async (id) => {
   }
 };
 
-// Lấy khách hàng theo số điện thoại
 export const getCustomerByPhone = async (phone) => {
   try {
     const response = await axios.get(
@@ -59,7 +56,6 @@ export const getCustomerByPhone = async (phone) => {
   }
 };
 
-// Thêm khách hàng
 export const createCustomer = async (customerData) => {
   try {
     const response = await axios.post(
@@ -74,7 +70,6 @@ export const createCustomer = async (customerData) => {
   }
 };
 
-// Cập nhật khách hàng
 export const updateCustomer = async (id, customerData) => {
   try {
     const response = await axios.put(
@@ -89,7 +84,6 @@ export const updateCustomer = async (id, customerData) => {
   }
 };
 
-// Xóa khách hàng
 export const deleteCustomer = async (id) => {
   try {
     const response = await axios.delete(

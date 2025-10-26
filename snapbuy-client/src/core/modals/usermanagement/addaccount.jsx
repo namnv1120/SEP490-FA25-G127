@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import CommonSelect from "../../../components/select/common-select";
-import { createAccount } from "../../../services/accountService";
+import { createAccount } from "../../../services/AccountService";
 
 const AddAccount = ({ onUserAdded }) => {
   const status = [

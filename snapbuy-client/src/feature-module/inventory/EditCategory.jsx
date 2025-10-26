@@ -10,7 +10,7 @@ const EditCategory = ({ categoryId, onSuccess, onClose }) => {
     description: "",
     active: true,
   });
-  
+
   useEffect(() => {
     if (!categoryId) return;
 
@@ -30,8 +30,8 @@ const EditCategory = ({ categoryId, onSuccess, onClose }) => {
           modal.show();
         }
       } catch (error) {
-        console.error("Lỗi tại category:", error);
-        message.error("Không thể tải dữ liệu category");
+        console.error("Lỗi tải danh mục:", error);
+        message.error("Không thể tải dữ liệu danh mục");
         if (onClose) onClose(); // ✅ Đóng nếu lỗi
       } finally {
         setLoading(false);
@@ -39,7 +39,7 @@ const EditCategory = ({ categoryId, onSuccess, onClose }) => {
     };
 
     loadCategoryData();
-  }, [categoryId]); 
+  }, [categoryId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -94,9 +94,9 @@ const EditCategory = ({ categoryId, onSuccess, onClose }) => {
       if (onSuccess) onSuccess();
       if (onClose) onClose();
     } catch (error) {
-      console.error("Error updating category:", error);
+      console.error("Lỗi cập nhật danh mục", error);
       const errorMessage =
-        error.response?.data?.message || "Không thể cập nhật category";
+        error.response?.data?.message || "Không thể cập nhật danh mục";
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -203,7 +203,7 @@ const EditCategory = ({ categoryId, onSuccess, onClose }) => {
                       className="btn btn-submit"
                       disabled={loading}
                     >
-                      {loading ? "Saving..." : "Save Changes"}
+                      {loading ? "Đang lưu..." : "Lưu thay đổi"}
                     </button>
                   </div>
                 </form>

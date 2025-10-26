@@ -222,7 +222,7 @@ const AddProduct = () => {
                               setSelectedCategory(selectedOption);
                               setSelectedSubCategory(null); 
                             }}
-                            placeholder="Choose Category"
+                            placeholder="Chọn danh mục"
                           />
                         </div>
                       </div>
@@ -238,7 +238,7 @@ const AddProduct = () => {
                             options={subCategories}
                             value={selectedSubCategory}
                             onChange={setSelectedSubCategory}
-                            placeholder="Choose Sub Category"
+                            placeholder="Chọn danh mục con"
                           />
                         </div>
                       </div>
@@ -257,7 +257,7 @@ const AddProduct = () => {
                               setProduct({ ...product, unit: e.target.value })
                             }
                             className="form-control"
-                            placeholder="Enter unit (e.g., kg, box, piece)"
+                            placeholder="Điền đơn vị tính (ví dụ: cái, chiếc...)"
                           />
                         </div>
                       </div>

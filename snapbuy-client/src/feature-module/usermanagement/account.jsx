@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import AddAccount from "../../core/modals/usermanagement/addaccount";
 import EditAccount from "../../core/modals/usermanagement/editaccount";
 
@@ -12,6 +13,7 @@ const Accounts = () => {
   const [dataSource, setDataSource] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState(null);
+  const [selectedAccount, setSelectedAccount] = useState(null);
 
   // Fetch accounts khi component mount
   useEffect(() => {

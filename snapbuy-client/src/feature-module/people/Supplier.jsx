@@ -65,7 +65,7 @@ const Suppliers = () => {
 
   const handleRefresh = () => {
     fetchSuppliers();
-    message.success("Supplier list refreshed!");
+    message.success("Làm mới danh sách thành công!");
   }
 
   const handleSearch = (value) => {
@@ -163,9 +163,6 @@ const Suppliers = () => {
       sortable: false,
       body: (row) => (
         <div className="edit-delete-action">
-          <Link className="me-2 p-2" to="#">
-            <i className="feather icon-eye"></i>
-          </Link>
           <button
             className="me-2 p-2 border-0 bg-transparent"
             onClick={() => handleEditClick(row)}
@@ -190,8 +187,8 @@ const Suppliers = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Suppliers</h4>
-                <h6>Manage your suppliers</h6>
+                <h4>Nhà cung cấp</h4>
+                <h6>Quản lý danh sách nhà cung cấp</h6>
               </div>
             </div>
             <TableTopHead
@@ -254,10 +251,8 @@ const Suppliers = () => {
         <CommonFooter />
       </div>
 
-      {/* ✅ Add Supplier Component */}
       <AddSupplier onSuccess={fetchSuppliers} />
 
-      {/* ✅ Edit Supplier Component */}
       {editSupplierId && (
         <EditSupplier
           supplierId={editSupplierId}
@@ -268,8 +263,6 @@ const Suppliers = () => {
           onClose={() => setEditSupplierId(null)}
         />
       )}
-
-      {/* ✅ Delete Modal */}
       <DeleteModal
         itemId={selectedSupplier?.supplierId}
         itemName={selectedSupplier?.supplierName}

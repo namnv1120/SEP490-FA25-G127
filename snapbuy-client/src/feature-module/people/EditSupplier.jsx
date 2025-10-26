@@ -42,8 +42,8 @@ const EditSupplier = ({ supplierId, onSuccess, onClose }) => {
           modal.show();
         }
       } catch (error) {
-        console.error("Error loading supplier:", error);
-        message.error("Failed to load supplier data");
+        console.error("❌ Lỗi khi tải dữ liệu nhà cung cấp", error);
+        message.error("Không thể tải dữ liệu nhà cung cấp");
         if (onClose) onClose();
       } finally {
         setLoading(false);
@@ -73,15 +73,15 @@ const EditSupplier = ({ supplierId, onSuccess, onClose }) => {
     e.preventDefault();
 
     if (!formData.supplierCode.trim()) {
-      message.warning("Please enter supplier code");
+      message.warning("Hãy nhập mã nhà cung cấp");
       return;
     }
     if (!formData.supplierName.trim()) {
-      message.warning("Please enter supplier name");
+      message.warning("Hãy nhập tên nhà cung cấp");
       return;
     }
     if (!formData.email.trim()) {
-      message.warning("Please enter email");
+      message.warning("Hãy nhập email");
       return;
     }
 
@@ -100,11 +100,8 @@ const EditSupplier = ({ supplierId, onSuccess, onClose }) => {
         active: formData.active === true,
       };
 
-      console.log("🟢 Submit data:", submitData);
-
-
       await updateSupplier(supplierId, submitData);
-      message.success("Supplier updated successfully!");
+      message.success("Thêm nhà cung cấp thành công!");
 
       const modalElement = document.getElementById("edit-supplier");
       const modal = Modal.getInstance(modalElement);
@@ -122,9 +119,9 @@ const EditSupplier = ({ supplierId, onSuccess, onClose }) => {
       if (onSuccess) onSuccess();
       if (onClose) onClose();
     } catch (error) {
-      console.error("Error updating supplier:", error);
+      console.error("Lỗi khi cập nhật:", error);
       const errorMessage =
-        error.response?.data?.message || "Failed to update supplier";
+        error.response?.data?.message || "Lỗi khi cập nhật nhà cung cấp";
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -158,7 +155,7 @@ const EditSupplier = ({ supplierId, onSuccess, onClose }) => {
           <div className="modal-content">
             <div className="modal-header border-0 custom-modal-header">
               <div className="page-title">
-                <h4>Edit Supplier</h4>
+                <h4>Cập nhật nhà cung cấp</h4>
               </div>
               <button
                 type="button"
@@ -183,7 +180,7 @@ const EditSupplier = ({ supplierId, onSuccess, onClose }) => {
                     <div className="col-lg-6">
                       <div className="mb-3">
                         <label className="form-label">
-                          Supplier Code <span className="text-danger">*</span>
+                          Mã nhà cung cấp <span className="text-danger">*</span>
                         </label>
                         <input
                           type="text"
@@ -199,7 +196,7 @@ const EditSupplier = ({ supplierId, onSuccess, onClose }) => {
                     <div className="col-lg-6">
                       <div className="mb-3">
                         <label className="form-label">
-                          Supplier Name <span className="text-danger">*</span>
+                          Tên nhà cung cấp <span className="text-danger">*</span>
                         </label>
                         <input
                           type="text"
@@ -231,7 +228,7 @@ const EditSupplier = ({ supplierId, onSuccess, onClose }) => {
                     <div className="col-lg-6">
                       <div className="mb-3">
                         <label className="form-label">
-                          Phone <span className="text-danger">*</span>
+                          Số điện thoại <span className="text-danger">*</span>
                         </label>
                         <input
                           type="text"
@@ -247,7 +244,7 @@ const EditSupplier = ({ supplierId, onSuccess, onClose }) => {
                     <div className="col-lg-12">
                       <div className="mb-3">
                         <label className="form-label">
-                          Address <span className="text-danger">*</span>
+                          Địa chỉ <span className="text-danger">*</span>
                         </label>
                         <input
                           type="text"
@@ -262,7 +259,7 @@ const EditSupplier = ({ supplierId, onSuccess, onClose }) => {
 
                     <div className="col-lg-6">
                       <div className="mb-3">
-                        <label className="form-label">Ward</label>
+                        <label className="form-label">Quận/Huyện</label>
                         <input
                           type="text"
                           name="ward"
@@ -275,14 +272,14 @@ const EditSupplier = ({ supplierId, onSuccess, onClose }) => {
 
                     <div className="col-lg-6 col-sm-10 col-10">
                       <div className="mb-3">
-                        <label className="form-label">City</label>
+                        <label className="form-label">Thành phố</label>
                         <input
                           type="text"
                           name="city"
                           className="form-control"
                           value={formData.city}
                           onChange={handleInputChange}
-                          placeholder="Enter city"
+                          placeholder="Nhập thành phố"
                         />
                       </div>
                     </div>
@@ -290,7 +287,7 @@ const EditSupplier = ({ supplierId, onSuccess, onClose }) => {
                     <div className="col-md-12">
                       <div className="mb-0">
                         <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                          <span className="status-label">Status</span>
+                          <span className="status-label">Trạng thái</span>
                           <input
                             type="checkbox"
                             id="edit-supplier-status"
@@ -311,10 +308,10 @@ const EditSupplier = ({ supplierId, onSuccess, onClose }) => {
                     onClick={handleModalClose}
                     disabled={loading}
                   >
-                    Cancel
+                    Huỷ
                   </button>
                   <button type="submit" className="btn btn-submit" disabled={loading}>
-                    {loading ? "Saving..." : "Save Changes"}
+                    {loading ? "Đang lưu..." : "Lưu thay đổi"}
                   </button>
                 </div>
               </form>

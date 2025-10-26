@@ -11,11 +11,11 @@ import CollapesIcon from "../../components/tooltip-content/collapes";
 import Table from "../../core/pagination/datatable";
 
 import {
-  listRoles,
+  getAllRoles,
   deleteRole,
   createRole,
   updateRole,
-} from "../../services/roleService";
+} from "../../services/RoleService";
 
 const RolesPermissions = () => {
   const [roles, setRoles] = useState([]);
@@ -25,7 +25,7 @@ const RolesPermissions = () => {
   const fetchRoles = async () => {
     try {
       setLoading(true);
-      const response = await listRoles();
+      const response = await getAllRoles();
       const data = Array.isArray(response) ? response : response.data || response.result || [];
       setRoles(data);
     } catch (error) {

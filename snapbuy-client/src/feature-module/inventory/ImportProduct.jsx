@@ -2,11 +2,13 @@ import ImportExcelModal from "../../components/ImportExcelModal";
 
 const ImportProduct = ({ visible, onClose, onImport }) => {
   const columns = [
-    { title: "Code", dataIndex: "productCode", key: "productCode", width: 120 },
-    { title: "Name", dataIndex: "productName", key: "productName", width: 200 },
-    { title: "Category", dataIndex: "categoryName", key: "categoryName", width: 150 },
-    { title: "Supplier", dataIndex: "supplierName", key: "supplierName", width: 200 },
-    { title: "Unit", dataIndex: "unit", key: "unit", width: 100 },
+    { title: "Mã sản phẩm", dataIndex: "Mã sản phẩm", key: "productCode", width: 120 },
+    { title: "Tên sản phẩm", dataIndex: "Tên sản phẩm", key: "productName", width: 200 },
+    { title: "Danh mục", dataIndex: "Danh mục", key: "categoryName", width: 150 },
+    { title: "Nhà cung cấp", dataIndex: "Nhà cung cấp", key: "supplierName", width: 200 },
+    { title: "Đơn vị", dataIndex: "Đơn vị", key: "unit", width: 100 },
+    { title: "Kích thước", dataIndex: "Kích thước", key: "dimensions", width: 150 },
+    { title: "Mô tả", dataIndex: "Mô tả", key: "description", width: 250 },
   ];
 
   const mapExcelRow = (row, index) => ({
@@ -62,7 +64,7 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       columns={columns}
       mapExcelRow={mapExcelRow}
       templateData={templateData}
-      title="Import Products from Excel"
+      title="Thêm sản phẩm từ Excel"
     />
   );
 };

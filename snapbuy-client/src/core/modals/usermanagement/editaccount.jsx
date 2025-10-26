@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import CommonSelect from "../../../components/select/common-select";
-import { getAccount, updateAccount } from "../../../services/accountService";
+import { getAllAccounts, updateAccount } from "../../../services/AccountService";
 
 const EditAccount = ({ accountId, onClose, onUpdated }) => {
   const statusOptions = [
@@ -24,7 +24,7 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
 
   useEffect(() => {
     if (accountId) {
-      getAccount(accountId)
+      getAllAccounts(accountId)
         .then((account) => {
           const data = account.result || account;
 

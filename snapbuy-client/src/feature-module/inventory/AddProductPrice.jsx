@@ -66,28 +66,28 @@ const AddProductPrice = () => {
     }
 
     if (!formData.unitPrice || parseFloat(formData.unitPrice) <= 0) {
-      newErrors.unitPrice = "Giá nhập vào phải lớn hơn 0";
+      newErrors.unitPrice = "Giá bán phải lớn hơn 0";
     }
 
     if (!formData.costPrice || parseFloat(formData.costPrice) <= 0) {
-      newErrors.costPrice = "Giá bán phải lớn hơn 0";
+      newErrors.costPrice = "Giá nhập vào phải lớn hơn 0";
     }
 
     if (formData.taxRate && (parseFloat(formData.taxRate) < 0 || parseFloat(formData.taxRate) > 1)) {
       newErrors.taxRate = "Thuế phải nằm trong khoảng từ 0 đến 1 (như 0.10 cho 10%)";
     }
 
-    if (!formData.validFrom) {
-      newErrors.validFrom = "Vui lòng chọn ngày bắt đầu hiệu lực";
-    }
+    // if (!formData.validFrom) {
+    //   newErrors.validFrom = "Vui lòng chọn ngày bắt đầu hiệu lực";
+    // }
 
-    if (formData.validTo && formData.validFrom) {
-      const from = new Date(formData.validFrom);
-      const to = new Date(formData.validTo);
-      if (to <= from) {
-        newErrors.validTo = "Ngày kết thúc phải sau ngày bắt đầu";
-      }
-    }
+    // if (formData.validTo && formData.validFrom) {
+    //   const from = new Date(formData.validFrom);
+    //   const to = new Date(formData.validTo);
+    //   if (to <= from) {
+    //     newErrors.validTo = "Ngày kết thúc phải sau ngày bắt đầu";
+    //   }
+    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -194,7 +194,6 @@ const AddProductPrice = () => {
                       </div>
                     </div>
 
-                    {/* Display selected product info */}
                     {selectedProduct && (
                       <div className="col-lg-6 col-md-6">
                         <div className="mb-3">
@@ -214,7 +213,7 @@ const AddProductPrice = () => {
                     <div className="col-lg-4 col-md-6">
                       <div className="mb-3">
                         <label className="form-label">
-                          Giá nhập (đ) <span className="text-danger">*</span>
+                          Giá bán (đ) <span className="text-danger">*</span>
                         </label>
                         <input
                           type="number"
@@ -222,7 +221,7 @@ const AddProductPrice = () => {
                           name="unitPrice"
                           value={formData.unitPrice}
                           onChange={handleChange}
-                          placeholder="Nhập giá nhập"
+                          placeholder="Nhập giá bán"
                           step="0.01"
                           min="0"
                         />
@@ -236,7 +235,7 @@ const AddProductPrice = () => {
                     <div className="col-lg-4 col-md-6">
                       <div className="mb-3">
                         <label className="form-label">
-                          Giá bán (đ) <span className="text-danger">*</span>
+                          Giá nhập (đ) <span className="text-danger">*</span>
                         </label>
                         <input
                           type="number"
@@ -244,7 +243,7 @@ const AddProductPrice = () => {
                           name="costPrice"
                           value={formData.costPrice}
                           onChange={handleChange}
-                          placeholder="Nhập giá bán"
+                          placeholder="Nhập giá nhập"
                           step="0.01"
                           min="0"
                         />
@@ -278,8 +277,7 @@ const AddProductPrice = () => {
                       </div>
                     </div>
 
-                    {/* Valid From */}
-                    <div className="col-lg-6 col-md-6">
+                    {/* <div className="col-lg-6 col-md-6">
                       <div className="mb-3">
                         <label className="form-label">
                           Có hiệu lực <span className="text-danger">*</span>
@@ -296,8 +294,6 @@ const AddProductPrice = () => {
                         )}
                       </div>
                     </div>
-
-                    {/* Valid To */}
                     <div className="col-lg-6 col-md-6">
                       <div className="mb-3">
                         <label className="form-label">Hết hiệu lực</label>
@@ -313,7 +309,7 @@ const AddProductPrice = () => {
                         )}
                         <small className="text-muted">Để trống không hết hạn</small>
                       </div>
-                    </div>
+                    </div> */}
 
                     {/* Price Calculation Preview */}
                     {formData.unitPrice && formData.taxRate && (
@@ -321,7 +317,7 @@ const AddProductPrice = () => {
                         <div className="alert alert-info">
                           <strong>Xem trước:</strong>
                           <ul className="mb-0 mt-2">
-                            <li>Giá nhập: {parseFloat(formData.unitPrice).toLocaleString()} đ</li>
+                            <li>Giá bán: {parseFloat(formData.unitPrice).toLocaleString()} đ</li>
                             <li>Thuế ({(parseFloat(formData.taxRate) * 100).toFixed(2)}%): {(parseFloat(formData.unitPrice) * parseFloat(formData.taxRate)).toLocaleString()} đ</li>
                             <li>
                               <strong>Tổng với thuế: {(parseFloat(formData.unitPrice) * (1 + parseFloat(formData.taxRate))).toLocaleString()} đ</strong>

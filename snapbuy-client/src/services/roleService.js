@@ -9,7 +9,7 @@ const getAuthHeader = () => {
   return { Authorization: `${tokenType} ${token}` };
 };
 
-export const listRoles = async (active) => {
+export const getAllRoles = async (active) => {
   try {
     const params = active !== undefined ? { active } : {};
     const response = await axios.get(REST_API_BASE_URL, {
@@ -23,7 +23,6 @@ export const listRoles = async (active) => {
   }
 };
 
-// Lấy Role theo ID
 export const getRoleById = async (roleId) => {
   try {
     const response = await axios.get(`${REST_API_BASE_URL}/${roleId}`, {
@@ -36,7 +35,6 @@ export const getRoleById = async (roleId) => {
   }
 };
 
-// Tạo Role mới
 export const createRole = async (roleData) => {
   try {
     const response = await axios.post(REST_API_BASE_URL, roleData, {
@@ -49,7 +47,6 @@ export const createRole = async (roleData) => {
   }
 };
 
-// Cập nhật Role
 export const updateRole = async (roleId, updatedData) => {
   try {
     const response = await axios.put(`${REST_API_BASE_URL}/${roleId}`, updatedData, {
@@ -62,7 +59,6 @@ export const updateRole = async (roleId, updatedData) => {
   }
 };
 
-// Xóa Role
 export const deleteRole = async (roleId) => {
   try {
     const response = await axios.delete(`${REST_API_BASE_URL}/${roleId}`, {
@@ -75,7 +71,6 @@ export const deleteRole = async (roleId) => {
   }
 };
 
-// Lấy danh sách Permission của Role
 export const listPermissions = async (roleId) => {
   try {
     const response = await axios.get(`${REST_API_BASE_URL}/${roleId}/permissions`, {
@@ -88,7 +83,6 @@ export const listPermissions = async (roleId) => {
   }
 };
 
-// Thêm Permission vào Role
 export const addPermission = async (roleId, permissionId) => {
   try {
     const response = await axios.post(
@@ -103,7 +97,6 @@ export const addPermission = async (roleId, permissionId) => {
   }
 };
 
-// Xóa Permission khỏi Role
 export const removePermission = async (roleId, permissionId) => {
   try {
     const response = await axios.delete(
@@ -117,7 +110,6 @@ export const removePermission = async (roleId, permissionId) => {
   }
 };
 
-// Gán lại toàn bộ Permissions cho Role
 export const setPermissions = async (roleId, permissionsData) => {
   try {
     const response = await axios.put(

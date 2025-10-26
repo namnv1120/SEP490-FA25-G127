@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createRole } from "../../../services/roleService";
+import { createRole } from "../../../services/RoleService";
 
 const AddRole = ({ id = "add-role", onCreated }) => {
   const [roleName, setRoleName] = useState("");

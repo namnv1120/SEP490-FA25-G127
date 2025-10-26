@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { all_routes } from "../../routes/all_routes";
 import DeleteModal from "../../components/delete-modal";
+import CommonFooter from "../../components/footer/commonFooter";
 import CommonSelect from "../../components/select/common-select";
 import RefreshIcon from "../../components/tooltip-content/refresh";
 import CollapesIcon from "../../components/tooltip-content/collapes";
-import { getProductById, updateProduct } from "../../services/productService";
-import { getAllCategories } from "../../services/categoryService";
+import { getProductById, updateProduct } from "../../services/ProductService";
+import { getAllCategories } from "../../services/CategoryService";
 import { message } from "antd";
 
 
@@ -23,7 +24,6 @@ const EditProduct = () => {
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
   const [isImageVisible, setIsImageVisible] = useState(true);
 
-  // 🔹 Lấy danh sách Category từ server
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -57,7 +57,7 @@ const EditProduct = () => {
 
         setSubCategories(subs);
       } catch (err) {
-        console.error("❌ Lỗi tải subcategory:", err);
+        console.error("❌ Lỗi tải danh mục con:", err);
       }
     };
 
@@ -69,7 +69,6 @@ const EditProduct = () => {
   }, [selectedCategory]);
 
 
-  // 🔹 Lấy chi tiết sản phẩm
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -103,8 +102,8 @@ const EditProduct = () => {
         productCode: product?.productCode || "",
         productName: product?.productName || "",
         categoryId: selectedSubCategory
-          ? selectedSubCategory.value // Nếu có subcategory thì lấy ID con
-          : selectedCategory?.value,  // Nếu không thì lấy category cha
+          ? selectedSubCategory.value
+          : selectedCategory?.value,
         unit: product?.unit || "",
         supplierName: product?.supplierName || "",
         dimensions: product?.dimensions || "",
@@ -115,7 +114,7 @@ const EditProduct = () => {
       await updateProduct(id, updatedProduct);
 
       message.success("Cập nhật sản phẩm thành công!");
-      navigate(route.productlist);
+      navigate(route.products);
     } catch (error) {
       console.error("❌ Lỗi khi cập nhật sản phẩm:", error);
       message.success("Cập nhật thất bại!");
@@ -131,8 +130,8 @@ const EditProduct = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Edit Product</h4>
-                <h6>Update product</h6>
+                <h4>Sửa sản phẩm</h4>
+                <h6>Cập nhật sản phẩm</h6>
               </div>
             </div>
             <ul className="table-top-head">
@@ -142,7 +141,7 @@ const EditProduct = () => {
                 <div className="page-btn">
                   <Link to={route.products} className="btn btn-secondary">
                     <i className="feather icon-arrow-left me-2" />
-                    Back to Product
+                    Quay lại danh sách sản phẩm
                   </Link>
                 </div>
               </li>
@@ -166,7 +165,7 @@ const EditProduct = () => {
                         <div className="d-flex align-items-center justify-content-between flex-fill">
                           <h5 className="d-flex align-items-center">
                             <i className="feather icon-info text-primary me-2" />
-                            <span>Product Information</span>
+                            <span>Thông tin sản phẩm</span>
                           </h5>
                         </div>
                       </div>
@@ -181,7 +180,7 @@ const EditProduct = () => {
                           <div className="col-sm-6 col-12">
                             <div className="mb-3">
                               <label className="form-label">
-                                Product Code
+                                Mã sản phẩm
                                 <span className="text-danger ms-1">*</span>
                               </label>
                               <input
@@ -195,7 +194,7 @@ const EditProduct = () => {
                           <div className="col-sm-6 col-12">
                             <div className="mb-3">
                               <label className="form-label">
-                                Product Name
+                                Tên sản phẩm
                                 <span className="text-danger ms-1">*</span>
                               </label>
                               <input
@@ -212,7 +211,7 @@ const EditProduct = () => {
                             <div className="mb-3">
                               <div className="add-newplus">
                                 <label className="form-label">
-                                  Category
+                                  Danh mục
                                   <span className="text-danger ms-1">*</span>
                                 </label>
                               </div>
@@ -220,18 +219,18 @@ const EditProduct = () => {
                                 className="w-100"
                                 options={categories}
                                 value={selectedCategory}
-                                onChange={(selectedOption) => {  // ✅ Bây giờ nhận cả object rồi
+                                onChange={(selectedOption) => {
                                   setSelectedCategory(selectedOption);
                                   setSelectedSubCategory(null);
                                 }}
-                                placeholder="Choose Category"
+                                placeholder="Chọn danh mục"
                               />
                             </div>
                           </div>
                           <div className="col-sm-6 col-12">
                             <div className="mb-3">
                               <label className="form-label">
-                                Sub Category
+                                Danh mục con
                                 <span className="text-danger ms-1">*</span>
                               </label>
                               <CommonSelect
@@ -239,7 +238,7 @@ const EditProduct = () => {
                                 options={subCategories}
                                 value={selectedSubCategory}
                                 onChange={setSelectedSubCategory}
-                                placeholder="Choose Sub Category"
+                                placeholder="Chọn danh mục con"
                               />
                             </div>
                           </div>
@@ -256,14 +255,14 @@ const EditProduct = () => {
                                 value={product?.unit || ""}
                                 onChange={(e) => setProduct({ ...product, unit: e.target.value })}
                                 className="form-control"
-                                placeholder="Enter unit (e.g., kg, box, piece)"
+                                placeholder="Điền đơn vị tính (ví dụ: cái, chiếc...)"
                               />
                             </div>
                           </div>
                           <div className="col-sm-6 col-12">
                             <div className="mb-3">
                               <label className="form-label">
-                                Supplier Name
+                                Nhà cung cấp
                                 <span className="text-danger ms-1">*</span>
                               </label>
                               <input
@@ -278,7 +277,7 @@ const EditProduct = () => {
                         <div className="row">
                           <div className="col-lg-6 col-sm-6 col-12">
                             <div className="mb-3">
-                              <label className="form-label">Dimensions</label>
+                              <label className="form-label">Kích thước</label>
                               <input
                                 type="text"
                                 value={product?.dimensions || ""}
@@ -290,7 +289,7 @@ const EditProduct = () => {
                         </div>
                         <div className="col-lg-12">
                           <div className="summer-description-box">
-                            <label className="form-label">Description</label>
+                            <label className="form-label">Mô tả</label>
                             <textarea
                               value={product?.description || ""}
                               onChange={(e) =>
@@ -299,7 +298,7 @@ const EditProduct = () => {
                               className="form-control"
                               rows={5}
                             />
-                            <p className="fs-14 mt-1">Maximum 60 Words</p>
+                            <p className="fs-14 mt-1">Tối đa 500 ký tự</p>
                           </div>
                         </div>
                       </div>
@@ -370,19 +369,20 @@ const EditProduct = () => {
                   className="btn btn-cancel me-2"
                   onClick={() => navigate(route.products)}
                 >
-                  Cancel
+                  Huỷ
                 </button>
                 <button
                   type="button"
                   className="btn btn-submit"
                   onClick={handleSaveProduct}
                 >
-                  Save Product
+                  Lưu
                 </button>
               </div>
             </div>
           </form>
         </div>
+        <CommonFooter />
       </div>
       <DeleteModal />
     </>

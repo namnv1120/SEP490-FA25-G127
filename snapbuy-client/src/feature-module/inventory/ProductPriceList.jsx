@@ -7,7 +7,6 @@ import TableTopHead from "../../components/table-top-head";
 import SearchFromApi from "../../components/data-table/search";
 import { message } from "antd";
 import { exportToExcel } from "../../utils/excelUtils";
-// Import services - bạn cần tạo ProductPriceService
 import { getAllProductPrices } from "../../services/ProductPriceService";
 
 const ProductPriceList = () => {
@@ -60,39 +59,42 @@ const ProductPriceList = () => {
       setProductPrices(mappedPrices);
       setTotalRecords(mappedPrices.length);
     } catch (err) {
-      console.error("❌ Error fetching product prices:", err);
-      setError("Failed to load product prices. Please try again.");
+      console.error("❌ Lỗi khi tải danh sách giá sản phẩm:", err);
+      setError("Không thể tải danh sách giá sản phẩm. Vui lòng thử lại sau.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Determine price status based on validity period
   const getStatus = (validFrom, validTo) => {
-    if (!validFrom) return "draft";
-
     const now = new Date();
+    if (!validFrom) return "Không hoạt động";
+
     const from = new Date(validFrom);
     const to = validTo ? new Date(validTo) : null;
 
-    if (from > now) return "upcoming";
-    if (to && to < now) return "expired";
-    return "active";
+    // Nếu trong thời gian còn hiệu lực => Hoạt động
+    if (from <= now && (!to || to >= now)) {
+      return "Hoạt động";
+    }
+    return "Không hoạt động";
   };
 
+
   const getStatusBadge = (status) => {
-    const badges = {
-      active: <span className="badge badge-linesuccess">Active</span>,
-      expired: <span className="badge badge-linedanger">Expired</span>,
-      upcoming: <span className="badge badge-linewarning">Upcoming</span>,
-      draft: <span className="badge badge-linesecondary">Draft</span>,
-    };
-    return badges[status] || badges.draft;
+    return (
+      <span
+        className={`badge fw-medium fs-10 ${status === "Hoạt động" ? "bg-success" : "bg-danger"
+          }`}
+      >
+        {status}
+      </span>
+    );
   };
 
   const handleExportExcel = () => {
     if (!productPrices || productPrices.length === 0) {
-      message.warning("No price data to export!");
+      message.warning("Không có dữ liệu để xuất.");
       return;
     }
 
@@ -107,12 +109,12 @@ const ProductPriceList = () => {
       "Created Date": p.createdDate,
     }));
 
-    exportToExcel(exportData, "Product_Price_List");
+    exportToExcel(exportData, "Danh_sach_gia_san_pham");
   };
 
   const handleRefresh = () => {
     fetchProductPrices();
-    message.success("Product price list refreshed!");
+    message.success("Làm mới danh sách thành công!");
   };
 
   const handleSearch = (value) => {
@@ -137,46 +139,46 @@ const ProductPriceList = () => {
       key: "checked",
     },
     {
-      header: "Product Name",
+      header: "Tên sản phẩm",
       field: "productName",
       key: "productName",
       sortable: true,
       body: (data) => (
-        <Link to={`${route.productdetails}/${data.productId}`}>
+        <Link to={route.productdetails.replace(":id", data.productId)}>
           {data.productName}
         </Link>
       ),
     },
     {
-      header: "Unit Price",
+      header: "Giá bán",
       field: "unitPrice",
       key: "unitPrice",
       sortable: true,
     },
     {
-      header: "Cost Price",
+      header: "Giá nhập",
       field: "costPrice",
       key: "costPrice",
       sortable: true,
     },
     {
-      header: "Tax Rate",
+      header: "Thuế suất",
       field: "taxRate",
       key: "taxRate",
       sortable: true,
     },
-    {
-      header: "Valid From",
-      field: "validFrom",
-      key: "validFrom",
-      sortable: true,
-    },
-    {
-      header: "Valid To",
-      field: "validTo",
-      key: "validTo",
-      sortable: true,
-    },
+    // {
+    //   header: "Valid From",
+    //   field: "validFrom",
+    //   key: "validFrom",
+    //   sortable: true,
+    // },
+    // {
+    //   header: "Valid To",
+    //   field: "validTo",
+    //   key: "validTo",
+    //   sortable: true,
+    // },
     {
       header: "Status",
       field: "status",
@@ -209,8 +211,8 @@ const ProductPriceList = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Product Price List</h4>
-                <h6>Manage product pricing</h6>
+                <h4>Danh sách giá sản phẩm</h4>
+                <h6>Quản lý danh sách giá sản phẩm</h6>
               </div>
             </div>
             <TableTopHead
@@ -220,7 +222,7 @@ const ProductPriceList = () => {
             <div className="page-btn">
               <Link to={route.addproductprice} className="btn btn-primary">
                 <i className="ti ti-circle-plus me-1"></i>
-                Add New Price
+                Thêm giá mới
               </Link>
             </div>
           </div>
@@ -250,7 +252,7 @@ const ProductPriceList = () => {
                   rows={rows}
                   setRows={setRows}
                 />
-                <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
+                {/* <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
                   <div className="dropdown me-2">
                     <Link
                       to="#"
@@ -313,7 +315,7 @@ const ProductPriceList = () => {
                       </li>
                     </ul>
                   </div>
-                </div>
+                </div> */}
               </div>
               <div className="card-body">
                 <div className="table-responsive">

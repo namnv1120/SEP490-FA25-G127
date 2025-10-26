@@ -54,8 +54,8 @@ const ProductList = () => {
       setProducts(mappedProducts);
       setTotalRecords(mappedProducts.length);
     } catch (err) {
-      console.error("❌ Error fetching products:", err);
-      setError("Failed to load products. Please try again.");
+      console.error("❌ Lỗi khi tải danh sách sản phẩm:", err);
+      setError("Lỗi khi tải danh sách sản phẩm. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -63,39 +63,39 @@ const ProductList = () => {
 
   const handleExportExcel = () => {
     if (!products || products.length === 0) {
-      message.warning("No product data to export!");
+      message.warning("Không có sản phẩm để xuất!");
       return;
     }
 
     const exportData = products.map(p => ({
-      Code: p.productCode,
-      Name: p.productName,
-      Description: p.description || "",
-      Category: p.category,
-      Supplier: p.supplier || "",
-      Unit: p.unit,
-      Dimension: p.dimensions || "",
-      Image: p.imageUrl
+      "Mã sản phẩm": p.productCode,
+      "Tên sản phẩm": p.productName,
+      "Mô tả": p.description || "",
+      "Danh mục": p.category,
+      "Nhà cung cấp": p.supplier || "",
+      "Đơn vị": p.unit,
+      "Kích thước": p.dimensions || "",
+      "Ảnh": p.imageUrl
     }));
 
-    exportToExcel(exportData, "Product_List");
+    exportToExcel(exportData, "Danh_sach_san_pham");
   };
 
   const handleImport = async (data) => {
     try {
       console.log("📦 Importing products:", data);
-      await importProducts(data); // Gọi API
-      await fetchProducts(); // Refresh list
+      await importProducts(data);
+      await fetchProducts();
       return Promise.resolve();
     } catch (error) {
-      console.error("❌ Import error:", error);
+      console.error("❌ Lỗi khi nhập sản phẩm:", error);
       return Promise.reject(error);
     }
   };
 
   const handleRefresh = () => {
     fetchProducts();
-    message.success("Product list refreshed!");
+    message.success("Danh sách sản phẩm đã được làm mới!");
   };
 
   const handleSearch = (value) => {
@@ -110,7 +110,7 @@ const ProductList = () => {
         const modal = new Modal(modalElement);
         modal.show();
       } else {
-        console.error("Delete modal not found in DOM");
+        console.error("❌ Không tìm thấy phần tử xoá");
       }
     }, 0);
   };
@@ -129,10 +129,10 @@ const ProductList = () => {
         if (modal) modal.hide();
       }
 
-      message.success("Product deleted successfully!");
+      message.success("Sản phẩm đã được xoá thành công!");
     } catch (error) {
-      console.error("Delete failed:", error);
-      message.error("Failed to delete product.");
+      console.error("Lỗi khi xoá sản phẩm", error);
+      message.error("Lỗi khi xoá sản phẩm. Vui lòng thử lại.");
     }
   };
 
@@ -159,13 +159,13 @@ const ProductList = () => {
       key: "checked",
     },
     {
-      header: "Code",
+      header: "Mã sản phẩm",
       field: "productCode",
       key: "productCode",
       sortable: true,
     },
     {
-      header: "Product Name",
+      header: "Tên sản phẩm",
       field: "productName",
       key: "productName",
       sortable: true,
@@ -174,30 +174,30 @@ const ProductList = () => {
           <Link to="#" className="avatar avatar-md me-2">
             <img alt="" src={data.productImage} />
           </Link>
-          <Link to={`${route.productdetails}/${data.productId}`}>{data.productName}</Link>
+          <Link to={route.productdetails.replace(":id", data.productId)}>{data.productName}</Link>
         </div>
       ),
     },
     {
-      header: "Category",
+      header: "Danh mục",
       field: "category",
       key: "category",
       sortable: true,
     },
     {
-      header: "Price",
+      header: "Giá",
       field: "unitprice",
       key: "unitprice",
       sortable: true,
     },
     {
-      header: "Unit",
+      header: "Đơn vị",
       field: "unit",
       key: "unit",
       sortable: true,
     },
     {
-      header: "Qty",
+      header: "Số lượng",
       field: "qty",
       key: "qty",
       sortable: true,
@@ -233,8 +233,8 @@ const ProductList = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Product List</h4>
-                <h6>Manage your products</h6>
+                <h4>Danh sách sản phẩm</h4>
+                <h6>Quản lý danh sách sản phẩm</h6>
               </div>
             </div>
             <TableTopHead
@@ -244,7 +244,7 @@ const ProductList = () => {
             <div className="page-btn">
               <Link to={route.addproduct} className="btn btn-primary">
                 <i className="ti ti-circle-plus me-1"></i>
-                Add New Product
+                Thêm sản phẩm mới
               </Link>
             </div>
             <div className="page-btn import">
@@ -253,7 +253,7 @@ const ProductList = () => {
                 onClick={() => setShowImportModal(true)}
               >
                 <i className="feather icon-download feather me-2" />
-                Import Product
+                Nhập sản phẩm từ Excel
               </button>
             </div>
           </div>
@@ -274,7 +274,7 @@ const ProductList = () => {
             </div>
           )}
 
-          {/* Product List Table */}
+
           {!loading && (
             <div className="card table-list-card">
               <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
@@ -283,7 +283,7 @@ const ProductList = () => {
                   rows={rows}
                   setRows={setRows}
                 />
-                <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
+                {/* <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
                   <div className="dropdown me-2">
                     <Link
                       to="#"
@@ -351,7 +351,7 @@ const ProductList = () => {
                       </li>
                     </ul>
                   </div>
-                </div>
+                </div> */}
               </div>
               <div className="card-body">
                 <div className="table-responsive">
