@@ -29,7 +29,7 @@ const RolesPermissions = () => {
       const data = Array.isArray(response) ? response : response.data || response.result || [];
       setRoles(data);
     } catch (error) {
-      console.error("Failed to fetch roles:", error.message);
+      console.error("Không thể tải danh sách vai trò:", error.message);
     } finally {
       setLoading(false);
     }
@@ -45,7 +45,7 @@ const RolesPermissions = () => {
       await deleteRole(selectedRole.id || selectedRole.roleId);
       fetchRoles();
     } catch (error) {
-      console.error("Failed to delete role:", error.message);
+      console.error("Không thể xóa vai trò:", error.message);
     }
   };
 
@@ -54,7 +54,7 @@ const RolesPermissions = () => {
       await createRole(roleData);
       fetchRoles();
     } catch (error) {
-      console.error("Failed to create role:", error.message);
+      console.error("Không thể tạo vai trò:", error.message);
     }
   };
 
@@ -63,25 +63,25 @@ const RolesPermissions = () => {
       await updateRole(roleId, updatedData);
       fetchRoles();
     } catch (error) {
-      console.error("Failed to update role:", error.message);
+      console.error("Không thể cập nhật vai trò:", error.message);
     }
   };
 
   const columns = [
     {
-      title: "Role Name",
+      title: "Tên vai trò",
       dataIndex: "roleName",
       align: "center",
       sorter: (a, b) => a.roleName.localeCompare(b.roleName),
     },
     {
-      title: "Created On",
+      title: "Ngày tạo",
       dataIndex: "createdOn",
       align: "center",
       sorter: (a, b) => a.createdOn.localeCompare(b.createdOn),
     },
     {
-      title: "Status",
+      title: "Trạng thái",
       dataIndex: "active",
       align: "center",
       render: (active) => (
@@ -91,7 +91,7 @@ const RolesPermissions = () => {
           } fs-10`}
         >
           <i className="ti ti-point-filled me-1 fs-11"></i>
-          {active ? "Active" : "Inactive"}
+          {active ? "Đang hoạt động" : "Ngừng hoạt động"}
         </span>
       ),
       sorter: (a, b) => a.active - b.active,
@@ -141,8 +141,8 @@ const RolesPermissions = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Roles & Permissions</h4>
-                <h6>Manage your roles</h6>
+                <h4>Vai trò & Quyền hạn</h4>
+                <h6>Quản lý các vai trò của bạn</h6>
               </div>
             </div>
             <ul className="table-top-head">
@@ -158,7 +158,7 @@ const RolesPermissions = () => {
                 data-bs-target="#add-role"
               >
                 <i className="ti ti-circle-plus me-1"></i>
-                Add Role
+                Thêm vai trò
               </Link>
             </div>
           </div>
@@ -173,17 +173,17 @@ const RolesPermissions = () => {
                     className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
                     data-bs-toggle="dropdown"
                   >
-                    Status
+                    Trạng thái
                   </Link>
                   <ul className="dropdown-menu dropdown-menu-end p-3">
                     <li>
                       <Link to="#" className="dropdown-item rounded-1">
-                        Active
+                        Đang hoạt động
                       </Link>
                     </li>
                     <li>
                       <Link to="#" className="dropdown-item rounded-1">
-                        Inactive
+                        Ngừng hoạt động
                       </Link>
                     </li>
                   </ul>
@@ -194,7 +194,7 @@ const RolesPermissions = () => {
             <div className="card-body">
               <div className="table-responsive">
                 {loading ? (
-                  <div className="text-center p-4">Loading...</div>
+                  <div className="text-center p-4">Đang tải...</div>
                 ) : (
                   <Table columns={columns} dataSource={roles} />
                 )}

@@ -12,14 +12,13 @@ const PosHeader = () => {
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
-      const timeString = now.toLocaleTimeString("en-GB", { hour12: false }); // Định dạng HH:mm:ss
-      setCurrentTime(timeString);
+      const timeString = now.toLocaleTimeString("en-GB", { hour12: false });
     };
 
-    updateClock(); // Cập nhật ngay khi load
+    updateClock();
     const timer = setInterval(updateClock, 1000);
 
-    return () => clearInterval(timer); // Xóa timer khi component unmount
+    return () => clearInterval(timer);
   }, []);
 
   return (

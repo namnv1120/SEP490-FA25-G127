@@ -1,7 +1,10 @@
 import axios from 'axios';
 
-const REST_API_BASE_URL = 'http://localhost:8080/api/accounts';
+const BASE_URL = 'http://localhost:8080/api/accounts';
 
+/** 
+ * Lấy header xác thực từ localStorage 
+ */
 const getAuthHeader = () => {
   const token = localStorage.getItem('authToken');
   const tokenType = localStorage.getItem('authTokenType') || 'Bearer';
@@ -9,74 +12,84 @@ const getAuthHeader = () => {
   return { Authorization: `${tokenType} ${token}` };
 };
 
+/** 
+ * Hàm helper xử lý yêu cầu Axios thống nhất 
+ */
+const handleRequest = async (method, url, data = null) => {
+  try {
+    const config = {
+      method,
+      url,
+      data,
+      headers: getAuthHeader(),
+    };
+
+    const response = await axios(config);
+    // Trả về `response.data.result` nếu có, ngược lại `response.data`
+    return response.data.result || response.data;
+  } catch (error) {
+    const message =
+      error.response?.data?.message ||
+      error.message ||
+      'An unexpected error occurred!';
+    console.error(`Request failed [${method.toUpperCase()} ${url}]:`, message);
+    throw new Error(message);
+  }
+};
+
+/** ======================= ACCOUNT API ======================= **/
+
+// Lấy danh sách tài khoản
 export const listAccounts = async () => {
-  try {
-    const response = await axios.get(REST_API_BASE_URL, {
-      headers: getAuthHeader(),
-    });
-    return response.data.result || response.data;
-  } catch (error) {
-    console.error('Failed to fetch accounts:', error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to fetch accounts!');
-  }
+  return handleRequest('get', BASE_URL);
 };
 
+// Tạo tài khoản mới
 export const createAccount = async (userData) => {
-  try {
-    const response = await axios.post(REST_API_BASE_URL, userData, {
-      headers: getAuthHeader(),
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Failed to create account:', error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to create account!');
-  }
+  return handleRequest('post', BASE_URL, userData);
 };
 
+// Lấy thông tin tài khoản theo ID
 export const getAccount = async (id) => {
-  try {
-    const response = await axios.get(`${REST_API_BASE_URL}/${id}`, {
-      headers: getAuthHeader(),
-    });
-    return response.data.result || response.data;
-  } catch (error) {
-    console.error('Failed to fetch account:', error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to fetch account!');
-  }
+  return handleRequest('get', `${BASE_URL}/${id}`);
 };
 
+// Lấy thông tin tài khoản hiện tại (đăng nhập)
 export const getMyInfo = async () => {
-  try {
-    const response = await axios.get(`${REST_API_BASE_URL}/my-info`, {
-      headers: getAuthHeader(),
-    });
-    return response.data.result || response.data;
-  } catch (error) {
-    console.error('Failed to fetch current user info:', error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to fetch current user info!');
-  }
+  return handleRequest('get', `${BASE_URL}/my-info`);
 };
 
+// Cập nhật tài khoản
 export const updateAccount = async (id, updatedData) => {
-  try {
-    const response = await axios.put(`${REST_API_BASE_URL}/${id}`, updatedData, {
-      headers: getAuthHeader(),
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Failed to update account:', error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to update account!');
-  }
+  return handleRequest('put', `${BASE_URL}/${id}`, updatedData);
 };
 
+// Xóa tài khoản
 export const deleteAccount = async (id) => {
-  try {
-    const response = await axios.delete(`${REST_API_BASE_URL}/${id}`, {
-      headers: getAuthHeader(),
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Failed to delete account:', error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to delete account!');
-  }
+  return handleRequest('delete', `${BASE_URL}/${id}`);
+};
+
+// Đổi mật khẩu
+export const changePassword = async (id, passwordData) => {
+  return handleRequest('put', `${BASE_URL}/${id}/change-password`, passwordData);
+};
+
+// Gán role cho tài khoản
+export const assignRole = async (accountId, roleId) => {
+  return handleRequest('post', `${BASE_URL}/${accountId}/roles/${roleId}`);
+};
+
+// Bỏ gán role
+export const unassignRole = async (accountId, roleId) => {
+  return handleRequest('delete', `${BASE_URL}/${accountId}/roles/${roleId}`);
+};
+
+// Cập nhật thông tin nhân viên (bởi chủ shop)
+export const updateStaffByOwner = async (staffId, data) => {
+  return handleRequest('put', `${BASE_URL}/owner/${staffId}`, data);
+};
+
+// Cập nhật vai trò nhân viên (bởi chủ shop)
+export const updateStaffRolesByOwner = async (staffId, data) => {
+  return handleRequest('put', `${BASE_URL}/owner/${staffId}/roles`, data);
 };

@@ -47,12 +47,14 @@ const Login = lazy(() =>
 const Forgotpassword = lazy(() =>
   import("../feature-module/pages/authentication/ForgotPassword")
 );
-const PosSettings = lazy(
-  () => import("../feature-module/settings/websitesettings/possettings")
+const PosSettings = lazy(() =>
+  import("../feature-module/settings/websitesettings/possettings")
 );
-const PosOrder = lazy(
-  () => import("../feature-module/sales/pos-order/posOrder")
+const PosOrder = lazy(() =>
+  import("../feature-module/sales/pos-order/posOrder")
 );
+
+const Customers = lazy(() => import("../feature-module/people/customers"));
 
 const routes = all_routes;
 
@@ -64,14 +66,7 @@ export const authRoutes = [
     element: <Dashboard />,
     route: Route,
   },
-  // {
-  //   id: 2,
-  //   path: "/customers",
-  //   name: "customers",
-  //   element: <CustomerList />,
-  //   route: Route,
-  // },
-    {
+  {
     id: 76,
     path: routes.possettings,
     name: "possettings",
@@ -120,7 +115,7 @@ export const authRoutes = [
   //   element: <DeleteAccount />,
   //   route: Route,
   // },
-    {
+  {
     id: 121,
     path: routes.posorder,
     name: "pos-orders",
@@ -152,7 +147,7 @@ export const authRoutes = [
 ];
 
 export const posPage = [
-    {
+  {
     id: 25,
     path: routes.pos,
     name: "pos",
