@@ -38,6 +38,7 @@
     "react-redux": "^9.2.0",
     "react-router-dom": "^6.28.0",
     "react-select": "^5.10.2",
+    "react-slick": "^0.31.0",
     "recharts": "^3.2.1",
     "slick-carousel": "^1.8.1",
     "xlsx": "^0.18.5"

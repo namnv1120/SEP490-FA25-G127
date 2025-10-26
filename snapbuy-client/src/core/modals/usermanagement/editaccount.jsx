@@ -1,23 +1,20 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import CommonSelect from "../../../components/select/common-select";
-// import { editUser } from "../../../utils/imagepath";
-// import { getUser, updateUser } from "../../../services/accountService";
+import { getAccount, updateAccount } from "../../../services/accountService";
 
-const EditUser = ({ userId, onClose, onUpdated }) => {
+const EditAccount = ({ accountId, onClose, onUpdated }) => {
   const statusOptions = [
     { value: "Choose", label: "Choose" },
     { value: "Manager", label: "Manager" },
     { value: "Admin", label: "Admin" },
   ];
 
-  const [avatar, setAvatar] = useState(editUser);
-  const [selectedStatus, setSelectedStatus] = useState(statusOptions[0].value);
+  const [avatar, setAvatar] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState(statusOptions[0]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [userData, setUserData] = useState({
-    username: "",
+  const [accountData, setAccountData] = useState({
     phone: "",
     email: "",
     password: "",
@@ -26,51 +23,61 @@ const EditUser = ({ userId, onClose, onUpdated }) => {
   });
 
   useEffect(() => {
-    if (userId) {
-      getUser(userId)
-        .then((res) => {
-          const user = res.data;
-          setUserData({
-            username: user.username || "",
-            phone: user.phone || "",
-            email: user.email || "",
-            password: "",
+    if (accountId) {
+      getAccount(accountId)
+        .then((account) => {
+          const data = account.result || account;
+
+          setAccountData({
+            phone: data.phone || "",
+            email: data.email || "",
+            password: "********",
             confirmPassword: "",
-            description: user.description || "",
+            description: data.description || "",
           });
-          setSelectedStatus(user.role || "Choose");
-          if (user.avatarUrl) setAvatar(user.avatarUrl);
+
+          // Lấy role hiện tại từ dữ liệu và tìm option tương ứng
+          const currentRoleOption = statusOptions.find(
+            (opt) => opt.value === data.role
+          );
+          // Nếu không tìm thấy thì mặc định chọn "Choose"
+          setSelectedStatus(currentRoleOption || statusOptions[0]);
+
+          if (data.avatarUrl) setAvatar(data.avatarUrl);
         })
-        .catch((err) => console.error("Error fetching user data:", err));
+        .catch((err) => console.error("Error fetching account data:", err));
     }
-  }, [userId]);
+  }, [accountId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (userData.password !== userData.confirmPassword) {
+    if (
+      accountData.password !== "********" &&
+      accountData.password !== accountData.confirmPassword
+    ) {
       alert("Passwords do not match!");
       return;
     }
 
     const updatedData = {
-      username: userData.username,
-      phone: userData.phone,
-      email: userData.email,
-      role: selectedStatus,
-      password: userData.password,
-      description: userData.description,
+      phone: accountData.phone,
+      email: accountData.email,
+      role: selectedStatus.value,
+      password:
+        accountData.password === "********" ? undefined : accountData.password,
+      description: accountData.description,
       avatarUrl: avatar,
     };
 
     try {
-      await updateUser(userId, updatedData);
-      alert("User updated successfully!");
+      await updateAccount(accountId, updatedData);
+      alert("Account updated successfully!");
       if (onUpdated) onUpdated();
       if (onClose) onClose();
     } catch (error) {
-      console.error("Error updating user:", error);
-      alert("Failed to update user. Please try again!");
+      console.error("Error updating account:", error);
+      alert("Failed to update account. Please try again!");
     }
   };
 
@@ -79,26 +86,21 @@ const EditUser = ({ userId, onClose, onUpdated }) => {
     if (file) setAvatar(URL.createObjectURL(file));
   };
 
-  const handleTogglePassword = () => setShowPassword((prev) => !prev);
-  const handleToggleConfirmPassword = () =>
-    setShowConfirmPassword((prev) => !prev);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setUserData((prev) => ({ ...prev, [name]: value }));
+    setAccountData((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
     <div>
-      <div className="modal fade" id="edit-units">
+      <div className="modal fade" id="edit-account">
         <div className="modal-dialog modal-dialog-centered custom-modal-two">
           <div className="modal-content">
             <div className="page-wrapper-new p-0">
               <div className="content">
-                {/* Modal Header */}
                 <div className="modal-header border-0 custom-modal-header">
                   <div className="page-title">
-                    <h4>Edit User</h4>
+                    <h4>Edit Account</h4>
                   </div>
                   <button
                     type="button"
@@ -113,6 +115,7 @@ const EditUser = ({ userId, onClose, onUpdated }) => {
                 <div className="modal-body custom-modal-body">
                   <form onSubmit={handleSubmit}>
                     <div className="row">
+                      {/* Avatar */}
                       <div className="col-lg-12">
                         <div className="new-employee-field">
                           <span>Avatar</span>
@@ -144,45 +147,37 @@ const EditUser = ({ userId, onClose, onUpdated }) => {
                         </div>
                       </div>
 
-                      <div className="col-lg-6">
-                        <div className="input-blocks">
-                          <label>User Name</label>
-                          <input
-                            type="text"
-                            name="username"
-                            value={userData.username}
-                            onChange={handleChange}
-                            placeholder="Thomas"
-                          />
-                        </div>
-                      </div>
-
+                      {/* Phone */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Phone</label>
                           <input
                             type="text"
+                            className="form-control"
                             name="phone"
-                            value={userData.phone}
+                            value={accountData.phone}
                             onChange={handleChange}
                             placeholder="+12163547758"
                           />
                         </div>
                       </div>
 
+                      {/* Email */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Email</label>
                           <input
                             type="email"
+                            className="form-control"
                             name="email"
-                            value={userData.email}
+                            value={accountData.email}
                             onChange={handleChange}
-                            placeholder="thomas@example.com"
+                            placeholder="example@example.com"
                           />
                         </div>
                       </div>
 
+                      {/* Role */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Role</label>
@@ -190,64 +185,69 @@ const EditUser = ({ userId, onClose, onUpdated }) => {
                             className="w-100"
                             options={statusOptions}
                             value={selectedStatus}
-                            onChange={(e) => setSelectedStatus(e.value)}
+                            onChange={(e) => setSelectedStatus(e)}
                             placeholder="Choose"
                             filter={false}
                           />
                         </div>
                       </div>
 
+                      {/* Password */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Password</label>
                           <div className="pass-group">
                             <input
                               type={showPassword ? "text" : "password"}
-                              className="pass-input"
+                              className="form-control pass-input"
                               name="password"
-                              value={userData.password}
+                              value={accountData.password}
                               onChange={handleChange}
-                              placeholder="Enter your password"
+                              placeholder="Enter new password"
                             />
                             <span
                               className={`ti toggle-password text-gray-9 ${
                                 showPassword ? "ti-eye" : "ti-eye-off"
                               }`}
-                              onClick={handleTogglePassword}
+                              onClick={() => setShowPassword(!showPassword)}
                             />
                           </div>
                         </div>
                       </div>
 
+                      {/* Confirm Password */}
                       <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Confirm Password</label>
                           <div className="pass-group">
                             <input
                               type={showConfirmPassword ? "text" : "password"}
-                              className="pass-input"
+                              className="form-control pass-input"
                               name="confirmPassword"
-                              value={userData.confirmPassword}
+                              value={accountData.confirmPassword}
                               onChange={handleChange}
-                              placeholder="Enter your password again"
+                              placeholder="Re-enter your password"
                             />
                             <span
                               className={`ti toggle-password ${
                                 showConfirmPassword ? "ti-eye" : "ti-eye-off"
                               }`}
-                              onClick={handleToggleConfirmPassword}
+                              onClick={() =>
+                                setShowConfirmPassword(!showConfirmPassword)
+                              }
                             />
                           </div>
                         </div>
                       </div>
 
+                      {/* Description */}
                       <div className="col-lg-12">
                         <div className="mb-0 input-blocks">
                           <label className="form-label">Descriptions</label>
                           <textarea
                             className="form-control mb-1"
                             name="description"
-                            value={userData.description}
+                            value={accountData.description}
                             onChange={handleChange}
                           />
                           <p>Maximum 600 Characters</p>
@@ -275,9 +275,8 @@ const EditUser = ({ userId, onClose, onUpdated }) => {
           </div>
         </div>
       </div>
-      {/* /Edit User */}
     </div>
   );
 };
 
-export default EditUser;
+export default EditAccount;

@@ -2,27 +2,44 @@ import { Route } from "react-router-dom";
 import { lazy } from "react";
 import { all_routes } from "./all_routes";
 import FormHorizontal from "../feature-module/uiinterface/forms/formelements/layouts/form-horizontal";
-
-
+// import FormBasicInputs from "../feature-module/uiinterface/forms/formelements/basic-inputs";
+// import CheckboxRadios from "../feature-module/uiinterface/forms/formelements/checkbox-radios";
+// import FileUpload from "../feature-module/uiinterface/forms/formelements/fileupload";
+// import FormSelect from "../feature-module/uiinterface/forms/formelements/form-select";
+// import FormWizard from "../feature-module/uiinterface/forms/formelements/form-wizard";
+// import FormPikers from "../feature-module/uiinterface/forms/formelements/formpickers";
+// import GridGutters from "../feature-module/uiinterface/forms/formelements/grid-gutters";
+// import InputGroup from "../feature-module/uiinterface/forms/formelements/input-group";
+// import BootstrapIcons from "../feature-module/uiinterface/icons/bootstrapicons";
+// import FlagIcons from "../feature-module/uiinterface/icons/flagicons";
+// import FontawesomeIcons from "../feature-module/uiinterface/icons/fontawesome";
+// import MaterialIcons from "../feature-module/uiinterface/icons/materialicon";
+// import PE7Icons from "../feature-module/uiinterface/icons/pe7icons";
+// import RemixIcons from "../feature-module/uiinterface/icons/remixIcons";
+// import TablerIcon from "../feature-module/uiinterface/icons/tablericon";
+// import ThemifyIcons from "../feature-module/uiinterface/icons/themify";
+// import TypiconIcons from "../feature-module/uiinterface/icons/typicons";
+// import Leaflet from "../feature-module/uiinterface/map/leaflet";
+// import DataTables from "../feature-module/uiinterface/table/data-tables";
+// import TablesBasic from "../feature-module/uiinterface/table/tables-basic";
+import Pos from "../feature-module/pos/pos";
 const Suppliers = lazy(() => import("../feature-module/people/Supplier"));
 
-const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
-const ProductList = lazy(() => import("../feature-module/inventory/ProductList"));
-const ProductDetail = lazy(() => import("../feature-module/inventory/ProductDetail"));
-const AddProduct = lazy(() => import("../feature-module/inventory/AddProduct"));
-const EditProduct = lazy(() => import("../feature-module/inventory/EditProduct"));
-const ProductPriceList = lazy(() => import("../feature-module/inventory/ProductPriceList"));
-const AddProductPrice = lazy(() => import("../feature-module/inventory/AddProductPrice"));
-const EditProductPrice = lazy(() => import("../feature-module/inventory/EditProductPrice"));
-
-const CategoryList = lazy(() => import("../feature-module/inventory/CategoryList"));
-const SubCategories = lazy(() => import("../feature-module/inventory/SubCategoryList"));
-
-
+// Lazy load Dashboard
+const Dashboard = lazy(() => import("../feature-module/dashboard/dashboard"));
+const ProductList = lazy(() =>
+  import("../feature-module/inventory/ProductList")
+);
 const Accounts = lazy(() => import("../feature-module/usermanagement/account"));
 const RolesPermissions = lazy(() =>
   import("../feature-module/usermanagement/Rolespermissions")
 );
+const Permissions = lazy(() =>
+  import("../feature-module/usermanagement/permissions")
+);
+// const DeleteAccount = lazy(() =>
+//   import("../feature-module/usermanagement/deleteaccount")
+// );
 const Profile = lazy(() => import("../feature-module/usermanagement/Profile"));
 const Login = lazy(() =>
   import("../feature-module/pages/authentication/Login")
@@ -30,9 +47,12 @@ const Login = lazy(() =>
 const Forgotpassword = lazy(() =>
   import("../feature-module/pages/authentication/ForgotPassword")
 );
-const Customers = lazy(() => import("../feature-module/people/Customer"));
-
-const InventoryList = lazy(() => import("../feature-module/inventory/InventoryList"));
+const PosSettings = lazy(
+  () => import("../feature-module/settings/websitesettings/possettings")
+);
+const PosOrder = lazy(
+  () => import("../feature-module/sales/pos-order/posOrder")
+);
 
 const routes = all_routes;
 
@@ -42,6 +62,20 @@ export const authRoutes = [
     path: routes.dashboard,
     name: "dashboard",
     element: <Dashboard />,
+    route: Route,
+  },
+  // {
+  //   id: 2,
+  //   path: "/customers",
+  //   name: "customers",
+  //   element: <CustomerList />,
+  //   route: Route,
+  // },
+    {
+    id: 76,
+    path: routes.possettings,
+    name: "possettings",
+    element: <PosSettings />,
     route: Route,
   },
   {
@@ -73,6 +107,27 @@ export const authRoutes = [
     route: Route,
   },
   {
+    id: 106,
+    path: routes.permissions,
+    name: "permissions",
+    element: <Permissions />,
+    route: Route,
+  },
+  // {
+  //   id: 107,
+  //   path: routes.deleteaccount,
+  //   name: "deleteaccount",
+  //   element: <DeleteAccount />,
+  //   route: Route,
+  // },
+    {
+    id: 121,
+    path: routes.posorder,
+    name: "pos-orders",
+    element: <PosOrder />,
+    route: Route,
+  },
+  {
     id: 6,
     path: routes.formhorizontal,
     name: "formhorizontal",
@@ -86,80 +141,24 @@ export const authRoutes = [
     element: <Suppliers />,
     route: Route,
   },
+
   {
-    id: 8,
-    path: routes.products,
-    name: "products",
+    id: 232,
+    path: "/product-list",
+    name: "product-list",
     element: <ProductList />,
-    route: Route,
-  },
-  {
-    id: 9,
-    path: routes.productdetails,
-    name: "product-details",
-    element: <ProductDetail />,
-    route: Route,
-  },
-  {
-    id: 10,
-    path: routes.addproduct,
-    name: "add-product",
-    element: <AddProduct />,
-    route: Route,
-  },
-  {
-    id: 11,
-    path: routes.editproduct,
-    name: "edit-product",
-    element: <EditProduct />,
-    route: Route,
-  },
-  {
-    id: 12,
-    path: routes.categories,
-    name: "categories",
-    element: <CategoryList />,
-    route: Route,
-  },
-  {
-    id: 13,
-    path: routes.subcategories,
-    name: "sub-categories",
-    element: <SubCategories />,
-    route: Route,
-  },
-  {
-    id: 14,
-    path: routes.inventories,
-    name: "inventories",
-    element: <InventoryList />,
-    route: Route,
-  },
-  {
-    id: 15,
-    path: routes.productprices,
-    name: "product-prices",
-    element: <ProductPriceList />,
-    route: Route,
-  },
-  {
-    id: 16,
-    path: routes.addproductprice,
-    name: "add-product-price",
-    element: <AddProductPrice />,
-    route: Route,
-  },
-  {
-    id: 15,
-    path: routes.editproductprice,
-    name: "edit-product-price",
-    element: <EditProductPrice />,
     route: Route,
   },
 ];
 
-export const posPages = [
-  // giữ nguyên nếu cần POS sau này
+export const posPage = [
+    {
+    id: 25,
+    path: routes.pos,
+    name: "pos",
+    element: <Pos />,
+    route: Route,
+  },
 ];
 
 export const unAuthRoutes = [

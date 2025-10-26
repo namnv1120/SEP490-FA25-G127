@@ -1141,36 +1141,47 @@ label span {
     display: none;
 }
 .quick-cash {
-    padding: 20px;
-    @include mixins.rounded(5px);
-    .form-check {
-        padding: 0;
-        margin: 0;
-        label {
-            font-size: variables.$font-size-20;
-            font-weight: variables.$font-weight-bold;
-            border: 1px solid variables.$border-color;
-            width: 88px;
-            height: 62px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-            color: variables.$text-color;
-            &:hover {
-                background: variables.$white;
-            }
-            @include mixins.respond-below(lg) {
-                height: 50px;
-                font-size: variables.$font-size-16;
-            }
-        }
-        .btn-check:checked + .btn {
-            background: variables.$primary-transparent;
-            border-color: variables.$primary;
-            color: variables.$secondary !important;
-        }
+  padding: 20px;
+  @include mixins.rounded(5px);
+
+  .form-check {
+    padding: 0;
+    margin: 0;
+
+    label {
+      font-size: variables.$font-size-18;
+      font-weight: variables.$font-weight-bold;
+      border: 1px solid variables.$border-color;
+      min-width: 110px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 6px;
+      color: variables.$text-color;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border-radius: 8px;
+
+      &:hover {
+        background: variables.$white;
+      }
+
+      @include mixins.respond-below(lg) {
+        height: 50px;
+        font-size: variables.$font-size-16;
+        min-width: 90px;
+      }
     }
+
+    .btn-check:checked + .btn {
+      background: variables.$primary-transparent;
+      border-color: variables.$primary;
+      color: variables.$secondary !important;
+    }
+  }
 }
 .search-pos {
     .form-control {

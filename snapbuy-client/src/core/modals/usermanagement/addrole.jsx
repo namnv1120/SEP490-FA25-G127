@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { createRolePermission } from "../../../services/role_permissionService";
+import { createRole } from "../../../services/roleService";
 
-const AddRole = ({ onRoleAdded }) => {
+const AddRole = ({ id = "add-role", onCreated }) => {
   const [roleName, setRoleName] = useState("");
   const [status, setStatus] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -13,26 +13,25 @@ const AddRole = ({ onRoleAdded }) => {
     }
 
     const newRole = {
-      role: roleName.trim(),
-      status: status ? "Active" : "Inactive",
-      createdon: new Date().toISOString().split("T")[0],
+      roleName: roleName.trim(),
+      active: status,
     };
 
     try {
       setLoading(true);
-      await createRolePermission(newRole);
+      await createRole(newRole);
       alert("Role created successfully!");
       setRoleName("");
       setStatus(true);
 
       // Close modal
       const modal = window.bootstrap?.Modal.getInstance(
-        document.getElementById("add-units")
+        document.getElementById(id)
       );
       modal?.hide();
 
       // Reload list after adding
-      onRoleAdded && onRoleAdded();
+      onCreated && onCreated();
     } catch (error) {
       console.error("Error creating role:", error);
       alert("Failed to create role. Please try again!");
@@ -42,7 +41,7 @@ const AddRole = ({ onRoleAdded }) => {
   };
 
   return (
-    <div className="modal fade" id="add-units" tabIndex="-1">
+    <div className="modal fade" id={id} tabIndex="-1">
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content">
           <div className="modal-header">

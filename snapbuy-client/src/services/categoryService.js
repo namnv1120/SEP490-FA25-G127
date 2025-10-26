@@ -2,10 +2,11 @@ import axios from "axios";
 
 const REST_API_BASE_URL = "http://localhost:8080/api/categories";
 
+// Helper function để lấy headers với token
 const getAuthHeaders = () => {
   const token = localStorage.getItem("authToken");
   const tokenType = localStorage.getItem("authTokenType") || "Bearer";
-
+  
   return {
     headers: {
       Authorization: `${tokenType} ${token}`,
@@ -14,6 +15,7 @@ const getAuthHeaders = () => {
   };
 };
 
+// GET - Lấy tất cả categories
 export const getAllCategories = async () => {
   try {
     const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
@@ -24,6 +26,7 @@ export const getAllCategories = async () => {
   }
 };
 
+// GET - Lấy một category theo ID
 export const getCategoryById = async (categoryId) => {
   try {
     const response = await axios.get(
@@ -37,6 +40,7 @@ export const getCategoryById = async (categoryId) => {
   }
 };
 
+// POST - Tạo category mới
 export const createCategory = async (categoryData) => {
   try {
     const response = await axios.post(
@@ -51,6 +55,7 @@ export const createCategory = async (categoryData) => {
   }
 };
 
+// PUT - Cập nhật category
 export const updateCategory = async (categoryId, categoryData) => {
   try {
     const response = await axios.put(
@@ -65,6 +70,7 @@ export const updateCategory = async (categoryId, categoryData) => {
   }
 };
 
+// DELETE - Xóa category
 export const deleteCategory = async (categoryId) => {
   try {
     const response = await axios.delete(
@@ -78,6 +84,7 @@ export const deleteCategory = async (categoryId) => {
   }
 };
 
+// GET - Lấy sub categories của một parent category
 export const getSubCategories = async (parentCategoryId) => {
   try {
     const response = await axios.get(
@@ -91,6 +98,7 @@ export const getSubCategories = async (parentCategoryId) => {
   }
 };
 
+// PATCH - Toggle active status
 export const toggleCategoryStatus = async (categoryId) => {
   try {
     const response = await axios.patch(

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
-// import AddAccounts from "../../core/modals/accountmanagement/addaccounts";
-// import EditAccount from "../../core/modals/accountmanagement/editaccount";
+import AddAccount from "../../core/modals/usermanagement/addaccount";
+import EditAccount from "../../core/modals/usermanagement/editaccount";
+
 import TooltipIcons from "../../components/tooltip-content/tooltipIcons";
 import RefreshIcon from "../../components/tooltip-content/refresh";
 import CollapesIcon from "../../components/tooltip-content/collapes";
@@ -31,15 +31,12 @@ const Accounts = () => {
   };
 
   const handleDeleteAccount = async () => {
-    if (!selectedAccountId) return;
-    
+    if (!selectedAccount) return;
     try {
-      await deleteAccount(selectedAccountId);
-      // Refresh lại danh sách sau khi xóa
+      await deleteAccount(selectedAccount.id);
       await fetchAccounts();
-      setSelectedAccountId(null);
     } catch (error) {
-      console.error("Error deleting account:", error);
+      console.error("Failed to delete account:", error);
     }
   };
 
@@ -119,7 +116,8 @@ const Accounts = () => {
               className="me-2 p-2"
               to="#"
               data-bs-toggle="modal"
-              data-bs-target="#edit-units"
+              data-bs-target="#edit-account"
+              onClick={() => setSelectedAccount(record)}
             >
               <i data-feather="edit" className="feather-edit"></i>
             </Link>
@@ -162,7 +160,7 @@ const Accounts = () => {
                 to="#"
                 className="btn btn-added"
                 data-bs-toggle="modal"
-                data-bs-target="#add-units"
+                data-bs-target="#add-account"
               >
                 <i className="ti ti-circle-plus me-1"></i>
                 Add New Account
@@ -210,10 +208,15 @@ const Accounts = () => {
           </div>
         </div>
       </div>
-      
-      {/* <AddAccounts onSuccess={fetchAccounts} />
-      <EditAccount onSuccess={fetchAccounts} /> */}
-      
+
+      <AddAccount id="add-account" onCreated={fetchAccounts} />
+      <EditAccount
+        id="edit-account"
+        accountId={selectedAccount?.id}
+        onUpdated={fetchAccounts}
+        onClose={() => setSelectedAccount(null)}
+      />
+
       <div className="modal fade" id="delete-modal">
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">

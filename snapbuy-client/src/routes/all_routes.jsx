@@ -21,6 +21,7 @@ export const all_routes = {
   onlineorder: "/online-order",
   pos: "/pos",
   posorder: "/pos-order",
+  possettings: "/pos-settings",
   invoice: "/invoice",
   invoicedetails: "/invoice-details",
 
