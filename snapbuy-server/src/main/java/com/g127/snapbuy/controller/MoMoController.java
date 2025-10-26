@@ -1,8 +1,7 @@
 package com.g127.snapbuy.controller;
 
 import com.g127.snapbuy.dto.ApiResponse;
-import com.g127.snapbuy.service.MoMoService;
-import com.g127.snapbuy.service.PaymentService;
+import com.g127.snapbuy.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -15,8 +14,7 @@ import java.util.Map;
 @Slf4j
 public class MoMoController {
 
-    private final MoMoService moMoService;
-    private final PaymentService paymentService;
+    private final OrderService orderService;
 
     @PostMapping("/notify")
     public ApiResponse<String> handleMomoNotify(@RequestBody Map<String, Object> payload) {
@@ -27,7 +25,7 @@ public class MoMoController {
             String requestId = String.valueOf(payload.get("requestId"));
 
             if ("0".equals(resultCode)) {
-                paymentService.finalizePaymentByReference(requestId);
+                orderService.finalizePaymentByReference(requestId);
                 log.info("Xác nhận thanh toán cho yêu cầu MoMo {}", requestId);
                 response.setResult("Thanh toán thành công.");
             } else {
@@ -50,7 +48,7 @@ public class MoMoController {
             String requestId = params.get("requestId");
 
             if ("0".equals(resultCode)) {
-                paymentService.finalizePaymentByReference(requestId);
+                orderService.finalizePaymentByReference(requestId);
                 response.setResult("Thanh toán thành công.");
             } else {
                 response.setResult("Thanh toán thất bại, vui lòng thử lại.");

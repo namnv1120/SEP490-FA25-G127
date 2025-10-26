@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -44,7 +45,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
 
         Customer customer;
-        if (req.getCustomerId() == null) {
+        if (req.getCustomerId() == null || req.getCustomerId().toString().isEmpty()) {
             UUID defaultCustomerId = UUID.fromString("00000000-0000-0000-0000-000000000001");
             customer = customerRepository.findById(defaultCustomerId)
                     .orElseThrow(() -> new NoSuchElementException("Không tìm thấy khách vãng lai mặc định"));
@@ -97,7 +98,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                 throw new IllegalArgumentException("Giảm giá phải trong khoảng 0–100%");
 
             BigDecimal discountMultiplier = BigDecimal.ONE.subtract(
-                    discountPercent.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP));
+                    discountPercent.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
 
             BigDecimal itemTotal = unitPrice
                     .multiply(BigDecimal.valueOf(item.getQuantity()))
@@ -113,17 +114,17 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
             detail.setDiscount(discountPercent);
             orderDetails.add(detail);
 
-            adjustInventory(product, -item.getQuantity(), creator);
+            subtractInventoryOnly(product, item.getQuantity());
         }
 
         BigDecimal billDiscountPercent = req.getDiscountAmount() != null ? req.getDiscountAmount() : BigDecimal.ZERO;
         BigDecimal billDiscountAmount = total.multiply(
-                billDiscountPercent.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP));
+                billDiscountPercent.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
         BigDecimal afterDiscount = total.subtract(billDiscountAmount);
 
         BigDecimal taxPercent = req.getTaxAmount() != null ? req.getTaxAmount() : BigDecimal.ZERO;
         BigDecimal taxAmount = afterDiscount.multiply(
-                taxPercent.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP));
+                taxPercent.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
 
         BigDecimal grandTotal = afterDiscount.add(taxAmount);
         if (grandTotal.compareTo(BigDecimal.ZERO) < 0) grandTotal = BigDecimal.ZERO;
@@ -136,7 +137,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
 
         Payment payment = new Payment();
         payment.setOrder(order);
-        String method = Optional.ofNullable(req.getPaymentMethod()).orElse("CASH");
+        String method = Optional.ofNullable(req.getPaymentMethod()).orElse("Tiền mặt");
         payment.setPaymentMethod(method);
         payment.setAmount(grandTotal);
         payment.setPaymentStatus("Chưa thanh toán");
@@ -192,19 +193,24 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         Payment payment = paymentRepository.findByOrder(order);
         if (payment == null) throw new NoSuchElementException("Không tìm thấy thanh toán của đơn hàng");
 
+        List<OrderDetail> details = orderDetailRepository.findByOrder(order);
+
         if ("Chưa thanh toán".equalsIgnoreCase(order.getPaymentStatus())) {
+            for (OrderDetail d : details) {
+                addInventoryBack(d.getProduct(), d.getQuantity(), order.getAccount(),
+                        "Hủy đơn " + order.getOrderNumber());
+            }
             order.setOrderStatus("Đã hủy");
             order.setPaymentStatus("Chưa thanh toán");
             payment.setPaymentStatus("Chưa thanh toán");
         } else if ("Đã thanh toán".equalsIgnoreCase(order.getPaymentStatus())) {
-            order.setOrderStatus("Hoàn tất");
+            for (OrderDetail d : details) {
+                addInventoryBack(d.getProduct(), d.getQuantity(), order.getAccount(),
+                        "Trả hàng từ đơn " + order.getOrderNumber());
+            }
+            order.setOrderStatus("Đã hủy");
             order.setPaymentStatus("Đã hoàn tiền");
             payment.setPaymentStatus("Đã hoàn tiền");
-        }
-
-        List<OrderDetail> details = orderDetailRepository.findByOrder(order);
-        for (OrderDetail d : details) {
-            adjustInventory(d.getProduct(), d.getQuantity(), order.getAccount());
         }
 
         order.setUpdatedDate(LocalDateTime.now());
@@ -233,26 +239,70 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
     @Override
     @Transactional
     public OrderResponse completeOrder(UUID id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
-        order.setOrderStatus("Hoàn tất");
-        order.setPaymentStatus("Đã thanh toán");
+        finalizePayment(id);
 
-        Payment payment = paymentRepository.findByOrder(order);
-        if (payment != null) {
-            payment.setPaymentStatus("Đã thanh toán");
-            payment.setPaymentDate(LocalDateTime.now());
-            paymentRepository.save(payment);
-        }
-
-        order.setUpdatedDate(LocalDateTime.now());
-        orderRepository.save(order);
-
+        Order order = orderRepository.findById(id).orElseThrow();
         return orderMapper.toResponse(
                 order,
                 orderDetailRepository.findByOrder(order),
-                payment
+                paymentRepository.findByOrder(order)
         );
+    }
+
+    @Override
+    @Transactional
+    public void finalizePayment(UUID orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
+
+        if ("Đã thanh toán".equalsIgnoreCase(order.getPaymentStatus())) {
+            log.info("Đơn {} đã được thanh toán trước đó, bỏ qua", order.getOrderNumber());
+            return;
+        }
+
+        Payment payment = paymentRepository.findByOrder(order);
+        if (payment == null) {
+            throw new NoSuchElementException("Không tìm thấy thanh toán cho đơn hàng");
+        }
+
+        order.setOrderStatus("Hoàn tất");
+        order.setPaymentStatus("Đã thanh toán");
+        order.setUpdatedDate(LocalDateTime.now());
+
+        payment.setPaymentStatus("Đã thanh toán");
+        payment.setPaymentDate(LocalDateTime.now());
+
+        List<OrderDetail> details = orderDetailRepository.findByOrder(order);
+        String customerCode = order.getCustomer() != null
+                ? order.getCustomer().getCustomerCode()
+                : "Khách vãng lai";
+
+        for (OrderDetail d : details) {
+            recordSaleTransaction(
+                    d.getProduct(),
+                    d.getQuantity(),
+                    d.getUnitPrice(),
+                    order.getAccount(),
+                    order.getOrderNumber(),
+                    customerCode
+            );
+        }
+
+        orderRepository.save(order);
+        paymentRepository.save(payment);
+
+        log.info("Hoàn tất thanh toán cho đơn {}, đã ghi {} lịch sử tồn kho",
+                order.getOrderNumber(), details.size());
+    }
+
+    @Override
+    @Transactional
+    public void finalizePaymentByReference(String transactionReference) {
+        Payment payment = paymentRepository.findByTransactionReference(transactionReference)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Không tìm thấy thanh toán với reference: " + transactionReference));
+
+        finalizePayment(payment.getOrder().getOrderId());
     }
 
     private String generateOrderNumber() {
@@ -260,15 +310,40 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         return String.format("ORD-%05d", count);
     }
 
-    private void adjustInventory(Product product, int quantityChange, Account account) {
+    private void subtractInventoryOnly(Product product, int quantity) {
         Inventory inv = inventoryRepository.findByProduct(product)
                 .orElseThrow(() -> new NoSuchElementException(
                         "Không tìm thấy tồn kho cho sản phẩm: " + product.getProductName()));
 
-        int newQty = inv.getQuantityInStock() + quantityChange;
+        int newQty = inv.getQuantityInStock() - quantity;
         if (newQty < 0) throw new IllegalArgumentException("Không đủ tồn kho");
 
         inv.setQuantityInStock(newQty);
+        inv.setLastUpdated(LocalDateTime.now());
+        inventoryRepository.save(inv);
+    }
+
+    private void recordSaleTransaction(Product product, int quantity, BigDecimal unitPrice,
+                                       Account account, String orderNumber, String customerCode) {
+        InventoryTransaction trx = new InventoryTransaction();
+        trx.setTransactionId(UUID.randomUUID());
+        trx.setProduct(product);
+        trx.setAccount(account);
+        trx.setTransactionType("Bán ra");
+        trx.setQuantity(quantity);
+        trx.setUnitPrice(unitPrice);
+        trx.setReferenceType("Đơn hàng");
+        trx.setNotes("Bán cho khách " + customerCode + " - Đơn " + orderNumber);
+        trx.setTransactionDate(LocalDateTime.now());
+        inventoryTransactionRepository.save(trx);
+    }
+
+    private void addInventoryBack(Product product, int quantity, Account account, String notes) {
+        Inventory inv = inventoryRepository.findByProduct(product)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Không tìm thấy tồn kho cho sản phẩm: " + product.getProductName()));
+
+        inv.setQuantityInStock(inv.getQuantityInStock() + quantity);
         inv.setLastUpdated(LocalDateTime.now());
         inventoryRepository.save(inv);
 
@@ -276,8 +351,10 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         trx.setTransactionId(UUID.randomUUID());
         trx.setProduct(product);
         trx.setAccount(account);
-        trx.setTransactionType(quantityChange < 0 ? "Bán ra" : "Hủy bán");
-        trx.setQuantity(Math.abs(quantityChange));
+        trx.setTransactionType("Trả hàng");
+        trx.setQuantity(quantity);
+        trx.setReferenceType("Đơn hàng");
+        trx.setNotes(notes);
         trx.setTransactionDate(LocalDateTime.now());
         inventoryTransactionRepository.save(trx);
     }
