@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
@@ -7,6 +7,7 @@ import PosModals from "../../core/modals/pos-modal/posModals";
 import CounterTwo from "../../components/counter/counterTwo";
 import ProductService from "../../services/ProductService";
 import { getAllCategories } from "../../services/categoryService";
+import { getCustomerByPhone } from "../../services/customerService";
 import { category1 } from "../../utils/imagepath";
 
 const Pos = () => {
@@ -16,7 +17,9 @@ const Pos = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [selectedCustomer, setSelectedCustomer] = useState("");
+  const [customerInput, setCustomerInput] = useState("");
+  const [customerSuggestions, setCustomerSuggestions] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [selectedGST] = useState(5);
   const [selectedDiscount] = useState(10);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -38,8 +41,6 @@ const Pos = () => {
     const fetchProducts = async () => {
       try {
         const data = await ProductService.getAllProducts();
-        console.log("Dữ liệu gốc từ API:", data);
-
         const mapped = data.map((p, index) => ({
           productId: p.productId || index + 1,
           productCode: p.productCode || p.code || "N/A",
@@ -51,8 +52,6 @@ const Pos = () => {
           unitsInStock: p.unitsInStock ?? p.quantity ?? 0,
           supplierName: p.supplierName || p.supplier?.name || "",
         }));
-
-        console.log("Dữ liệu sau khi mapped:", mapped);
         setProducts(mapped);
       } catch (err) {
         console.error("Lỗi khi lấy sản phẩm:", err);
@@ -61,19 +60,18 @@ const Pos = () => {
     fetchProducts();
   }, []);
 
-  // Lọc sản phẩm theo danh mục
   useEffect(() => {
-    if (activeTab === "all") setFilteredProducts(products);
-    else
+    if (activeTab === "all") {
+      setFilteredProducts(products);
+    } else {
       setFilteredProducts(products.filter((p) => p.categoryId === activeTab));
+    }
   }, [activeTab, products]);
 
-  // Tìm kiếm sản phẩm
   const displayedProducts = filteredProducts.filter((p) =>
     p.productName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Khi click vào sản phẩm
   const handleAddProduct = (product) => {
     setSelectedProducts((prev) => {
       const exist = prev.find((p) => p.productId === product.productId);
@@ -88,29 +86,23 @@ const Pos = () => {
     });
   };
 
-  // Kiểm tra sản phẩm có được chọn không
   const isProductSelected = (id) =>
     selectedProducts.some((p) => p.productId === id);
 
-  // Thay đổi số lượng
   const handleQuantityChange = (productId, value) => {
-    setSelectedProducts((prev) => {
-      const updated = prev.map((p) =>
-        p.productId === productId ? { ...p, quantity: value } : p
-      );
-      console.log("Cập nhật số lượng:", updated);
-      return updated;
-    });
-  };
-
-  // Xóa sản phẩm
-  const removeProduct = (productId) => {
     setSelectedProducts((prev) =>
-      prev.filter((p) => p.productId !== productId)
+      prev.map((p) =>
+        p.productId === productId ? { ...p, quantity: value } : p
+      )
     );
   };
 
-  // Tính tổng tiền
+  const removeProduct = (productId) => {
+    setSelectedProducts((prev) =>
+      prev.filter((p) => p.productCode !== productId)
+    );
+  };
+
   const subTotal = selectedProducts.reduce(
     (sum, p) => sum + (p.unitPrice ?? 0) * (p.quantity ?? 1),
     0
@@ -119,11 +111,53 @@ const Pos = () => {
   const discountAmount = (subTotal * selectedDiscount) / 100;
   const total = subTotal + taxAmount - discountAmount;
 
-  // Giữ class body
   useEffect(() => {
     document.body.classList.add("pos-page");
     return () => document.body.classList.remove("pos-page");
   }, [location.pathname]);
+
+  const customerRef = useRef(null);
+
+  const handleCustomerInput = async (e) => {
+    const value = e.target.value;
+    setCustomerInput(value);
+
+    if (!value) {
+      setCustomerSuggestions([]);
+      setSelectedCustomer(null);
+      return;
+    }
+
+    try {
+      const results = await getCustomerByPhone(value);
+      const filtered = (results || []).filter(
+        (c) => c.phone && c.phone.toLowerCase().includes(value.toLowerCase())
+      );
+
+      setCustomerSuggestions(filtered);
+    } catch (err) {
+      console.error("Lỗi khi tìm khách hàng:", err);
+      setCustomerSuggestions([]);
+    }
+  };
+
+  const selectCustomer = (customer) => {
+    setSelectedCustomer(customer);
+    setCustomerInput(customer.phone);
+    setCustomerSuggestions([]);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (customerRef.current && !customerRef.current.contains(event.target)) {
+        setCustomerSuggestions([]);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const settings = {
     dots: false,
@@ -290,27 +324,58 @@ const Pos = () => {
                 </div>
 
                 {/* Customer input */}
-                <div className="customer-info block-section">
+                <div
+                  className="customer-info block-section"
+                  ref={customerRef}
+                  style={{ position: "relative" }}
+                >
                   <h4 className="mb-3">Thông tin khách hàng</h4>
-                  <div className="input-block d-flex align-items-center">
-                    <div className="flex-grow-1">
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Nhập số điện thoại khách hàng"
-                        value={selectedCustomer}
-                        onChange={(e) => setSelectedCustomer(e.target.value)}
-                      />
-                    </div>
+                  <div
+                    className="input-block d-flex align-items-center"
+                    style={{ position: "relative" }}
+                  >
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Nhập số điện thoại khách hàng"
+                      value={customerInput}
+                      onChange={handleCustomerInput}
+                      autoComplete="off"
+                    />
+
+                    {customerSuggestions.length > 0 && (
+                      <ul className="customer-suggestions list-group position-absolute w-100">
+                        {customerSuggestions.map((c) => (
+                          <li
+                            key={c.customerId}
+                            className="list-group-item list-group-item-action"
+                            onClick={() => selectCustomer(c)}
+                            style={{ cursor: "pointer" }}
+                          >
+                            <strong>{c.fullName}</strong> <br />
+                            <span>{c.phone}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
                     <Link
                       to="#"
-                      className="btn btn-primary btn-icon"
+                      className="btn btn-primary btn-icon ms-2"
                       data-bs-toggle="modal"
                       data-bs-target="#create"
                     >
                       <i className="feather icon-user-plus feather-16" />
                     </Link>
                   </div>
+
+                  {selectedCustomer && (
+                    <div className="mt-2">
+                      <strong>Khách hàng:</strong> {selectedCustomer.fullName}{" "}
+                      <br />
+                      <strong>SĐT:</strong> {selectedCustomer.phone}
+                    </div>
+                  )}
                 </div>
 
                 {/* Product Added */}
@@ -410,13 +475,15 @@ const Pos = () => {
                           </td>
                         </tr>
                         <tr>
-                          <td>Thuế</td>
+                          <td>Thuế ({selectedGST}%)</td>
                           <td className="text-end">
                             {taxAmount.toLocaleString()}₫
                           </td>
                         </tr>
                         <tr>
-                          <td className="text-danger">Giảm giá</td>
+                          <td className="text-danger">
+                            Giảm giá ({selectedDiscount}%)
+                          </td>
                           <td className="text-danger text-end">
                             -{discountAmount.toLocaleString()}₫
                           </td>
