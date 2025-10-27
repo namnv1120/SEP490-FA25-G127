@@ -1,6 +1,7 @@
 package com.g127.snapbuy.controller;
 
 import com.g127.snapbuy.dto.ApiResponse;
+import com.g127.snapbuy.dto.request.PurchaseOrderApproveRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderCreateRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderReceiveRequest;
 import com.g127.snapbuy.dto.response.PurchaseOrderResponse;
@@ -44,6 +45,16 @@ public class PurchaseOrderController {
         ApiResponse<PurchaseOrderResponse> response = new ApiResponse<>();
         response.setResult(service.cancel(id));
         response.setMessage("Đã hủy phiếu nhập hàng.");
+        return response;
+    }
+
+    @PutMapping("/{id}/approve")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    public ApiResponse<PurchaseOrderResponse> approve(@PathVariable UUID id,
+                                                      @Valid @RequestBody PurchaseOrderApproveRequest req) {
+        ApiResponse<PurchaseOrderResponse> response = new ApiResponse<>();
+        response.setResult(service.approve(id, req));
+        response.setMessage("Phiếu nhập đã được duyệt.");
         return response;
     }
 }

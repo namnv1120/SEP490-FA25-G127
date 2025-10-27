@@ -1,5 +1,6 @@
 package com.g127.snapbuy.service;
 
+import com.g127.snapbuy.dto.request.PurchaseOrderApproveRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderCreateRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderReceiveRequest;
 import com.g127.snapbuy.dto.response.PurchaseOrderResponse;
@@ -13,4 +14,6 @@ public interface PurchaseOrderService {
     PurchaseOrderResponse receive(UUID purchaseOrderId, PurchaseOrderReceiveRequest req);
 
     PurchaseOrderResponse cancel(UUID purchaseOrderId);
+
+    PurchaseOrderResponse approve(UUID poId, PurchaseOrderApproveRequest req);
 }

@@ -1,5 +1,6 @@
 package com.g127.snapbuy.service.impl;
 
+import com.g127.snapbuy.dto.request.PurchaseOrderApproveRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderCreateRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderReceiveRequest;
 import com.g127.snapbuy.dto.response.PurchaseOrderDetailResponse;
@@ -46,6 +47,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
         BigDecimal plannedTotal = plannedSubtotal.add(plannedTax);
 
+        String cleanedNotes = cleanNotes(req.notes());
+
         PurchaseOrder po = PurchaseOrder.builder()
                 .id(poId)
                 .number(number)
@@ -55,7 +58,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 .status("Chờ duyệt")
                 .totalAmount(plannedTotal)
                 .taxAmount(plannedTax)
-                .notes(req.notes())
+                .notes(cleanedNotes)
                 .build();
         purchaseOrderRepo.save(po);
 
@@ -76,14 +79,52 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
     @Override
     @Transactional
+    public PurchaseOrderResponse approve(UUID poId, PurchaseOrderApproveRequest req) {
+        PurchaseOrder po = purchaseOrderRepo.findById(poId)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu nhập hàng"));
+
+        if ("Đã hủy".equals(po.getStatus())) {
+            throw new IllegalStateException("Phiếu đã hủy, không thể duyệt");
+        }
+        if ("Đã nhận hàng".equals(po.getStatus())) {
+            throw new IllegalStateException("Phiếu đã hoàn tất, không thể duyệt");
+        }
+        if (!"Chờ duyệt".equals(po.getStatus())) {
+            throw new IllegalStateException("Chỉ duyệt phiếu ở trạng thái 'Chờ duyệt'");
+        }
+
+        if (req.ownerAccountId() != null) {
+            accountRepo.findById(req.ownerAccountId())
+                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản chủ cửa hàng"));
+        }
+
+        po.setStatus("Đã duyệt");
+
+        String suffix = (req.notes() != null && !req.notes().isBlank())
+                ? (": " + cleanNotes(req.notes()))
+                : "";
+        po.setNotes("Đã duyệt bởi Chủ cửa hàng" + suffix);
+
+        purchaseOrderRepo.save(po);
+
+        List<PurchaseOrderDetail> details = detailRepo.findByPurchaseOrderId(poId);
+        return toResponse(po, details);
+    }
+
+    @Override
+    @Transactional
     public PurchaseOrderResponse receive(UUID poId, PurchaseOrderReceiveRequest req) {
         PurchaseOrder po = purchaseOrderRepo.findById(poId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu nhập hàng"));
-        if (Objects.equals(po.getStatus(), "Đã hủy")) {
-            throw new IllegalStateException("Không thể xác nhận nhập hàng cho phiếu đã hủy");
-        }
-        if (Objects.equals(po.getStatus(), "Đã nhận hàng")) {
-            throw new IllegalStateException("Phiếu nhập đã hoàn tất, không thể chỉnh sửa");
+
+        if (!"Đã duyệt".equals(po.getStatus())) {
+            if ("Đã hủy".equals(po.getStatus())) {
+                throw new IllegalStateException("Phiếu nhập hàng đã bị hủy, không thể xác nhận nhập kho.");
+            }
+            if ("Đã nhận hàng".equals(po.getStatus())) {
+                throw new IllegalStateException("Phiếu nhập hàng đã hoàn tất, không thể chỉnh sửa.");
+            }
+            throw new IllegalStateException("Phiếu nhập hàng chưa được duyệt, không thể xác nhận nhập kho.");
         }
 
         List<PurchaseOrderDetail> details = detailRepo.findByPurchaseOrderId(poId);
@@ -165,8 +206,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                     .quantity(qty)
                     .unitPrice(unitPriceByProduct.getOrDefault(productId, BigDecimal.ZERO))
                     .referenceType("Phiếu nhập hàng")
-                    .referenceId(poId)
-                    .notes(req.notes())
+                    .referenceId(po.getId())
+                    .notes(cleanNotes(req.notes()))
                     .transactionDate(now)
                     .build();
             inventoryTxnRepo.save(txn);
@@ -208,7 +249,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         PurchaseOrder po = purchaseOrderRepo.findById(poId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu nhập hàng"));
 
-        if (Objects.equals(po.getStatus(), "Đã nhận hàng")) {
+        if ("Đã nhận hàng".equals(po.getStatus())) {
             throw new IllegalStateException("Không thể hủy phiếu đã hoàn tất");
         }
 
@@ -265,5 +306,13 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         String date = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
         String suffix = UUID.randomUUID().toString().substring(0, 4).toUpperCase();
         return "PO-" + date + "-" + suffix;
+    }
+
+    private String cleanNotes(String notes) {
+        if (notes == null) return "";
+        String n = notes.trim();
+        if (n.isBlank()) return "";
+        if (n.toLowerCase().contains("test")) return "";
+        return n;
     }
 }
