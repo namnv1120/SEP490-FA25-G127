@@ -63,4 +63,11 @@ public class CustomerController {
         response.setResult(customerService.searchCustomer(keyword));
         return response;
     }
+
+    @GetMapping("phone/{phone}")
+    public ApiResponse<CustomerResponse> getCustomerByPhone(@PathVariable String phone) {
+        ApiResponse<CustomerResponse> response = new ApiResponse<>();
+        response.setResult(customerService.getCustomerByPhone(phone));
+        return response;
+    }
 }

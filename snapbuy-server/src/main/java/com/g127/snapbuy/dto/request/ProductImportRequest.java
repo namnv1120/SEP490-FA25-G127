@@ -15,17 +15,15 @@ public class ProductImportRequest {
     @NotBlank(message = "Product code must not be empty")
     private String productCode;
 
-
     private String description;
 
-    @NotNull(message = "Category must not be null")
+    @NotBlank(message = "Category name must not be empty")
     private String categoryName;
 
-    @NotNull(message = "Supplier ID must not be null")
+    @NotBlank(message = "Supplier name must not be empty")
     private String supplierName;
 
     private String unit;
-
     private String dimensions;
 
     @Size(max = 500, message = "Image URL must be at most 500 characters")

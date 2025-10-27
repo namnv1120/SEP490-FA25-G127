@@ -4,10 +4,7 @@ import com.g127.snapbuy.dto.request.ProductCreateRequest;
 import com.g127.snapbuy.dto.request.ProductImportRequest;
 import com.g127.snapbuy.dto.request.ProductUpdateRequest;
 import com.g127.snapbuy.dto.response.ProductResponse;
-import com.g127.snapbuy.entity.Category;
-import com.g127.snapbuy.entity.Product;
-import com.g127.snapbuy.entity.ProductPrice;
-import com.g127.snapbuy.entity.Supplier;
+import com.g127.snapbuy.entity.*;
 import com.g127.snapbuy.exception.AppException;
 import com.g127.snapbuy.exception.ErrorCode;
 import com.g127.snapbuy.mapper.ProductMapper;
@@ -36,7 +33,9 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
 
     @Override
+    @Transactional
     public ProductResponse createProduct(ProductCreateRequest request) {
+        // 1️⃣ Tạo entity product
         Product product = productMapper.toEntity(request);
 
         Category category = categoryRepository.findById(request.getCategoryId())
@@ -51,7 +50,31 @@ public class ProductServiceImpl implements ProductService {
 
         product.setCreatedDate(LocalDateTime.now());
         product.setUpdatedDate(LocalDateTime.now());
-        return productMapper.toResponse(productRepository.save(product));
+
+        // 2️⃣ Lưu product trước
+        Product savedProduct = productRepository.save(product);
+
+        // 3️⃣ Tạo bản ghi product_price rỗng (chỉ để gắn product)
+        ProductPrice price = new ProductPrice();
+        price.setProduct(savedProduct);
+        price.setUnitPrice(new java.math.BigDecimal("0.00"));
+        price.setCostPrice(new java.math.BigDecimal("0.00"));
+        price.setTaxRate(new java.math.BigDecimal("0.00"));
+        price.setValidFrom(LocalDateTime.now());
+        productPriceRepository.save(price);
+
+        // 4️⃣ Tạo bản ghi inventory rỗng
+        Inventory inventory = new Inventory();
+        inventory.setProduct(savedProduct);
+        inventory.setQuantityInStock(0);
+        inventory.setMinimumStock(0);
+        inventory.setMaximumStock(0);
+        inventory.setReorderPoint(0);
+        inventory.setLastUpdated(LocalDateTime.now());
+        inventoryRepository.save(inventory);
+
+        // 5️⃣ Trả về response
+        return productMapper.toResponse(savedProduct);
     }
 
     @Override
@@ -127,12 +150,9 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        // 🧹 Xoá dữ liệu phụ thuộc trước
         productPriceRepository.deleteAllByProduct_ProductId(id);
         inventoryRepository.deleteAllByProduct_ProductId(id);
 
-
-        // 🗑️ Cuối cùng xoá product
         productRepository.delete(product);
     }
 
@@ -149,7 +169,7 @@ public class ProductServiceImpl implements ProductService {
             int rowNumber = i + 1;
 
             try {
-                // 1. Check duplicate product code
+                // 1️⃣ Check duplicate product code
                 if (productRepository.existsByProductCode(request.getProductCode())) {
                     String error = String.format("Row %d: Product code '%s' already exists",
                             rowNumber, request.getProductCode());
@@ -158,7 +178,7 @@ public class ProductServiceImpl implements ProductService {
                     continue;
                 }
 
-                // 2. Find category by name (case-insensitive)
+                // 2️⃣ Find category by name (case-insensitive)
                 Category category = categoryRepository.findByCategoryNameIgnoreCase(request.getCategoryName())
                         .orElseThrow(() -> {
                             String error = String.format("Row %d: Category '%s' not found",
@@ -167,7 +187,7 @@ public class ProductServiceImpl implements ProductService {
                             return new RuntimeException(error);
                         });
 
-                // 3. Find supplier by name (case-insensitive)
+                // 3️⃣ Find supplier by name (case-insensitive)
                 Supplier supplier = supplierRepository.findBySupplierNameIgnoreCase(request.getSupplierName())
                         .orElseThrow(() -> {
                             String error = String.format("Row %d: Supplier '%s' not found",
@@ -176,7 +196,7 @@ public class ProductServiceImpl implements ProductService {
                             return new RuntimeException(error);
                         });
 
-                // 4. Create product entity
+                // 4️⃣ Create product entity
                 Product product = new Product();
                 product.setProductCode(request.getProductCode());
                 product.setProductName(request.getProductName());
@@ -186,9 +206,32 @@ public class ProductServiceImpl implements ProductService {
                 product.setUnit(request.getUnit());
                 product.setDimensions(request.getDimensions());
                 product.setImageUrl(request.getImageUrl());
+                product.setCreatedDate(LocalDateTime.now());
+                product.setUpdatedDate(LocalDateTime.now());
 
-                // 5. Save product
+                // 5️⃣ Save product
                 Product savedProduct = productRepository.save(product);
+
+                // 6️⃣ Auto-create product_price (default = 0)
+                ProductPrice price = new ProductPrice();
+                price.setProduct(savedProduct);
+                price.setUnitPrice(new java.math.BigDecimal("0.00"));
+                price.setCostPrice(new java.math.BigDecimal("0.00"));
+                price.setTaxRate(new java.math.BigDecimal("0.00"));
+                price.setValidFrom(LocalDateTime.now());
+                productPriceRepository.save(price);
+
+                // 7️⃣ Auto-create inventory (default = 0)
+                com.g127.snapbuy.entity.Inventory inventory = new com.g127.snapbuy.entity.Inventory();
+                inventory.setProduct(savedProduct);
+                inventory.setQuantityInStock(0);
+                inventory.setMinimumStock(0);
+                inventory.setMaximumStock(0);
+                inventory.setReorderPoint(0);
+                inventory.setLastUpdated(LocalDateTime.now());
+                inventoryRepository.save(inventory);
+
+                // 8️⃣ Add to result
                 importedProducts.add(productMapper.toResponse(savedProduct));
 
                 log.info("✅ Row {}: Product '{}' imported successfully", rowNumber, request.getProductCode());
@@ -200,7 +243,7 @@ public class ProductServiceImpl implements ProductService {
             }
         }
 
-        // Log summary
+        // 9️⃣ Summary
         if (!errors.isEmpty()) {
             log.warn("⚠️ Import completed with {} errors:", errors.size());
             errors.forEach(log::warn);

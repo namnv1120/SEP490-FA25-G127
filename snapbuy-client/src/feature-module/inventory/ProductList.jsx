@@ -83,7 +83,7 @@ const ProductList = () => {
 
   const handleImport = async (data) => {
     try {
-      console.log("📦 Importing products:", data);
+      console.log("📦 Đang nhập sản phẩm", data);
       await importProducts(data);
       await fetchProducts();
       return Promise.resolve();

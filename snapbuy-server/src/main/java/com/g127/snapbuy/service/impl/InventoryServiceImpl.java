@@ -55,24 +55,23 @@ public class InventoryServiceImpl implements InventoryService {
         Inventory inventory = inventoryRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
 
-        int oldQty = inventory.getQuantityInStock();
-        inventoryMapper.updateEntity(request, inventory);
-
-        if (inventory.getQuantityInStock() < 0) {
-            throw new AppException(ErrorCode.INVALID_STOCK_OPERATION);
+        // chỉ cập nhật 3 giá trị
+        if (request.getMinimumStock() != null) {
+            inventory.setMinimumStock(request.getMinimumStock());
+        }
+        if (request.getMaximumStock() != null) {
+            inventory.setMaximumStock(request.getMaximumStock());
+        }
+        if (request.getReorderPoint() != null) {
+            inventory.setReorderPoint(request.getReorderPoint());
         }
 
         inventory.setLastUpdated(LocalDateTime.now());
         Inventory saved = inventoryRepository.save(inventory);
 
-        int diff = inventory.getQuantityInStock() - oldQty;
-        if (diff != 0) {
-            String type = diff > 0 ? "ADJUSTMENT_IN" : "ADJUSTMENT_OUT";
-            recordTransaction(inventory.getProduct(), Math.abs(diff), type, null, "Manual stock adjustment");
-        }
-
         return inventoryMapper.toResponse(saved);
     }
+
 
     @Override
     public InventoryResponse getInventoryById(UUID id) {

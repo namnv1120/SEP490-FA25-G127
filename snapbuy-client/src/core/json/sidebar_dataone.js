@@ -49,7 +49,7 @@ export const SidebarData1 = [
         tittle: "Tồn kho",
         hasSubRoute: false,
         showSubRoute: false,
-        route: "/inventory",
+        route: "/inventories",
         subRoutes: [],
       },
       {

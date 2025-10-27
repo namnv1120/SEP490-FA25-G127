@@ -13,6 +13,7 @@ public class Inventory {
 
     @Id
     @Column(name = "inventory_id")
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID inventoryId;
 
     @OneToOne

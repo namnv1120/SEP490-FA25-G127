@@ -24,5 +24,19 @@ export const getAllInventories = async () => {
   }
 };
 
+export const updateInventory = async (inventoryId, inventoryData) => {
+  try {
+    const response = await axios.put(
+      `${REST_API_BASE_URL}/${inventoryId}`,
+      inventoryData,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Failed to update inventory:", error);
+    throw error;
+  }
+};
+
 
 

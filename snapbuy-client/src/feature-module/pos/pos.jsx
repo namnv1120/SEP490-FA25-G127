@@ -5,8 +5,8 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import PosModals from "../../core/modals/pos-modal/posModals";
 import CounterTwo from "../../components/counter/counterTwo";
-import { getAllProducts } from "../../services/productService";
-import { getAllCategories } from "../../services/categoryService";
+import { getAllProducts } from "../../services/ProductService";
+import { getAllCategories } from "../../services/CategoryService";
 import { category1 } from "../../utils/imagepath";
 
 const Pos = () => {

@@ -10,45 +10,88 @@ const ImportExcelModal = ({
   columns,
   mapExcelRow,
   templateData,
-  title = "Import Data from Excel",
+  title = "Thêm dữ liệu từ excel",
 }) => {
   const [fileData, setFileData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [fileList, setFileList] = useState([]);
 
   const handleFileUpload = (file) => {
     const reader = new FileReader();
+
     reader.onload = (e) => {
       try {
-        const workbook = XLSX.read(e.target.result, { type: "array" });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(sheet);
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
 
+        // ✅ Đọc dữ liệu với header
+        const jsonData = XLSX.utils.sheet_to_json(sheet, {
+          raw: false,  // Format dữ liệu
+          defval: ""   // Giá trị mặc định cho ô trống
+        });
+
+        console.log("📊 Raw Excel Data:", jsonData);
+
+        if (jsonData.length === 0) {
+          message.warning("File Excel không có dữ liệu!");
+          return;
+        }
+
+        // ✅ Map dữ liệu
         const mapped = jsonData.map((row, i) => mapExcelRow(row, i));
+        console.log("✅ Mapped Data:", mapped);
+
+        // ✅ Update cả fileList và fileData cùng lúc
+        setFileList([{
+          uid: file.uid,
+          name: file.name,
+          status: 'done',
+        }]);
+
         setFileData(mapped);
-        message.success(`Loaded ${mapped.length} rows`);
+        message.success(`Đã tải ${mapped.length} dòng dữ liệu`);
+
       } catch (err) {
-        console.error(err);
-        message.error("Error reading Excel file");
+        console.error("❌ Lỗi đọc Excel:", err);
+        message.error("Lỗi khi đọc dữ liệu Excel. Vui lòng kiểm tra file!");
+        setFileData([]);
+        setFileList([]);
       }
     };
+
+    reader.onerror = (error) => {
+      console.error("❌ FileReader Error:", error);
+      message.error("Không thể đọc file!");
+    };
+
     reader.readAsArrayBuffer(file);
-    return false;
+    return false; // Ngăn auto upload
   };
 
   const handleImport = async () => {
-    if (fileData.length === 0) return message.warning("No data to import");
+    if (fileData.length === 0) {
+      return message.warning("Không có dữ liệu để nhập");
+    }
+
     setLoading(true);
     try {
       await onImport(fileData);
-      message.success("Import successful!");
-      onClose();
-      setFileData([]);
+      message.success("Nhập dữ liệu thành công!");
+      handleClose();
     } catch (err) {
-      console.error(err);
-      message.error("Import failed!");
+      console.error("❌ Import Error:", err);
+      message.error(err.message || "Nhập dữ liệu thất bại!");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleClose = () => {
+    setFileData([]);
+    setFileList([]);
+    onClose();
   };
 
   const downloadTemplate = () => {
@@ -56,21 +99,26 @@ const ImportExcelModal = ({
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Template");
     XLSX.writeFile(wb, `${title.replace(/\s+/g, "_").toLowerCase()}_template.xlsx`);
-    message.success("Template downloaded!");
+    message.success("Tải về mẫu thành công!");
   };
 
   return (
     <Modal
       title={title}
       open={visible}
-      onCancel={onClose}
-      width={1000}
+      onCancel={handleClose}
+      width={1200}
+      destroyOnClose={true}
       footer={[
-        <Button key="template" icon={<DownloadOutlined />} onClick={downloadTemplate}>
-          Download Template
+        <Button
+          key="template"
+          icon={<DownloadOutlined />}
+          onClick={downloadTemplate}
+        >
+          Tải về mẫu
         </Button>,
-        <Button key="cancel" onClick={onClose}>
-          Cancel
+        <Button key="cancel" onClick={handleClose}>
+          Huỷ
         </Button>,
         <Button
           key="import"
@@ -79,27 +127,41 @@ const ImportExcelModal = ({
           onClick={handleImport}
           disabled={fileData.length === 0}
         >
-          Import ({fileData.length})
+          Nhập dữ liệu ({fileData.length})
         </Button>,
       ]}
     >
       <Upload
-        accept=".xlsx,.xls,.csv"
+        accept=".xlsx,.xls"
         beforeUpload={handleFileUpload}
         maxCount={1}
-        onRemove={() => setFileData([])}
+        fileList={fileList}
+        onRemove={() => {
+          setFileData([]);
+          setFileList([]);
+        }}
+        showUploadList={true}
       >
-        <Button icon={<UploadOutlined />}>Select Excel File</Button>
+        <Button icon={<UploadOutlined />}>Chọn tệp Excel</Button>
       </Upload>
 
       {fileData.length > 0 ? (
-        <Table
-          columns={columns}
-          dataSource={fileData}
-          pagination={{ pageSize: 10 }}
-          size="small"
-          style={{ marginTop: 20 }}
-        />
+        <div style={{ marginTop: 20 }}>
+          <p style={{ marginBottom: 10, fontWeight: 500 }}>
+            Tìm thấy {fileData.length} dòng dữ liệu
+          </p>
+          <Table
+            columns={columns}
+            dataSource={fileData}
+            pagination={{
+              pageSize: 10,
+              showTotal: (total) => `Tổng ${total} dòng`
+            }}
+            size="small"
+            scroll={{ x: 'max-content' }}
+            bordered
+          />
+        </div>
       ) : (
         <div
           style={{
@@ -111,7 +173,9 @@ const ImportExcelModal = ({
           }}
         >
           <UploadOutlined style={{ fontSize: 48, color: "#bbb" }} />
-          <p style={{ color: "#666" }}>Upload an Excel file to preview data</p>
+          <p style={{ color: "#666", margin: "10px 0 0 0" }}>
+            Tải lên tệp Excel để xem trước dữ liệu
+          </p>
         </div>
       )}
     </Modal>

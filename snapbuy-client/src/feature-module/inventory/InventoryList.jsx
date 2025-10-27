@@ -1,64 +1,80 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import PrimeDataTable from "../../components/data-table";
-import CommonFooter from "../../components/footer/commonFooter";
 import TableTopHead from "../../components/table-top-head";
+import CommonFooter from "../../components/footer/commonFooter";
 import CommonDatePicker from "../../components/date-picker/common-date-picker";
-import CommonSelect from "../../components/select/common-select";
 import SearchFromApi from "../../components/data-table/search";
+import { getAllInventories } from "../../services/InventoryService";
+import { message } from "antd";
+import EditInventory from "../inventory/EditInventory";
 
-export const inventoryData = [
-  {
-    id: 1,
-    product_id: "P001",
-    product: "Lenovo 3rd Generation",
-    quantity_in_stock: 3,
-    minimum_stock: 5,
-    maximum_stock: 50,
-    reorder_point: 4,
-    last_updated: "2025-10-10",
-  },
-  {
-    id: 2,
-    product_id: "P002",
-    product: "Nike Jordan",
-    quantity_in_stock: 12,
-    minimum_stock: 10,
-    maximum_stock: 60,
-    reorder_point: 8,
-    last_updated: "2025-10-12",
-  },
-  {
-    id: 3,
-    product_id: "P003",
-    product: "Apple Series 5 Watch",
-    quantity_in_stock: 1,
-    minimum_stock: 4,
-    maximum_stock: 40,
-    reorder_point: 2,
-    last_updated: "2025-10-13",
-  },
-];
 
 const InventoryList = () => {
+  const [inventoryList, setInventoryList] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalRecords, _setTotalRecords] = useState(5);
+  const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
-  const [date1, setDate1] = useState(new Date());
-  const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [inventoryList, _setInventoryList] = useState(inventoryData);
+  const [dateFilter, setDateFilter] = useState(new Date());
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedInventory, setSelectedInventory] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
-  const handleSearch = (value) => {
-    setSearchQuery(value);
+  const openEditModal = (row) => {
+    setSelectedInventory(row);
+    setModalVisible(true);
   };
 
-  const ProductList = [
-    { label: "Lenovo 3rd Generation", value: "1" },
-    { label: "Nike Jordan", value: "2" },
-    { label: "Apple Series 5 Watch", value: "3" },
-  ];
+  const closeEditModal = () => {
+    setModalVisible(false);
+    setSelectedInventory(null);
+  };
 
+  // ✅ Lấy dữ liệu tồn kho từ backend
+  useEffect(() => {
+    fetchInventories();
+  }, []);
+
+  const fetchInventories = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getAllInventories();
+
+      // 🔹 Chuẩn hóa dữ liệu để tránh lỗi undefined
+      const mapped = data.map((item, index) => ({
+        inventoryId: item.inventoryId || item.id || index + 1,
+        productId: item.productId || item.product?.productId || "N/A",
+        productName: item.productName || item.product?.productName || "Không rõ",
+        quantityInStock: item.quantityInStock ?? item.quantity ?? 0,
+        minimumStock: item.minimumStock ?? 0,
+        maximumStock: item.maximumStock ?? 0,
+        reorderPoint: item.reorderPoint ?? 0,
+        lastUpdated: item.lastUpdated || item.updatedAt || null,
+      }));
+
+      setInventoryList(mapped);
+      setTotalRecords(mapped.length);
+    } catch (err) {
+      console.error("❌ Lỗi khi lấy danh sách tồn kho:", err);
+      setError("Không thể tải dữ liệu tồn kho.");
+      message.error("Không thể tải dữ liệu tồn kho.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Lọc danh sách theo ô tìm kiếm
+  const filteredList = inventoryList.filter((item) => {
+    if (!searchQuery) return true;
+    return (
+      item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.productId?.toString().toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
+
+  // ✅ Cấu hình cột bảng
   const columns = [
     {
       header: (
@@ -76,215 +92,119 @@ const InventoryList = () => {
       sortable: false,
       key: "checked",
     },
+    { header: "Tên sản phẩm", field: "productName" },
+    { header: "Tồn kho hiện tại", field: "quantityInStock" },
+    { header: "Tồn kho tối thiểu", field: "minimumStock" },
+    { header: "Tồn kho tối đa", field: "maximumStock" },
+    { header: "Điểm đặt hàng lại", field: "reorderPoint" },
     {
-      header: "Mã sản phẩm",
-      field: "product_id",
-      key: "product_id",
-      sortable: true,
-    },
-    {
-      header: "Tên sản phẩm",
-      field: "product",
-      key: "product",
-      sortable: true,
-    },
-    {
-      header: "Số lượng tồn",
-      field: "quantity_in_stock",
-      key: "quantity_in_stock",
-      sortable: true,
-      body: (data) => (
-        <span
-          className={
-            data.quantity_in_stock < data.minimum_stock
-              ? "text-danger fw-semibold"
-              : ""
-          }
-        >
-          {data.quantity_in_stock}
-        </span>
-      ),
-    },
-    {
-      header: "Tồn tối thiểu",
-      field: "minimum_stock",
-      key: "minimum_stock",
-      sortable: true,
-    },
-    {
-      header: "Tồn tối đa",
-      field: "maximum_stock",
-      key: "maximum_stock",
-      sortable: true,
-    },
-    {
-      header: "Điểm đặt hàng lại",
-      field: "reorder_point",
-      key: "reorder_point",
-      sortable: true,
+      header: "Trạng thái",
+      body: (rowData) => {
+        const qty = Number(rowData.quantityInStock);
+        const min = Number(rowData.minimumStock);
+        const max = Number(rowData.maximumStock);
+
+        if (qty < min) return <span className="badge bg-danger">Thiếu hàng</span>;
+        if (qty > max) return <span className="badge bg-warning text-dark">Quá tồn</span>;
+        return <span className="badge bg-success">Ổn định</span>;
+      },
     },
     {
       header: "Ngày cập nhật",
-      field: "last_updated",
-      key: "last_updated",
-      sortable: true,
-      body: (data) => (
-        <span>{new Date(data.last_updated).toLocaleDateString("vi-VN")}</span>
-      ),
-    },
-    {
-      header: "Trạng thái",
-      field: "status",
-      key: "status",
-      sortable: false,
-      body: (data) => {
-        if (data.quantity_in_stock < data.minimum_stock)
-          return <span className="badge bg-danger">Thiếu hàng</span>;
-        if (data.quantity_in_stock > data.maximum_stock)
-          return <span className="badge bg-warning">Quá tồn</span>;
-        return <span className="badge bg-success">Ổn định</span>;
-      },
+      body: (rowData) =>
+        rowData.lastUpdated
+          ? new Date(rowData.lastUpdated).toLocaleDateString("vi-VN")
+          : "-",
     },
     {
       header: "",
       field: "actions",
       key: "actions",
       sortable: false,
-      body: (_row) => (
+      body: (row) => (
         <div className="edit-delete-action d-flex align-items-center">
-          <Link
-            className="me-2 p-2 d-flex align-items-center border rounded"
-            to="#"
-            data-bs-toggle="modal"
-            data-bs-target="#edit-inventory"
+          <button
+            className="me-2 p-2 border rounded bg-transparent"
+            onClick={() => openEditModal(row)}
           >
             <i className="feather icon-edit"></i>
-          </Link>
+          </button>
         </div>
       ),
     },
+
   ];
 
+  // ✅ Xử lý tìm kiếm
+  const handleSearch = (value) => setSearchQuery(value);
+
   return (
-    <div>
-      <div className="page-wrapper">
-        <div className="content">
-          <div className="page-header">
-            <div className="add-item d-flex">
-              <div className="page-title">
-                <h4>Quản lý tồn kho</h4>
-                <h6>Theo dõi lượng hàng, cảnh báo thiếu hoặc quá tồn</h6>
+    <div className="page-wrapper">
+      <div className="content">
+        {/* 🔹 Header */}
+        <div className="page-header">
+          <div className="add-item d-flex">
+            <div className="page-title">
+              <h4>Quản lý tồn kho</h4>
+              <h6>Theo dõi lượng hàng, cảnh báo thiếu hoặc quá tồn</h6>
+            </div>
+          </div>
+          <TableTopHead onRefresh={fetchInventories} />
+        </div>
+
+        {/* 🔹 Thông báo lỗi */}
+        {error && (
+          <div className="alert alert-danger" role="alert">
+            {error}
+          </div>
+        )}
+
+        {/* 🔹 Loading */}
+        {loading && (
+          <div className="text-center my-5">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Đang tải...</span>
+            </div>
+          </div>
+        )}
+
+        {/* 🔹 Danh sách tồn kho */}
+        {!loading && (
+          <div className="card table-list-card">
+            <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+              <SearchFromApi callback={handleSearch} rows={rows} setRows={setRows} />
+              <div className="d-flex align-items-center flex-wrap row-gap-3">
+                <CommonDatePicker value={dateFilter} onChange={setDateFilter} />
               </div>
             </div>
-            <TableTopHead />
-          </div>
 
-          <>
-            {/* Danh sách tồn kho */}
-            <div className="card table-list-card">
-              <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-                <SearchFromApi
-                  callback={handleSearch}
+            <div className="card-body">
+              <div className="table-responsive">
+                <PrimeDataTable
+                  column={columns}
+                  data={filteredList}
                   rows={rows}
                   setRows={setRows}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  totalRecords={filteredList.length}
+                  loading={loading}
+                  dataKey="inventoryId"
                 />
-                <div className="d-flex align-items-center flex-wrap row-gap-3">
-                  <CommonDatePicker value={date1} onChange={setDate1} />
-                </div>
-              </div>
-
-              <div className="card-body">
-                <div className="table-responsive">
-                  <PrimeDataTable
-                    column={columns}
-                    data={inventoryList}
-                    rows={rows}
-                    setRows={setRows}
-                    currentPage={currentPage}
-                    setCurrentPage={setCurrentPage}
-                    totalRecords={totalRecords}
-                  />
-                </div>
-              </div>
-            </div>
-          </>
-        </div>
-        <CommonFooter />
-      </div>
-
-      {/* Modal chỉnh sửa */}
-      <div className="modal fade" id="edit-inventory">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="page-wrapper-new p-0">
-              <div className="content">
-                <div className="modal-header">
-                  <div className="page-title">
-                    <h4>Chỉnh sửa tồn kho</h4>
-                  </div>
-                  <button
-                    type="button"
-                    className="close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                  >
-                    <span aria-hidden="true">×</span>
-                  </button>
-                </div>
-
-                <div className="modal-body">
-                  <form>
-                    <div className="mb-3">
-                      <label className="form-label">Tên sản phẩm</label>
-                      <CommonSelect
-                        className="w-100"
-                        options={ProductList}
-                        value={selectedProduct}
-                        onChange={(e) => setSelectedProduct(e.value)}
-                        placeholder="Chọn sản phẩm"
-                      />
-                    </div>
-
-                    <div className="mb-3">
-                      <label>Số lượng tồn</label>
-                      <input type="number" className="form-control" />
-                    </div>
-
-                    <div className="mb-3">
-                      <label>Ngày cập nhật</label>
-                      <div className="input-groupicon calender-input">
-                        <CommonDatePicker
-                          value={date1}
-                          onChange={setDate1}
-                          className="w-100"
-                        />
-                        <i className="feather icon-calendar info-img" />
-                      </div>
-                    </div>
-                  </form>
-                </div>
-
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    data-bs-dismiss="modal"
-                  >
-                    Hủy
-                  </button>
-                  <Link
-                    to="#"
-                    data-bs-dismiss="modal"
-                    className="btn btn-primary"
-                  >
-                    Lưu thay đổi
-                  </Link>
-                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
+
+      <CommonFooter />\
+      <EditInventory
+        visible={modalVisible}
+        onClose={closeEditModal}
+        inventory={selectedInventory}
+        onUpdated={fetchInventories}
+      />
+
     </div>
   );
 };

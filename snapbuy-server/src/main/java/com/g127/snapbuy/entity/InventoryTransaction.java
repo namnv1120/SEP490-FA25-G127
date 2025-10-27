@@ -14,6 +14,7 @@ public class InventoryTransaction {
 
     @Id
     @Column(name = "transaction_id")
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID transactionId;
 
     @ManyToOne(fetch = FetchType.LAZY)

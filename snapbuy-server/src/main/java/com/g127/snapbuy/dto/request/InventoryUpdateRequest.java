@@ -6,9 +6,6 @@ import lombok.Data;
 @Data
 public class InventoryUpdateRequest {
 
-    @Min(value = 0, message = "Quantity must be greater than or equal to 0")
-    private Integer quantityInStock;
-
     @Min(value = 0, message = "Minimum stock must be greater than or equal to 0")
     private Integer minimumStock;
 
