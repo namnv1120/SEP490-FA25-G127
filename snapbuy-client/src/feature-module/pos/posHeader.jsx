@@ -5,14 +5,13 @@ import { Settings, User } from "react-feather";
 import { all_routes } from "../../routes/all_routes";
 
 const PosHeader = () => {
-  const [isFullscreen] = useState(false);
   const [currentTime, setCurrentTime] = useState("");
 
-  // Cập nhật thời gian mỗi giây
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
       const timeString = now.toLocaleTimeString("en-GB", { hour12: false });
+      setCurrentTime(timeString);
     };
 
     updateClock();

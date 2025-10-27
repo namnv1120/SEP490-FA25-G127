@@ -5,7 +5,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import PosModals from "../../core/modals/pos-modal/posModals";
 import CounterTwo from "../../components/counter/counterTwo";
-import { getAllProducts } from "../../services/productService";
+import ProductService from "../../services/ProductService";
 import { getAllCategories } from "../../services/categoryService";
 import { category1 } from "../../utils/imagepath";
 
@@ -37,7 +37,7 @@ const Pos = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const data = await getAllProducts();
+        const data = await ProductService.getAllProducts();
         console.log("Dữ liệu gốc từ API:", data);
 
         const mapped = data.map((p, index) => ({
@@ -127,9 +127,10 @@ const Pos = () => {
 
   const settings = {
     dots: false,
+    arrows: true,
     autoplay: false,
     slidesToShow: 6,
-    margin: 0,
+    slidesToScroll: 1,
     speed: 500,
     responsive: [
       { breakpoint: 992, settings: { slidesToShow: 6 } },

@@ -1,17 +1,13 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import TableTopHead from "../../../components/table-top-head";
 import CommonSelect from "../../../components/select/common-select";
-import {
-  barcodeImg3,
-  logo,
-  posProduct16,
-  scanImg,
-} from "../../../utils/imagepath";
+import { logo, scanImg } from "../../../utils/imagepath";
 import {
   createCustomer,
   getCustomerByPhone,
 } from "../../../services/customerService";
+import orderService from "../../../services/orderService";
+import ProductService from "../../../services/ProductService";
 
 const PosModals = () => {
   const [selectedTaxType, setSelectedTaxType] = useState(null);
@@ -24,6 +20,66 @@ const PosModals = () => {
   const [receivedAmount, setReceivedAmount] = useState("");
   const [payingAmount, setPayingAmount] = useState("");
   const [changeAmount, setChangeAmount] = useState(0);
+  const [orders, setOrders] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [activeTab, setActiveTab] = useState("paid");
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [selectedOrderProducts, setSelectedOrderProducts] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [matchedCustomers, setMatchedCustomers] = useState([]);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await orderService.getAllOrders();
+        setOrders(response);
+      } catch (error) {
+        console.error("Lỗi khi tải danh sách đơn hàng:", error);
+      }
+    };
+    fetchOrders();
+  }, []);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await ProductService.getAllProducts();
+        setProducts(data);
+      } catch (error) {
+        console.error("Lỗi khi tải sản phẩm:", error);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  const filteredOrders = (status) => {
+    return orders.filter((order) => order.paymentStatus === status);
+  };
+
+  const handleViewOrder = async (orderId) => {
+    try {
+      const response = await orderService.getOrderById(orderId);
+      setSelectedOrder(response);
+      const modal = new window.bootstrap.Modal(
+        document.getElementById("print-receipt")
+      );
+      modal.show();
+    } catch (error) {
+      console.error("Lỗi khi xem đơn hàng:", error);
+    }
+  };
+
+  const handleViewProducts = async (orderId) => {
+    try {
+      setSelectedOrderId(orderId);
+      const order = await orderService.getOrderById(orderId);
+      setSelectedOrder(order);
+      setSelectedOrderProducts(order.items || []);
+    } catch (error) {
+      console.error("Lỗi khi tải sản phẩm của đơn hàng:", error);
+      setSelectedOrderProducts([]);
+    }
+  };
 
   // State lưu thông tin khách hàng
   const [customer, setCustomer] = useState({
@@ -35,17 +91,14 @@ const PosModals = () => {
   });
   const [loading, setLoading] = useState(false);
 
-  // Khi thay đổi input
   const handleChange = (e) => {
     const { name, value } = e.target;
     setCustomer({ ...customer, [name]: value });
   };
 
-  // Khi nhấn Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Kiểm tra dữ liệu đầu vào
     if (!customer.customerName.trim() || !customer.phone.trim()) {
       alert("Vui lòng nhập đầy đủ họ tên và số điện thoại!");
       return;
@@ -53,7 +106,6 @@ const PosModals = () => {
 
     setLoading(true);
     try {
-      // Kiểm tra trùng số điện thoại
       const existing = await getCustomerByPhone(customer.phone);
       if (existing) {
         alert(`Số điện thoại ${customer.phone} đã tồn tại trong hệ thống!`);
@@ -61,14 +113,11 @@ const PosModals = () => {
         return;
       }
 
-      // Gửi yêu cầu tạo khách hàng mới
       const newCustomer = await createCustomer(customer);
       alert("Tạo khách hàng thành công!");
 
-      // Cập nhật lại POS nếu cần
       if (onCustomerCreated) onCustomerCreated(newCustomer);
 
-      // Reset form
       setCustomer({
         customerName: "",
         phone: "",
@@ -239,116 +288,64 @@ const PosModals = () => {
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
             <div className="modal-body">
-              <div className="icon-head text-center">
-                <Link to="#">
-                  <img src={logo} width={100} height={30} alt="Receipt Logo" />
-                </Link>
-              </div>
-              <div className="text-center info text-center">
-                <h6>SnapBuy</h6>
-                <p className="mb-0">Phone Number</p>
-                <p className="mb-0">
-                  Email:{" "}
-                  <Link to="mailto:example@gmail.com">example@gmail.com</Link>
-                </p>
-              </div>
-              <div className="tax-invoice">
-                <h6 className="text-center">Tax Invoice</h6>
-                <div className="row">
-                  <div className="col-sm-12 col-md-6">
-                    <div className="invoice-user-name">
-                      <span>Name: </span>John Doe
-                    </div>
-                    <div className="invoice-user-name">
-                      <span>Invoice No: </span>CS132453
-                    </div>
+              {selectedOrder ? (
+                <>
+                  <div className="text-center mb-3">
+                    <img src={logo} width={100} height={30} alt="Logo" />
+                    <h6 className="mt-2">Hóa đơn bán hàng</h6>
+                    <p>Mã đơn: #{selectedOrder.orderNumber}</p>
+                    <p>
+                      Ngày: {new Date(selectedOrder.orderDate).toLocaleString()}
+                    </p>
                   </div>
-                  <div className="col-sm-12 col-md-6">
-                    <div className="invoice-user-name">
-                      <span>Customer Id: </span>#LL93784
-                    </div>
-                    <div className="invoice-user-name">
-                      <span>Date: </span>01.07.2022
-                    </div>
+
+                  <table className="table w-100">
+                    <thead>
+                      <tr>
+                        <th>Sản phẩm</th>
+                        <th>Số lượng</th>
+                        <th>Giá</th>
+                        <th className="text-end">Thành tiền</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedOrder.items?.map((item, index) => (
+                        <tr key={index}>
+                          <td>{item.productName}</td>
+                          <td>{item.quantity}</td>
+                          <td>{item.price.toLocaleString()}₫</td>
+                          <td className="text-end">
+                            {(item.price * item.quantity).toLocaleString()}₫
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  <div className="text-end mt-3">
+                    <p>
+                      Tổng cộng:{" "}
+                      <strong>
+                        {selectedOrder.totalAmount?.toLocaleString()}₫
+                      </strong>
+                    </p>
+                    <p>
+                      Trạng thái: <strong>{selectedOrder.paymentStatus}</strong>
+                    </p>
                   </div>
-                </div>
-              </div>
-              <table className="table-borderless w-100 table-fit">
-                <thead>
-                  <tr>
-                    <th># Item</th>
-                    <th>Price</th>
-                    <th>Qty</th>
-                    <th className="text-end">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>1. Red Nike Laser</td>
-                    <td>$50</td>
-                    <td>3</td>
-                    <td className="text-end">$150</td>
-                  </tr>
-                  <tr>
-                    <td>2. Iphone 14</td>
-                    <td>$50</td>
-                    <td>2</td>
-                    <td className="text-end">$100</td>
-                  </tr>
-                  <tr>
-                    <td colSpan={4}>
-                      <table className="table-borderless w-100 table-fit">
-                        <tbody>
-                          <tr>
-                            <td className="fw-bold">Sub Total :</td>
-                            <td className="text-end">$700.00</td>
-                          </tr>
-                          <tr>
-                            <td className="fw-bold">Discount :</td>
-                            <td className="text-end">-$50.00</td>
-                          </tr>
-                          <tr>
-                            <td className="fw-bold">Shipping :</td>
-                            <td className="text-end">0.00</td>
-                          </tr>
-                          <tr>
-                            <td className="fw-bold">Tax :</td>
-                            <td className="text-end">$5.00</td>
-                          </tr>
-                          <tr>
-                            <td className="fw-bold">Total Bill :</td>
-                            <td className="text-end">$655.00</td>
-                          </tr>
-                          <tr>
-                            <td className="fw-bold">Due :</td>
-                            <td className="text-end">$0.00</td>
-                          </tr>
-                          <tr>
-                            <td className="fw-bold">Total Payable :</td>
-                            <td className="text-end">$655.00</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              <div className="text-center invoice-bar">
-                <div className="border-bottom border-dashed">
-                  <p>
-                    **VAT against this challan is payable through central
-                    registration. Thank you for your business!
-                  </p>
-                </div>
-                <Link to="#">
-                  <img src={barcodeImg3} alt="Barcode" />
-                </Link>
-                <p className="text-dark fw-bold">Sale 31</p>
-                <p>Thank You For Shopping With Us. Please Come Again</p>
-                <Link to="#" className="btn btn-md btn-primary">
-                  Print Receipt
-                </Link>
-              </div>
+
+                  <div className="text-center mt-4">
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => window.print()}
+                    >
+                      <i className="ti ti-printer" /> In hóa đơn
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p className="text-center">Không có dữ liệu đơn hàng.</p>
+              )}
             </div>
           </div>
         </div>
@@ -364,7 +361,7 @@ const PosModals = () => {
           <div className="modal-content">
             <div className="modal-header d-flex align-items-center justify-content-between">
               <div className="d-flex align-items-center">
-                <h5 className="me-4">Products</h5>
+                <h5 className="me-4">Sản phẩm trong đơn hàng</h5>
               </div>
               <button
                 type="button"
@@ -375,42 +372,56 @@ const PosModals = () => {
                 <span aria-hidden="true">×</span>
               </button>
             </div>
+
             <div className="modal-body">
-              <div className="card bg-light mb-3">
-                <div className="card-body">
-                  <div className="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-3">
-                    <span className="badge bg-dark fs-12">
-                      Order ID : #45698
-                    </span>
-                    <p className="fs-16">Number of Products : 02</p>
-                  </div>
-                  <div className="product-wrap h-auto">
-                    <div className="product-list bg-white align-items-center justify-content-between">
-                      <div
-                        className="d-flex align-items-center product-info"
-                        data-bs-toggle="modal"
-                        data-bs-target="#products"
-                      >
-                        <Link to="#" className="pro-img">
-                          <img src={posProduct16} alt="Products" />
-                        </Link>
-                        <div className="info">
-                          <h6>
-                            <Link to="#">Red Nike Laser</Link>
-                          </h6>
-                          <p>Quantity : 04</p>
+              {selectedOrderProducts.length === 0 ? (
+                <p className="text-center text-muted">
+                  Không có sản phẩm trong đơn hàng này.
+                </p>
+              ) : (
+                <div className="card bg-light mb-3">
+                  <div className="card-body">
+                    <div className="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-3">
+                      <span className="badge bg-dark fs-12">
+                        Mã đơn: #{selectedOrderId}
+                      </span>
+                      <p className="fs-16">
+                        Số lượng sản phẩm: {selectedOrderProducts.length}
+                      </p>
+                    </div>
+
+                    <div className="product-wrap h-auto">
+                      {selectedOrderProducts.map((item) => (
+                        <div
+                          key={item.productId}
+                          className="product-list bg-white align-items-center justify-content-between"
+                        >
+                          <div className="d-flex align-items-center product-info">
+                            <Link to="#" className="pro-img">
+                              <img src={item.imageUrl} alt={item.productName} />
+                            </Link>
+                            <div className="info">
+                              <h6>
+                                <Link to="#">{item.productName}</Link>
+                              </h6>
+                              <p>Số lượng: {item.quantity}</p>
+                            </div>
+                          </div>
+                          <p className="text-teal fw-bold">
+                            {(item.price || item.unitPrice)?.toLocaleString()}₫
+                          </p>
                         </div>
-                      </div>
-                      <p className="text-teal fw-bold">$2000</p>
+                      ))}
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
       </div>
       {/* /Products */}
+      {/* Customer */}
       <div
         className="modal fade"
         id="create"
@@ -537,6 +548,7 @@ const PosModals = () => {
           </div>
         </div>
       </div>
+      {/* /Customer */}
       {/* Edit Product */}
       <div
         className="modal fade modal-default pos-modal"
@@ -784,7 +796,7 @@ const PosModals = () => {
         >
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title">Orders</h5>
+              <h5 className="modal-title">Đơn hàng</h5>
               <button
                 type="button"
                 className="close"
@@ -794,277 +806,182 @@ const PosModals = () => {
                 <span aria-hidden="true">×</span>
               </button>
             </div>
+
             <div className="modal-body">
               <div className="tabs-sets">
                 <ul className="nav nav-tabs" id="myTabs" role="tablist">
                   <li className="nav-item" role="presentation">
                     <button
-                      className="nav-link active"
-                      id="onhold-tab"
-                      data-bs-toggle="tab"
-                      data-bs-target="#onhold"
-                      type="button"
-                      aria-controls="onhold"
-                      aria-selected="true"
-                      role="tab"
-                    >
-                      Onhold
-                    </button>
-                  </li>
-                  <li className="nav-item" role="presentation">
-                    <button
-                      className="nav-link"
+                      className={`nav-link ${
+                        activeTab === "unpaid" ? "active" : ""
+                      }`}
                       id="unpaid-tab"
                       data-bs-toggle="tab"
                       data-bs-target="#unpaid"
                       type="button"
-                      aria-controls="unpaid"
-                      aria-selected="false"
                       role="tab"
+                      onClick={() => setActiveTab("unpaid")}
                     >
-                      Unpaid
+                      Chưa thanh toán
                     </button>
                   </li>
                   <li className="nav-item" role="presentation">
                     <button
-                      className="nav-link"
+                      className={`nav-link ${
+                        activeTab === "paid" ? "active" : ""
+                      }`}
                       id="paid-tab"
                       data-bs-toggle="tab"
                       data-bs-target="#paid"
                       type="button"
-                      aria-controls="paid"
-                      aria-selected="false"
                       role="tab"
+                      onClick={() => setActiveTab("paid")}
                     >
-                      Paid
+                      Đã thanh toán
+                    </button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button
+                      className={`nav-link ${
+                        activeTab === "refunded" ? "active" : ""
+                      }`}
+                      id="refunded-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#refunded"
+                      type="button"
+                      role="tab"
+                      onClick={() => setActiveTab("refunded")}
+                    >
+                      Hoàn tiền
                     </button>
                   </li>
                 </ul>
+
                 <div className="tab-content">
-                  <div
-                    className="tab-pane fade show active"
-                    id="onhold"
-                    role="tabpanel"
-                    aria-labelledby="onhold-tab"
-                  >
-                    <div className="input-icon-start pos-search position-relative mb-3">
-                      <span className="input-icon-addon">
-                        <i className="ti ti-search" />
-                      </span>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Search Product"
-                      />
-                    </div>
-                    <div className="order-body">
-                      <div className="card bg-light mb-3">
-                        <div className="card-body">
-                          <span className="badge bg-dark fs-12 mb-2">
-                            Order ID : #45698
-                          </span>
-                          <div className="row g-3">
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Cashier :
-                                </span>{" "}
-                                admin
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Total :
-                                </span>{" "}
-                                $900
-                              </p>
+                  {["unpaid", "paid", "refunded"].map((tabKey) => (
+                    <div
+                      key={tabKey}
+                      className={`tab-pane fade ${
+                        activeTab === tabKey ? "show active" : ""
+                      }`}
+                      id={tabKey}
+                      role="tabpanel"
+                    >
+                      <div className="input-icon-start pos-search position-relative mb-3">
+                        <span className="input-icon-addon">
+                          <i className="ti ti-search" />
+                        </span>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Tìm kiếm đơn hàng"
+                        />
+                      </div>
+
+                      <div className="order-body">
+                        {filteredOrders(tabKey.toUpperCase()).map((order) => (
+                          <div
+                            className="card bg-light mb-3"
+                            key={order.orderId}
+                          >
+                            <div className="card-body">
+                              <span
+                                className={`badge fs-12 mb-2 ${
+                                  tabKey === "paid"
+                                    ? "bg-success"
+                                    : tabKey === "unpaid"
+                                    ? "bg-dark"
+                                    : "bg-danger"
+                                }`}
+                              >
+                                Mã đơn: #{order.orderNumber}
+                              </span>
+
+                              <div className="row g-3">
+                                <div className="col-md-6">
+                                  <p className="fs-15 mb-1">
+                                    <span className="fw-bold text-gray-9">
+                                      Thu ngân:
+                                    </span>{" "}
+                                    {order.accountName || "Admin"}
+                                  </p>
+                                  <p className="fs-15">
+                                    <span className="fw-bold text-gray-9">
+                                      Tổng tiền:
+                                    </span>{" "}
+                                    {order.totalAmount?.toLocaleString()}₫
+                                  </p>
+                                </div>
+                                <div className="col-md-6">
+                                  <p className="fs-15 mb-1">
+                                    <span className="fw-bold text-gray-9">
+                                      Khách hàng:
+                                    </span>{" "}
+                                    {order.customerName || "Khách lẻ"}
+                                  </p>
+                                  <p className="fs-15">
+                                    <span className="fw-bold text-gray-9">
+                                      Ngày:
+                                    </span>{" "}
+                                    {new Date(order.orderDate).toLocaleString()}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div
+                                className={`${
+                                  tabKey === "paid"
+                                    ? "bg-success-transparent text-success"
+                                    : tabKey === "unpaid"
+                                    ? "bg-info-transparent text-info"
+                                    : "bg-danger-transparent text-danger"
+                                } p-1 rounded text-center my-3`}
+                              >
+                                <p className="fw-medium">
+                                  {tabKey === "paid"
+                                    ? "Đơn hàng đã được thanh toán"
+                                    : tabKey === "unpaid"
+                                    ? "Đơn hàng chưa được thanh toán"
+                                    : "Đơn hàng đã được hoàn tiền"}
+                                </p>
+                              </div>
+
+                              <div className="d-flex align-items-center justify-content-center flex-wrap gap-2">
+                                <Link
+                                  to="#"
+                                  className="btn btn-md btn-teal"
+                                  data-bs-dismiss="modal"
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#products"
+                                  onClick={() =>
+                                    handleViewProducts(order.orderId)
+                                  }
+                                >
+                                  Xem sản phẩm
+                                </Link>
+
+                                <Link
+                                  to="#"
+                                  className="btn btn-md btn-indigo"
+                                  onClick={() => handleViewOrder(order.orderId)}
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#print-receipt"
+                                >
+                                  In hóa đơn
+                                </Link>
+                              </div>
                             </div>
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Customer :
-                                </span>{" "}
-                                Botsford
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Date :
-                                </span>{" "}
-                                24 Dec 2024 13:39:11
-                              </p>
-                            </div>
                           </div>
-                          <div className="bg-info-transparent p-1 rounded text-center my-3">
-                            <p className="text-info fw-medium">
-                              Customer need to recheck the product once
-                            </p>
-                          </div>
-                          <div className="d-flex align-items-center justify-content-center flex-wrap gap-2">
-                            <Link to="#" className="btn btn-md btn-orange">
-                              Open Order
-                            </Link>
-                            <Link
-                              to="#"
-                              className="btn btn-md btn-teal"
-                              data-bs-dismiss="modal"
-                              data-bs-toggle="modal"
-                              data-bs-target="#products"
-                            >
-                              View Products
-                            </Link>
-                            <Link to="#" className="btn btn-md btn-indigo">
-                              Print
-                            </Link>
-                          </div>
-                        </div>
+                        ))}
+
+                        {filteredOrders(tabKey.toUpperCase()).length === 0 && (
+                          <p className="text-center text-muted mt-3">
+                            Không có đơn hàng nào.
+                          </p>
+                        )}
                       </div>
                     </div>
-                  </div>
-                  <div className="tab-pane fade" id="unpaid" role="tabpanel">
-                    <div className="input-icon-start pos-search position-relative mb-3">
-                      <span className="input-icon-addon">
-                        <i className="ti ti-search" />
-                      </span>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Search Product"
-                      />
-                    </div>
-                    <div className="order-body">
-                      <div className="card bg-light mb-3">
-                        <div className="card-body">
-                          <span className="badge bg-dark fs-12 mb-2">
-                            Order ID : #45698
-                          </span>
-                          <div className="row g-3">
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Cashier :
-                                </span>{" "}
-                                admin
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Total :
-                                </span>{" "}
-                                $900
-                              </p>
-                            </div>
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Customer :
-                                </span>{" "}
-                                Anastasia
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Date :
-                                </span>{" "}
-                                24 Dec 2024 13:39:11
-                              </p>
-                            </div>
-                          </div>
-                          <div className="bg-info-transparent p-1 rounded text-center my-3">
-                            <p className="text-info fw-medium">
-                              Customer need to recheck the product once
-                            </p>
-                          </div>
-                          <div className="d-flex align-items-center justify-content-center flex-wrap gap-2">
-                            <Link to="#" className="btn btn-md btn-orange">
-                              Open Order
-                            </Link>
-                            <Link
-                              to="#"
-                              className="btn btn-md btn-teal"
-                              data-bs-dismiss="modal"
-                              data-bs-toggle="modal"
-                              data-bs-target="#products"
-                            >
-                              View Products
-                            </Link>
-                            <Link to="#" className="btn btn-md btn-indigo">
-                              Print
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="tab-pane fade" id="paid" role="tabpanel">
-                    <div className="input-icon-start pos-search position-relative mb-3">
-                      <span className="input-icon-addon">
-                        <i className="ti ti-search" />
-                      </span>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Search Product"
-                      />
-                    </div>
-                    <div className="order-body">
-                      <div className="card bg-light mb-3">
-                        <div className="card-body">
-                          <span className="badge bg-dark fs-12 mb-2">
-                            Order ID : #45698
-                          </span>
-                          <div className="row g-3">
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Cashier :
-                                </span>{" "}
-                                admin
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Total :
-                                </span>{" "}
-                                $1000
-                              </p>
-                            </div>
-                            <div className="col-md-6">
-                              <p className="fs-15 mb-1">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Customer :
-                                </span>{" "}
-                                Hugo
-                              </p>
-                              <p className="fs-15">
-                                <span className="fs-14 fw-bold text-gray-9">
-                                  Date :
-                                </span>{" "}
-                                24 Dec 2024 13:39:11
-                              </p>
-                            </div>
-                          </div>
-                          <div className="bg-info-transparent p-1 rounded text-center my-3">
-                            <p className="text-info fw-medium">
-                              Customer need to recheck the product once
-                            </p>
-                          </div>
-                          <div className="d-flex align-items-center justify-content-center flex-wrap gap-2">
-                            <Link to="#" className="btn btn-md btn-orange">
-                              Open Order
-                            </Link>
-                            <Link
-                              to="#"
-                              className="btn btn-md btn-teal"
-                              data-bs-dismiss="modal"
-                              data-bs-toggle="modal"
-                              data-bs-target="#products"
-                            >
-                              View Products
-                            </Link>
-                            <Link to="#" className="btn btn-md btn-indigo">
-                              Print
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>

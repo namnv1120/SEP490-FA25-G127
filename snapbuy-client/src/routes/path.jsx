@@ -32,7 +32,7 @@ const ProductList = lazy(() =>
 );
 const Accounts = lazy(() => import("../feature-module/usermanagement/account"));
 const RolesPermissions = lazy(() =>
-  import("../feature-module/usermanagement/Rolespermissions")
+  import("../feature-module/usermanagement/rolespermissions")
 );
 const Permissions = lazy(() =>
   import("../feature-module/usermanagement/permissions")

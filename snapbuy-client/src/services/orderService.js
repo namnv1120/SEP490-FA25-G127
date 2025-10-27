@@ -11,13 +11,12 @@ const getAuthHeader = () => {
 };
 
 const orderService = {
-  // Lấy tất cả đơn hàng
   getAllOrders: async () => {
     try {
       const res = await axios.get(REST_API_BASE_URL, {
         headers: getAuthHeader(),
       });
-      return res.data.result; // Backend trả về ApiResponse<OrderResponse>
+      return res.data.result;
     } catch (error) {
       console.error('Lỗi khi tải danh sách đơn hàng:', error);
       throw error;
