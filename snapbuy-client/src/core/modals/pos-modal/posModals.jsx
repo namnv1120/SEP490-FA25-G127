@@ -10,12 +10,6 @@ import orderService from "../../../services/orderService";
 import ProductService from "../../../services/ProductService";
 
 const PosModals = () => {
-  const [selectedTaxType, setSelectedTaxType] = useState(null);
-  const [selectedDiscountType, setSelectedDiscountType] = useState(null);
-  const [selectedWeightUnit, setSelectedWeightUnit] = useState(null);
-  const [selectedTaxRate, setSelectedTaxRate] = useState(null);
-  const [selectedDiscountMode, setSelectedDiscountMode] = useState(null);
-  const [selectedPaymentType, setSelectedPaymentType] = useState(null);
   const [input, setInput] = useState("");
   const [receivedAmount, setReceivedAmount] = useState("");
   const [payingAmount, setPayingAmount] = useState("");
@@ -25,8 +19,8 @@ const PosModals = () => {
   const [activeTab, setActiveTab] = useState("paid");
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [selectedOrderProducts, setSelectedOrderProducts] = useState([]);
+  const [selectedProducts, setSelectedProducts] = useState([]);
   const [products, setProducts] = useState([]);
-  const [matchedCustomers, setMatchedCustomers] = useState([]);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -57,31 +51,48 @@ const PosModals = () => {
   };
 
   const handleViewOrder = async (orderId) => {
+    if (!orderId) {
+      console.warn("⚠️ Không có ID đơn hàng để xem chi tiết!");
+      return;
+    }
+
+    console.log(`🔍 Đang fetch chi tiết đơn hàng với ID: ${orderId}...`);
+
     try {
       const response = await orderService.getOrderById(orderId);
+      console.log("✅ Dữ liệu đơn hàng trả về:", response);
+
       setSelectedOrder(response);
-      const modal = new window.bootstrap.Modal(
-        document.getElementById("print-receipt")
-      );
-      modal.show();
     } catch (error) {
-      console.error("Lỗi khi xem đơn hàng:", error);
+      console.error("❌ Lỗi khi xem đơn hàng:", error);
+      if (error.response) {
+        console.error("📦 Chi tiết lỗi từ server:", error.response.data);
+      }
     }
   };
 
   const handleViewProducts = async (orderId) => {
+    if (!orderId) {
+      console.warn("⚠️ Không có ID đơn hàng để xem sản phẩm!");
+      return;
+    }
+
+    console.log(`🛒 Đang tải danh sách sản phẩm cho đơn hàng ID: ${orderId}...`);
+
     try {
-      setSelectedOrderId(orderId);
-      const order = await orderService.getOrderById(orderId);
-      setSelectedOrder(order);
-      setSelectedOrderProducts(order.items || []);
+      const response = await orderService.getOrderById(orderId);
+      console.log("✅ Dữ liệu sản phẩm trong đơn hàng:", response?.items || []);
+      console.log("📦 Toàn bộ dữ liệu đơn hàng:", response);
+
+      setSelectedProducts(response.items || []);
     } catch (error) {
-      console.error("Lỗi khi tải sản phẩm của đơn hàng:", error);
-      setSelectedOrderProducts([]);
+      console.error("❌ Lỗi khi xem sản phẩm:", error);
+      if (error.response) {
+        console.error("📦 Chi tiết lỗi từ server:", error.response.data);
+      }
     }
   };
 
-  // State lưu thông tin khách hàng
   const [customer, setCustomer] = useState({
     customerName: "",
     phone: "",
@@ -200,40 +211,6 @@ const PosModals = () => {
   const handleQuickCash = (amount) => {
     setReceivedAmount(amount);
     setChangeAmount(Math.max(amount - payingAmount, 0));
-  };
-
-  const options = {
-    taxType: [
-      { value: "exclusive", label: "Exclusive" },
-      { value: "inclusive", label: "Inclusive" },
-    ],
-    discountType: [
-      { value: "percentage", label: "Percentage" },
-      { value: "early_payment", label: "Early payment discounts" },
-    ],
-    weightUnits: [
-      { value: "kg", label: "Kilogram" },
-      { value: "g", label: "Grams" },
-    ],
-    taxRates: [
-      { value: "select", label: "Select" },
-      { value: "no_tax", label: "No Tax" },
-      { value: "10", label: "@10" },
-      { value: "15", label: "@15" },
-      { value: "vat", label: "VAT" },
-      { value: "sltax", label: "SLTAX" },
-    ],
-    paymentMethods: [
-      { value: "cash", label: "Cash" },
-      { value: "card", label: "Card" },
-    ],
-    paymentTypes: [
-      { value: "credit", label: "Credit Card" },
-      { value: "cash", label: "Cash" },
-      { value: "cheque", label: "Cheque" },
-      { value: "deposit", label: "Deposit" },
-      { value: "points", label: "Points" },
-    ],
   };
 
   return (
@@ -549,156 +526,6 @@ const PosModals = () => {
         </div>
       </div>
       {/* /Customer */}
-      {/* Edit Product */}
-      <div
-        className="modal fade modal-default pos-modal"
-        id="edit-product"
-        aria-labelledby="edit-product"
-      >
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Edit Product</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="row">
-                  <div className="col-lg-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Product Name <span className="text-danger">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        defaultValue="Red Nike Laser Show"
-                      />
-                    </div>
-                  </div>
-                  <div className="col-lg-6 col-sm-12 col-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Product Price <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={1800}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-lg-6 col-sm-12 col-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Tax Type <span className="text-danger">*</span>
-                      </label>
-
-                      <CommonSelect
-                        className="w-100"
-                        options={options.taxType}
-                        value={selectedTaxType}
-                        onChange={(e) => setSelectedTaxType(e.value)}
-                        placeholder="Select Tax Type"
-                        filter={false}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-lg-6 col-sm-12 col-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Tax <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-percentage" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={15}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-lg-6 col-sm-12 col-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Discount Type <span className="text-danger">*</span>
-                      </label>
-
-                      <CommonSelect
-                        className="w-100"
-                        options={options.discountType}
-                        value={selectedDiscountType}
-                        onChange={(e) => setSelectedDiscountType(e.value)}
-                        placeholder="Select Discount Type"
-                        filter={false}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-lg-6 col-sm-12 col-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Discount <span className="text-danger">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        defaultValue={15}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-lg-6 col-sm-12 col-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Sale Unit <span className="text-danger">*</span>
-                      </label>
-                      <CommonSelect
-                        className="w-100"
-                        options={options.weightUnits}
-                        value={selectedWeightUnit}
-                        onChange={(e) => setSelectedWeightUnit(e.value)}
-                        placeholder="Select Sale Unit"
-                        filter={false}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {/* /Edit Product */}
       {/* Delete Product */}
       <div
         className="modal fade modal-default"
@@ -1018,116 +845,6 @@ const PosModals = () => {
         </div>
       </div>
       {/* /Scan */}
-      {/* Order Tax */}
-      <div className="modal fade modal-default" id="order-tax">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Order Tax</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="mb-3">
-                  <label className="form-label">
-                    Order Tax <span className="text-danger">*</span>
-                  </label>
-                  <CommonSelect
-                    className="w-100"
-                    options={options.taxRates}
-                    value={selectedTaxRate}
-                    onChange={(e) => setSelectedTaxRate(e.value)}
-                    placeholder="Select Order Tax"
-                    filter={false}
-                  />
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {/* /Order Tax */}
-      {/* Discount */}
-      <div className="modal fade modal-default" id="discount">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Discount </h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="mb-3">
-                  <label className="form-label">
-                    Order Discount Type <span className="text-danger">*</span>
-                  </label>
-                  <CommonSelect
-                    className="w-100"
-                    options={options.discountMode}
-                    value={selectedDiscountMode}
-                    onChange={(e) => setSelectedDiscountMode(e.value)}
-                    placeholder="Select Discount Type"
-                    filter={false}
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">
-                    Value <span className="text-danger">*</span>
-                  </label>
-                  <input type="text" className="form-control" />
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {/* /Discount */}
       {/* Cash Payment */}
       <div
         className="modal fade modal-default"
@@ -1416,242 +1133,6 @@ const PosModals = () => {
         </div>
       </div>
       {/* /Payment Cash  */}
-      {/* Payment Point */}
-      <div className="modal fade modal-default" id="payment-points">
-        <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Finalize Sale</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="row">
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Received Amount <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={1800}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Paying Amount <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue={1800}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    {/* <div className="change-item mb-3">
-                  <label className="form-label">Change</label>
-                  <div className="input-icon-start position-relative">
-                    <span className="input-icon-addon text-gray-9">
-                      <i className="ti ti-currency-dollar" />
-                    </span>
-                    <input
-                      type="text"
-                      className="form-control"
-                      defaultValue={0.0}
-                    />
-                  </div>
-                </div> */}
-                    <div className="point-item mb-3">
-                      <label className="form-label">Balance Point</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        defaultValue={200}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Payment Type <span className="text-danger">*</span>
-                      </label>
-                      <CommonSelect
-                        className="w-100"
-                        options={options.paymentTypes}
-                        value={selectedPaymentType}
-                        onChange={(e) => setSelectedPaymentType(e.value)}
-                        placeholder="Select Payment Type"
-                        filter={false}
-                      />
-                    </div>
-                    <div className="quick-cash payment-content bg-light  mb-3">
-                      <div className="d-flex align-items-center flex-wra gap-4">
-                        <h5 className="text-nowrap">Quick Cash</h5>
-                        <div className="d-flex align-items-center flex-wrap gap-3">
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash41"
-                              defaultChecked
-                            />
-                            <label className="btn btn-white" htmlFor="cash41">
-                              10
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash42"
-                            />
-                            <label className="btn btn-white" htmlFor="cash42">
-                              20
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash43"
-                            />
-                            <label className="btn btn-white" htmlFor="cash43">
-                              50
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash44"
-                            />
-                            <label className="btn btn-white" htmlFor="cash44">
-                              100
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash45"
-                            />
-                            <label className="btn btn-white" htmlFor="cash45">
-                              500
-                            </label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              type="radio"
-                              className="btn-check"
-                              name="cash"
-                              id="cash46"
-                            />
-                            <label className="btn btn-white" htmlFor="cash46">
-                              1000
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="point-wrap payment-content d-block mb-3">
-                      <div className=" bg-success-transparent d-flex align-items-center justify-content-between flex-wrap p-2 gap-2 br-5">
-                        <h6 className="fs-14 fw-bold text-success">
-                          You have 2000 Points to Use
-                        </h6>
-                        <Link to="#" className="btn btn-dark btn-md">
-                          Use for this Purchase
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Payment Receiver</label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Payment Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Sale Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Staff Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                        defaultValue={""}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {/* /Payment Point */}
       {/* Calculator */}
       <div
         className="modal fade pos-modal"

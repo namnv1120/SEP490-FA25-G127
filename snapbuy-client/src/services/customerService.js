@@ -39,14 +39,18 @@ export const getCustomerById = async (id) => {
 
 export const getCustomerByPhone = async (phone) => {
   try {
-    const response = await axios.get(REST_API_BASE_URL, {
-      params: { phone },
-      ...getAuthHeaders(),
-    });
-    return response.data?.result;
+    const response = await axios.get(
+      `${REST_API_BASE_URL}/phone/${phone}`,
+      getAuthHeaders()
+    );
+
+    if (response.data && response.data.result) {
+      return [response.data.result];
+    }
+    return [];
   } catch (err) {
     console.error("Lỗi khi tìm khách hàng theo số điện thoại:", err);
-    throw err;
+    return [];
   }
 };
 
