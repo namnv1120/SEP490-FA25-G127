@@ -37,7 +37,6 @@ const ProductPriceList = () => {
         productName: price.productName || "N/A",
         unitPrice: `${price.unitPrice?.toLocaleString() || "0.00"} đ`,
         costPrice: `${price.costPrice?.toLocaleString() || "0.00"} đ`,
-        taxRate: price.taxRate ? `${(price.taxRate * 100).toFixed(2)}%` : "0%",
         validFrom: price.validFrom
           ? new Date(price.validFrom).toLocaleDateString("vi-VN")
           : "N/A",
@@ -51,7 +50,6 @@ const ProductPriceList = () => {
         // Raw values for filtering/sorting
         rawUnitPrice: price.unitPrice,
         rawCostPrice: price.costPrice,
-        rawTaxRate: price.taxRate,
         rawValidFrom: price.validFrom,
         rawValidTo: price.validTo,
       }));
@@ -102,7 +100,6 @@ const ProductPriceList = () => {
       "Product Name": p.productName,
       "Unit Price": p.unitPrice,
       "Cost Price": p.costPrice,
-      "Tax Rate": p.taxRate,
       "Valid From": p.validFrom,
       "Valid To": p.validTo,
       "Status": p.status,
@@ -161,12 +158,6 @@ const ProductPriceList = () => {
       key: "costPrice",
       sortable: true,
     },
-    {
-      header: "Thuế suất",
-      field: "taxRate",
-      key: "taxRate",
-      sortable: true,
-    },
     // {
     //   header: "Valid From",
     //   field: "validFrom",
@@ -219,12 +210,12 @@ const ProductPriceList = () => {
               onExportExcel={handleExportExcel}
               onRefresh={handleRefresh}
             />
-            <div className="page-btn">
+            {/* <div className="page-btn">
               <Link to={route.addproductprice} className="btn btn-primary">
                 <i className="ti ti-circle-plus me-1"></i>
                 Thêm giá mới
               </Link>
-            </div>
+            </div> */}
           </div>
 
           {/* Error Message */}

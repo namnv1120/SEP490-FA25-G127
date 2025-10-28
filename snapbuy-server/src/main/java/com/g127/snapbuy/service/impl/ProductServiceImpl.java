@@ -56,7 +56,6 @@ public class ProductServiceImpl implements ProductService {
         price.setProduct(savedProduct);
         price.setUnitPrice(new java.math.BigDecimal("0.00"));
         price.setCostPrice(new java.math.BigDecimal("0.00"));
-        price.setTaxRate(new java.math.BigDecimal("0.00"));
         price.setValidFrom(LocalDateTime.now());
         productPriceRepository.save(price);
 
@@ -205,7 +204,7 @@ public class ProductServiceImpl implements ProductService {
                 price.setProduct(savedProduct);
                 price.setUnitPrice(new java.math.BigDecimal("0.00"));
                 price.setCostPrice(new java.math.BigDecimal("0.00"));
-                price.setTaxRate(new java.math.BigDecimal("0.00"));
+
                 price.setValidFrom(LocalDateTime.now());
                 productPriceRepository.save(price);
 

@@ -20,9 +20,6 @@ const EditProductPrice = () => {
     productId: "",
     unitPrice: "",
     costPrice: "",
-    taxRate: "",
-    validFrom: "",
-    validTo: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -50,19 +47,16 @@ const EditProductPrice = () => {
       setInitialLoading(true);
       const data = await getProductPriceById(id);
 
-      const formatDateTime = (dateTime) => {
-        if (!dateTime) return "";
-        const date = new Date(dateTime);
-        return date.toLocaleDateString("vi-VN");
-      };
+      // const formatDateTime = (dateTime) => {
+      //   if (!dateTime) return "";
+      //   const date = new Date(dateTime);
+      //   return date.toLocaleDateString("vi-VN");
+      // };
 
       setFormData({
         productId: data.productId || "",
         unitPrice: data.unitPrice || "",
         costPrice: data.costPrice || "",
-        taxRate: data.taxRate || "",
-        validFrom: formatDateTime(data.validFrom),
-        validTo: formatDateTime(data.validTo),
       });
     } catch (error) {
       console.error("Lỗi khi tải giá sản phẩm:", error);
@@ -104,10 +98,6 @@ const EditProductPrice = () => {
       newErrors.costPrice = "Giá nhập phải lớn hơn 0";
     }
 
-    if (formData.taxRate && (parseFloat(formData.taxRate) < 0 || parseFloat(formData.taxRate) > 1)) {
-      newErrors.taxRate = "Thuế suất phải từ 0 đến 1 (như 0.10 cho 10%)";
-    }
-
     // if (!formData.validFrom) {
     //   newErrors.validFrom = "Vui lòng chọn ngày bắt đầu hiệu lực";
     // }
@@ -139,9 +129,6 @@ const EditProductPrice = () => {
         productId: formData.productId,
         unitPrice: parseFloat(formData.unitPrice),
         costPrice: parseFloat(formData.costPrice),
-        taxRate: formData.taxRate ? parseFloat(formData.taxRate) : 0,
-        validFrom: formData.validFrom,
-        validTo: formData.validTo || null,
       };
 
       await updateProductPrice(id, priceData);
@@ -284,28 +271,6 @@ const EditProductPrice = () => {
                       </div>
                     </div>
 
-                    {/* Tax Rate */}
-                    <div className="col-lg-4 col-md-6">
-                      <div className="mb-3">
-                        <label className="form-label">Thuế suất (0-1)</label>
-                        <input
-                          type="number"
-                          className={`form-control ${errors.taxRate ? "is-invalid" : ""}`}
-                          name="taxRate"
-                          value={formData.taxRate}
-                          onChange={handleChange}
-                          placeholder="ví dụ: 0.10 cho 10%"
-                          step="0.01"
-                          min="0"
-                          max="1"
-                        />
-                        {errors.taxRate && (
-                          <div className="invalid-feedback">{errors.taxRate}</div>
-                        )}
-                        <small className="text-muted">Nhập dưới dạng thập phân (ví dụ: 0,10 = 10%)</small>
-                      </div>
-                    </div>
-
                     {/* <div className="col-lg-6 col-md-6">
                       <div className="mb-3">
                         <label className="form-label">
@@ -343,26 +308,13 @@ const EditProductPrice = () => {
                     </div> */}
 
                     {/* Price Calculation Preview */}
-                    {formData.unitPrice && formData.taxRate && (
+                    {formData.unitPrice && formData.costPrice && (
                       <div className="col-12">
                         <div className="alert alert-info">
                           <strong>Xem trước:</strong>
                           <ul className="mb-0 mt-2">
                             <li>Giá bán: {parseFloat(formData.unitPrice).toLocaleString()} đ</li>
-                            <li>
-                              Thuế ({(parseFloat(formData.taxRate) * 100).toFixed(2)}%):{" "}
-                              {(parseFloat(formData.unitPrice) * parseFloat(formData.taxRate)).toLocaleString()} đ
-                            </li>
-                            <li>
-                              <strong>
-                                Tổng với thuế:{" "}
-                                {(
-                                  parseFloat(formData.unitPrice) *
-                                  (1 + parseFloat(formData.taxRate))
-                                ).toLocaleString()}{" "}
-                                đ
-                              </strong>
-                            </li>
+                            <li>Giá nhập: {parseFloat(formData.costPrice).toLocaleString()} đ</li>
                             {formData.costPrice && (
                               <li className="mt-2">
                                 Biên lợi nhuận:{" "}

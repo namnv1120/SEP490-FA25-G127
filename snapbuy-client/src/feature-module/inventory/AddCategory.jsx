@@ -11,6 +11,30 @@ const AddCategory = ({ onSuccess }) => {
     active: true,
   });
 
+  const [errors, setErrors] = useState({});
+
+  // Hàm kiểm tra hợp lệ dữ liệu
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Tên danh mục
+    if (!formData.categoryName.trim()) {
+      newErrors.categoryName = "Vui lòng nhập tên danh mục.";
+    } else if (formData.categoryName.length < 3) {
+      newErrors.categoryName = "Tên danh mục phải có ít nhất 3 ký tự.";
+    } else if (formData.categoryName.length > 100) {
+      newErrors.categoryName = "Tên danh mục không được vượt quá 100 ký tự.";
+    }
+
+    // Mô tả
+    if (formData.description && formData.description.length > 255) {
+      newErrors.description = "Mô tả không được vượt quá 255 ký tự.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   // Xử lý thay đổi input
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -18,9 +42,9 @@ const AddCategory = ({ onSuccess }) => {
       ...prev,
       [name]: value,
     }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  // Xử lý checkbox
   const handleStatusChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -28,12 +52,11 @@ const AddCategory = ({ onSuccess }) => {
     }));
   };
 
-  // Submit thêm mới category
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.categoryName.trim()) {
-      message.warning("Vui lòng nhập tên danh mục");
+    if (!validateForm()) {
+      message.warning("Vui lòng kiểm tra lại thông tin nhập.");
       return;
     }
 
@@ -41,8 +64,8 @@ const AddCategory = ({ onSuccess }) => {
       setLoading(true);
 
       const newCategory = {
-        categoryName: formData.categoryName,
-        description: formData.description,
+        categoryName: formData.categoryName.trim(),
+        description: formData.description.trim(),
         active: formData.active ? 1 : 0,
         parentCategoryId: null,
       };
@@ -50,7 +73,7 @@ const AddCategory = ({ onSuccess }) => {
       await createCategory(newCategory);
       message.success("Thêm danh mục thành công!");
 
-      // Đóng modal và dọn backdrop
+      // Đóng modal
       const modalElement = document.getElementById("add-main-category");
       let modal = Modal.getInstance(modalElement);
       if (!modal) modal = new Modal(modalElement);
@@ -69,12 +92,13 @@ const AddCategory = ({ onSuccess }) => {
         description: "",
         active: true,
       });
+      setErrors({});
 
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error("Lỗi khi thêm danh mục", error);
+      console.error("Lỗi khi thêm danh mục:", error);
       const errorMessage =
-        error.response?.data?.message || "Không thể thêm danh mục";
+        error.response?.data?.message || "Không thể thêm danh mục.";
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -83,7 +107,6 @@ const AddCategory = ({ onSuccess }) => {
 
   return (
     <div>
-      {/* Add Category Modal */}
       <div className="modal fade" id="add-main-category">
         <div className="modal-dialog modal-dialog-centered modal-md">
           <div className="modal-content">
@@ -103,6 +126,7 @@ const AddCategory = ({ onSuccess }) => {
 
             <div className="modal-body custom-modal-body">
               <form onSubmit={handleSubmit}>
+                {/* Tên danh mục */}
                 <div className="mb-3">
                   <label className="form-label">
                     Tên danh mục<span className="text-danger">*</span>
@@ -110,24 +134,35 @@ const AddCategory = ({ onSuccess }) => {
                   <input
                     type="text"
                     name="categoryName"
-                    className="form-control"
+                    className={`form-control ${errors.categoryName ? "is-invalid" : ""
+                      }`}
                     value={formData.categoryName}
                     onChange={handleInputChange}
-                    required
+                    placeholder="Nhập tên danh mục"
                   />
+                  {errors.categoryName && (
+                    <div className="invalid-feedback">{errors.categoryName}</div>
+                  )}
                 </div>
 
+                {/* Mô tả */}
                 <div className="mb-3 input-blocks">
                   <label className="form-label">Mô tả</label>
                   <textarea
                     name="description"
-                    className="form-control"
+                    className={`form-control ${errors.description ? "is-invalid" : ""
+                      }`}
                     rows="3"
                     value={formData.description}
                     onChange={handleInputChange}
+                    placeholder="Nhập mô tả (tùy chọn)"
                   />
+                  {errors.description && (
+                    <div className="invalid-feedback">{errors.description}</div>
+                  )}
                 </div>
 
+                {/* Trạng thái */}
                 <div className="mb-0">
                   <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
                     <span className="status-label">Trạng thái</span>
@@ -142,6 +177,7 @@ const AddCategory = ({ onSuccess }) => {
                   </div>
                 </div>
 
+                {/* Nút hành động */}
                 <div className="modal-footer-btn mt-4 d-flex justify-content-end">
                   <button
                     type="button"
@@ -156,7 +192,7 @@ const AddCategory = ({ onSuccess }) => {
                     className="btn btn-submit"
                     disabled={loading}
                   >
-                    {loading ? "Saving..." : "Add Category"}
+                    {loading ? "Đang lưu..." : "Thêm danh mục"}
                   </button>
                 </div>
               </form>
@@ -164,7 +200,6 @@ const AddCategory = ({ onSuccess }) => {
           </div>
         </div>
       </div>
-      {/* /Add Category Modal */}
     </div>
   );
 };

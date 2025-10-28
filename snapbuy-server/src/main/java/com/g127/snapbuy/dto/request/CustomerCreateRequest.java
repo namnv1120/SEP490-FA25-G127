@@ -18,9 +18,6 @@ public class CustomerCreateRequest {
     @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Số điện thoại không đúng định dạng.")
     private String phone;
 
-    @NotNull(message = "Vui lòng chọn giới tính.")
     private Customer.Gender gender;
 
-    @Builder.Default
-    private boolean active = true;
 }

@@ -32,9 +32,6 @@ public class ProductPrice {
     @Column(name = "cost_price", precision = 18, scale = 2)
     private BigDecimal costPrice;
 
-    @Column(name = "tax_rate", precision = 5, scale = 2)
-    private BigDecimal taxRate = BigDecimal.ZERO;
-
     @Column(name = "valid_from", nullable = false)
     private LocalDateTime validFrom;
 

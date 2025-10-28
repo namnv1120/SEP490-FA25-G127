@@ -57,7 +57,6 @@ CREATE TABLE customers
     full_name     NVARCHAR(50),
     phone         NVARCHAR(20),
     gender        NVARCHAR(6),
-    active        BIT                          DEFAULT 1,
     created_date  DATETIME2                    DEFAULT GETDATE(),
     updated_date  DATETIME2                    DEFAULT GETDATE()
 );
@@ -85,7 +84,6 @@ CREATE TABLE suppliers
     [address]     NVARCHAR(100),
     city          NVARCHAR(50),
     ward          NVARCHAR(50),
-
     active        BIT                          DEFAULT 1,
     created_date  DATETIME2                    DEFAULT GETDATE(),
     updated_date  DATETIME2                    DEFAULT GETDATE()
@@ -99,7 +97,7 @@ CREATE TABLE products
     [description] NVARCHAR(MAX),
     category_id   UNIQUEIDENTIFIER    NOT NULL,
     supplier_id   UNIQUEIDENTIFIER,
-    unit          NVARCHAR(20)                 DEFAULT N'Piece',
+    unit          NVARCHAR(20)                 DEFAULT N'Cái',
     dimensions    NVARCHAR(50),
     image_url     NVARCHAR(500),
     active        BIT                          DEFAULT 1,
@@ -116,7 +114,6 @@ CREATE TABLE product_price
     product_id   UNIQUEIDENTIFIER NOT NULL,
     unit_price   DECIMAL(18, 2)   NOT NULL,
     cost_price   DECIMAL(18, 2),
-    tax_rate     DECIMAL(5, 2)                DEFAULT 0,
     valid_from   DATETIME2        NOT NULL    DEFAULT GETDATE(),
     valid_to     DATETIME2        NULL,
     created_date DATETIME2                    DEFAULT GETDATE(),
@@ -132,7 +129,7 @@ CREATE TABLE purchase_order
     account_id            UNIQUEIDENTIFIER    NOT NULL,
     order_date            DATETIME2                    DEFAULT GETDATE(),
     received_date         DATETIME2,
-    [status]              NVARCHAR(20)                 DEFAULT 'PENDING', -- PENDING, APPROVED, RECEIVED, CANCELLED
+    [status]              NVARCHAR(20)                 DEFAULT N'Chờ duyệt',
     total_amount          DECIMAL(18, 2)      NOT NULL DEFAULT 0,
     tax_amount            DECIMAL(18, 2)               DEFAULT 0,
     notes                 NVARCHAR(500),
@@ -194,8 +191,8 @@ CREATE TABLE orders
     customer_id     UNIQUEIDENTIFIER    NOT NULL,
     account_id      UNIQUEIDENTIFIER    NOT NULL,
     order_date      DATETIME2                    DEFAULT GETDATE(),
-    order_status    NVARCHAR(20)                 DEFAULT 'PENDING', -- PENDING, CONFIRMED, COMPLETED, CANCELLED
-    payment_status  NVARCHAR(20)                 DEFAULT 'UNPAID',  -- UNPAID, PARTIAL, PAID, REFUNDED
+    order_status    NVARCHAR(20)                 DEFAULT N'Chờ xác nhận',
+    payment_status  NVARCHAR(20)                 DEFAULT N'Chưa thanh toán',
     total_amount    DECIMAL(18, 2)      NOT NULL DEFAULT 0,
     discount_amount DECIMAL(18, 2)               DEFAULT 0,
     tax_amount      DECIMAL(18, 2)               DEFAULT 0,
@@ -226,10 +223,10 @@ CREATE TABLE payments
 (
     payment_id            UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     order_id              UNIQUEIDENTIFIER NOT NULL,
-    payment_method        NVARCHAR(30)     NOT NULL,                      -- CASH, CARD, BANK_TRANSFER, E_WALLET
+    payment_method        NVARCHAR(30)     NOT NULL,
     payment_date          DATETIME2                    DEFAULT GETDATE(),
     amount                DECIMAL(18, 2)   NOT NULL,
-    payment_status        NVARCHAR(20)                 DEFAULT 'PENDING', -- PENDING, SUCCESS, FAILED, CANCELLED
+    payment_status        NVARCHAR(20)                 DEFAULT N'Chưa thanh toán',
     transaction_reference NVARCHAR(100),
     notes                 NVARCHAR(500),
     created_date          DATETIME2                    DEFAULT GETDATE(),
@@ -242,7 +239,7 @@ CREATE TABLE promotions
     promotion_id   UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     promotion_name NVARCHAR(200)  NOT NULL,
     [description]  NVARCHAR(500),
-    discount_type  NVARCHAR(20)   NOT NULL, -- PERCENT, FIXED
+    discount_type  NVARCHAR(20)   NOT NULL,
     discount_value DECIMAL(18, 2) NOT NULL,
     [start_date]   DATETIME2      NOT NULL,
     end_date       DATETIME2      NOT NULL,

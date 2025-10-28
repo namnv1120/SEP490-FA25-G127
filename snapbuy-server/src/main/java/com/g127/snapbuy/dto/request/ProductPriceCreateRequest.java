@@ -24,10 +24,6 @@ public class ProductPriceCreateRequest {
     @DecimalMin(value = "0.0", inclusive = true, message = "Giá vốn không được âm.")
     private BigDecimal costPrice;
 
-    @DecimalMin(value = "0.0", inclusive = true, message = "Thuế suất không được âm.")
-    @DecimalMax(value = "100.0", message = "Thuế suất không được vượt quá 100%.")
-    private BigDecimal taxRate;
-
-    private LocalDateTime validFrom;
-    private LocalDateTime validTo;
+//    private LocalDateTime validFrom;
+//    private LocalDateTime validTo;
 }

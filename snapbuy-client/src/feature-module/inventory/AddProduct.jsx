@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { message } from "antd"; 
+import { message } from "antd";
 import { all_routes } from "../../routes/all_routes";
 import { createProduct } from "../../services/ProductService";
 import { getAllCategories } from "../../services/CategoryService";
@@ -27,6 +27,7 @@ const AddProduct = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
 
+  const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isImageVisible, setIsImageVisible] = useState(true);
 
@@ -36,20 +37,17 @@ const AddProduct = () => {
     const fetchCategories = async () => {
       try {
         const data = await getAllCategories();
-
         const mainCats = data
           .filter((c) => !c.parentCategoryId)
           .map((c) => ({
             value: c.categoryId,
             label: c.categoryName,
           }));
-
         setCategories(mainCats);
       } catch (error) {
         console.error("❌ Lỗi tải danh mục:", error);
       }
     };
-
     fetchCategories();
   }, []);
 
@@ -76,24 +74,72 @@ const AddProduct = () => {
     }
   }, [selectedCategory]);
 
+  // 🧩 Validate dữ liệu
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!product.productCode.trim()) {
+      newErrors.productCode = "Vui lòng nhập mã sản phẩm.";
+    } else if (product.productCode.length < 3) {
+      newErrors.productCode = "Mã sản phẩm phải có ít nhất 3 ký tự.";
+    } else if (product.productCode.length > 50) {
+      newErrors.productCode = "Mã sản phẩm không được vượt quá 50 ký tự.";
+    }
+
+    if (!product.productName.trim()) {
+      newErrors.productName = "Vui lòng nhập tên sản phẩm.";
+    } else if (product.productName.length < 3) {
+      newErrors.productName = "Tên sản phẩm phải có ít nhất 3 ký tự.";
+    } else if (product.productName.length > 100) {
+      newErrors.productName = "Tên sản phẩm không được vượt quá 100 ký tự.";
+    }
+
+    if (!selectedCategory) {
+      newErrors.category = "Vui lòng chọn danh mục chính.";
+    }
+
+    if (!selectedSubCategory) {
+      newErrors.subCategory = "Vui lòng chọn danh mục con.";
+    }
+
+    if (!product.supplierName.trim()) {
+      newErrors.supplierName = "Vui lòng nhập tên nhà cung cấp.";
+    }
+
+    if (product.unit && product.unit.length > 50) {
+      newErrors.unit = "Đơn vị không được vượt quá 50 ký tự.";
+    }
+
+    if (product.dimensions && product.dimensions.length > 100) {
+      newErrors.dimensions = "Kích thước không được vượt quá 100 ký tự.";
+    }
+
+    if (product.description && product.description.length > 500) {
+      newErrors.description = "Mô tả không được vượt quá 500 ký tự.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!product.productCode || !product.productName || !selectedCategory  || !product.unit)  {
-      message.warning("Làm ơn điền tất cả trường có dấu (*)");
+    if (!validateForm()) {
+      message.warning("Vui lòng kiểm tra lại thông tin nhập.");
       return;
     }
 
     const productData = {
-      productCode: product.productCode,
-      productName: product.productName,
-      description: product.description,
-      unit: product.unit,
-      dimensions: product.dimensions,
+      productCode: product.productCode.trim(),
+      productName: product.productName.trim(),
+      description: product.description.trim(),
+      unit: product.unit.trim(),
+      dimensions: product.dimensions.trim(),
       categoryId: selectedSubCategory
         ? selectedSubCategory.value
         : selectedCategory?.value,
-      supplierName: product.supplierName || "",
+      supplierName: product.supplierName.trim(),
       active: true,
       imageUrl: "",
     };
@@ -108,15 +154,14 @@ const AddProduct = () => {
       const res = error.response?.data;
 
       if (res?.code === 4000 && res?.message) {
-        const messages = res.message.split(";").map(msg => msg.trim()).filter(Boolean);
-        messages.forEach(msg => message.error(msg));
-      }
-
-      else if (res?.message) {
+        const messages = res.message
+          .split(";")
+          .map((msg) => msg.trim())
+          .filter(Boolean);
+        messages.forEach((msg) => message.error(msg));
+      } else if (res?.message) {
         message.error(res.message);
-      }
-
-      else {
+      } else {
         message.error("Lỗi tạo sản phẩm. Vui lòng thử lại.");
       }
     } finally {
@@ -151,6 +196,7 @@ const AddProduct = () => {
 
           <form className="add-product-form" onSubmit={handleSubmit}>
             <div className="add-product">
+              {/* --- THÔNG TIN SẢN PHẨM --- */}
               <div className="accordion-item border mb-4">
                 <h2 className="accordion-header" id="headingSpacingOne">
                   <div
@@ -168,148 +214,232 @@ const AddProduct = () => {
                     </div>
                   </div>
                 </h2>
+
                 <div
                   id="SpacingOne"
                   className="accordion-collapse collapse show"
-                  aria-labelledby="headingSpacingOne"
                 >
                   <div className="accordion-body border-top">
                     <div className="row">
-                      <div className="col-sm-6 col-12">
+                      <div className="col-sm-6">
                         <div className="mb-3">
                           <label className="form-label">
-                            Mã sản phẩm<span className="text-danger ms-1">*</span>
+                            Mã sản phẩm<span className="text-danger">*</span>
                           </label>
                           <input
                             type="text"
+                            className={`form-control ${
+                              errors.productCode ? "is-invalid" : ""
+                            }`}
                             value={product.productCode}
                             onChange={(e) =>
-                              setProduct({ ...product, productCode: e.target.value })
+                              setProduct({
+                                ...product,
+                                productCode: e.target.value,
+                              })
                             }
-                            className="form-control"
                           />
+                          {errors.productCode && (
+                            <div className="invalid-feedback">
+                              {errors.productCode}
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <div className="col-sm-6 col-12">
+
+                      <div className="col-sm-6">
                         <div className="mb-3">
                           <label className="form-label">
-                            Tên sản phẩm<span className="text-danger ms-1">*</span>
+                            Tên sản phẩm<span className="text-danger">*</span>
                           </label>
                           <input
                             type="text"
+                            className={`form-control ${
+                              errors.productName ? "is-invalid" : ""
+                            }`}
                             value={product.productName}
                             onChange={(e) =>
-                              setProduct({ ...product, productName: e.target.value })
+                              setProduct({
+                                ...product,
+                                productName: e.target.value,
+                              })
                             }
-                            className="form-control"
                           />
+                          {errors.productName && (
+                            <div className="invalid-feedback">
+                              {errors.productName}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
 
+                    {/* --- DANH MỤC --- */}
                     <div className="row">
-                      <div className="col-sm-6 col-12">
+                      <div className="col-sm-6">
                         <div className="mb-3">
                           <label className="form-label">
-                            Danh mục
-                            <span className="text-danger ms-1">*</span>
+                            Danh mục<span className="text-danger">*</span>
                           </label>
                           <CommonSelect
-                            className="w-100"
+                            className={`w-100 ${
+                              errors.category ? "is-invalid" : ""
+                            }`}
                             options={categories}
                             value={selectedCategory}
-                            onChange={(selectedOption) => {
-                              setSelectedCategory(selectedOption);
-                              setSelectedSubCategory(null); 
+                            onChange={(opt) => {
+                              setSelectedCategory(opt);
+                              setSelectedSubCategory(null);
+                              setErrors((prev) => ({
+                                ...prev,
+                                category: "",
+                              }));
                             }}
                             placeholder="Chọn danh mục"
                           />
+                          {errors.category && (
+                            <div className="text-danger small mt-1">
+                              {errors.category}
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      <div className="col-sm-6 col-12">
+                      <div className="col-sm-6">
                         <div className="mb-3">
                           <label className="form-label">
-                            Danh mục con
-                            <span className="text-danger ms-1">*</span>
+                            Danh mục con<span className="text-danger">*</span>
                           </label>
                           <CommonSelect
-                            className="w-100"
+                            className={`w-100 ${
+                              errors.subCategory ? "is-invalid" : ""
+                            }`}
                             options={subCategories}
                             value={selectedSubCategory}
-                            onChange={setSelectedSubCategory}
+                            onChange={(opt) => {
+                              setSelectedSubCategory(opt);
+                              setErrors((prev) => ({
+                                ...prev,
+                                subCategory: "",
+                              }));
+                            }}
                             placeholder="Chọn danh mục con"
                           />
+                          {errors.subCategory && (
+                            <div className="text-danger small mt-1">
+                              {errors.subCategory}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
 
+                    {/* --- ĐƠN VỊ, NCC --- */}
                     <div className="row">
-                      <div className="col-sm-6 col-12">
+                      <div className="col-sm-6">
                         <div className="mb-3">
-                          <label className="form-label">
-                            Đơn vị<span className="text-danger ms-1">*</span>
-                          </label>
+                          <label className="form-label">Đơn vị</label>
                           <input
                             type="text"
+                            className={`form-control ${
+                              errors.unit ? "is-invalid" : ""
+                            }`}
                             value={product.unit}
                             onChange={(e) =>
                               setProduct({ ...product, unit: e.target.value })
                             }
-                            className="form-control"
-                            placeholder="Điền đơn vị tính (ví dụ: cái, chiếc...)"
                           />
+                          {errors.unit && (
+                            <div className="invalid-feedback">
+                              {errors.unit}
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <div className="col-sm-6 col-12">
+
+                      <div className="col-sm-6">
                         <div className="mb-3">
-                          <label className="form-label">Nhà cung cấp</label>
+                          <label className="form-label">
+                            Nhà cung cấp<span className="text-danger">*</span>
+                          </label>
                           <input
                             type="text"
+                            className={`form-control ${
+                              errors.supplierName ? "is-invalid" : ""
+                            }`}
                             value={product.supplierName}
                             onChange={(e) =>
-                              setProduct({ ...product, supplierName: e.target.value })
+                              setProduct({
+                                ...product,
+                                supplierName: e.target.value,
+                              })
                             }
-                            className="form-control"
                           />
+                          {errors.supplierName && (
+                            <div className="invalid-feedback">
+                              {errors.supplierName}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
 
+                    {/* --- KÍCH THƯỚC --- */}
                     <div className="row">
-                      <div className="col-lg-6 col-sm-6 col-12">
+                      <div className="col-sm-6">
                         <div className="mb-3">
                           <label className="form-label">Kích thước</label>
                           <input
                             type="text"
+                            className={`form-control ${
+                              errors.dimensions ? "is-invalid" : ""
+                            }`}
                             value={product.dimensions}
                             onChange={(e) =>
-                              setProduct({ ...product, dimensions: e.target.value })
+                              setProduct({
+                                ...product,
+                                dimensions: e.target.value,
+                              })
                             }
-                            className="form-control"
                           />
+                          {errors.dimensions && (
+                            <div className="invalid-feedback">
+                              {errors.dimensions}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
 
+                    {/* --- MÔ TẢ --- */}
                     <div className="col-lg-12">
                       <div className="summer-description-box">
                         <label className="form-label">Mô tả</label>
                         <textarea
+                          className={`form-control ${
+                            errors.description ? "is-invalid" : ""
+                          }`}
+                          rows={5}
                           value={product.description}
                           onChange={(e) =>
-                            setProduct({ ...product, description: e.target.value })
+                            setProduct({
+                              ...product,
+                              description: e.target.value,
+                            })
                           }
-                          className="form-control"
-                          rows={5}
                         />
+                        {errors.description && (
+                          <div className="invalid-feedback">
+                            {errors.description}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Image */}
+              {/* --- HÌNH ẢNH --- */}
               <div className="accordion-item border mb-4">
                 <h2 className="accordion-header" id="headingSpacingThree">
                   <div
@@ -330,39 +460,31 @@ const AddProduct = () => {
                 <div
                   id="SpacingThree"
                   className="accordion-collapse collapse show"
-                  aria-labelledby="headingSpacingThree"
                 >
                   <div className="accordion-body border-top">
-                    <div className="text-editor add-list add">
-                      <div className="col-lg-12">
-                        <div className="add-choosen">
-                          <div className="mb-3">
-                            <div className="image-upload">
-                              <input type="file" />
-                              <div className="image-uploads">
-                                <i className="feather icon-plus-circle plus-down-add me-0" />
-                                <h4>Thêm ảnh</h4>
-                              </div>
-                            </div>
-                          </div>
-                          {isImageVisible && (
-                            <div className="phone-img">
-                              <img src="" alt="product" />
-                              <Link to="#">
-                                <i
-                                  className="feather icon-x x-square-add remove-product"
-                                  onClick={handleRemoveProduct}
-                                />
-                              </Link>
-                            </div>
-                          )}
-                        </div>
+                    <div className="image-upload">
+                      <input type="file" />
+                      <div className="image-uploads">
+                        <i className="feather icon-plus-circle plus-down-add me-0" />
+                        <h4>Thêm ảnh</h4>
                       </div>
                     </div>
+                    {isImageVisible && (
+                      <div className="phone-img mt-3">
+                        <img src="" alt="product" />
+                        <Link to="#">
+                          <i
+                            className="feather icon-x x-square-add remove-product"
+                            onClick={handleRemoveProduct}
+                          />
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
+              {/* --- NÚT LƯU --- */}
               <div className="col-lg-12">
                 <div className="d-flex align-items-center justify-content-end mb-4">
                   <button
@@ -377,7 +499,7 @@ const AddProduct = () => {
                     className="btn btn-primary"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Adding..." : "Add Product"}
+                    {isSubmitting ? "Đang lưu..." : "Thêm sản phẩm"}
                   </button>
                 </div>
               </div>
@@ -386,9 +508,7 @@ const AddProduct = () => {
         </div>
 
         <div className="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-          <p className="mb-0 text-gray-9">
-            2025 © SnapBuy.
-          </p>
+          <p className="mb-0 text-gray-9">2025 © SnapBuy.</p>
           <p>
             Thiết kế & Phát triển bởi{" "}
             <Link to="#" className="text-primary">

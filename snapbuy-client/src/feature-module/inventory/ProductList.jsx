@@ -174,7 +174,7 @@ const ProductList = () => {
           <Link to="#" className="avatar avatar-md me-2">
             <img alt="" src={data.productImage} />
           </Link>
-          <Link to={route.productdetails.replace(":id", data.productId)}>{data.productName}</Link>
+          <Link to={route.productdetail.replace(":id", data.productId)}>{data.productName}</Link>
         </div>
       ),
     },

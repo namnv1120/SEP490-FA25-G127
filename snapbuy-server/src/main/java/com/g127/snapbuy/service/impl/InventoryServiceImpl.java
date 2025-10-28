@@ -68,12 +68,6 @@ public class InventoryServiceImpl implements InventoryService {
         inventory.setLastUpdated(LocalDateTime.now());
         Inventory saved = inventoryRepository.save(inventory);
 
-        int diff = inventory.getQuantityInStock() - oldQty;
-        if (diff != 0) {
-            String type = diff > 0 ? "Điều chỉnh tăng" : "Điều chỉnh giảm";
-            recordTransaction(inventory.getProduct(), Math.abs(diff), type, null, "Điều chỉnh tồn kho thủ công");
-        }
-
         return inventoryMapper.toResponse(saved);
     }
 

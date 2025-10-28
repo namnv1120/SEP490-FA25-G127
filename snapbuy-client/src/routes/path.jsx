@@ -16,7 +16,6 @@ const ProductDetail = lazy(() =>
 const AddProduct = lazy(() => import("../feature-module/inventory/AddProduct"));
 const EditProduct = lazy(() => import("../feature-module/inventory/EditProduct"));
 const ProductPriceList = lazy(() => import("../feature-module/inventory/ProductPriceList"));
-const AddProductPrice = lazy(() => import("../feature-module/inventory/AddProductPrice"));
 const EditProductPrice = lazy(() => import("../feature-module/inventory/EditProductPrice"));
 const InventoryList = lazy(() => import("../feature-module/inventory/InventoryList"));
 
@@ -113,7 +112,7 @@ export const authRoutes = [
   },
   {
     id: 9,
-    path: routes.productdetails,
+    path: routes.productdetail,
     name: "product-details",
     element: <ProductDetail />,
     route: Route,
@@ -147,17 +146,6 @@ export const authRoutes = [
     route: Route,
   },
   {
-    id: 301,
-    path: routes.purchaseorder, // đảm bảo trong all_routes có key purchaseorder
-    name: "purchaseorder",
-    element: <PurchaseOrder />,
-    route: Route,
-  },
-  {
-    id: 302,
-    path: routes.purchaseorderdetail, // thêm key này trong all_routes
-    name: "purchaseorderdetail",
-    element: <PurchaseOrderDetail />,
     id: 14,
     path: routes.inventories,
     name: "inventories",
@@ -173,19 +161,25 @@ export const authRoutes = [
   },
   {
     id: 16,
-    path: routes.addproductprice,
-    name: "add-product-price",
-    element: <AddProductPrice />,
-    route: Route,
-  },
-  {
-    id: 17,
     path: routes.editproductprice,
     name: "edit-product-price",
     element: <EditProductPrice />,
     route: Route,
   },
-
+  {
+    id: 17,
+    path: routes.purchaseorders,
+    name: "purchaseorders",
+    element: <PurchaseOrder />,
+    route: Route,
+  },
+  {
+    id: 18,
+    path: routes.purchaseorderdetail,
+    name: "purchaseorderdetail",
+    element: <PurchaseOrderDetail />,
+    route: Route,
+  },
   {
     id: 76,
     path: routes.possettings,

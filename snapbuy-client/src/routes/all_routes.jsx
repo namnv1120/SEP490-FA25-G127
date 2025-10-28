@@ -4,12 +4,11 @@ export const all_routes = {
   products: "/products",
   addproduct: "/products/add",
   editproduct: "/products/edit/:id",
-  productdetails: "/products/details/:id",
+  productdetail: "/products/detail/:id",
   inventories: "/inventories",
   categories: "/categories",
   subcategories: "/sub-categories",
   productprices: "/product-prices",
-  addproductprice: "/product-prices/add",
   editproductprice: "/product-prices/edit/:id",
 
 
@@ -26,9 +25,8 @@ export const all_routes = {
   invoicedetails: "/invoice-details",
 
   // Purchase
-  purchaselist: "/purchase-list",
-  purchaseorder: "/purchase-order",
-  purchaseorderdetail: "/purchase-order-detail",
+  purchaseorders: "/purchase-orders",
+  purchaseorderdetail: "/purchase-orders/detail/:id",
 
   // Customers & Suppliers
   customers: "/customers",

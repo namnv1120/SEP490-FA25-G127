@@ -1,32 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import CommonFooter from "../../components/footer/commonFooter";
 import TableTopHead from "../../components/table-top-head";
 import PrimeDataTable from "../../components/data-table";
 import SearchFromApi from "../../components/data-table/search";
+import { getAllPurchaseOrders } from "../../services/PurchaseOrderService"; // ✅ import service
+import { message, Spin } from "antd"; // ✅ để hiển thị thông báo và loading
 
 const PurchaseOrder = () => {
-  const [listData, _setListData] = useState([
-    {
-      supplier_id: "SUP-1001",
-      account_id: "ACC-2001",
-      order_date: "2025-10-25",
-      received_date: "2025-10-28",
-      status: "PENDING",
-      total_amount: 12000.5,
-    },
-    {
-      supplier_id: "SUP-1002",
-      account_id: "ACC-2002",
-      order_date: "2025-10-20",
-      received_date: "2025-10-23",
-      status: "APPROVED",
-      total_amount: 8000.0,
-    },
-  ]);
-
+  const [listData, setListData] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalRecords, _setTotalRecords] = useState(5);
+  const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
   const [_searchQuery, setSearchQuery] = useState(undefined);
 
@@ -58,6 +43,25 @@ const PurchaseOrder = () => {
   const handleSearch = (value) => {
     setSearchQuery(value);
   };
+
+  const fetchPurchaseOrders = async () => {
+    try {
+      setLoading(true);
+      const data = await getAllPurchaseOrders();
+      setListData(data);
+      setTotalRecords(data.length || 0);
+    } catch (error) {
+      console.error("❌ Lỗi khi tải đơn hàng:", error);
+      message.error("Không thể tải danh sách đơn đặt hàng!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Gọi 1 lần khi load trang
+  useEffect(() => {
+    fetchPurchaseOrders();
+  }, []);
 
   return (
     <div>
@@ -122,15 +126,22 @@ const PurchaseOrder = () => {
 
             <div className="card-body p-0">
               <div className="table-responsive">
-                <PrimeDataTable
-                  column={columns}
-                  data={listData}
-                  rows={rows}
-                  setRows={setRows}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalRecords={totalRecords}
-                />
+                {loading ? (
+                  <div className="d-flex justify-content-center p-5">
+                    <Spin size="large" />
+                  </div>
+                ) : (
+                  <PrimeDataTable
+                    column={columns}
+                    data={listData}
+                    rows={rows}
+                    setRows={setRows}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    totalRecords={totalRecords}
+                    dataKey="purchaseOrderId"
+                  />
+                )}
               </div>
             </div>
           </div>

@@ -21,6 +21,4 @@ public class CustomerUpdateRequest {
     @NotNull(message = "Vui lòng chọn giới tính.")
     private Customer.Gender gender;
 
-    @AssertTrue(message = "Trạng thái khách hàng phải là hoạt động hoặc không hoạt động.")
-    private boolean active = true;
 }

@@ -22,7 +22,10 @@ public class ProductUpdateRequest {
     @Size(max = 10000, message = "Mô tả không được vượt quá 10000 ký tự.")
     private String description;
 
+    @NotNull(message = "Vui lòng chọn danh mục.")
     private UUID categoryId;
+
+    @NotNull(message = "Vui lòng chọn nhà cung cấp.")
     private UUID supplierId;
 
     @Size(max = 20, message = "Đơn vị tính không được vượt quá 20 ký tự.")

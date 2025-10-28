@@ -37,9 +37,6 @@ public class Customer {
     @Column(name = "gender")
     private Gender gender;
 
-    @Column(name = "active")
-    private boolean active = true;
-
     @Column(name = "created_date", updatable = false)
     private LocalDateTime createdDate;
 

@@ -9,6 +9,7 @@ import com.g127.snapbuy.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -39,6 +40,7 @@ public class ProductController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<List<ProductResponse>> getAllProducts() {
         ApiResponse<List<ProductResponse>> response = new ApiResponse<>();
         response.setResult(productService.getAllProducts());

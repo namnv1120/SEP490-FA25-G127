@@ -27,6 +27,7 @@ public class ProductCreateRequest {
     @NotNull(message = "Vui lòng chọn danh mục.")
     private UUID categoryId;
 
+    @NotNull(message = "Vui lòng chọn danh mục.")
     private UUID supplierId;
 
     @Size(max = 20, message = "Đơn vị tính không được vượt quá 20 ký tự.")

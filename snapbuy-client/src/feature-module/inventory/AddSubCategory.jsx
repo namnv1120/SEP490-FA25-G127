@@ -12,6 +12,24 @@ const AddSubCategory = ({ parentCategories, onSuccess }) => {
     active: true,
   });
 
+  const [errors, setErrors] = useState({});
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.categoryName.trim()) {
+      newErrors.categoryName = "Vui lòng nhập tên danh mục.";
+    } else if (formData.categoryName.length < 3) {
+      newErrors.categoryName = "Tên danh mục phải có ít nhất 3 ký tự.";
+    } else if (formData.categoryName.length > 100) {
+      newErrors.categoryName = "Tên danh mục không được vượt quá 100 ký tự.";
+    }
+    if (!formData.parentId) newErrors.parentId = "Vui lòng chọn danh mục cha.";
+    if (formData.description && formData.description.length > 255) {
+      newErrors.description = "Mô tả không được vượt quá 255 ký tự.";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -30,13 +48,8 @@ const AddSubCategory = ({ parentCategories, onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.categoryName.trim()) {
-      message.warning("Vui lòng nhập tên danh mục con");
-      return;
-    }
-
-    if (!formData.parentCategoryId) {
-      message.warning("Vui lòng chọn danh mục cha");
+    if (!validateForm()) {
+      message.warning("Vui lòng kiểm tra lại thông tin nhập.");
       return;
     }
 
@@ -59,11 +72,11 @@ const AddSubCategory = ({ parentCategories, onSuccess }) => {
       modal.hide();
 
       setTimeout(() => {
-        document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+        const backdrop = document.querySelector(".modal-backdrop");
+        if (backdrop) backdrop.remove();
         document.body.classList.remove("modal-open");
-        document.body.style.removeProperty("overflow");
-        document.body.style.removeProperty("padding-right");
-      }, 300);
+        document.body.style.overflow = "";
+      }, 100);
 
       setFormData({
         categoryName: "",
@@ -71,6 +84,7 @@ const AddSubCategory = ({ parentCategories, onSuccess }) => {
         parentCategoryId: "",
         active: true,
       });
+      setErrors({});
 
       if (onSuccess) onSuccess();
     } catch (error) {
@@ -105,23 +119,22 @@ const AddSubCategory = ({ parentCategories, onSuccess }) => {
             <div className="modal-body custom-modal-body">
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
-                  <label className="form-label">
-                    Danh mục cha<span className="text-danger">*</span>
-                  </label>
+                  <label className="form-label">Danh mục cha<span className="text-danger">*</span></label>
                   <select
-                    name="parentCategoryId"
-                    className="form-select"
-                    value={formData.parentCategoryId}
+                    name="parentId"
+                    value={formData.parentId}
                     onChange={handleInputChange}
-                    required
+                    className={`form-select ${errors.parentId ? "is-invalid" : ""}`}
+                    disabled={loading}
                   >
                     <option value="">Chọn danh mục cha</option>
-                    {parentCategories.map((parent) => (
+                    {(parentCategories || []).map((parent) => (
                       <option key={parent.categoryId} value={parent.categoryId}>
-                        {parent.name || parent.categoryName}
+                        {parent.categoryName}
                       </option>
                     ))}
                   </select>
+                  {errors.parentId && <div className="invalid-feedback">{errors.parentId}</div>}
                 </div>
 
                 <div className="mb-3">
@@ -131,22 +144,30 @@ const AddSubCategory = ({ parentCategories, onSuccess }) => {
                   <input
                     type="text"
                     name="categoryName"
-                    className="form-control"
+                    className={`form-control ${errors.categoryName ? "is-invalid" : ""
+                      }`}
                     value={formData.categoryName}
                     onChange={handleInputChange}
-                    required
                   />
+                  {errors.categoryName && (
+                    <div className="invalid-feedback">{errors.categoryName}</div>
+                  )}
                 </div>
 
                 <div className="mb-3 input-blocks">
                   <label className="form-label">Mô tả</label>
                   <textarea
                     name="description"
-                    className="form-control"
+                    className={`form-control ${errors.description ? "is-invalid" : ""
+                      }`}
                     rows="3"
                     value={formData.description}
                     onChange={handleInputChange}
+                    placeholder="Nhập mô tả (tùy chọn)"
                   />
+                  {errors.description && (
+                    <div className="invalid-feedback">{errors.description}</div>
+                  )}
                 </div>
 
                 <div className="mb-0">
@@ -177,7 +198,7 @@ const AddSubCategory = ({ parentCategories, onSuccess }) => {
                     className="btn btn-submit"
                     disabled={loading}
                   >
-                    {loading ? "Saving..." : "Add Sub Category"}
+                    {loading ? "Đang lưu..." : "Thêm danh mục con"}
                   </button>
                 </div>
               </form>

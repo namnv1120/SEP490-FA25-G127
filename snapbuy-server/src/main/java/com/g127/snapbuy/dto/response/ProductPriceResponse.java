@@ -19,7 +19,6 @@ public class ProductPriceResponse {
 
     private BigDecimal unitPrice;
     private BigDecimal costPrice;
-    private BigDecimal taxRate;
 
     private LocalDateTime validFrom;
     private LocalDateTime validTo;
