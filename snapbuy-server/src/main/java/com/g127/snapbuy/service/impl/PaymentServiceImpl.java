@@ -15,7 +15,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,21 +31,22 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentResponse createPayment(PaymentRequest request) {
         Order order = orderRepository.findById(request.getOrderId())
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
 
         BigDecimal amount = request.getAmount();
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0)
-            throw new IllegalArgumentException("Invalid payment amount");
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Số tiền thanh toán không hợp lệ");
+        }
 
         Payment payment = new Payment();
         payment.setPaymentId(UUID.randomUUID());
         payment.setOrder(order);
         payment.setPaymentMethod(request.getPaymentMethod());
         payment.setAmount(amount);
-        payment.setPaymentStatus("UNPAID");
+        payment.setPaymentStatus("Chưa thanh toán");
         payment.setPaymentDate(LocalDateTime.now());
 
-        if ("MOMO".equalsIgnoreCase(request.getPaymentMethod())) {
+        if ("MOMO".equalsIgnoreCase(request.getPaymentMethod()) || "Ví điện tử".equalsIgnoreCase(request.getPaymentMethod())) {
             try {
                 var momoResp = moMoService.createPayment(order.getOrderId());
                 if (momoResp != null && momoResp.getPayUrl() != null) {
@@ -52,13 +54,13 @@ public class PaymentServiceImpl implements PaymentService {
                     payment.setNotes("PAYURL:" + momoResp.getPayUrl());
                 }
             } catch (Exception e) {
-                log.error("MoMo payment creation failed: {}", e.getMessage(), e);
-                payment.setNotes("MoMo error: " + e.getMessage());
+                log.error("Tạo thanh toán MoMo thất bại: {}", e.getMessage(), e);
+                payment.setNotes("Lỗi MoMo: " + e.getMessage());
             }
         }
 
         paymentRepository.save(payment);
-        order.setPaymentStatus("UNPAID");
+        order.setPaymentStatus("Chưa thanh toán");
         orderRepository.save(order);
         return toResponse(payment);
     }
@@ -67,14 +69,15 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentResponse finalizePayment(UUID id) {
         Payment payment = paymentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
-        payment.setPaymentStatus("PAID");
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thanh toán"));
+
+        payment.setPaymentStatus("Đã thanh toán");
         payment.setPaymentDate(LocalDateTime.now());
         paymentRepository.save(payment);
 
         Order order = payment.getOrder();
-        order.setPaymentStatus("PAID");
-        order.setOrderStatus("COMPLETED");
+        order.setPaymentStatus("Đã thanh toán");
+        order.setOrderStatus("Hoàn tất");
         order.setUpdatedDate(LocalDateTime.now());
         orderRepository.save(order);
         return toResponse(payment);
@@ -84,13 +87,14 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentResponse refundPayment(UUID id) {
         Payment payment = paymentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
-        payment.setPaymentStatus("REFUNDED");
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thanh toán"));
+        payment.setPaymentStatus("Đã hoàn tiền");
         paymentRepository.save(payment);
 
         Order order = payment.getOrder();
-        order.setPaymentStatus("REFUNDED");
-        order.setOrderStatus("COMPLETED");
+        order.setPaymentStatus("Đã hoàn tiền");
+        order.setOrderStatus("Hoàn tất");
+        order.setUpdatedDate(LocalDateTime.now());
         orderRepository.save(order);
         return toResponse(payment);
     }
@@ -98,7 +102,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public List<PaymentResponse> getPaymentsByOrder(UUID orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
         Payment payment = paymentRepository.findByOrder(order);
         if (payment == null) return List.of();
         return List.of(toResponse(payment));
@@ -108,19 +112,19 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public void finalizePaymentByReference(String momoRequestId) {
         Payment payment = paymentRepository.findByTransactionReference(momoRequestId)
-                .orElseThrow(() -> new RuntimeException("Payment not found for MoMo requestId"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thanh toán theo requestId MoMo"));
 
-        payment.setPaymentStatus("PAID");
+        payment.setPaymentStatus("Đã thanh toán");
         payment.setPaymentDate(LocalDateTime.now());
         paymentRepository.save(payment);
 
         Order order = payment.getOrder();
-        order.setPaymentStatus("PAID");
-        order.setOrderStatus("COMPLETED");
+        order.setPaymentStatus("Đã thanh toán");
+        order.setOrderStatus("Hoàn tất");
         order.setUpdatedDate(LocalDateTime.now());
         orderRepository.save(order);
 
-        log.info("MoMo payment confirmed for order {}", order.getOrderNumber());
+        log.info("Xác nhận thanh toán MoMo cho đơn {}", order.getOrderNumber());
     }
 
     private PaymentResponse toResponse(Payment payment) {
@@ -140,4 +144,3 @@ public class PaymentServiceImpl implements PaymentService {
                 .build();
     }
 }
-

@@ -24,7 +24,7 @@ public class MailServiceImpl implements MailService {
             mailSender.send(msg);
         } catch (Exception e) {
 
-            log.warn("Send mail failed; content fallback:\nTo: {}\nSubject: {}\n{}", to, subject, content, e);
+            log.warn("Gửi email thất bại; in ra nội dung dự phòng:\nTo: {}\nSubject: {}\n{}", to, subject, content, e);
         }
     }
 }

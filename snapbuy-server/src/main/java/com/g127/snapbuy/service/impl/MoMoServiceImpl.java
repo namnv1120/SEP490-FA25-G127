@@ -48,7 +48,7 @@ public class MoMoServiceImpl implements MoMoService {
     public MomoPaymentResponse createPayment(UUID orderId) {
         try {
             Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new RuntimeException("Order not found"));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
 
             BigDecimal amount = order.getTotalAmount();
             String amountStr = amount.setScale(0, RoundingMode.HALF_UP).toPlainString();
@@ -95,13 +95,13 @@ public class MoMoServiceImpl implements MoMoService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-            log.info("Sending MoMo request: {}", body);
+            log.info("Gửi yêu cầu MoMo: {}", body);
             MomoPaymentResponse resp = restTemplate.postForObject(url, entity, MomoPaymentResponse.class);
-            log.info("MoMo response: {}", resp);
+            log.info("Phản hồi MoMo: {}", resp);
 
             return resp;
         } catch (Exception e) {
-            throw new RuntimeException("Create MoMo payment failed: " + e.getMessage(), e);
+            throw new RuntimeException("Tạo thanh toán MoMo thất bại: " + e.getMessage(), e);
         }
     }
 

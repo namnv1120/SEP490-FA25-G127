@@ -1,8 +1,7 @@
 package com.g127.snapbuy.controller;
 
 import com.g127.snapbuy.dto.ApiResponse;
-import com.g127.snapbuy.service.MoMoService;
-import com.g127.snapbuy.service.PaymentService;
+import com.g127.snapbuy.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -15,8 +14,7 @@ import java.util.Map;
 @Slf4j
 public class MoMoController {
 
-    private final MoMoService moMoService;
-    private final PaymentService paymentService;
+    private final OrderService orderService;
 
     @PostMapping("/notify")
     public ApiResponse<String> handleMomoNotify(@RequestBody Map<String, Object> payload) {
@@ -27,16 +25,16 @@ public class MoMoController {
             String requestId = String.valueOf(payload.get("requestId"));
 
             if ("0".equals(resultCode)) {
-                paymentService.finalizePaymentByReference(requestId);
-                log.info("Payment confirmed for MoMo request {}", requestId);
-                response.setResult("Payment success");
+                orderService.finalizePaymentByReference(requestId);
+                log.info("Xác nhận thanh toán cho yêu cầu MoMo {}", requestId);
+                response.setResult("Thanh toán thành công.");
             } else {
-                log.warn("MoMo payment failed, resultCode={}", resultCode);
-                response.setResult("Payment failed");
+                log.warn("Thanh toán MoMo thất bại, resultCode={}", resultCode);
+                response.setResult("Thanh toán thất bại.");
             }
         } catch (Exception e) {
-            log.error("Error handling MoMo notify: {}", e.getMessage(), e);
-            response.setResult("Error processing payment");
+            log.error("Lỗi khi xử lý notify MoMo: {}", e.getMessage(), e);
+            response.setResult("Đã xảy ra lỗi khi xử lý thanh toán.");
         }
         return response;
     }
@@ -50,14 +48,14 @@ public class MoMoController {
             String requestId = params.get("requestId");
 
             if ("0".equals(resultCode)) {
-                paymentService.finalizePaymentByReference(requestId);
-                response.setResult("Thanh toán thành công!");
+                orderService.finalizePaymentByReference(requestId);
+                response.setResult("Thanh toán thành công.");
             } else {
                 response.setResult("Thanh toán thất bại, vui lòng thử lại.");
             }
         } catch (Exception e) {
-            log.error("Error handling MoMo return: {}", e.getMessage(), e);
-            response.setResult("Đã xảy ra lỗi trong quá trình xử lý thanh toán.");
+            log.error("Lỗi khi xử lý return MoMo: {}", e.getMessage(), e);
+            response.setResult("Đã xảy ra lỗi khi xử lý thanh toán.");
         }
         return response;
     }

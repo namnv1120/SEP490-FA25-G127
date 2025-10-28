@@ -5,18 +5,18 @@ import lombok.Data;
 
 @Data
 public class AccountUpdateRequest {
-    @Size(max = 100, message = "Full name must be <= 100 characters")
+    @Size(max = 100, message = "Họ và tên không được vượt quá 100 ký tự.")
     private String fullName;
 
-    @Email(message = "Email is invalid")
+    @Email(message = "Email không hợp lệ. Vui lòng kiểm tra lại.")
     private String email;
 
-    @Pattern(regexp = "^$|^\\d{10}$", message = "Phone must be exactly 10 digits")
+    @Pattern(regexp = "^$|^\\d{10}$", message = "Số điện thoại phải gồm đúng 10 chữ số.")
     private String phone;
 
     private String avatarUrl;
 
-    @Size(min = 6, message = "Password must be at least 6 characters")
+    @Size(min = 6, message = "Mật khẩu phải có ít nhất 6 ký tự.")
     private String password;
 
     private Boolean active;

@@ -1,24 +1,21 @@
 package com.g127.snapbuy.dto.request;
 
-import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import java.util.UUID;
-import java.time.LocalDateTime;
 
 @Data
 public class CategoryUpdateRequest {
 
-    @Size(min = 3, max = 100, message = "Category name must be between 3 and 100 characters.")
+    @Size(min = 3, max = 100, message = "Tên danh mục phải từ 3 đến 100 ký tự.")
     private String categoryName;
 
-    @Size(max = 1000, message = "Description must not exceed 1000 characters.")
+    @Size(max = 1000, message = "Mô tả không được vượt quá 1000 ký tự.")
     private String description;
 
     private UUID parentCategoryId;
 
-    @NotNull(message = "Active status cannot be null.")
+    @NotNull(message = "Trạng thái hoạt động không được để trống.")
     private Boolean active = true;
 
 }
-

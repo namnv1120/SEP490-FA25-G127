@@ -35,7 +35,6 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductResponse createProduct(ProductCreateRequest request) {
-        // 1️⃣ Tạo entity product
         Product product = productMapper.toEntity(request);
 
         Category category = categoryRepository.findById(request.getCategoryId())
@@ -51,10 +50,8 @@ public class ProductServiceImpl implements ProductService {
         product.setCreatedDate(LocalDateTime.now());
         product.setUpdatedDate(LocalDateTime.now());
 
-        // 2️⃣ Lưu product trước
         Product savedProduct = productRepository.save(product);
 
-        // 3️⃣ Tạo bản ghi product_price rỗng (chỉ để gắn product)
         ProductPrice price = new ProductPrice();
         price.setProduct(savedProduct);
         price.setUnitPrice(new java.math.BigDecimal("0.00"));
@@ -63,7 +60,6 @@ public class ProductServiceImpl implements ProductService {
         price.setValidFrom(LocalDateTime.now());
         productPriceRepository.save(price);
 
-        // 4️⃣ Tạo bản ghi inventory rỗng
         Inventory inventory = new Inventory();
         inventory.setProduct(savedProduct);
         inventory.setQuantityInStock(0);
@@ -73,7 +69,6 @@ public class ProductServiceImpl implements ProductService {
         inventory.setLastUpdated(LocalDateTime.now());
         inventoryRepository.save(inventory);
 
-        // 5️⃣ Trả về response
         return productMapper.toResponse(savedProduct);
     }
 
@@ -152,7 +147,6 @@ public class ProductServiceImpl implements ProductService {
 
         productPriceRepository.deleteAllByProduct_ProductId(id);
         inventoryRepository.deleteAllByProduct_ProductId(id);
-
         productRepository.delete(product);
     }
 
@@ -169,7 +163,6 @@ public class ProductServiceImpl implements ProductService {
             int rowNumber = i + 1;
 
             try {
-                // 1️⃣ Check duplicate product code
                 if (productRepository.existsByProductCode(request.getProductCode())) {
                     String error = String.format("Row %d: Product code '%s' already exists",
                             rowNumber, request.getProductCode());
@@ -178,7 +171,6 @@ public class ProductServiceImpl implements ProductService {
                     continue;
                 }
 
-                // 2️⃣ Find category by name (case-insensitive)
                 Category category = categoryRepository.findByCategoryNameIgnoreCase(request.getCategoryName())
                         .orElseThrow(() -> {
                             String error = String.format("Row %d: Category '%s' not found",
@@ -187,7 +179,6 @@ public class ProductServiceImpl implements ProductService {
                             return new RuntimeException(error);
                         });
 
-                // 3️⃣ Find supplier by name (case-insensitive)
                 Supplier supplier = supplierRepository.findBySupplierNameIgnoreCase(request.getSupplierName())
                         .orElseThrow(() -> {
                             String error = String.format("Row %d: Supplier '%s' not found",
@@ -196,7 +187,6 @@ public class ProductServiceImpl implements ProductService {
                             return new RuntimeException(error);
                         });
 
-                // 4️⃣ Create product entity
                 Product product = new Product();
                 product.setProductCode(request.getProductCode());
                 product.setProductName(request.getProductName());
@@ -209,10 +199,8 @@ public class ProductServiceImpl implements ProductService {
                 product.setCreatedDate(LocalDateTime.now());
                 product.setUpdatedDate(LocalDateTime.now());
 
-                // 5️⃣ Save product
                 Product savedProduct = productRepository.save(product);
 
-                // 6️⃣ Auto-create product_price (default = 0)
                 ProductPrice price = new ProductPrice();
                 price.setProduct(savedProduct);
                 price.setUnitPrice(new java.math.BigDecimal("0.00"));
@@ -221,7 +209,6 @@ public class ProductServiceImpl implements ProductService {
                 price.setValidFrom(LocalDateTime.now());
                 productPriceRepository.save(price);
 
-                // 7️⃣ Auto-create inventory (default = 0)
                 com.g127.snapbuy.entity.Inventory inventory = new com.g127.snapbuy.entity.Inventory();
                 inventory.setProduct(savedProduct);
                 inventory.setQuantityInStock(0);
@@ -231,25 +218,23 @@ public class ProductServiceImpl implements ProductService {
                 inventory.setLastUpdated(LocalDateTime.now());
                 inventoryRepository.save(inventory);
 
-                // 8️⃣ Add to result
                 importedProducts.add(productMapper.toResponse(savedProduct));
 
-                log.info("✅ Row {}: Product '{}' imported successfully", rowNumber, request.getProductCode());
+                log.info("Row {}: Product '{}' imported successfully", rowNumber, request.getProductCode());
 
             } catch (Exception e) {
                 String error = String.format("Row %d: %s", rowNumber, e.getMessage());
-                log.error("❌ {}", error);
+                log.error("{}", error);
                 errors.add(error);
             }
         }
 
-        // 9️⃣ Summary
         if (!errors.isEmpty()) {
-            log.warn("⚠️ Import completed with {} errors:", errors.size());
+            log.warn("Import completed with {} errors:", errors.size());
             errors.forEach(log::warn);
         }
 
-        log.info("✅ Import summary: {} successful, {} failed out of {} total",
+        log.info("Import summary: {} successful, {} failed out of {} total",
                 importedProducts.size(), errors.size(), requests.size());
 
         return importedProducts;

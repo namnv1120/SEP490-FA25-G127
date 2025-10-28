@@ -5,12 +5,12 @@ import lombok.Data;
 
 @Data
 public class ChangePasswordRequest {
-    @NotBlank(message = "Old password is required")
+    @NotBlank(message = "Vui lòng nhập mật khẩu cũ.")
     private String oldPassword;
 
-    @NotBlank(message = "New password is required")
+    @NotBlank(message = "Vui lòng nhập mật khẩu mới.")
     private String newPassword;
 
-    @NotBlank(message = "Confirm new password is required")
+    @NotBlank(message = "Vui lòng xác nhận mật khẩu mới.")
     private String confirmNewPassword;
 }

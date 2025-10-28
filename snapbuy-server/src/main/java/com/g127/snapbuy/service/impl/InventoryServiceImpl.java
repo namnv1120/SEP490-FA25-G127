@@ -45,7 +45,7 @@ public class InventoryServiceImpl implements InventoryService {
 
         Inventory saved = inventoryRepository.save(inventory);
 
-        recordTransaction(product, request.getQuantityInStock(), "IMPORT", null, "Initial stock setup");
+        recordTransaction(product, request.getQuantityInStock(), "Nhập kho", null, "Khởi tạo tồn kho ban đầu");
 
         return inventoryMapper.toResponse(saved);
     }
@@ -55,7 +55,6 @@ public class InventoryServiceImpl implements InventoryService {
         Inventory inventory = inventoryRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
 
-        // chỉ cập nhật 3 giá trị
         if (request.getMinimumStock() != null) {
             inventory.setMinimumStock(request.getMinimumStock());
         }
@@ -68,6 +67,12 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventory.setLastUpdated(LocalDateTime.now());
         Inventory saved = inventoryRepository.save(inventory);
+
+        int diff = inventory.getQuantityInStock() - oldQty;
+        if (diff != 0) {
+            String type = diff > 0 ? "Điều chỉnh tăng" : "Điều chỉnh giảm";
+            recordTransaction(inventory.getProduct(), Math.abs(diff), type, null, "Điều chỉnh tồn kho thủ công");
+        }
 
         return inventoryMapper.toResponse(saved);
     }
@@ -94,7 +99,7 @@ public class InventoryServiceImpl implements InventoryService {
                 .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
         inventoryRepository.delete(inventory);
 
-        recordTransaction(inventory.getProduct(), 0, "DELETE", null, "Inventory deleted");
+        recordTransaction(inventory.getProduct(), 0, "Xóa tồn", null, "Xóa tồn kho");
     }
 
     private void recordTransaction(Product product, int quantity, String type, Account account, String notes) {

@@ -5,15 +5,15 @@ import lombok.Data;
 
 @Data
 public class AuthenticationRequest {
-    @NotBlank(message = "Username is required")
-    @Size(min = 3, max = 50, message = "Username must be 3–50 characters")
+    @NotBlank(message = "Vui lòng nhập tên đăng nhập.")
+    @Size(min = 3, max = 50, message = "Tên đăng nhập phải từ 3 đến 50 ký tự.")
     @Pattern(
             regexp = "^[A-Za-z0-9._-]+$",
-            message = "Username may only contain letters, digits, '.', '_' or '-' and no spaces"
+            message = "Tên đăng nhập chỉ được gồm chữ, số, dấu chấm (.), gạch dưới (_) hoặc gạch ngang (-), không có khoảng trắng."
     )
     private String username;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters")
+    @NotBlank(message = "Vui lòng nhập mật khẩu.")
+    @Size(min = 6, message = "Mật khẩu phải có ít nhất 6 ký tự.")
     private String password;
 }

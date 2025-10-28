@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 public class RoleUpdateRequest {
-    @Size(max = 50, message = "roleName must be <= 50 chars")
+    @Size(max = 50, message = "roleName phải <= 50 ký tự")
     private String roleName;
 
     @Size(max = 4000)

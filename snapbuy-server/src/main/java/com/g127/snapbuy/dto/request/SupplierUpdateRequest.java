@@ -3,39 +3,36 @@ package com.g127.snapbuy.dto.request;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
-import java.util.UUID;
-
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class SupplierUpdateRequest {
-    @NotBlank(message = "Supplier code is required")
-    @Size(max = 20, message = "Supplier code must be at most 20 characters")
+    @NotBlank(message = "Vui lòng nhập mã nhà cung cấp.")
+    @Size(max = 20, message = "Mã nhà cung cấp không được vượt quá 20 ký tự.")
     private String supplierCode;
 
-    @NotBlank(message = "Supplier name is required")
-    @Size(max = 100, message = "Supplier name must be at most 100 characters")
+    @NotBlank(message = "Vui lòng nhập tên nhà cung cấp.")
+    @Size(max = 100, message = "Tên nhà cung cấp không được vượt quá 100 ký tự.")
     private String supplierName;
 
-    @Size(max = 20, message = "Phone must be at most 20 characters")
-    @Pattern(regexp = "^[0-9+\\-()\\s]{6,20}$", message = "Invalid phone number format")
+    @Size(max = 20, message = "Số điện thoại không được vượt quá 20 ký tự.")
+    @Pattern(regexp = "^[0-9+\\-()\\s]{6,20}$", message = "Số điện thoại không đúng định dạng.")
     private String phone;
 
-    @Email(message = "Invalid email format")
-    @Size(max = 100, message = "Email must be at most 100 characters")
+    @Email(message = "Email không đúng định dạng. Vui lòng kiểm tra lại.")
+    @Size(max = 100, message = "Email không được vượt quá 100 ký tự.")
     private String email;
 
-    @Size(max = 100, message = "Address must be at most 100 characters")
+    @Size(max = 100, message = "Địa chỉ không được vượt quá 100 ký tự.")
     private String address;
 
-    @Size(max = 50, message = "City must be at most 50 characters")
+    @Size(max = 50, message = "Thành phố không được vượt quá 50 ký tự.")
     private String city;
 
-    @Size(max = 50, message = "Ward must be at most 50 characters")
+    @Size(max = 50, message = "Phường/Xã không được vượt quá 50 ký tự.")
     private String ward;
 
     private boolean active = true;
-
 }

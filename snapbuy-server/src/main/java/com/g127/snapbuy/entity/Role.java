@@ -12,8 +12,7 @@ import java.util.*;
 @NoArgsConstructor @AllArgsConstructor @Builder
 public class Role {
     @Id
-    @GeneratedValue(generator = "uuid2")
-    @GenericGenerator(name = "uuid2", strategy = "org.hibernate.id.UUIDGenerator")
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "role_id", columnDefinition = "uniqueidentifier")
     private UUID roleId;
 

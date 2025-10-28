@@ -6,12 +6,15 @@ import lombok.Data;
 @Data
 public class InventoryUpdateRequest {
 
-    @Min(value = 0, message = "Minimum stock must be greater than or equal to 0")
+    @Min(value = 0, message = "Số lượng tồn phải lớn hơn hoặc bằng 0.")
+    private Integer quantityInStock;
+
+    @Min(value = 0, message = "Tồn tối thiểu phải lớn hơn hoặc bằng 0.")
     private Integer minimumStock;
 
-    @Min(value = 0, message = "Maximum stock must be greater than or equal to 0")
+    @Min(value = 0, message = "Tồn tối đa phải lớn hơn hoặc bằng 0.")
     private Integer maximumStock;
 
-    @Min(value = 0, message = "Reorder point must be greater than or equal to 0")
+    @Min(value = 0, message = "Điểm đặt hàng lại phải lớn hơn hoặc bằng 0.")
     private Integer reorderPoint;
 }

@@ -38,10 +38,10 @@ public class ForgotPasswordServiceImpl implements ForgotPasswordService {
     public void requestOtp(ForgotPasswordRequest req) {
         String email = req.getEmail();
         Account acc = accountRepository.findByEmail(email)
-                .orElseThrow(() -> new NoSuchElementException("Email not found"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy email"));
 
         if (!otpStore.canResend(email, RESEND_GAP_SECONDS)) {
-            throw new IllegalStateException("Please wait a moment before requesting again");
+            throw new IllegalStateException("Vui lòng chờ trong giây lát trước khi yêu cầu lại");
         }
 
         String code = String.format("%06d", new Random().nextInt(1_000_000));
@@ -57,36 +57,38 @@ public class ForgotPasswordServiceImpl implements ForgotPasswordService {
                 + "Nếu không phải bạn yêu cầu, vui lòng bỏ qua email này.";
 
         mailService.send(email, subject, content);
-        log.info("Issued OTP for {} exp={}", email, expiresAt);
+        log.info("Cấp OTP cho {} hết hạn vào {}", email, expiresAt);
     }
 
     @Override
     public void verifyOtp(VerifyOtpRequest req) {
         var rec = otpStore.get(req.getEmail());
-        if (rec == null) throw new IllegalStateException("Invalid or expired code");
+        if (rec == null) throw new IllegalStateException("Mã xác nhận không hợp lệ hoặc đã hết hạn");
         rec.attempts++;
-        if (!rec.code.equals(req.getCode())) throw new IllegalStateException("Invalid or expired code");
+        if (!rec.code.equals(req.getCode())) {
+            throw new IllegalStateException("Mã xác nhận không hợp lệ hoặc đã hết hạn");
+        }
     }
 
     @Override
     public void resetPassword(ResetPasswordRequest req) {
         if (!req.getNewPassword().equals(req.getConfirmNewPassword())) {
-            throw new IllegalArgumentException("Passwords do not match");
+            throw new IllegalArgumentException("Mật khẩu xác nhận không khớp");
         }
 
         var rec = otpStore.get(req.getEmail());
         if (rec == null || !rec.code.equals(req.getCode())) {
-            throw new IllegalStateException("Invalid or expired code");
+            throw new IllegalStateException("Mã xác nhận không hợp lệ hoặc đã hết hạn");
         }
 
         Account acc = accountRepository.findByEmail(req.getEmail())
-                .orElseThrow(() -> new NoSuchElementException("Email not found"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy email"));
 
         acc.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
         accountRepository.save(acc);
 
         otpStore.remove(req.getEmail());
-        log.info("Password reset for {}", req.getEmail());
+        log.info("Đặt lại mật khẩu cho {}", req.getEmail());
     }
 
 }
