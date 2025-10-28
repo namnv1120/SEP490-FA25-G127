@@ -316,7 +316,7 @@ export const SidebarData = [
       },
       {
         label: "Purchase Return",
-        link: "/purchase-returns",
+        link: "/purchase-order-detail",
         icon: 'file-upload',
         showSubRoute: false,
         submenu: false,

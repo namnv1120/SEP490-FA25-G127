@@ -27,8 +27,8 @@ export const all_routes = {
 
   // Purchase
   purchaselist: "/purchase-list",
-  purchaseorderreport: "/purchase-order-report",
-  purchasereturn: "/purchase-return",
+  purchaseorder: "/purchase-order",
+  purchaseorderdetail: "/purchase-order-detail",
 
   // Customers & Suppliers
   customers: "/customers",

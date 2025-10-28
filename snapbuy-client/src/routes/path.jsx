@@ -7,8 +7,12 @@ import Pos from "../feature-module/pos/pos";
 const Suppliers = lazy(() => import("../feature-module/people/Supplier"));
 
 const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
-const ProductList = lazy(() => import("../feature-module/inventory/ProductList"));
-const ProductDetail = lazy(() => import("../feature-module/inventory/ProductDetail"));
+const ProductList = lazy(() =>
+  import("../feature-module/inventory/ProductList")
+);
+const ProductDetail = lazy(() =>
+  import("../feature-module/inventory/ProductDetail")
+);
 const AddProduct = lazy(() => import("../feature-module/inventory/AddProduct"));
 const EditProduct = lazy(() => import("../feature-module/inventory/EditProduct"));
 const ProductPriceList = lazy(() => import("../feature-module/inventory/ProductPriceList"));
@@ -41,6 +45,12 @@ const PosOrder = lazy(
 );
 
 const Customers = lazy(() => import("../feature-module/people/Customer"));
+const PurchaseOrder = lazy(() =>
+  import("../feature-module/purchases/PurchaseOrder")
+);
+const PurchaseOrderDetail = lazy(() =>
+  import("../feature-module/purchases/PurchaseOrderDetail")
+);
 
 const routes = all_routes;
 
@@ -137,6 +147,17 @@ export const authRoutes = [
     route: Route,
   },
   {
+    id: 301,
+    path: routes.purchaseorder, // đảm bảo trong all_routes có key purchaseorder
+    name: "purchaseorder",
+    element: <PurchaseOrder />,
+    route: Route,
+  },
+  {
+    id: 302,
+    path: routes.purchaseorderdetail, // thêm key này trong all_routes
+    name: "purchaseorderdetail",
+    element: <PurchaseOrderDetail />,
     id: 14,
     path: routes.inventories,
     name: "inventories",
