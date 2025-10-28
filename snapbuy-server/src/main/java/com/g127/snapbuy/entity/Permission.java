@@ -8,13 +8,15 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "permissions")
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Permission {
 
     @Id
-    @GeneratedValue(generator = "uuid2")
-    @GenericGenerator(name = "uuid2", strategy = "org.hibernate.id.UUIDGenerator")
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "permission_id", columnDefinition = "uniqueidentifier")
     private UUID permissionId;
 

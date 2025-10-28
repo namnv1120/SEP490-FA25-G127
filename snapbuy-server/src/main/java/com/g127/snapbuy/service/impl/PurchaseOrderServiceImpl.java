@@ -33,9 +33,10 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
     @Override
     @Transactional
-    public PurchaseOrderResponse create(PurchaseOrderCreateRequest req) {
-        UUID poId = UUID.randomUUID();
-        String number = generateNumber();
+    public PurchaseOrderResponse create(PurchaseOrderCreateRequest req, String usernameOrEmail) {
+        UUID currentAccountId = resolveAccountId(usernameOrEmail);
+
+        String number = generateUniqueNumber();
         LocalDateTime now = LocalDateTime.now();
 
         BigDecimal plannedSubtotal = req.items().stream()
@@ -50,21 +51,23 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         String cleanedNotes = cleanNotes(req.notes());
 
         PurchaseOrder po = PurchaseOrder.builder()
-                .id(poId)
                 .number(number)
                 .supplierId(req.supplierId())
-                .accountId(req.accountId())
+                .accountId(currentAccountId)
                 .orderDate(now)
                 .status("Chờ duyệt")
                 .totalAmount(plannedTotal)
                 .taxAmount(plannedTax)
                 .notes(cleanedNotes)
                 .build();
+
         purchaseOrderRepo.save(po);
+        purchaseOrderRepo.flush();
+
+        UUID poId = po.getId();
 
         List<PurchaseOrderDetail> details = req.items().stream().map(i ->
                 PurchaseOrderDetail.builder()
-                        .id(UUID.randomUUID())
                         .purchaseOrderId(poId)
                         .productId(i.productId())
                         .quantity(i.quantity())
@@ -79,19 +82,15 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
     @Override
     @Transactional
-    public PurchaseOrderResponse approve(UUID poId, PurchaseOrderApproveRequest req) {
+    public PurchaseOrderResponse approve(UUID poId, PurchaseOrderApproveRequest req, String usernameOrEmail) {
+        UUID approverId = resolveAccountId(usernameOrEmail);
+
         PurchaseOrder po = purchaseOrderRepo.findById(poId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu nhập hàng"));
 
-        if ("Đã hủy".equals(po.getStatus())) {
-            throw new IllegalStateException("Phiếu đã hủy, không thể duyệt");
-        }
-        if ("Đã nhận hàng".equals(po.getStatus())) {
-            throw new IllegalStateException("Phiếu đã hoàn tất, không thể duyệt");
-        }
-        if (!"Chờ duyệt".equals(po.getStatus())) {
-            throw new IllegalStateException("Chỉ duyệt phiếu ở trạng thái 'Chờ duyệt'");
-        }
+        if ("Đã hủy".equals(po.getStatus())) throw new IllegalStateException("Phiếu đã hủy, không thể duyệt");
+        if ("Đã nhận hàng".equals(po.getStatus())) throw new IllegalStateException("Phiếu đã hoàn tất, không thể duyệt");
+        if (!"Chờ duyệt".equals(po.getStatus())) throw new IllegalStateException("Chỉ duyệt phiếu ở trạng thái 'Chờ duyệt'");
 
         if (req.ownerAccountId() != null) {
             accountRepo.findById(req.ownerAccountId())
@@ -100,10 +99,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
         po.setStatus("Đã duyệt");
 
-        String suffix = (req.notes() != null && !req.notes().isBlank())
-                ? (": " + cleanNotes(req.notes()))
-                : "";
-        po.setNotes("Đã duyệt bởi Chủ cửa hàng" + suffix);
+        String base = "Phiếu đã được duyệt.";
+        String extra = (req.notes() != null && !req.notes().isBlank()) ? (" " + cleanNotes(req.notes())) : "";
+        po.setNotes(base + extra);
 
         purchaseOrderRepo.save(po);
 
@@ -111,19 +109,20 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         return toResponse(po, details);
     }
 
+
     @Override
     @Transactional
-    public PurchaseOrderResponse receive(UUID poId, PurchaseOrderReceiveRequest req) {
+    public PurchaseOrderResponse receive(UUID poId, PurchaseOrderReceiveRequest req, String usernameOrEmail) {
+        UUID receiverId = resolveAccountId(usernameOrEmail);
+
         PurchaseOrder po = purchaseOrderRepo.findById(poId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu nhập hàng"));
 
         if (!"Đã duyệt".equals(po.getStatus())) {
-            if ("Đã hủy".equals(po.getStatus())) {
+            if ("Đã hủy".equals(po.getStatus()))
                 throw new IllegalStateException("Phiếu nhập hàng đã bị hủy, không thể xác nhận nhập kho.");
-            }
-            if ("Đã nhận hàng".equals(po.getStatus())) {
+            if ("Đã nhận hàng".equals(po.getStatus()))
                 throw new IllegalStateException("Phiếu nhập hàng đã hoàn tất, không thể chỉnh sửa.");
-            }
             throw new IllegalStateException("Phiếu nhập hàng chưa được duyệt, không thể xác nhận nhập kho.");
         }
 
@@ -155,17 +154,17 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             int remaining = Math.max(planned - receivedSoFar, 0);
 
             if (importQty < 0) throw new IllegalArgumentException("Số lượng nhận phải ≥ 0");
-            if (importQty > remaining) {
+            if (importQty > remaining)
                 throw new IllegalStateException("Số lượng nhận vượt quá số lượng còn lại theo kế hoạch");
-            }
 
             d.setReceivedQuantity(receivedSoFar + importQty);
         }
         detailRepo.saveAll(details);
 
         LocalDateTime now = LocalDateTime.now();
-        var account = accountRepo.findById(req.accountId())
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản: " + req.accountId()));
+
+        var account = accountRepo.findById(receiverId)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản: " + receiverId));
 
         Map<UUID, Integer> importByProduct = new HashMap<>();
         Map<UUID, BigDecimal> unitPriceByProduct = new HashMap<>();
@@ -174,8 +173,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             int importQty = e.getValue();
             if (importQty <= 0) continue;
             importByProduct.merge(d.getProductId(), importQty, Integer::sum);
-            unitPriceByProduct.putIfAbsent(d.getProductId(),
-                    Optional.ofNullable(d.getUnitPrice()).orElse(BigDecimal.ZERO));
+            unitPriceByProduct.putIfAbsent(d.getProductId(), Optional.ofNullable(d.getUnitPrice()).orElse(BigDecimal.ZERO));
         }
 
         for (var e : importByProduct.entrySet()) {
@@ -235,7 +233,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
         po.setTaxAmount(taxAmount);
         po.setTotalAmount(receivedTotal);
-
         po.setStatus("Đã nhận hàng");
         po.setReceivedDate(now);
         purchaseOrderRepo.save(po);
@@ -245,18 +242,16 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
     @Override
     @Transactional
-    public PurchaseOrderResponse cancel(UUID poId) {
+    public PurchaseOrderResponse cancel(UUID poId, String usernameOrEmail) {
+        UUID actorId = resolveAccountId(usernameOrEmail);
+
         PurchaseOrder po = purchaseOrderRepo.findById(poId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu nhập hàng"));
 
-        if ("Đã nhận hàng".equals(po.getStatus())) {
-            throw new IllegalStateException("Không thể hủy phiếu đã hoàn tất");
-        }
+        if ("Đã nhận hàng".equals(po.getStatus())) throw new IllegalStateException("Không thể hủy phiếu đã hoàn tất");
 
         List<PurchaseOrderDetail> details = detailRepo.findByPurchaseOrderId(poId);
-        for (PurchaseOrderDetail d : details) {
-            d.setReceivedQuantity(0);
-        }
+        for (PurchaseOrderDetail d : details) d.setReceivedQuantity(0);
         detailRepo.saveAll(details);
 
         po.setTaxAmount(BigDecimal.ZERO);
@@ -266,6 +261,13 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         purchaseOrderRepo.save(po);
 
         return toResponse(po, details);
+    }
+
+    private UUID resolveAccountId(String usernameOrEmail) {
+        return accountRepo.findByUsername(usernameOrEmail)
+                .map(a -> a.getAccountId())
+                .or(() -> accountRepo.findByEmail(usernameOrEmail).map(a -> a.getAccountId()))
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản: " + usernameOrEmail));
     }
 
     private PurchaseOrderResponse toResponse(PurchaseOrder po, List<PurchaseOrderDetail> details) {
@@ -302,9 +304,22 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         );
     }
 
+    private String generateUniqueNumber() {
+        String number;
+        int attempts = 0;
+        do {
+            number = generateNumber();
+            attempts++;
+        } while (purchaseOrderRepo.existsByNumber(number) && attempts < 5);
+        if (purchaseOrderRepo.existsByNumber(number)) {
+            throw new IllegalStateException("Không tạo được số phiếu duy nhất, vui lòng thử lại");
+        }
+        return number;
+    }
+
     private String generateNumber() {
         String date = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
-        String suffix = UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+        String suffix = java.util.UUID.randomUUID().toString().substring(0, 4).toUpperCase();
         return "PO-" + date + "-" + suffix;
     }
 

@@ -8,13 +8,15 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "purchase_order_detail")
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class PurchaseOrderDetail {
     @Id
-    @Column(name = "purchase_order_detail_id")
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "purchase_order_detail_id", columnDefinition = "uniqueidentifier")
     private UUID id;
 
     @Column(name = "purchase_order_id", nullable = false)

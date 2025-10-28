@@ -9,6 +9,8 @@ import com.g127.snapbuy.service.PurchaseOrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -22,39 +24,40 @@ public class PurchaseOrderController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
-    public ApiResponse<PurchaseOrderResponse> create(@Valid @RequestBody PurchaseOrderCreateRequest req) {
+    public ApiResponse<PurchaseOrderResponse> create(@Valid @RequestBody PurchaseOrderCreateRequest req,
+                                                     @AuthenticationPrincipal User principal) {
         ApiResponse<PurchaseOrderResponse> response = new ApiResponse<>();
-        response.setResult(service.create(req));
-        response.setMessage("Tạo phiếu nhập hàng thành công.");
+        response.setResult(service.create(req, principal.getUsername()));
         return response;
     }
 
     @PutMapping("/{id}/receive")
     @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<PurchaseOrderResponse> receive(@PathVariable UUID id,
-                                                      @Valid @RequestBody PurchaseOrderReceiveRequest req) {
+                                                      @Valid @RequestBody PurchaseOrderReceiveRequest req,
+                                                      @AuthenticationPrincipal User principal) {
         ApiResponse<PurchaseOrderResponse> response = new ApiResponse<>();
-        response.setResult(service.receive(id, req));
-        response.setMessage("Đã xác nhận nhập hàng và cập nhật tồn kho.");
+        response.setResult(service.receive(id, req, principal.getUsername()));
         return response;
     }
 
     @PutMapping("/{id}/cancel")
     @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
-    public ApiResponse<PurchaseOrderResponse> cancel(@PathVariable UUID id) {
+    public ApiResponse<PurchaseOrderResponse> cancel(@PathVariable UUID id,
+                                                     @AuthenticationPrincipal User principal) {
         ApiResponse<PurchaseOrderResponse> response = new ApiResponse<>();
-        response.setResult(service.cancel(id));
-        response.setMessage("Đã hủy phiếu nhập hàng.");
+        response.setResult(service.cancel(id, principal.getUsername()));
         return response;
     }
 
     @PutMapping("/{id}/approve")
     @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<PurchaseOrderResponse> approve(@PathVariable UUID id,
-                                                      @Valid @RequestBody PurchaseOrderApproveRequest req) {
+                                                      @Valid @RequestBody PurchaseOrderApproveRequest req,
+                                                      @AuthenticationPrincipal User principal) {
         ApiResponse<PurchaseOrderResponse> response = new ApiResponse<>();
-        response.setResult(service.approve(id, req));
-        response.setMessage("Phiếu nhập đã được duyệt.");
+        response.setResult(service.approve(id, req, principal.getUsername()));
+        response.setMessage("Phiếu đã được duyệt!");
         return response;
     }
 }

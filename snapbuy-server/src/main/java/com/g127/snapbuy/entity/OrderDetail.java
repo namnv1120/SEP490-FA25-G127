@@ -2,6 +2,7 @@ package com.g127.snapbuy.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.util.UUID;
 
@@ -15,7 +16,7 @@ import java.util.UUID;
 public class OrderDetail {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "order_detail_id")
     private UUID orderDetailId;
 

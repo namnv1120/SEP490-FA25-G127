@@ -1,20 +1,13 @@
 package com.g127.snapbuy.repository;
 
-import org.springframework.data.jpa.repository.*;
-import org.springframework.data.repository.query.Param;
+import com.g127.snapbuy.entity.PurchaseOrder;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.*;
+import java.util.UUID;
 
 @Repository
-public interface PurchaseOrderRepository extends JpaRepository<com.g127.snapbuy.entity.PurchaseOrder, UUID> {
-
-    @Query(value = """
-        SELECT *
-        FROM purchase_order WITH (NOLOCK)
-        WHERE purchase_order_id = :id
-    """, nativeQuery = true)
-    Optional<com.g127.snapbuy.entity.PurchaseOrder> findNativeById(@Param("id") UUID id);
+public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, UUID> {
 
     boolean existsByNumber(String number);
 }

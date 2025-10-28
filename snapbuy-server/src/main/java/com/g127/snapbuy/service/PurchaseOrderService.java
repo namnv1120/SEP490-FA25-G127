@@ -8,12 +8,12 @@ import com.g127.snapbuy.dto.response.PurchaseOrderResponse;
 import java.util.UUID;
 
 public interface PurchaseOrderService {
+    PurchaseOrderResponse create(PurchaseOrderCreateRequest req, String usernameOrEmail);
 
-    PurchaseOrderResponse create(PurchaseOrderCreateRequest req);
+    PurchaseOrderResponse receive(UUID poId, PurchaseOrderReceiveRequest req, String usernameOrEmail);
 
-    PurchaseOrderResponse receive(UUID purchaseOrderId, PurchaseOrderReceiveRequest req);
+    PurchaseOrderResponse approve(UUID poId, PurchaseOrderApproveRequest req, String usernameOrEmail);
 
-    PurchaseOrderResponse cancel(UUID purchaseOrderId);
-
-    PurchaseOrderResponse approve(UUID poId, PurchaseOrderApproveRequest req);
+    PurchaseOrderResponse cancel(UUID poId, String usernameOrEmail);
 }
+
