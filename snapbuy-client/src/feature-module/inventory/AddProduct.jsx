@@ -4,6 +4,7 @@ import { message } from "antd";
 import { all_routes } from "../../routes/all_routes";
 import { createProduct } from "../../services/ProductService";
 import { getAllCategories } from "../../services/CategoryService";
+import { getAllSuppliers } from "../../services/SupplierService";
 import CommonSelect from "../../components/select/common-select";
 import DeleteModal from "../../components/delete-modal";
 import RefreshIcon from "../../components/tooltip-content/refresh";
@@ -20,12 +21,18 @@ const AddProduct = () => {
     unit: "",
     supplierName: "",
     dimensions: "",
+    imageUrl: "",
   });
+  const [imageFile, setImageFile] = useState(null);
+
 
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
+  const [suppliers, setSuppliers] = useState([]);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
+
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,6 +81,23 @@ const AddProduct = () => {
     }
   }, [selectedCategory]);
 
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      try {
+        const data = await getAllSuppliers(); // bạn cần tạo API service getAllSuppliers()
+        const options = data.map((s) => ({
+          value: s.supplierId,
+          label: s.supplierName,
+        }));
+        setSuppliers(options);
+      } catch (error) {
+        console.error("❌ Lỗi tải nhà cung cấp:", error);
+      }
+    };
+    fetchSuppliers();
+  }, []);
+
+
   // 🧩 Validate dữ liệu
   const validateForm = () => {
     const newErrors = {};
@@ -102,8 +126,8 @@ const AddProduct = () => {
       newErrors.subCategory = "Vui lòng chọn danh mục con.";
     }
 
-    if (!product.supplierName.trim()) {
-      newErrors.supplierName = "Vui lòng nhập tên nhà cung cấp.";
+    if (!selectedSupplier) {
+      newErrors.supplier = "Vui lòng chọn nhà cung cấp.";
     }
 
     if (product.unit && product.unit.length > 50) {
@@ -130,23 +154,28 @@ const AddProduct = () => {
       return;
     }
 
-    const productData = {
-      productCode: product.productCode.trim(),
-      productName: product.productName.trim(),
-      description: product.description.trim(),
-      unit: product.unit.trim(),
-      dimensions: product.dimensions.trim(),
-      categoryId: selectedSubCategory
-        ? selectedSubCategory.value
-        : selectedCategory?.value,
-      supplierName: product.supplierName.trim(),
-      active: true,
-      imageUrl: "",
-    };
+    const formData = new FormData();
+    formData.append("productCode", product.productCode.trim());
+    formData.append("productName", product.productName.trim());
+    formData.append("description", product.description.trim());
+    formData.append("unit", product.unit.trim());
+    formData.append("dimensions", product.dimensions.trim());
+    formData.append(
+      "categoryId",
+      selectedSubCategory ? selectedSubCategory.value : selectedCategory?.value
+    );
+    formData.append("supplierId", selectedSupplier.value);
+
+    formData.append("active", true);
+
+    if (imageFile) {
+      formData.append("image", imageFile); // 👈 gửi file ảnh
+    }
+
 
     try {
       setIsSubmitting(true);
-      const created = await createProduct(productData);
+      const created = await createProduct(formData);
       message.success(`Sản phẩm "${created.productName}" tạo thành công!`);
       navigate(route.products);
     } catch (error) {
@@ -224,13 +253,12 @@ const AddProduct = () => {
                       <div className="col-sm-6">
                         <div className="mb-3">
                           <label className="form-label">
-                            Mã sản phẩm<span className="text-danger">*</span>
+                            Mã sản phẩm <span className="text-danger">*</span>
                           </label>
                           <input
                             type="text"
-                            className={`form-control ${
-                              errors.productCode ? "is-invalid" : ""
-                            }`}
+                            className={`form-control ${errors.productCode ? "is-invalid" : ""
+                              }`}
                             value={product.productCode}
                             onChange={(e) =>
                               setProduct({
@@ -250,13 +278,12 @@ const AddProduct = () => {
                       <div className="col-sm-6">
                         <div className="mb-3">
                           <label className="form-label">
-                            Tên sản phẩm<span className="text-danger">*</span>
+                            Tên sản phẩm <span className="text-danger">*</span>
                           </label>
                           <input
                             type="text"
-                            className={`form-control ${
-                              errors.productName ? "is-invalid" : ""
-                            }`}
+                            className={`form-control ${errors.productName ? "is-invalid" : ""
+                              }`}
                             value={product.productName}
                             onChange={(e) =>
                               setProduct({
@@ -279,12 +306,11 @@ const AddProduct = () => {
                       <div className="col-sm-6">
                         <div className="mb-3">
                           <label className="form-label">
-                            Danh mục<span className="text-danger">*</span>
+                            Danh mục <span className="text-danger">*</span>
                           </label>
                           <CommonSelect
-                            className={`w-100 ${
-                              errors.category ? "is-invalid" : ""
-                            }`}
+                            className={`w-100 ${errors.category ? "is-invalid" : ""
+                              }`}
                             options={categories}
                             value={selectedCategory}
                             onChange={(opt) => {
@@ -308,12 +334,11 @@ const AddProduct = () => {
                       <div className="col-sm-6">
                         <div className="mb-3">
                           <label className="form-label">
-                            Danh mục con<span className="text-danger">*</span>
+                            Danh mục con <span className="text-danger">*</span>
                           </label>
                           <CommonSelect
-                            className={`w-100 ${
-                              errors.subCategory ? "is-invalid" : ""
-                            }`}
+                            className={`w-100 ${errors.subCategory ? "is-invalid" : ""
+                              }`}
                             options={subCategories}
                             value={selectedSubCategory}
                             onChange={(opt) => {
@@ -338,46 +363,44 @@ const AddProduct = () => {
                     <div className="row">
                       <div className="col-sm-6">
                         <div className="mb-3">
-                          <label className="form-label">Đơn vị</label>
-                          <input
-                            type="text"
-                            className={`form-control ${
-                              errors.unit ? "is-invalid" : ""
-                            }`}
-                            value={product.unit}
-                            onChange={(e) =>
-                              setProduct({ ...product, unit: e.target.value })
-                            }
+                          <label className="form-label">Nhà cung cấp <span className="text-danger">*</span></label>
+                          <CommonSelect
+                            className={`w-100 ${errors.supplier ? "is-invalid" : ""}`}
+                            options={suppliers}
+                            value={selectedSupplier}
+                            onChange={(opt) => {
+                              setSelectedSupplier(opt);
+                              setErrors((prev) => ({ ...prev, supplier: "" }));
+                            }}
+                            placeholder="Chọn nhà cung cấp"
                           />
-                          {errors.unit && (
-                            <div className="invalid-feedback">
-                              {errors.unit}
-                            </div>
+                          {errors.supplier && (
+                            <div className="text-danger small mt-1">{errors.supplier}</div>
                           )}
+
                         </div>
                       </div>
 
                       <div className="col-sm-6">
                         <div className="mb-3">
                           <label className="form-label">
-                            Nhà cung cấp<span className="text-danger">*</span>
+                            Đơn vị
                           </label>
                           <input
                             type="text"
-                            className={`form-control ${
-                              errors.supplierName ? "is-invalid" : ""
-                            }`}
-                            value={product.supplierName}
+                            className={`form-control ${errors.unit ? "is-invalid" : ""
+                              }`}
+                            value={product.unit}
                             onChange={(e) =>
                               setProduct({
                                 ...product,
-                                supplierName: e.target.value,
+                                unit: e.target.value,
                               })
                             }
                           />
-                          {errors.supplierName && (
+                          {errors.unit && (
                             <div className="invalid-feedback">
-                              {errors.supplierName}
+                              {errors.unit}
                             </div>
                           )}
                         </div>
@@ -391,9 +414,8 @@ const AddProduct = () => {
                           <label className="form-label">Kích thước</label>
                           <input
                             type="text"
-                            className={`form-control ${
-                              errors.dimensions ? "is-invalid" : ""
-                            }`}
+                            className={`form-control ${errors.dimensions ? "is-invalid" : ""
+                              }`}
                             value={product.dimensions}
                             onChange={(e) =>
                               setProduct({
@@ -416,9 +438,8 @@ const AddProduct = () => {
                       <div className="summer-description-box">
                         <label className="form-label">Mô tả</label>
                         <textarea
-                          className={`form-control ${
-                            errors.description ? "is-invalid" : ""
-                          }`}
+                          className={`form-control ${errors.description ? "is-invalid" : ""
+                            }`}
                           rows={5}
                           value={product.description}
                           onChange={(e) =>
@@ -463,15 +484,27 @@ const AddProduct = () => {
                 >
                   <div className="accordion-body border-top">
                     <div className="image-upload">
-                      <input type="file" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            setImageFile(file);
+                            setIsImageVisible(true);
+                            setProduct({ ...product, imageUrl: URL.createObjectURL(file) });
+                          }
+                        }}
+                      />
+
                       <div className="image-uploads">
                         <i className="feather icon-plus-circle plus-down-add me-0" />
                         <h4>Thêm ảnh</h4>
                       </div>
                     </div>
-                    {isImageVisible && (
+                    {isImageVisible && product.imageUrl && (
                       <div className="phone-img mt-3">
-                        <img src="" alt="product" />
+                        <img src={product.imageUrl} alt="product" />
                         <Link to="#">
                           <i
                             className="feather icon-x x-square-add remove-product"
@@ -480,6 +513,7 @@ const AddProduct = () => {
                         </Link>
                       </div>
                     )}
+
                   </div>
                 </div>
               </div>

@@ -65,22 +65,22 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
 
   const templateData = [
     {
-      "Mã sản phẩm": "PROD001",
+      "Mã sản phẩm": "PRD1",
       "Tên sản phẩm": "Samsung Galaxy S23",
       "Mô tả": "Latest Samsung flagship phone",
       "Danh mục": "Electronics",
       "Nhà cung cấp": "Samsung Vietnam",
-      "Đơn vị": "piece",
+      "Đơn vị": "Cái",
       "Kích thước": "15x7x0.8",
       "Ảnh": ""
     },
     {
-      "Mã sản phẩm": "PROD002",
+      "Mã sản phẩm": "PRD2",
       "Tên sản phẩm": "Apple iPhone 14",
       "Mô tả": "Newest iPhone model",
       "Danh mục": "Electronics",
       "Nhà cung cấp": "Apple",
-      "Đơn vị": "piece",
+      "Đơn vị": "Cái",
       "Kích thước": "15x7x0.8",
       "Ảnh": ""
     }

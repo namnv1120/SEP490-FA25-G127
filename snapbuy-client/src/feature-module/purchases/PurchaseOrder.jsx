@@ -58,7 +58,6 @@ const PurchaseOrder = () => {
     }
   };
 
-  // ✅ Gọi 1 lần khi load trang
   useEffect(() => {
     fetchPurchaseOrders();
   }, []);
@@ -70,8 +69,8 @@ const PurchaseOrder = () => {
           <div className="page-header">
             <div className="d-flex align-items-center justify-content-between w-100">
               <div className="page-title">
-                <h4>Purchase Order</h4>
-                <h6>Manage Your Purchase Orders</h6>
+                <h4>Đơn đặt hàng</h4>
+                <h6>Quản lý danh sách các đơn đặt hàng về kho</h6>
               </div>
             </div>
             <TableTopHead />

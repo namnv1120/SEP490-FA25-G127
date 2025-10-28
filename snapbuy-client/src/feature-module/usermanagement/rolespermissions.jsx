@@ -4,10 +4,7 @@ import AddRole from "../../core/modals/usermanagement/addrole";
 import EditRole from "../../core/modals/usermanagement/editrole";
 import DeleteModal from "../../components/delete-modal";
 import { all_routes } from "../../routes/all_routes";
-
-import TooltipIcons from "../../components/tooltip-content/tooltipIcons";
-import RefreshIcon from "../../components/tooltip-content/refresh";
-import CollapesIcon from "../../components/tooltip-content/collapes";
+import TableTopHead from "../../components/table-top-head";
 import Table from "../../core/pagination/datatable";
 
 import {
@@ -29,7 +26,7 @@ const RolesPermissions = () => {
       const data = Array.isArray(response) ? response : response.data || response.result || [];
       setRoles(data);
     } catch (error) {
-      console.error("Failed to fetch roles:", error.message);
+      console.error("Lỗi khi tải danh sách vai trò", error.message);
     } finally {
       setLoading(false);
     }
@@ -45,7 +42,7 @@ const RolesPermissions = () => {
       await deleteRole(selectedRole.id || selectedRole.roleId);
       fetchRoles();
     } catch (error) {
-      console.error("Failed to delete role:", error.message);
+      console.error("Lỗi khi xoá vai trò", error.message);
     }
   };
 
@@ -54,7 +51,7 @@ const RolesPermissions = () => {
       await createRole(roleData);
       fetchRoles();
     } catch (error) {
-      console.error("Failed to create role:", error.message);
+      console.error("Lỗi khi thêm vai trò", error.message);
     }
   };
 
@@ -63,38 +60,38 @@ const RolesPermissions = () => {
       await updateRole(roleId, updatedData);
       fetchRoles();
     } catch (error) {
-      console.error("Failed to update role:", error.message);
+      console.error("Lỗi khi cập nhật vai trò", error.message);
     }
   };
 
   const columns = [
     {
-      title: "Role Name",
+      title: "Vai trò",
       dataIndex: "roleName",
-      align: "center",
+      align: "left",
       sorter: (a, b) => a.roleName.localeCompare(b.roleName),
     },
     {
-      title: "Created On",
-      dataIndex: "createdOn",
-      align: "center",
-      sorter: (a, b) => a.createdOn.localeCompare(b.createdOn),
+      title: "Mô tả",
+      dataIndex: "description",
+      align: "left",
+      sorter: (a, b) => a.createdOn.localeCompare(b.description),
     },
     {
-      title: "Status",
+      title: "Trạng thái",
       dataIndex: "active",
-      align: "center",
-      render: (active) => (
-        <span
-          className={`d-inline-flex align-items-center p-1 pe-2 rounded-1 text-white ${
-            active ? "bg-success" : "bg-danger"
-          } fs-10`}
-        >
-          <i className="ti ti-point-filled me-1 fs-11"></i>
-          {active ? "Active" : "Inactive"}
-        </span>
-      ),
-      sorter: (a, b) => a.active - b.active,
+      render: (isActive) => {
+        const active = isActive === true || isActive === 1 || isActive === "1";
+        return (
+          <span
+            className={`d-inline-flex align-items-center p-1 pe-2 rounded-1 text-white fs-10 ${active ? "bg-success" : "bg-danger"}`}
+          >
+            <i className="ti ti-point-filled me-1 fs-11"></i>
+            {active ? "Hoạt động" : "Không hoạt động"}
+          </span>
+        );
+      },
+      sorter: (a, b) => (a.isActive === b.isActive ? 0 : a.isActive ? -1 : 1),
     },
     {
       title: "",
@@ -141,24 +138,20 @@ const RolesPermissions = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Roles & Permissions</h4>
-                <h6>Manage your roles</h6>
+                <h4>Vai trò và Phân quyền</h4>
+                <h6>Quản lý danh sách vai trò và quyền</h6>
               </div>
             </div>
-            <ul className="table-top-head">
-              <TooltipIcons />
-              <RefreshIcon onClick={fetchRoles} />
-              <CollapesIcon />
-            </ul>
+            <TableTopHead />
             <div className="page-btn">
               <Link
                 to="#"
-                className="btn btn-added"
+                className="btn btn-primary"
                 data-bs-toggle="modal"
                 data-bs-target="#add-role"
               >
                 <i className="ti ti-circle-plus me-1"></i>
-                Add Role
+                Thêm vai trò
               </Link>
             </div>
           </div>
@@ -194,7 +187,7 @@ const RolesPermissions = () => {
             <div className="card-body">
               <div className="table-responsive">
                 {loading ? (
-                  <div className="text-center p-4">Loading...</div>
+                  <div className="text-center p-4">Đang tải...</div>
                 ) : (
                   <Table columns={columns} dataSource={roles} />
                 )}
@@ -204,7 +197,7 @@ const RolesPermissions = () => {
         </div>
       </div>
 
-      <AddRole id="add-role" onCreated={handleAddRole}/>
+      <AddRole id="add-role" onCreated={handleAddRole} />
       <EditRole
         id="edit-role"
         roleId={selectedRole?.id}

@@ -25,7 +25,8 @@ public enum ErrorCode {
     AUTH_INVALID(3001, "Tên đăng nhập hoặc mật khẩu không đúng"),
     TOKEN_INVALID(3002, "Token không hợp lệ"),
     TOKEN_REVOKED(3003, "Token đã bị thu hồi"),
-    ACCOUNT_LOCKED(3004, "Tài khoản đã bị khóa");
+    ACCOUNT_LOCKED(3004, "Tài khoản đã bị khóa"),
+    FILE_UPLOAD_FAILED(3005, "Tải ảnh thất bại");
 
     private final int code;
     private final String message;

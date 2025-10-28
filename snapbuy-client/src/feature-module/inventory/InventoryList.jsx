@@ -197,7 +197,7 @@ const InventoryList = () => {
         )}
       </div>
 
-      <CommonFooter />\
+      <CommonFooter />
       <EditInventory
         visible={modalVisible}
         onClose={closeEditModal}

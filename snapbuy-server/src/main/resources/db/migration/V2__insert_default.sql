@@ -63,19 +63,19 @@ VALUES
 -- 1️⃣ Insert 4 accounts
 INSERT INTO accounts (full_name, username, password_hash, email, phone, avatar_url, active)
 VALUES
-    (N'System Administrator', N'admin',
+    (N'Quản trị viên', N'admin',
      N'$2a$10$.KiG7oyd3/JtvMSfV0tdBefCs2eLKBx2LlO6uwPO82fM6nhlGYeIq',
      N'admin@snapbuy.com', N'0901000001', NULL, 1),
 
-    (N'Shop Owner', N'shopowner',
+    (N'Chủ cửa hàng', N'shopowner',
      N'$2a$10$.KiG7oyd3/JtvMSfV0tdBefCs2eLKBx2LlO6uwPO82fM6nhlGYeIq',
      N'shopowner@snapbuy.com', N'0901000002', NULL, 1),
 
-    (N'Warehouse Staff', N'warehouse',
+    (N'Nhân viên kho', N'warehouse',
      N'$2a$10$.KiG7oyd3/JtvMSfV0tdBefCs2eLKBx2LlO6uwPO82fM6nhlGYeIq',
      N'warehouse@snapbuy.com', N'0901000003', NULL, 1),
 
-    (N'Sales Staff', N'sales',
+    (N'Nhân viên bán hàng', N'sales',
      N'$2a$10$.KiG7oyd3/JtvMSfV0tdBefCs2eLKBx2LlO6uwPO82fM6nhlGYeIq',
      N'sales@snapbuy.com', N'0901000004', NULL, 1);
 
@@ -145,52 +145,52 @@ VALUES
     -- Sản phẩm thuộc danh mục "Bộ nồi Inox"
     (N'Bộ nồi Inox 3 đáy Sunhouse SH333', 'PRD001', N'Bộ nồi inox 3 đáy cao cấp, dùng được cho bếp từ',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Bộ nồi Inox'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Bộ', N'16cm-20cm-24cm', N'https://sunhouse.com.vn/images/products/sh333.jpg'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Bộ', N'16cm-20cm-24cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg'),
 
     -- Sản phẩm thuộc danh mục "Bộ nồi Anod"
     (N'Bộ nồi Anod Sunhouse AN668', 'PRD002', N'Bộ nồi Anod phủ chống dính, nấu nhanh chín đều',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Bộ nồi Anod'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Bộ', N'18cm-22cm-26cm', N'https://sunhouse.com.vn/images/products/an668.jpg'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Bộ', N'18cm-22cm-26cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg'),
 
     -- Sản phẩm thuộc danh mục "Chảo chống dính"
     (N'Chảo chống dính Sunhouse CS26', 'PRD003', N'Chảo chống dính sâu lòng 26cm, lớp phủ Whitford',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Chảo chống dính'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'26cm', N'https://sunhouse.com.vn/images/products/cs26.jpg'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'26cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg'),
 
     -- Sản phẩm thuộc danh mục "Nồi áp suất"
     (N'Nồi áp suất Sunhouse SH735', 'PRD004', N'Nồi áp suất 7L, tiết kiệm thời gian nấu ăn',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Nồi áp suất'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'24cm', N'https://sunhouse.com.vn/images/products/sh735.jpg'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'24cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg'),
 
     -- Sản phẩm thuộc danh mục "Nồi cơm điện"
     (N'Nồi cơm điện Sunhouse SHD8955', 'PRD005', N'Nồi cơm điện 1.8L, công nghệ nấu 3D',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Nồi cơm điện'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'28x28x30cm', N'https://sunhouse.com.vn/images/products/shd8955.jpg'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'28x28x30cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg'),
 
     -- Sản phẩm thuộc danh mục "Máy xay sinh tố"
     (N'Máy xay sinh tố Sunhouse SHD5115', 'PRD006', N'Máy xay sinh tố 1.5L, công suất 500W',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Máy xay sinh tố'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'35x20x40cm', N'https://sunhouse.com.vn/images/products/shd5115.jpg'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'35x20x40cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg'),
 
     -- Sản phẩm thuộc danh mục "Bếp điện từ"
     (N'Bếp điện từ đơn Sunhouse SHB9100', 'PRD007', N'Bếp điện từ đơn 2000W, mặt kính chịu nhiệt',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Bếp điện từ'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Chiếc', N'30x37x6cm', N'https://sunhouse.com.vn/images/products/shb9100.jpg'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Chiếc', N'30x37x6cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg'),
 
     -- Sản phẩm thuộc danh mục "Quạt đứng"
     (N'Quạt đứng Sunhouse SHD7728', 'PRD008', N'Quạt đứng 3 cánh, 3 tốc độ gió',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Quạt đứng'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'40x40x120cm', N'https://sunhouse.com.vn/images/products/shd7728.jpg'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'40x40x120cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg'),
 
     -- Thêm sản phẩm mới - Chảo chống dính thêm
     (N'Chảo chống dính Sunhouse CS28', 'PRD009', N'Chảo chống dính đáy từ 28cm, an toàn sức khỏe',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Chảo chống dính'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'28cm', N'https://sunhouse.com.vn/images/products/cs28.jpg'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'28cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg'),
 
     -- Thêm sản phẩm mới - Nồi cơm điện thêm
     (N'Nồi cơm điện cao tần Sunhouse SHD8858', 'PRD010', N'Nồi cơm điện cao tần 1.5L, nấu nhanh thơm ngon',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Nồi cơm điện'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'26x26x28cm', N'https://sunhouse.com.vn/images/products/shd8858.jpg');
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'26x26x28cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg');
 
 INSERT INTO product_price (product_id, unit_price, cost_price)
 VALUES
@@ -227,11 +227,11 @@ VALUES
 
 INSERT INTO purchase_order (purchase_order_number, supplier_id, account_id, order_date, [status], total_amount, tax_amount, notes)
 VALUES
-    ('PO001', (SELECT supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), (SELECT TOP 1 account_id FROM accounts), GETDATE(), 'APPROVED', 20000000, 2000000, N'Nhập hàng Sunhouse đợt 1'),
-    ('PO002', (SELECT supplier_id FROM suppliers WHERE supplier_code = 'SUP002'), (SELECT TOP 1 account_id FROM accounts), GETDATE(), 'RECEIVED', 15000000, 1500000, N'Nhập hàng Minh Tâm'),
-    ('PO003', (SELECT supplier_id FROM suppliers WHERE supplier_code = 'SUP003'), (SELECT TOP 1 account_id FROM accounts), GETDATE(), 'PENDING', 10000000, 1000000, N'Đơn hàng đang chờ duyệt'),
-    ('PO004', (SELECT supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), (SELECT TOP 1 account_id FROM accounts), GETDATE(), 'APPROVED', 25000000, 2500000, N'Nhập thêm sản phẩm Sunhouse'),
-    ('PO005', (SELECT supplier_id FROM suppliers WHERE supplier_code = 'SUP004'), (SELECT TOP 1 account_id FROM accounts), GETDATE(), 'RECEIVED', 12000000, 1200000, N'Đã nhận đủ hàng Việt Phát');
+    ('PO001', (SELECT supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), (SELECT TOP 1 account_id FROM accounts), GETDATE(), N'Đã duyệt', 20000000, 2000000, N'Nhập hàng Sunhouse đợt 1'),
+    ('PO002', (SELECT supplier_id FROM suppliers WHERE supplier_code = 'SUP002'), (SELECT TOP 1 account_id FROM accounts), GETDATE(), N'Đã nhận hàng', 15000000, 1500000, N'Nhập hàng Minh Tâm'),
+    ('PO003', (SELECT supplier_id FROM suppliers WHERE supplier_code = 'SUP003'), (SELECT TOP 1 account_id FROM accounts), GETDATE(), N'Chờ duyệt', 10000000, 1000000, N'Đơn hàng đang chờ duyệt'),
+    ('PO004', (SELECT supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), (SELECT TOP 1 account_id FROM accounts), GETDATE(), N'Đã duyệt', 25000000, 2500000, N'Nhập thêm sản phẩm Sunhouse'),
+    ('PO005', (SELECT supplier_id FROM suppliers WHERE supplier_code = 'SUP004'), (SELECT TOP 1 account_id FROM accounts), GETDATE(), N'Đã nhận hàng', 12000000, 1200000, N'Đã nhận đủ hàng Việt Phát');
 
 INSERT INTO purchase_order_detail (purchase_order_id, product_id, quantity, unit_price)
 VALUES

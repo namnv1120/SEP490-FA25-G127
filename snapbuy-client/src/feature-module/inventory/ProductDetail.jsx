@@ -3,10 +3,11 @@ import { useEffect, useState } from "react";
 import { barcodeImg1, printer, product69 } from "../../utils/imagepath";
 import { getProductById } from "../../services/ProductService";
 import { all_routes } from "../../routes/all_routes";
+import { getImageUrl } from "../../utils/imageUtils"; // 👈 THÊM IMPORT
 
 const ProductDetail = () => {
   const route = all_routes;
-  const { id } = useParams(); // ✅ Lấy id từ URL
+  const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -14,6 +15,8 @@ const ProductDetail = () => {
     const fetchProduct = async () => {
       try {
         const res = await getProductById(id);
+        console.log("🔍 Product detail data:", res); // 👈 DEBUG
+        console.log("🖼️ Image URL from API:", res.imageUrl); // 👈 DEBUG
         setProduct(res);
       } catch (err) {
         console.error("❌ Lỗi khi tải chi tiết sản phẩm:", err);
@@ -45,6 +48,10 @@ const ProductDetail = () => {
       </div>
     );
   }
+
+  // 👇 THÊM: Tạo full URL cho ảnh
+  const productImageUrl = getImageUrl(product.imageUrl) || product69;
+  console.log("🌐 Full image URL:", productImageUrl); // 👈 DEBUG
 
   return (
     <div className="page-wrapper">
@@ -143,24 +150,26 @@ const ProductDetail = () => {
             </div>
           </div>
 
-          {/* Image section */}
+          {/* Image section - 👇 SỬA PHẦN NÀY */}
           <div className="col-lg-4 col-sm-12">
             <div className="card">
               <div className="card-body text-center">
                 <div className="slider-product-details">
                   <div className="slider-product">
                     <img
-                      src={product.productImage || product69}
-                      alt="img"
+                      src={productImageUrl} // 👈 SỬA: Dùng full URL
+                      alt={product.productName}
                       style={{
                         width: "100%",
+                        maxHeight: "400px", // 👈 THÊM: Giới hạn chiều cao
                         borderRadius: "8px",
                         objectFit: "cover",
                       }}
-                      onError={(e) => (e.target.src = product69)}
+                      onError={(e) => {
+                        console.error("❌ Lỗi load ảnh, dùng fallback"); // 👈 DEBUG
+                        e.target.src = product69;
+                      }}
                     />
-                    <h4>{product.productImage?.split("/").pop() || "image.jpg"}</h4>
-                    <h6>—</h6>
                   </div>
                 </div>
               </div>

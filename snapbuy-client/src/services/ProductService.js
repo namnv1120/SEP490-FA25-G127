@@ -19,7 +19,7 @@ export const getAllProducts = async () => {
     const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
     return response.data?.result || response.data || [];
   } catch (error) {
-    console.error("❌ Failed to fetch products:", error);
+    console.error("❌ Lỗi khi lấy danh sách sản phẩm:", error);
     throw error;
   }
 };
@@ -30,25 +30,34 @@ export const getProductById = async (id) => {
 
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Failed to fetch product by ID:", error);
+    console.error("❌ Lỗi khi lấy sản phẩm theo ID:", error);
     throw error;
   }
 };
 
 // ➕ Thêm sản phẩm
-export const createProduct = async (productData) => {
+export const createProduct = async (formData) => {
   try {
+    const token = localStorage.getItem("authToken");
+    const tokenType = localStorage.getItem("authTokenType") || "Bearer";
+
     const response = await axios.post(
       REST_API_BASE_URL,
-      productData,
-      getAuthHeaders()
+      formData,
+      {
+        headers: {
+          Authorization: `${tokenType} ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Failed to create product:", error);
+    console.error("❌ Lỗi khi tạo sản phẩm:", error);
     throw error;
   }
 };
+
 
 export const updateProduct = async (id, productData) => {
   try {
@@ -59,7 +68,7 @@ export const updateProduct = async (id, productData) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Failed to update product:", error);
+    console.error("❌ Lỗi khi cập nhật sản phẩm:", error);
     throw error;
   }
 };
@@ -72,7 +81,7 @@ export const deleteProduct = async (id) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Failed to delete product:", error);
+    console.error("❌ Lỗi khi xóa sản phẩm:", error);
     throw error;
   }
 }
@@ -86,7 +95,7 @@ export const importProducts = async (products) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Failed to import products:", error);
+    console.error("❌ Lỗi khi nhập sản phẩm:", error);
     throw error;
   }
 };

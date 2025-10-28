@@ -141,7 +141,7 @@ const ProductPriceList = () => {
       key: "productName",
       sortable: true,
       body: (data) => (
-        <Link to={route.productdetails.replace(":id", data.productId)}>
+        <Link to={route.productdetail.replace(":id", data.productId)}>
           {data.productName}
         </Link>
       ),

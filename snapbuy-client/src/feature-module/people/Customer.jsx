@@ -1,24 +1,146 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import CustomerDataComponent, {
-  customersData,
-} from "../../core/json/customers-data";
+import { useState, useEffect } from "react";
+import { Modal } from "bootstrap";
+import { message } from "antd";
 import PrimeDataTable from "../../components/data-table";
 import SearchFromApi from "../../components/data-table/search";
-import DeleteModal from "../../components/delete-modal";
-import CommonSelect from "../../components/select/common-select";
 import TableTopHead from "../../components/table-top-head";
-import { user41 } from "../../utils/imagepath";
+import DeleteModal from "../../components/delete-modal";
+import CommonFooter from "../../components/footer/commonFooter";
+import {
+  getAllCustomers,
+  getCustomerById,
+  updateCustomer,
+} from "../../services/CustomerService";
 
 const Customers = () => {
-  const [listData, _setListData] = useState(customersData);
+  const [listData, setListData] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalRecords, _setTotalRecords] = useState(5);
+  const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
-  const [_searchQuery, setSearchQuery] = useState(undefined);
-  const [selectedCity, setSelectedCity] = useState("");
-  const [selectedState, setSelectedState] = useState("");
-  const [selectedCountry, setSelectedCountry] = useState("");
+  const [_searchQuery, setSearchQuery] = useState("");
+
+  // 🟢 State cho modal edit
+  const [selectedCustomerId, setSelectedCustomerId] = useState(null);
+  const [formData, setFormData] = useState({
+    fullName: "",
+    phone: "",
+    gender: "",
+  });
+  const [modalLoading, setModalLoading] = useState(false);
+
+  // 🟢 Load danh sách khách hàng
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      const data = await getAllCustomers();
+      setListData(data);
+      setTotalRecords(data.length || 0);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách khách hàng:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  // 🟢 Khi nhấn nút edit
+  const handleEditClick = async (customer) => {
+    setSelectedCustomerId(customer.customerId);
+
+    try {
+      setModalLoading(true);
+      const customerData = await getCustomerById(customer.customerId);
+      setFormData({
+        fullName: customerData.fullName || "",
+        phone: customerData.phone || "",
+        gender: customerData.gender || "",
+      });
+
+      const modalElement = document.getElementById("edit-customer-modal");
+      if (modalElement) {
+        const modal = new Modal(modalElement);
+        modal.show();
+      }
+    } catch (error) {
+      console.error("Lỗi khi tải dữ liệu khách hàng:", error);
+      message.error("Không thể tải dữ liệu khách hàng");
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  // 🟢 Đóng modal
+  const handleModalClose = () => {
+    const modalElement = document.getElementById("edit-customer-modal");
+    const modal = Modal.getInstance(modalElement);
+    if (modal) modal.hide();
+
+    // Cleanup backdrop
+    setTimeout(() => {
+      document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+      document.body.classList.remove("modal-open");
+      document.body.style.removeProperty("overflow");
+      document.body.style.removeProperty("padding-right");
+    }, 0);
+
+    setSelectedCustomerId(null);
+  };
+
+  // 🟢 Thay đổi input
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  // 🟢 Gửi cập nhật
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!formData.fullName.trim()) {
+      message.warning("Vui lòng nhập họ và tên");
+      return;
+    }
+    if (!formData.phone.trim()) {
+      message.warning("Vui lòng nhập số điện thoại");
+      return;
+    }
+
+    const phoneRegex = /^\+?[0-9]{10,15}$/;
+    if (!phoneRegex.test(formData.phone)) {
+      message.warning("Số điện thoại không đúng định dạng");
+      return;
+    }
+
+    try {
+      setModalLoading(true);
+
+      const updateData = {
+        fullName: formData.fullName,
+        phone: formData.phone,
+        gender: formData.gender,
+      };
+
+      await updateCustomer(selectedCustomerId, updateData);
+      message.success("Cập nhật khách hàng thành công!");
+
+      handleModalClose();
+      fetchCustomers();
+    } catch (error) {
+      console.error("Lỗi cập nhật khách hàng:", error);
+      const errorMessage =
+        error.response?.data?.message || "Không thể cập nhật khách hàng";
+      message.error(errorMessage);
+    } finally {
+      setModalLoading(false);
+    }
+  };
 
   const columns = [
     {
@@ -37,155 +159,69 @@ const Customers = () => {
       sortable: false,
       key: "checked",
     },
-    { header: "Code", field: "code", key: "code" },
+    { header: "Mã KH", field: "customerCode", key: "customerCode" },
+    { header: "Tên khách hàng", field: "fullName", key: "fullName" },
+    { header: "Số điện thoại", field: "phone", key: "phone" },
     {
-      header: "Customer",
-      field: "customer",
-      key: "customer",
-      body: (data) => (
-        <div className="d-flex align-items-center">
-          <Link to="#" className="avatar avatar-md me-2">
-            <img src={data.avatar} alt="product" />
-          </Link>
-          <Link to="#">{data.customer}</Link>
-        </div>
-      ),
-    },
-    { header: "Email", field: "email", key: "email" },
-    { header: "Phone", field: "phone", key: "phone" },
-    { header: "Country", field: "country", key: "country" },
-    {
-      header: "Status",
-      field: "status",
-      key: "status",
-      body: (data) => (
-        <span
-          className={`d-inline-flex align-items-center p-1 pe-2 rounded-1 text-white bg-${
-            data.status === "Active" ? "success" : "danger"
-          } fs-10`}
-        >
-          <i className="ti ti-point-filled me-1 fs-11"></i>
-          {data.status}
-        </span>
-      ),
+      header: "Giới tính",
+      field: "gender",
+      key: "gender",
+      body: (data) => {
+        const gender = data.gender?.toLowerCase();
+        if (gender === "male" || gender === "m") return "Nam";
+        if (gender === "female" || gender === "f") return "Nữ";
+        return "Khác";
+      },
     },
     {
       header: "",
-      field: "actions",
       key: "actions",
       sortable: false,
-      body: () => (
+      body: (row) => (
         <div className="edit-delete-action d-flex align-items-center">
-          <Link
-            className="me-2 p-2 d-flex align-items-center border rounded"
-            to="#"
-          >
-            <i className="feather icon-eye"></i>
-          </Link>
-          <Link
-            className="me-2 p-2 d-flex align-items-center border rounded"
-            to="#"
-            data-bs-toggle="modal"
-            data-bs-target="#edit-customer"
+          <button
+            className="me-2 p-2 border rounded bg-transparent"
+            onClick={() => handleEditClick(row)}
           >
             <i className="feather icon-edit"></i>
-          </Link>
-          <Link
-            className="p-2 d-flex align-items-center border rounded"
-            to="#"
-            data-bs-toggle="modal"
-            data-bs-target="#delete-modal"
+          </button>
+          <button
+            className="p-2 border rounded bg-transparent"
+            onClick={() => message.info("Tính năng xoá sẽ thêm sau")}
           >
             <i className="feather icon-trash-2"></i>
-          </Link>
+          </button>
         </div>
       ),
     },
   ];
 
-  const handleSearch = (value) => {
-    setSearchQuery(value);
-  };
-
-  const cityOptions = [
-    { label: "Select", value: "" },
-    { label: "Los Angles", value: "los-angles" },
-    { label: "New York City", value: "new-york-city" },
-    { label: "Houston", value: "houston" },
-  ];
-
-  const stateOptions = [
-    { label: "Select", value: "" },
-    { label: "California", value: "california" },
-    { label: "New York", value: "new-york" },
-    { label: "Texas", value: "texas" },
-  ];
-
-  const countryOptions = [
-    { label: "Select", value: "" },
-    { label: "United States", value: "united-states" },
-    { label: "Canada", value: "canada" },
-    { label: "Germany", value: "germany" },
-  ];
-
   return (
-    <>
-      <div className="page-wrapper">
-        <div className="content">
-          <div className="page-header">
-            <div className="add-item d-flex">
-              <div className="page-title">
-                <h4 className="fw-bold">Customers</h4>
-                <h6>Manage your customers</h6>
-              </div>
-            </div>
-            <TableTopHead />
-            <div className="page-btn">
-              <Link
-                to="#"
-                className="btn btn-primary text-white"
-                data-bs-toggle="modal"
-                data-bs-target="#add-customer"
-              >
-                <i className="ti ti-circle-plus me-1" />
-                Add Customer
-              </Link>
+    <div className="page-wrapper">
+      <div className="content">
+        <div className="page-header">
+          <div className="add-item d-flex">
+            <div className="page-title">
+              <h4 className="fw-bold">Khách hàng</h4>
+              <h6>Quản lý danh sách khách hàng</h6>
             </div>
           </div>
+          <TableTopHead />
+        </div>
 
-          <div className="card">
-            <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <SearchFromApi
-                callback={handleSearch}
-                rows={rows}
-                setRows={setRows}
-              />
-              <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                <div className="dropdown">
-                  <Link
-                    to="#"
-                    className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                    data-bs-toggle="dropdown"
-                  >
-                    Status
-                  </Link>
-                  <ul className="dropdown-menu dropdown-menu-end p-3">
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Active
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Inactive
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+        <div className="card">
+          <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+            <SearchFromApi
+              callback={setSearchQuery}
+              rows={rows}
+              setRows={setRows}
+            />
+          </div>
 
-            <div className="card-body p-0">
+          <div className="card-body p-0">
+            {loading ? (
+              <div className="text-center p-3">Đang tải dữ liệu...</div>
+            ) : (
               <div className="table-responsive">
                 <PrimeDataTable
                   column={columns}
@@ -195,358 +231,110 @@ const Customers = () => {
                   currentPage={currentPage}
                   setCurrentPage={setCurrentPage}
                   totalRecords={totalRecords}
+                  dataKey="customerId"
                 />
               </div>
-            </div>
+            )}
           </div>
-        </div>
-
-        <div className="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-          <p className="mb-0 text-gray-9">
-            2014 - 2025 © DreamsPOS. All Right Reserved
-          </p>
-          <p>
-            Designed & Developed by{" "}
-            <Link to="#" className="text-primary">
-              Dreams
-            </Link>
-          </p>
         </div>
       </div>
 
-      {/* Add Customer */}
-      <div className="modal fade" id="add-customer">
-        <div className="modal-dialog modal-dialog-centered">
+      <CommonFooter />
+      <DeleteModal />
+
+      {/* 🟢 Modal chỉnh sửa khách hàng (giống EditCategory) */}
+      <div className="modal fade" id="edit-customer-modal" tabIndex="-1">
+        <div className="modal-dialog modal-dialog-centered modal-md">
           <div className="modal-content">
-            <div className="modal-header">
+            <div className="modal-header border-0 custom-modal-header">
               <div className="page-title">
-                <h4>Add Customer</h4>
+                <h4>Chỉnh sửa khách hàng</h4>
               </div>
               <button
                 type="button"
                 className="close"
-                data-bs-dismiss="modal"
+                onClick={handleModalClose}
                 aria-label="Close"
               >
                 <span aria-hidden="true">×</span>
               </button>
             </div>
-            <form action="customers.html">
-              <div className="modal-body">
-                <div className="new-employee-field">
-                  <div className="profile-pic-upload">
-                    <div className="profile-pic">
-                      <span>
-                        <i className="feather icon-plus-circle plus-down-add" />{" "}
-                        Add Image
-                      </span>
-                    </div>
-                    <div className="mb-3">
-                      <div className="image-upload mb-0">
-                        <input type="file" />
-                        <div className="image-uploads">
-                          <h4>Upload Image</h4>
-                        </div>
-                      </div>
-                      <p className="mt-2">JPEG, PNG up to 2 MB</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="row">
-                  <div className="col-lg-6 mb-3">
-                    <label className="form-label">
-                      First Name<span className="text-danger ms-1">*</span>
-                    </label>
-                    <input type="text" className="form-control" />
-                  </div>
-                  <div className="col-lg-6 mb-3">
-                    <label className="form-label">
-                      Last Name<span className="text-danger ms-1">*</span>
-                    </label>
-                    <input type="text" className="form-control" />
-                  </div>
-                  <div className="col-lg-12 mb-3">
-                    <label className="form-label">
-                      Email<span className="text-danger ms-1">*</span>
-                    </label>
-                    <input type="email" className="form-control" />
-                  </div>
-                  <div className="col-lg-12 mb-3">
-                    <label className="form-label">
-                      Phone<span className="text-danger ms-1">*</span>
-                    </label>
-                    <input type="tel" className="form-control" />
-                  </div>
-                  <div className="col-lg-12 mb-3">
-                    <label className="form-label">
-                      Address<span className="text-danger ms-1">*</span>
-                    </label>
-                    <input type="text" className="form-control" />
-                  </div>
-                  <div className="col-lg-6 mb-3">
-                    <label className="form-label">
-                      City<span className="text-danger ms-1">*</span>
-                    </label>
-                    <CommonSelect
-                      className="w-100"
-                      options={cityOptions}
-                      value={selectedCity}
-                      onChange={(e) => setSelectedCity(e.value)}
-                      placeholder="Select City"
-                      filter={false}
-                    />
-                  </div>
-                  <div className="col-lg-6 mb-3">
-                    <label className="form-label">
-                      State<span className="text-danger ms-1">*</span>
-                    </label>
-                    <CommonSelect
-                      className="w-100"
-                      options={stateOptions}
-                      value={selectedState}
-                      onChange={(e) => setSelectedState(e.value)}
-                      placeholder="Select State"
-                      filter={false}
-                    />
-                  </div>
-                  <div className="col-lg-6 mb-3">
-                    <label className="form-label">
-                      Country<span className="text-danger ms-1">*</span>
-                    </label>
-                    <CommonSelect
-                      className="w-100"
-                      options={countryOptions}
-                      value={selectedCountry}
-                      onChange={(e) => setSelectedCountry(e.value)}
-                      placeholder="Select Country"
-                      filter={false}
-                    />
-                  </div>
-                  <div className="col-lg-6 mb-3">
-                    <label className="form-label">
-                      Postal Code<span className="text-danger ms-1">*</span>
-                    </label>
-                    <input type="text" className="form-control" />
-                  </div>
-                  <div className="col-lg-12">
-                    <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                      <span className="status-label">Status</span>
-                      <input
-                        type="checkbox"
-                        id="user1"
-                        className="check"
-                        defaultChecked
-                      />
-                      <label htmlFor="user1" className="checktoggle"></label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3 shadow-none"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary fs-13 fw-medium p-2 px-3"
-                >
-                  Add Customer
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
 
-      {/* Edit Customer */}
-      <div className="modal fade" id="edit-customer">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="page-wrapper-new p-0">
-              <div className="content">
-                <div className="modal-header">
-                  <div className="page-title">
-                    <h4>Edit Customer</h4>
+            <div className="modal-body custom-modal-body">
+              {modalLoading ? (
+                <div className="text-center py-4">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
                   </div>
-                  <button
-                    type="button"
-                    className="close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                  >
-                    <span aria-hidden="true">×</span>
-                  </button>
                 </div>
-                <form action="customers.html">
-                  <div className="modal-body">
-                    <div className="new-employee-field">
-                      <div className="profile-pic-upload image-field">
-                        <div className="profile-pic p-2">
-                          <img
-                            src={user41}
-                            className="object-fit-cover h-100 rounded-1"
-                            alt="user"
-                          />
-                          <button type="button" className="close rounded-1">
-                            <span aria-hidden="true">×</span>
-                          </button>
-                        </div>
-                        <div className="mb-3">
-                          <div className="image-upload mb-0">
-                            <input type="file" />
-                            <div className="image-uploads">
-                              <h4>Change Image</h4>
-                            </div>
-                          </div>
-                          <p className="mt-2">JPEG, PNG up to 2 MB</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="row">
-                      <div className="col-lg-6 mb-3">
-                        <label className="form-label">
-                          First Name<span className="text-danger ms-1">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue="Carl"
-                        />
-                      </div>
-                      <div className="col-lg-6 mb-3">
-                        <label className="form-label">
-                          Last Name<span className="text-danger ms-1">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue="Evans"
-                        />
-                      </div>
-                      <div className="col-lg-12 mb-3">
-                        <label className="form-label">
-                          Email<span className="text-danger ms-1">*</span>
-                        </label>
-                        <input
-                          type="email"
-                          className="form-control"
-                          defaultValue="carlevans@example.com"
-                        />
-                      </div>
-                      <div className="col-lg-12 mb-3">
-                        <label className="form-label">
-                          Phone<span className="text-danger ms-1">*</span>
-                        </label>
-                        <input
-                          type="tel"
-                          className="form-control"
-                          defaultValue="+12163547758"
-                        />
-                      </div>
-                      <div className="col-lg-12 mb-3">
-                        <label className="form-label">
-                          Address<span className="text-danger ms-1">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue="87 Griffin Street"
-                        />
-                      </div>
-                      <div className="col-lg-6 mb-3">
-                        <label className="form-label">
-                          City<span className="text-danger ms-1">*</span>
-                        </label>
-                        <CommonSelect
-                          className="w-100"
-                          options={cityOptions}
-                          value={selectedCity}
-                          onChange={(e) => setSelectedCity(e.value)}
-                          placeholder="Select City"
-                          filter={false}
-                        />
-                      </div>
-                      <div className="col-lg-6 mb-3">
-                        <label className="form-label">
-                          State<span className="text-danger ms-1">*</span>
-                        </label>
-                        <CommonSelect
-                          className="w-100"
-                          options={stateOptions}
-                          value={selectedState}
-                          onChange={(e) => setSelectedState(e.value)}
-                          placeholder="Select State"
-                          filter={false}
-                        />
-                      </div>
-                      <div className="col-lg-6 mb-3">
-                        <label className="form-label">
-                          Country<span className="text-danger ms-1">*</span>
-                        </label>
-                        <CommonSelect
-                          className="w-100"
-                          options={countryOptions}
-                          value={selectedCountry}
-                          onChange={(e) => setSelectedCountry(e.value)}
-                          placeholder="Select Country"
-                          filter={false}
-                        />
-                      </div>
-                      <div className="col-lg-6 mb-3">
-                        <label className="form-label">
-                          Postal Code<span className="text-danger ms-1">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          defaultValue="90001"
-                        />
-                      </div>
-                      <div className="col-lg-12">
-                        <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                          <span className="status-label">Status</span>
-                          <input
-                            type="checkbox"
-                            id="user2"
-                            className="check"
-                            defaultChecked
-                          />
-                          <label
-                            htmlFor="user2"
-                            className="checktoggle"
-                          ></label>
-                        </div>
-                      </div>
-                    </div>
+              ) : (
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-3">
+                    <label className="form-label">
+                      Họ và tên<span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="fullName"
+                      className="form-control"
+                      value={formData.fullName}
+                      onChange={handleInputChange}
+                      required
+                    />
                   </div>
-                  <div className="modal-footer">
+
+                  <div className="mb-3">
+                    <label className="form-label">
+                      Số điện thoại<span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="phone"
+                      className="form-control"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Giới tính</label>
+                    <select
+                      name="gender"
+                      className="form-control"
+                      value={formData.gender}
+                      onChange={handleInputChange}
+                    >
+                      <option value="Male">Nam</option>
+                      <option value="Female">Nữ</option>
+                      <option value="Other">Khác</option>
+                    </select>
+                  </div>
+
+                  <div className="modal-footer-btn mt-4 d-flex justify-content-end">
                     <button
                       type="button"
-                      className="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3 shadow-none"
-                      data-bs-dismiss="modal"
+                      className="btn btn-cancel me-2"
+                      onClick={handleModalClose}
+                      disabled={modalLoading}
                     >
-                      Cancel
+                      Huỷ
                     </button>
                     <button
                       type="submit"
-                      className="btn btn-primary fs-13 fw-medium p-2 px-3"
+                      className="btn btn-submit"
+                      disabled={modalLoading}
                     >
-                      Save Changes
+                      {modalLoading ? "Đang lưu..." : "Lưu thay đổi"}
                     </button>
                   </div>
                 </form>
-              </div>
+              )}
             </div>
           </div>
         </div>
       </div>
-      {/* /Edit Customer */}
-      <DeleteModal />
-    </>
+    </div>
   );
 };
 

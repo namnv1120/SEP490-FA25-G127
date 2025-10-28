@@ -52,6 +52,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/forgot-password/**").permitAll()
                         .requestMatchers("/api/payments/momo/notify").permitAll()
                         .requestMatchers("/api/payments/momo/return").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

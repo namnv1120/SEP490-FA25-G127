@@ -12,6 +12,7 @@ import ImportProductModal from "./ImportProduct";
 import { message } from "antd";
 import { Modal } from "bootstrap";
 import { exportToExcel } from "../../utils/excelUtils";
+import { getImageUrl } from "../../utils/imageUtils";
 
 const ProductList = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,21 +37,34 @@ const ProductList = () => {
       setError(null);
       const data = await getAllProducts();
 
+      console.log("📦 Raw API data:", data);
+
       // Map API data to match table structure
-      const mappedProducts = data.map((product, index) => ({
-        productId: product.productId || index + 1,
-        productCode: product.code || product.productCode || "N/A",
-        productName: product.name || product.productName || "N/A",
-        productImage: product.image || product.imageUrl || stockImg1,
-        category: product.category?.name || product.categoryName || "N/A",
-        description: product.description || "N/A",
-        supplier: product.supplier?.name || product.supplierName || "N/A",
-        dimensions: product.dimensions || "N/A",
-        imageUrl: product.image || product.imageUrl || "",
-        unitprice: `${product.unitPrice?.toLocaleString() || "0.00"} đ`,
-        unit: product.unit || "N/A",
-        qty: product.quantityInStock?.toString() || product.qty?.toString() || "0",
-      }));
+      const mappedProducts = data.map((product, index) => {
+        const imageUrl = product.image || product.imageUrl || "";
+        const fullImageUrl = getImageUrl(imageUrl) || stockImg1;
+
+        console.log(`🖼️ Product ${product.productCode}:`, {
+          rawImageUrl: imageUrl,
+          fullImageUrl: fullImageUrl
+        });
+
+        return {
+          productId: product.productId || index + 1,
+          productCode: product.code || product.productCode || "N/A",
+          productName: product.name || product.productName || "N/A",
+          productImage: fullImageUrl, // 👈 SỬA: Dùng full URL
+          category: product.category?.name || product.categoryName || "N/A",
+          description: product.description || "N/A",
+          supplier: product.supplier?.name || product.supplierName || "N/A",
+          dimensions: product.dimensions || "N/A",
+          imageUrl: imageUrl, // Giữ URL gốc để export
+          unitprice: `${product.unitPrice?.toLocaleString() || "0.00"} đ`,
+          unit: product.unit || "N/A",
+          qty: product.quantityInStock?.toString() || product.qty?.toString() || "0",
+        };
+      });
+
       setProducts(mappedProducts);
       setTotalRecords(mappedProducts.length);
     } catch (err) {
@@ -172,9 +186,19 @@ const ProductList = () => {
       body: (data) => (
         <div className="d-flex align-items-center">
           <Link to="#" className="avatar avatar-md me-2">
-            <img alt="" src={data.productImage} />
+            {/* 👇 THÊM: Error handler cho ảnh */}
+            <img
+              alt={data.productName}
+              src={data.productImage}
+              onError={(e) => {
+                e.target.src = stockImg1; // Fallback to default image
+              }}
+
+            />
           </Link>
-          <Link to={route.productdetail.replace(":id", data.productId)}>{data.productName}</Link>
+          <Link to={route.productdetail.replace(":id", data.productId)}>
+            {data.productName}
+          </Link>
         </div>
       ),
     },

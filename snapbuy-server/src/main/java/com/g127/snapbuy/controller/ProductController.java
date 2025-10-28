@@ -23,12 +23,13 @@ public class ProductController {
 
     private final ProductService productService;
 
-    @PostMapping
-    public ApiResponse<ProductResponse> createProduct(@RequestBody @Valid ProductCreateRequest request) {
+    @PostMapping(consumes = {"multipart/form-data"})
+    public ApiResponse<ProductResponse> createProduct(@ModelAttribute @Valid ProductCreateRequest request) {
         ApiResponse<ProductResponse> response = new ApiResponse<>();
         response.setResult(productService.createProduct(request));
         return response;
     }
+
 
     @PutMapping("{id}")
     public ApiResponse<ProductResponse> updateProduct(

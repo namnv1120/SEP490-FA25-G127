@@ -22,7 +22,6 @@ public class CustomerResponse {
     private String fullName;
     private String phone;
     private String gender;
-    private boolean active;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
 }

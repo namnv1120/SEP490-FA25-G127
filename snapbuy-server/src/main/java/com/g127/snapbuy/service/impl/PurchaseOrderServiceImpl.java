@@ -13,6 +13,8 @@ import com.g127.snapbuy.repository.*;
 import com.g127.snapbuy.service.PurchaseOrderService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -302,6 +304,42 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 po.getReceivedDate(),
                 d
         );
+    }
+
+    @Override
+    @Transactional
+    public List<PurchaseOrderResponse> findAll() {
+        List<PurchaseOrder> pos = purchaseOrderRepo.findAll();
+        // nạp chi tiết theo id để response đầy đủ
+        Map<UUID, List<PurchaseOrderDetail>> detailsByPo = detailRepo.findAll().stream()
+                .collect(Collectors.groupingBy(PurchaseOrderDetail::getPurchaseOrderId));
+        return pos.stream()
+                .map(po -> toResponse(po, detailsByPo.getOrDefault(po.getId(), List.of())))
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public Page<PurchaseOrderResponse> search(String status, UUID supplierId, LocalDateTime from, LocalDateTime to, Pageable pageable) {
+        Page<PurchaseOrder> page;
+        if (supplierId != null) {
+            page = purchaseOrderRepo.findBySupplierId(supplierId, pageable);
+        } else if (status != null && !status.isBlank()) {
+            page = purchaseOrderRepo.findByStatusContainingIgnoreCase(status.trim(), pageable);
+        } else if (from != null && to != null) {
+            page = purchaseOrderRepo.findByOrderDateBetween(from, to, pageable);
+        } else {
+            page = purchaseOrderRepo.findAll(pageable);
+        }
+
+        List<UUID> poIds = page.getContent().stream().map(PurchaseOrder::getId).toList();
+        List<PurchaseOrderDetail> details = poIds.isEmpty() ? List.of() : detailRepo.findAll().stream()
+                .filter(d -> poIds.contains(d.getPurchaseOrderId()))
+                .toList();
+        Map<UUID, List<PurchaseOrderDetail>> detailsByPo = details.stream()
+                .collect(Collectors.groupingBy(PurchaseOrderDetail::getPurchaseOrderId));
+
+        return page.map(po -> toResponse(po, detailsByPo.getOrDefault(po.getId(), List.of())));
     }
 
     private String generateUniqueNumber() {

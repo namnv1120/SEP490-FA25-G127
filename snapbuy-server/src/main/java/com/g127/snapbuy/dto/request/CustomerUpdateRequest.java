@@ -18,7 +18,6 @@ public class CustomerUpdateRequest {
     @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Số điện thoại không đúng định dạng.")
     private String phone;
 
-    @NotNull(message = "Vui lòng chọn giới tính.")
     private Customer.Gender gender;
 
 }

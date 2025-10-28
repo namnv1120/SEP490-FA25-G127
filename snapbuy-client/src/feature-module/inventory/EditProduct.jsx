@@ -108,6 +108,7 @@ const EditProduct = () => {
         supplierName: product?.supplierName || "",
         dimensions: product?.dimensions || "",
         description: product?.description || "",
+        imageUrl: product?.imageUrl || "",
       };
 
 
