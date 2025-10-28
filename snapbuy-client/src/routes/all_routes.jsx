@@ -1,20 +1,17 @@
 export const all_routes = {
-  // Dashboard
   dashboard: "/dashboard",
 
-  // Product routes
-  productlist: "/product-list",
-  addproduct: "/add-product",
-  editproduct: "/edit-product",
-  productdetails: "/product-details",
-  inventory: "/inventory",
-  categorylist: "/category-list",
+  products: "/products",
+  addproduct: "/products/add",
+  editproduct: "/products/edit/:id",
+  productdetails: "/products/details/:id",
+  inventories: "/inventories",
+  categories: "/categories",
   subcategories: "/sub-categories",
-  units: "/units",
-  variantattributes: "/variant-attributes",
-  warranty: "/warranty",
-  barcode: "/barcode",
-  qrcode: "/qrcode",
+  productprices: "/product-prices",
+  addproductprice: "/product-prices/add",
+  editproductprice: "/product-prices/edit/:id",
+
 
   // Orders & Sales
   orders: "/orders",
@@ -24,6 +21,7 @@ export const all_routes = {
   onlineorder: "/online-order",
   pos: "/pos",
   posorder: "/pos-order",
+  possettings: "/pos-settings",
   invoice: "/invoice",
   invoicedetails: "/invoice-details",
 

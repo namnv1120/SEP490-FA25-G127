@@ -22,5 +22,7 @@ public interface CustomerRepository extends JpaRepository<Customer, UUID> {
            OR LOWER(c.phone) LIKE LOWER(CONCAT('%', :keyword, '%'))
     """)
     List<Customer> searchByKeyword(@Param("keyword") String keyword);
+
+    Customer getCustomerByPhone(String phone);
 }
 

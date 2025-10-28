@@ -21,7 +21,7 @@ public class AccountDetailsServiceImpl implements AccountDetailsService {
 
         Account acc = accountRepository
                 .findByUsernameWithRolesAndPermissionsIgnoreCase(uname)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng: " + username));
 
         String[] authorities = acc.getRoles().stream()
                 .map(r -> r.getRoleName().startsWith("ROLE_") ? r.getRoleName() : "ROLE_" + r.getRoleName())

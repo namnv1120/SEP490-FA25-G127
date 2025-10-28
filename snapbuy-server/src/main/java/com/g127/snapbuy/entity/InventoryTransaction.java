@@ -1,7 +1,7 @@
 package com.g127.snapbuy.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -10,10 +10,14 @@ import java.util.UUID;
 @Entity
 @Table(name = "inventory_transaction")
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class InventoryTransaction {
 
     @Id
     @Column(name = "transaction_id")
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID transactionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -44,5 +48,4 @@ public class InventoryTransaction {
 
     @Column(name = "transaction_date")
     private LocalDateTime transactionDate;
-
 }

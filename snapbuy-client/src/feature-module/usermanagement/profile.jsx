@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import CommonFooter from "../../components/layouts/footer";
 import { user49 } from "../../utils/imagepath";
-import { getAccount, updateAccount } from "../../services/accountService";
+import { getMyInfo, updateAccount } from "../../services/accountService";
 
 const Profile = () => {
   const [isPasswordVisible, setPasswordVisible] = useState(false);
   const [avatar, setAvatar] = useState(user49);
-
   const [user, setUser] = useState({
+    id: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -18,21 +18,21 @@ const Profile = () => {
   });
 
   useEffect(() => {
-    const userId = 1;
-    getAccount(userId)
-      .then((res) => {
-        const data = res.data;
+    getMyInfo()
+      .then((data) => {
+        const userData = data.result || data;
         setUser({
-          firstName: data.firstName || "",
-          lastName: data.lastName || "",
-          email: data.email || "",
-          phone: data.phone || "",
-          username: data.username || "",
-          password: data.password || "",
+          id: userData.id,
+          firstName: userData.firstName || "",
+          lastName: userData.lastName || "",
+          email: userData.email || "",
+          phone: userData.phone || "",
+          username: userData.username || "",
+          password: userData.password || "",
         });
-        if (data.image) setAvatar(data.image);
+        if (userData.image) setAvatar(userData.image);
       })
-      .catch((err) => console.error("Error fetching user:", err));
+      .catch((err) => console.error("Error fetching user info:", err.message));
   }, []);
 
   const handleChange = (e) => {
@@ -50,14 +50,17 @@ const Profile = () => {
   };
 
   const handleSave = () => {
-    const userId = 1; // tạm thời fix cứng
-    updateAccount(userId, { ...user, image: avatar })
+    if (!user.id) {
+      alert("User ID not found!");
+      return;
+    }
+    updateAccount(user.id, { ...user, image: avatar })
       .then(() => alert("Profile updated successfully!"))
       .catch(() => alert("Failed to update profile!"));
   };
 
   const togglePasswordVisibility = () => {
-    setPasswordVisible((prevState) => !prevState);
+    setPasswordVisible((prev) => !prev);
   };
 
   return (

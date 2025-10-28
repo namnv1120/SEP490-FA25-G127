@@ -11,7 +11,6 @@ import com.g127.snapbuy.service.PermissionService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +28,7 @@ public class PermissionServiceImpl implements PermissionService {
     private boolean isAdmin() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null) return false;
-        return auth.getAuthorities().stream().anyMatch(a -> "ROLE_Admin".equals(a.getAuthority()));
+        return auth.getAuthorities().stream().anyMatch(a -> "ROLE_Quản trị viên".equalsIgnoreCase(a.getAuthority()));
     }
 
     private PermissionResponse toResponse(Permission p) {
@@ -74,7 +73,7 @@ public class PermissionServiceImpl implements PermissionService {
     @Override
     public PermissionResponse getPermissionById(UUID id) {
         Permission p = permissionRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Permission not found"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy quyền"));
         return toResponse(p);
     }
 
@@ -82,12 +81,12 @@ public class PermissionServiceImpl implements PermissionService {
     @Transactional
     public PermissionResponse updatePermission(UUID id, PermissionUpdateRequest req) {
         Permission p = permissionRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Permission not found"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy quyền"));
 
         boolean admin = isAdmin();
 
         if (req.getPermissionName() != null) {
-            if (!admin) throw new IllegalArgumentException("Only Admin can rename permission");
+            if (!admin) throw new IllegalArgumentException("Chỉ 'Quản trị viên' mới được đổi tên quyền");
             String newName = req.getPermissionName().trim();
             permissionRepository.findByPermissionNameIgnoreCase(newName)
                     .filter(other -> !other.getPermissionId().equals(id))
@@ -95,11 +94,11 @@ public class PermissionServiceImpl implements PermissionService {
             p.setPermissionName(newName);
         }
         if (req.getDescription() != null) {
-            if (!admin) throw new IllegalArgumentException("Only Admin can update description");
+            if (!admin) throw new IllegalArgumentException("Chỉ 'Quản trị viên' mới được cập nhật mô tả");
             p.setDescription(req.getDescription());
         }
         if (req.getModule() != null) {
-            if (!admin) throw new IllegalArgumentException("Only Admin can update module");
+            if (!admin) throw new IllegalArgumentException("Chỉ 'Quản trị viên' mới được cập nhật module");
             p.setModule(req.getModule());
         }
         if (req.getIsActive() != null) {

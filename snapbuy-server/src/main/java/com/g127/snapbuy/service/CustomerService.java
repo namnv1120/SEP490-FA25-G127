@@ -19,4 +19,6 @@ public interface CustomerService {
     void deleteCustomer(UUID id);
 
     List<CustomerResponse> searchCustomer(String keyword);
+
+    CustomerResponse getCustomerByPhone(String phone);
 }

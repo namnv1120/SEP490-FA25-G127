@@ -21,7 +21,7 @@ public class OrderController {
     public ApiResponse<OrderResponse> createOrder(@RequestBody OrderCreateRequest req) {
         ApiResponse<OrderResponse> response = new ApiResponse<>();
         response.setResult(orderService.createOrder(req));
-        response.setMessage("Order created successfully");
+        response.setMessage("Tạo đơn hàng thành công.");
         return response;
     }
 
@@ -29,7 +29,7 @@ public class OrderController {
     public ApiResponse<OrderResponse> getOrder(@PathVariable UUID id) {
         ApiResponse<OrderResponse> response = new ApiResponse<>();
         response.setResult(orderService.getOrder(id));
-        response.setMessage("Order fetched successfully");
+        response.setMessage("Lấy thông tin đơn hàng thành công.");
         return response;
     }
 
@@ -37,7 +37,7 @@ public class OrderController {
     public ApiResponse<List<OrderResponse>> getAllOrders() {
         ApiResponse<List<OrderResponse>> response = new ApiResponse<>();
         response.setResult(orderService.getAllOrders());
-        response.setMessage("Orders fetched successfully");
+        response.setMessage("Lấy danh sách đơn hàng thành công.");
         return response;
     }
 
@@ -45,7 +45,7 @@ public class OrderController {
     public ApiResponse<OrderResponse> holdOrder(@PathVariable UUID id) {
         ApiResponse<OrderResponse> response = new ApiResponse<>();
         response.setResult(orderService.holdOrder(id));
-        response.setMessage("Order put on hold successfully");
+        response.setMessage("Đã chuyển đơn hàng sang trạng thái chờ.");
         return response;
     }
 
@@ -53,7 +53,7 @@ public class OrderController {
     public ApiResponse<OrderResponse> completeOrder(@PathVariable UUID id) {
         ApiResponse<OrderResponse> response = new ApiResponse<>();
         response.setResult(orderService.completeOrder(id));
-        response.setMessage("Order completed successfully");
+        response.setMessage("Hoàn tất đơn hàng thành công.");
         return response;
     }
 
@@ -61,7 +61,7 @@ public class OrderController {
     public ApiResponse<OrderResponse> cancelOrder(@PathVariable UUID id) {
         ApiResponse<OrderResponse> response = new ApiResponse<>();
         response.setResult(orderService.cancelOrder(id));
-        response.setMessage("Order cancelled successfully");
+        response.setMessage("Hủy đơn hàng thành công.");
         return response;
     }
 }

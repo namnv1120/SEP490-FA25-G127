@@ -4,7 +4,6 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 import org.hibernate.validator.constraints.URL;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Data
@@ -13,27 +12,27 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ProductUpdateRequest {
 
-    @Size(max = 200, message = "Product name must be at most 200 characters")
+    @Size(max = 200, message = "Tên sản phẩm không được vượt quá 200 ký tự.")
     private String productName;
 
-    @Size(max = 50, message = "Product code must be at most 50 characters")
-    @Pattern(regexp = "^[A-Za-z0-9_-]+$", message = "Product code can only contain letters, numbers, underscores or dashes")
+    @Size(max = 50, message = "Mã sản phẩm không được vượt quá 50 ký tự.")
+    @Pattern(regexp = "^[A-Za-z0-9_-]+$", message = "Mã sản phẩm chỉ cho phép chữ, số, gạch dưới hoặc gạch ngang.")
     private String productCode;
 
-    @Size(max = 10000, message = "Description must be at most 10000 characters")
+    @Size(max = 10000, message = "Mô tả không được vượt quá 10000 ký tự.")
     private String description;
 
     private UUID categoryId;
     private UUID supplierId;
 
-    @Size(max = 20, message = "Unit must be at most 20 characters")
+    @Size(max = 20, message = "Đơn vị tính không được vượt quá 20 ký tự.")
     private String unit;
 
-    @Size(max = 50, message = "Dimensions must be at most 50 characters")
+    @Size(max = 50, message = "Kích thước không được vượt quá 50 ký tự.")
     private String dimensions;
 
-    @Size(max = 500, message = "Image URL must be at most 500 characters")
-    @URL(message = "Invalid image URL format")
+    @Size(max = 500, message = "URL ảnh không được vượt quá 500 ký tự.")
+    @URL(message = "URL ảnh không đúng định dạng. Vui lòng kiểm tra lại.")
     private String imageUrl;
 
     private Boolean active;

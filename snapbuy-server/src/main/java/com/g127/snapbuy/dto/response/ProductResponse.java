@@ -25,6 +25,7 @@ public class ProductResponse {
     private Boolean active;
     private BigDecimal unitPrice;
     private BigDecimal costPrice;
+    private Integer quantityInStock;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
 }

@@ -9,7 +9,6 @@ import { getAllCategories, deleteCategory } from "../../services/CategoryService
 import { message } from "antd";
 import { Modal } from "bootstrap";
 
-// ✅ Import 2 component mới
 import AddCategory from "../inventory/AddCategory";
 import EditCategory from "../inventory/EditCategory";
 
@@ -60,15 +59,15 @@ const CategoryList = () => {
             minute: "2-digit",
           })
           : "N/A",
-        status: cat.active === 1 || cat.active === true ? "Active" : "Inactive",
+        status: cat.active === 1 || cat.active === true ? "Hoạt động" : "Không hoạt động",
 
       }));
 
       setCategories(mapped);
       setTotalRecords(mapped.length);
     } catch (err) {
-      console.error("❌ Error fetching categories:", err);
-      setError("Failed to load categories. Please try again.");
+      console.error("❌ Lỗi khi tải danh sách danh mục:", err);
+      setError("Không thể tải danh sách danh mục. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -91,7 +90,7 @@ const CategoryList = () => {
         const modal = new Modal(modalElement);
         modal.show();
       } else {
-        console.error("Delete modal not found in DOM");
+        console.error("❌ Không tìm thấy phần tử modal xoá");
       }
     }, 0);
   };
@@ -107,7 +106,6 @@ const CategoryList = () => {
         modal.hide();
       }
 
-      // ✅ Xóa backdrop
       setTimeout(() => {
         document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
         document.body.classList.remove("modal-open");
@@ -116,10 +114,10 @@ const CategoryList = () => {
       }, 0);
 
       await fetchCategories();
-      message.success("Category deleted successfully!");
+      message.success("Danh muc đã được xoá thành công!");
     } catch (err) {
-      console.error("❌ Error deleting category:", err);
-      message.error("Failed to delete category. Please try again.");
+      console.error("❌ Lỗi khi xoá danh sách danh mục:", err);
+      message.error("Lỗi khi xoá danh mục. Vui lòng thử lại.");
     } finally {
       setSelectedCategory(null);
     }
@@ -147,37 +145,37 @@ const CategoryList = () => {
       key: "checked",
     },
     {
-      header: "Category",
+      header: "Tên danh mục",
       field: "categoryName",
       key: "categoryName",
       sortable: true,
     },
     {
-      header: "Description",
+      header: "Mô tả",
       field: "description",
       key: "description",
       sortable: true,
     },
     {
-      header: "Created Date",
+      header: "Ngày tạo",
       field: "createddate",
       key: "createddate",
       sortable: true,
     },
     {
-      header: "Updated Date",
+      header: "Ngày chỉnh sửa",
       field: "updateddate",
       key: "updateddate",
       sortable: true,
     },
     {
-      header: "Status",
+      header: "Trạng thái",
       field: "status",
       key: "status",
       sortable: true,
       body: (data) => (
         <span
-          className={`badge fw-medium fs-10 ${data.status === "Active" ? "bg-success" : "bg-danger"
+          className={`badge fw-medium fs-10 ${data.status === "Hoạt động" ? "bg-success" : "bg-danger"
             }`}
         >
           {data.status}
@@ -214,8 +212,8 @@ const CategoryList = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4 className="fw-bold">Parent Categories</h4>
-                <h6>Manage your parent categories</h6>
+                <h4 className="fw-bold">Danh mục</h4>
+                <h6>Quản lý danh mục</h6>
               </div>
             </div>
             <TableTopHead />
@@ -227,7 +225,7 @@ const CategoryList = () => {
                 data-bs-target="#add-main-category"
               >
                 <i className="ti ti-circle-plus me-1"></i>
-                Add Parent Category
+                Thêm danh mục
               </Link>
             </div>
           </div>

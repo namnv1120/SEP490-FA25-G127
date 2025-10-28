@@ -72,4 +72,10 @@ public class CustomerServiceImpl implements CustomerService {
                 .map(customerMapper::toResponse)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public CustomerResponse getCustomerByPhone(String phone) {
+        Customer customer = customerRepository.getCustomerByPhone(phone);
+        return customerMapper.toResponse(customer);
+    }
 }

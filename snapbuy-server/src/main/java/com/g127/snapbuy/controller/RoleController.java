@@ -24,16 +24,16 @@ public class RoleController {
     private final RoleService roleService;
 
     @PostMapping
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<RoleResponse> createRole(@Valid @RequestBody RoleCreateRequest req) {
         ApiResponse<RoleResponse> response = new ApiResponse<>();
         response.setResult(roleService.createRole(req));
-        response.setMessage("Create role successfully");
+        response.setMessage("Tạo vai trò thành công");
         return response;
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<List<RoleResponse>> list(@RequestParam(name = "active", required = false) String active) {
         Optional<Boolean> filter;
         if (active == null) filter = Optional.empty();
@@ -46,7 +46,7 @@ public class RoleController {
     }
 
     @GetMapping("/{roleId}")
-    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<RoleResponse> get(@PathVariable UUID roleId) {
         ApiResponse<RoleResponse> response = new ApiResponse<>();
         response.setResult(roleService.getRoleById(roleId));
@@ -54,27 +54,27 @@ public class RoleController {
     }
 
     @PutMapping("/{roleId}")
-    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<RoleResponse> update(@PathVariable UUID roleId,
                                             @Valid @RequestBody RoleUpdateRequest req) {
         ApiResponse<RoleResponse> response = new ApiResponse<>();
         response.setResult(roleService.updateRole(roleId, req));
-        response.setMessage("Update role successfully");
+        response.setMessage("Cập nhật vai trò thành công");
         return response;
     }
 
     @DeleteMapping("/{roleId}")
-    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<Void> delete(@PathVariable UUID roleId) {
         roleService.deleteRole(roleId);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setResult(null);
-        response.setMessage("Delete role successfully");
+        response.setMessage("Xóa vai trò thành công");
         return response;
     }
 
     @GetMapping("/{roleId}/permissions")
-    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<List<PermissionResponse>> listPermissions(@PathVariable UUID roleId) {
         ApiResponse<List<PermissionResponse>> response = new ApiResponse<>();
         response.setResult(roleService.listPermissions(roleId));
@@ -82,34 +82,34 @@ public class RoleController {
     }
 
     @PostMapping("/{roleId}/permissions/{permissionId}")
-    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<Void> addPermission(@PathVariable UUID roleId,
                                            @PathVariable UUID permissionId) {
         roleService.addPermission(roleId, permissionId);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setResult(null);
-        response.setMessage("Add permission to role successfully");
+        response.setMessage("Thêm quyền vào vai trò thành công");
         return response;
     }
 
     @DeleteMapping("/{roleId}/permissions/{permissionId}")
-    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<Void> removePermission(@PathVariable UUID roleId,
                                               @PathVariable UUID permissionId) {
         roleService.removePermission(roleId, permissionId);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setResult(null);
-        response.setMessage("Remove permission from role successfully");
+        response.setMessage("Xóa quyền khỏi vai trò thành công");
         return response;
     }
 
     @PutMapping("/{roleId}/permissions")
-    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<RoleResponse> setPermissions(@PathVariable UUID roleId,
                                                     @Valid @RequestBody RolePermissionUpdateRequest req) {
         ApiResponse<RoleResponse> response = new ApiResponse<>();
         response.setResult(roleService.setPermissions(roleId, req));
-        response.setMessage("Set permissions successfully");
+        response.setMessage("Cập nhật quyền cho vai trò thành công");
         return response;
     }
 }

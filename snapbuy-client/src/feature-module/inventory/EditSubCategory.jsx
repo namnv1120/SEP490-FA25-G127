@@ -33,8 +33,8 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
           modal.show();
         }
       } catch (error) {
-        console.error("Error loading sub category:", error);
-        message.error("Không thể tải dữ liệu sub category");
+        console.error("Lỗi khi tải danh mục con", error);
+        message.error("Không thể tải dữ liệu danh mục con");
         if (onClose) onClose(); // ✅ Đóng nếu lỗi
       } finally {
         setLoading(false);
@@ -83,7 +83,7 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
       };
 
       await updateCategory(categoryId, updateData);
-      message.success("Cập nhật sub category thành công!");
+      message.success("Cập nhật danh mục con thành công!");
 
       // ✅ Đóng modal giống AddSubCategory
       const modalElement = document.getElementById("edit-sub-category");
@@ -103,16 +103,15 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
       if (onSuccess) onSuccess();
       if (onClose) onClose(); // ✅ Reset editSubCategoryId
     } catch (error) {
-      console.error("Error updating sub category:", error);
+      console.error("Lỗi khi cập nhật danh mục con", error);
       const errorMessage =
-        error.response?.data?.message || "Không thể cập nhật sub category";
+        error.response?.data?.message || "Không thể cập nhật danh mục con";
       message.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Xử lý khi đóng modal bằng nút X hoặc Cancel
   const handleModalClose = () => {
     const modalElement = document.getElementById("edit-sub-category");
     const modal = Modal.getInstance(modalElement);
@@ -130,7 +129,6 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
     if (onClose) onClose();
   };
 
-  // ✅ Không render gì nếu không có categoryId
   if (!categoryId) return null;
 
   return (
@@ -140,7 +138,7 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
           <div className="modal-content">
             <div className="modal-header border-0 custom-modal-header">
               <div className="page-title">
-                <h4>Edit Sub Category</h4>
+                <h4>Cập nhật danh mục con</h4>
               </div>
               <button
                 type="button"
@@ -163,7 +161,7 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
                     <label className="form-label">
-                      Parent Category<span className="text-danger">*</span>
+                      Danh mục cha<span className="text-danger">*</span>
                     </label>
                     <select
                       name="parentCategoryId"
@@ -172,7 +170,7 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
                       onChange={handleInputChange}
                       required
                     >
-                      <option value="">Select Parent Category</option>
+                      <option value="">Chọn danh mục cha</option>
                       {parentCategories.map((parent) => (
                         <option key={parent.categoryId} value={parent.categoryId}>
                           {parent.name || parent.categoryName}
@@ -183,7 +181,7 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
 
                   <div className="mb-3">
                     <label className="form-label">
-                      Sub Category Name<span className="text-danger">*</span>
+                      Tên danh mục con<span className="text-danger">*</span>
                     </label>
                     <input
                       type="text"
@@ -196,7 +194,7 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
                   </div>
 
                   <div className="mb-3 input-blocks">
-                    <label className="form-label">Description</label>
+                    <label className="form-label">Mô tả</label>
                     <textarea
                       name="description"
                       className="form-control"
@@ -208,7 +206,7 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
 
                   <div className="mb-0">
                     <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                      <span className="status-label">Status</span>
+                      <span className="status-label">Trạng thái</span>
                       <input
                         type="checkbox"
                         id="edit-subcat-status"
@@ -227,14 +225,14 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
                       onClick={handleModalClose}
                       disabled={loading}
                     >
-                      Cancel
+                      Huỷ
                     </button>
                     <button
                       type="submit"
                       className="btn btn-submit"
                       disabled={loading}
                     >
-                      {loading ? "Saving..." : "Save Changes"}
+                      {loading ? "Đang lưu..." : "Lưu thay đổi"}
                     </button>
                   </div>
                 </form>

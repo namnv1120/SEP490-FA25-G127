@@ -1,9 +1,15 @@
-import { Tooltip } from "primereact/tooltip";
+import { excel } from "../../utils/imagepath";
 import { Link } from "react-router-dom";
+import { Tooltip } from "primereact/tooltip";
 import { useSelector, useDispatch } from "react-redux";
 import { setToggleHeader } from "../../core/redux/sidebarSlice";
 
-const TableTopHead = () => {
+const TableTopHead = ({
+  onExportExcel,
+  onRefresh,
+  showExcel = true,
+  showRefresh = true
+}) => {
   const dispatch = useDispatch();
   const { toggleHeader } = useSelector((state) => state.sidebar);
 
@@ -15,16 +21,32 @@ const TableTopHead = () => {
     <>
       <Tooltip target=".pr-tooltip" />
       <ul className="table-top-head">
-        <li>
-          <Link
-            to="#"
-            className="pr-tooltip"
-            data-pr-tooltip="Refresh"
-            data-pr-position="top"
-          >
-            <i className="ti ti-refresh" />
-          </Link>
-        </li>
+        {showExcel && (
+          <li>
+            <Link
+              to="#"
+              className="pr-tooltip"
+              data-pr-tooltip="Xuất Excel"
+              data-pr-position="top"
+              onClick={onExportExcel}
+            >
+              <img src={excel} alt="excel" />
+            </Link>
+          </li>
+        )}
+        {showRefresh && (
+          <li>
+            <Link
+              to="#"
+              className="pr-tooltip"
+              data-pr-tooltip="Tải lại trang"
+              data-pr-position="top"
+              onClick={onRefresh}
+            >
+              <i className="ti ti-refresh" />
+            </Link>
+          </li>
+        )}
         <li>
           <Link
             to="#"
@@ -35,7 +57,8 @@ const TableTopHead = () => {
             onClick={handleToggleHeader}
           >
             <i
-              className={`ti ${toggleHeader ? "ti-chevron-down" : "ti-chevron-up"}`}
+              className={`ti ${toggleHeader ? "ti-chevron-down" : "ti-chevron-up"
+                }`}
             />
           </Link>
         </li>

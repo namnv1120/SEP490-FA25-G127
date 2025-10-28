@@ -1,8 +1,8 @@
 INSERT INTO roles (role_name, [description], active)
-VALUES (N'Admin', N'System Administrator - Full access rights', 1),
-       (N'Shop Owner', N'Shop Owner - Manages all business operations', 1),
-       (N'Warehouse Staff', N'Warehouse Staff - Manages inventory receipts and issues', 1),
-       (N'Sales Staff', N'Sales Staff - Processes orders and manages customers', 1);
+VALUES (N'Quản trị viên', N'System Administrator - Full access rights', 1),
+       (N'Chủ cửa hàng', N'Shop Owner - Manages all business operations', 1),
+       (N'Nhân viên kho', N'Warehouse Staff - Manages inventory receipts and issues', 1),
+       (N'Nhân viên bán hàng', N'Sales Staff - Processes orders and manages customers', 1);
 
 INSERT INTO [permissions] ([permission_name], [description], module, active)
 VALUES
@@ -58,30 +58,44 @@ VALUES
     (N'UPDATE_PROMOTION', N'Update promotion', N'PROMOTION', 1),
     (N'DELETE_PROMOTION', N'Delete promotion', N'PROMOTION', 1);
 
-DECLARE @adminUsername NVARCHAR(50) = 'admin';
-DECLARE @adminEmail    NVARCHAR(100) = 'admin@snapbuy.com';
+--
 
-IF NOT EXISTS (SELECT 1 FROM accounts WHERE username = @adminUsername OR email = @adminEmail)
-BEGIN
-    DECLARE @adminId UNIQUEIDENTIFIER = NEWID();
+-- 1️⃣ Insert 4 accounts
+INSERT INTO accounts (full_name, username, password_hash, email, phone, avatar_url, active)
+VALUES
+    (N'System Administrator', N'admin',
+     N'$2a$10$.KiG7oyd3/JtvMSfV0tdBefCs2eLKBx2LlO6uwPO82fM6nhlGYeIq',
+     N'admin@snapbuy.com', N'0901000001', NULL, 1),
 
-INSERT INTO accounts (account_id, full_name, username, password_hash, email, active, created_date, updated_date)
-VALUES (
-           @adminId,
-           N'Admin',
-           @adminUsername,
-           -- BCrypt for "admin123"
-           '$2a$10$.KiG7oyd3/JtvMSfV0tdBefCs2eLKBx2LlO6uwPO82fM6nhlGYeIq',
-           @adminEmail,
-           1, GETDATE(), GETDATE()
-       );
+    (N'Shop Owner', N'shopowner',
+     N'$2a$10$.KiG7oyd3/JtvMSfV0tdBefCs2eLKBx2LlO6uwPO82fM6nhlGYeIq',
+     N'shopowner@snapbuy.com', N'0901000002', NULL, 1),
 
-DECLARE @roleAdmin UNIQUEIDENTIFIER =
-        (SELECT TOP 1 role_id FROM roles WHERE role_name = N'Admin');
+    (N'Warehouse Staff', N'warehouse',
+     N'$2a$10$.KiG7oyd3/JtvMSfV0tdBefCs2eLKBx2LlO6uwPO82fM6nhlGYeIq',
+     N'warehouse@snapbuy.com', N'0901000003', NULL, 1),
 
-    IF @roleAdmin IS NOT NULL
-        INSERT INTO account_roles(account_id, role_id) VALUES (@adminId, @roleAdmin);
-END
+    (N'Sales Staff', N'sales',
+     N'$2a$10$.KiG7oyd3/JtvMSfV0tdBefCs2eLKBx2LlO6uwPO82fM6nhlGYeIq',
+     N'sales@snapbuy.com', N'0901000004', NULL, 1);
+
+-- 2️⃣ Assign roles to each account
+DECLARE @adminId UNIQUEIDENTIFIER = (SELECT account_id FROM accounts WHERE username = N'admin');
+DECLARE @roleAdmin UNIQUEIDENTIFIER = (SELECT role_id FROM roles WHERE role_name = N'Admin');
+INSERT INTO account_roles (account_id, role_id) VALUES (@adminId, @roleAdmin);
+
+DECLARE @shopOwnerId UNIQUEIDENTIFIER = (SELECT account_id FROM accounts WHERE username = N'shopowner');
+DECLARE @roleShopOwner UNIQUEIDENTIFIER = (SELECT role_id FROM roles WHERE role_name = N'Shop Owner');
+INSERT INTO account_roles (account_id, role_id) VALUES (@shopOwnerId, @roleShopOwner);
+
+DECLARE @warehouseId UNIQUEIDENTIFIER = (SELECT account_id FROM accounts WHERE username = N'warehouse');
+DECLARE @roleWarehouse UNIQUEIDENTIFIER = (SELECT role_id FROM roles WHERE role_name = N'Warehouse Staff');
+INSERT INTO account_roles (account_id, role_id) VALUES (@warehouseId, @roleWarehouse);
+
+DECLARE @salesId UNIQUEIDENTIFIER = (SELECT account_id FROM accounts WHERE username = N'sales');
+DECLARE @roleSales UNIQUEIDENTIFIER = (SELECT role_id FROM roles WHERE role_name = N'Sales Staff');
+INSERT INTO account_roles (account_id, role_id) VALUES (@salesId, @roleSales);
+
 
 INSERT INTO customers (customer_code, full_name, phone, gender)
 VALUES
@@ -181,34 +195,34 @@ VALUES
 INSERT INTO product_price (product_id, unit_price, cost_price, tax_rate)
 VALUES
     -- PRD001: Bộ nồi Inox 3 đáy Sunhouse SH333
-    ((SELECT product_id FROM products WHERE product_code = 'PRD001'), 1850000, 1500000, 10),
+    ((SELECT product_id FROM products WHERE product_code = 'PRD001'), 1850000, 1500000, 0),
 
     -- PRD002: Bộ nồi Anod Sunhouse AN668
-    ((SELECT product_id FROM products WHERE product_code = 'PRD002'), 2200000, 1800000, 10),
+    ((SELECT product_id FROM products WHERE product_code = 'PRD002'), 2200000, 1800000, 0),
 
     -- PRD003: Chảo chống dính Sunhouse CS26
-    ((SELECT product_id FROM products WHERE product_code = 'PRD003'), 490000, 350000, 10),
+    ((SELECT product_id FROM products WHERE product_code = 'PRD003'), 490000, 350000, 0),
 
     -- PRD004: Nồi áp suất Sunhouse SH735
-    ((SELECT product_id FROM products WHERE product_code = 'PRD004'), 1650000, 1300000, 10),
+    ((SELECT product_id FROM products WHERE product_code = 'PRD004'), 1650000, 1300000, 0),
 
     -- PRD005: Nồi cơm điện Sunhouse SHD8955
-    ((SELECT product_id FROM products WHERE product_code = 'PRD005'), 2890000, 2300000, 10),
+    ((SELECT product_id FROM products WHERE product_code = 'PRD005'), 2890000, 2300000, 0),
 
     -- PRD006: Máy xay sinh tố Sunhouse SHD5115
-    ((SELECT product_id FROM products WHERE product_code = 'PRD006'), 890000, 650000, 10),
+    ((SELECT product_id FROM products WHERE product_code = 'PRD006'), 890000, 650000, 0),
 
     -- PRD007: Bếp điện từ đơn Sunhouse SHB9100
-    ((SELECT product_id FROM products WHERE product_code = 'PRD007'), 1590000, 1200000, 10),
+    ((SELECT product_id FROM products WHERE product_code = 'PRD007'), 1590000, 1200000, 0),
 
     -- PRD008: Quạt đứng Sunhouse SHD7728
-    ((SELECT product_id FROM products WHERE product_code = 'PRD008'), 750000, 550000, 10),
+    ((SELECT product_id FROM products WHERE product_code = 'PRD008'), 750000, 550000, 0),
 
     -- PRD009: Chảo chống dính Sunhouse CS28
-    ((SELECT product_id FROM products WHERE product_code = 'PRD009'), 550000, 400000, 10),
+    ((SELECT product_id FROM products WHERE product_code = 'PRD009'), 550000, 400000, 0),
 
     -- PRD010: Nồi cơm điện cao tần Sunhouse SHD8858
-    ((SELECT product_id FROM products WHERE product_code = 'PRD010'), 3290000, 2600000, 10);
+    ((SELECT product_id FROM products WHERE product_code = 'PRD010'), 3290000, 2600000, 0);
 
 
 INSERT INTO purchase_order (purchase_order_number, supplier_id, account_id, order_date, [status], total_amount, tax_amount, notes)

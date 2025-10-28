@@ -13,5 +13,7 @@ public interface OrderService {
     OrderResponse holdOrder(UUID id);
     OrderResponse completeOrder(UUID id);
     OrderResponse cancelOrder(UUID id);
+    void finalizePayment(UUID orderId);
+    void finalizePaymentByReference(String transactionReference);
 }
 

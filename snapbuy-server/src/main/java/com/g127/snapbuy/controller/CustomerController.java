@@ -53,7 +53,7 @@ public class CustomerController {
     public ApiResponse<String> deleteCustomer(@PathVariable("id") UUID id) {
         customerService.deleteCustomer(id);
         ApiResponse<String> response = new ApiResponse<>();
-        response.setResult("Customer deleted");
+        response.setResult("Khách hàng đã được xoá");
         return response;
     }
 
@@ -61,6 +61,13 @@ public class CustomerController {
     public ApiResponse<List<CustomerResponse>> searchCustomer(@RequestParam("keyword") String keyword) {
         ApiResponse<List<CustomerResponse>> response = new ApiResponse<>();
         response.setResult(customerService.searchCustomer(keyword));
+        return response;
+    }
+
+    @GetMapping("phone/{phone}")
+    public ApiResponse<CustomerResponse> getCustomerByPhone(@PathVariable String phone) {
+        ApiResponse<CustomerResponse> response = new ApiResponse<>();
+        response.setResult(customerService.getCustomerByPhone(phone));
         return response;
     }
 }

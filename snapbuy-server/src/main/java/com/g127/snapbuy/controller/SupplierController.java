@@ -52,7 +52,7 @@ public class SupplierController {
     public ApiResponse<String> deleteSupplierById(@PathVariable("id") UUID id) {
         supplierService.deleteSupplier(id);
         ApiResponse<String> response = new ApiResponse<>();
-        response.setResult("Supplier deleted");
+        response.setResult("Nhà cung cấp đã được xóa");
         return response;
     }
 

@@ -3,6 +3,7 @@ import { lazy } from "react";
 import { all_routes } from "./all_routes";
 import FormHorizontal from "../feature-module/uiinterface/forms/formelements/layouts/form-horizontal";
 
+import Pos from "../feature-module/pos/pos";
 const Suppliers = lazy(() => import("../feature-module/people/Supplier"));
 
 const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
@@ -13,20 +14,21 @@ const ProductDetail = lazy(() =>
   import("../feature-module/inventory/ProductDetail")
 );
 const AddProduct = lazy(() => import("../feature-module/inventory/AddProduct"));
-const EditProduct = lazy(() =>
-  import("../feature-module/inventory/EditProduct")
-);
+const EditProduct = lazy(() => import("../feature-module/inventory/EditProduct"));
+const ProductPriceList = lazy(() => import("../feature-module/inventory/ProductPriceList"));
+const AddProductPrice = lazy(() => import("../feature-module/inventory/AddProductPrice"));
+const EditProductPrice = lazy(() => import("../feature-module/inventory/EditProductPrice"));
+const InventoryList = lazy(() => import("../feature-module/inventory/InventoryList"));
 
-const CategoryList = lazy(() =>
-  import("../feature-module/inventory/CategoryList")
-);
-const SubCategories = lazy(() =>
-  import("../feature-module/inventory/SubCategoryList")
-);
+const CategoryList = lazy(() => import("../feature-module/inventory/CategoryList"));
+const SubCategories = lazy(() => import("../feature-module/inventory/SubCategoryList"));
 
 const Accounts = lazy(() => import("../feature-module/usermanagement/account"));
 const RolesPermissions = lazy(() =>
-  import("../feature-module/usermanagement/Rolespermissions")
+  import("../feature-module/usermanagement/rolespermissions")
+);
+const Permissions = lazy(() =>
+  import("../feature-module/usermanagement/permissions")
 );
 const Profile = lazy(() => import("../feature-module/usermanagement/Profile"));
 const Login = lazy(() =>
@@ -35,11 +37,14 @@ const Login = lazy(() =>
 const Forgotpassword = lazy(() =>
   import("../feature-module/pages/authentication/ForgotPassword")
 );
-const Customers = lazy(() => import("../feature-module/people/Customer"));
+const PosSettings = lazy(
+  () => import("../feature-module/settings/websitesettings/possettings")
+);
+const PosOrder = lazy(
+  () => import("../feature-module/sales/pos-order/posOrder")
+);
 
-// 🆕 Thêm Inventory
-const Inventory = lazy(() => import("../feature-module/inventory/Inventory"));
-// import ở trên
+const Customers = lazy(() => import("../feature-module/people/Customer"));
 const PurchaseOrder = lazy(() =>
   import("../feature-module/purchases/PurchaseOrder")
 );
@@ -59,7 +64,7 @@ export const authRoutes = [
   },
   {
     id: 2,
-    path: "/customers",
+    path: routes.customers,
     name: "customers",
     element: <Customers />,
     route: Route,
@@ -93,6 +98,13 @@ export const authRoutes = [
     route: Route,
   },
   {
+    id: 8,
+    path: routes.products,
+    name: "products",
+    element: <ProductList />,
+    route: Route,
+  },
+  {
     id: 7,
     path: routes.suppliers,
     name: "suppliers",
@@ -100,24 +112,8 @@ export const authRoutes = [
     route: Route,
   },
   {
-    id: 8,
-    path: routes.productlist,
-    name: "product-list",
-    element: <ProductList />,
-    route: Route,
-  },
-
-  // 🆕 Thêm route Inventory chính
-  {
-    id: 300,
-    path: routes.inventory, // đảm bảo trong all_routes có key inventory
-    name: "inventory",
-    element: <Inventory />,
-    route: Route,
-  },
-  {
     id: 9,
-    path: `${routes.productdetails}/:id`,
+    path: routes.productdetails,
     name: "product-details",
     element: <ProductDetail />,
     route: Route,
@@ -131,15 +127,15 @@ export const authRoutes = [
   },
   {
     id: 11,
-    path: `${routes.editproduct}/:id`,
+    path: routes.editproduct,
     name: "edit-product",
     element: <EditProduct />,
     route: Route,
   },
   {
     id: 12,
-    path: routes.categorylist,
-    name: "category-list",
+    path: routes.categories,
+    name: "categories",
     element: <CategoryList />,
     route: Route,
   },
@@ -162,12 +158,65 @@ export const authRoutes = [
     path: routes.purchaseorderdetail, // thêm key này trong all_routes
     name: "purchaseorderdetail",
     element: <PurchaseOrderDetail />,
+    id: 14,
+    path: routes.inventories,
+    name: "inventories",
+    element: <InventoryList />,
+    route: Route,
+  },
+  {
+    id: 15,
+    path: routes.productprices,
+    name: "product-prices",
+    element: <ProductPriceList />,
+    route: Route,
+  },
+  {
+    id: 16,
+    path: routes.addproductprice,
+    name: "add-product-price",
+    element: <AddProductPrice />,
+    route: Route,
+  },
+  {
+    id: 17,
+    path: routes.editproductprice,
+    name: "edit-product-price",
+    element: <EditProductPrice />,
+    route: Route,
+  },
+
+  {
+    id: 76,
+    path: routes.possettings,
+    name: "possettings",
+    element: <PosSettings />,
+    route: Route,
+  },
+  {
+    id: 106,
+    path: routes.permissions,
+    name: "permissions",
+    element: <Permissions />,
+    route: Route,
+  },
+  {
+    id: 121,
+    path: routes.posorder,
+    name: "pos-orders",
+    element: <PosOrder />,
     route: Route,
   },
 ];
 
-export const posPages = [
-  // giữ nguyên nếu cần POS sau này
+export const posPage = [
+  {
+    id: 25,
+    path: routes.pos,
+    name: "pos",
+    element: <Pos />,
+    route: Route,
+  },
 ];
 
 export const unAuthRoutes = [

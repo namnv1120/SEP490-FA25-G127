@@ -1,9 +1,17 @@
-import React, { useState } from "react";
-import { updateRolePermission } from "../../../services/role_permissionService";
+import React, { useState, useEffect } from "react";
+import { updateRole } from "../../../services/RoleService";
 
-const EditRole = ({ role, onUpdated }) => {
-  const [roleName, setRoleName] = useState(role?.role || "");
-  const [status, setStatus] = useState(role?.status === "Active");
+const EditRole = ({ id = "edit-role", role, roleId, onUpdated, onClose }) => {
+  const [roleName, setRoleName] = useState("");
+  const [status, setStatus] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (role) {
+      setRoleName(role.roleName || "");
+      setStatus(role.active || false);
+    }
+  }, [role]);
 
   const handleUpdate = async () => {
     if (!roleName.trim()) {
@@ -12,27 +20,32 @@ const EditRole = ({ role, onUpdated }) => {
     }
 
     const updatedRole = {
-      role: roleName.trim(),
-      status: status ? "Active" : "Inactive",
+      roleName: roleName.trim(),
+      active: status,
     };
 
     try {
-      await updateRolePermission(role.id, updatedRole);
+      setLoading(true);
+      await updateRole(roleId, updatedRole);
       alert("Role updated successfully!");
-      onUpdated && onUpdated();
 
       const modal = window.bootstrap?.Modal.getInstance(
-        document.getElementById("edit-role")
+        document.getElementById(id)
       );
       modal?.hide();
+
+      onUpdated && onUpdated();
+      onClose && onClose();
     } catch (error) {
       console.error("Update failed:", error);
-      alert("Failed to update role!");
+      alert("Failed to update role. Please try again!");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="modal fade" id="edit-role">
+    <div className="modal fade" id={id} tabIndex="-1">
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content">
           <div className="modal-header">
@@ -44,6 +57,7 @@ const EditRole = ({ role, onUpdated }) => {
               className="close"
               data-bs-dismiss="modal"
               aria-label="Close"
+              onClick={onClose}
             >
               <span aria-hidden="true">×</span>
             </button>
@@ -57,6 +71,7 @@ const EditRole = ({ role, onUpdated }) => {
                 className="form-control"
                 value={roleName}
                 onChange={(e) => setRoleName(e.target.value)}
+                placeholder="Enter role name"
               />
             </div>
 
@@ -78,6 +93,7 @@ const EditRole = ({ role, onUpdated }) => {
               type="button"
               className="btn btn-secondary me-2"
               data-bs-dismiss="modal"
+              onClick={onClose}
             >
               Cancel
             </button>
@@ -85,8 +101,9 @@ const EditRole = ({ role, onUpdated }) => {
               type="button"
               className="btn btn-primary"
               onClick={handleUpdate}
+              disabled={loading}
             >
-              Save Changes
+              {loading ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </div>

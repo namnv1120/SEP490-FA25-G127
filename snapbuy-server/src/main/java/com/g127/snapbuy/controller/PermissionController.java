@@ -22,16 +22,16 @@ public class PermissionController {
     private final PermissionService permissionService;
 
     @PostMapping
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<PermissionResponse> create(@Valid @RequestBody PermissionCreateRequest req) {
         ApiResponse<PermissionResponse> response = new ApiResponse<>();
         response.setResult(permissionService.createPermission(req));
-        response.setMessage("Create permission successfully");
+        response.setMessage("Tạo quyền thành công");
         return response;
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<List<PermissionResponse>> list(@RequestParam(name = "active", required = false) String active) {
         Optional<Boolean> filter;
         if (active == null) filter = Optional.empty();
@@ -44,7 +44,7 @@ public class PermissionController {
     }
 
     @GetMapping("/{permissionId}")
-    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<PermissionResponse> get(@PathVariable UUID permissionId) {
         ApiResponse<PermissionResponse> response = new ApiResponse<>();
         response.setResult(permissionService.getPermissionById(permissionId));
@@ -52,22 +52,22 @@ public class PermissionController {
     }
 
     @PutMapping("/{permissionId}")
-    @PreAuthorize("hasAnyRole('Admin','Shop Owner')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<PermissionResponse> update(@PathVariable UUID permissionId,
                                                   @Valid @RequestBody PermissionUpdateRequest req) {
         ApiResponse<PermissionResponse> response = new ApiResponse<>();
         response.setResult(permissionService.updatePermission(permissionId, req));
-        response.setMessage("Update permission successfully");
+        response.setMessage("Cập nhật quyền thành công");
         return response;
     }
 
     @DeleteMapping("/{permissionId}")
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<Void> delete(@PathVariable UUID permissionId) {
         permissionService.deletePermission(permissionId);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setResult(null);
-        response.setMessage("Delete permission successfully");
+        response.setMessage("Xóa quyền thành công");
         return response;
     }
 }
