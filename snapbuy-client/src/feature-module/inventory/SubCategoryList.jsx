@@ -35,8 +35,6 @@ const SubCategoryList = () => {
       setLoading(true);
       setError(null);
       const data = await getAllCategories();
-
-      // ✅ Tách parent và sub categories
       const parents = data.filter(
         (cat) => !cat.parentCategoryId || cat.parentCategoryId === null
       );
@@ -47,7 +45,6 @@ const SubCategoryList = () => {
 
       setParentCategories(parents);
 
-      // ✅ Map sub categories với parent name
       const mapped = subs.map((cat) => {
         const parent = parents.find((p) => p.categoryId === cat.parentCategoryId);
 
@@ -58,28 +55,32 @@ const SubCategoryList = () => {
           parentCategoryId: cat.parentCategoryId,
           description: cat.description || "N/A",
           createddate: cat.createdDate
-            ? new Date(cat.createdDate).toLocaleDateString("en-US", {
+            ? new Date(cat.createdDate).toLocaleDateString("vi-VN", {
               year: "numeric",
-              month: "short",
-              day: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
             })
             : "N/A",
           updateddate: cat.updatedDate
-            ? new Date(cat.updatedDate).toLocaleDateString("en-US", {
+            ? new Date(cat.updatedDate).toLocaleDateString("vi-VN", {
               year: "numeric",
-              month: "short",
-              day: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
             })
             : "N/A",
-          status: cat.active === 1 || cat.active === true ? "Active" : "Inactive",
+          status: cat.active === 1 || cat.active === true ? "Hoạt động" : "Không hoạt động",
         };
       });
 
       setSubCategories(mapped);
       setTotalRecords(mapped.length);
     } catch (err) {
-      console.error("❌ Error fetching sub categories:", err);
-      setError("Failed to load sub categories. Please try again.");
+      console.error("❌ Lỗi khi tải danh sách danh mục con", err);
+      setError("Lỗi khi tải danh sách danh mục con. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -123,10 +124,10 @@ const SubCategoryList = () => {
       }, 300);
 
       await fetchSubCategories();
-      message.success("Sub category deleted successfully!");
+      message.success("Xoá danh mục con thành công!");
     } catch (err) {
-      console.error("❌ Error deleting sub category:", err);
-      message.error("Failed to delete sub category. Please try again.");
+      console.error("❌ Lỗi khi xoá danh mục con", err);
+      message.error("Không thể xoá danh mục con. Vui lòng thử lại.");
     } finally {
       setSelectedSubCategory(null);
     }
@@ -154,43 +155,43 @@ const SubCategoryList = () => {
       key: "checked",
     },
     {
-      header: "Sub Category",
+      header: "Tên danh mục con",
       field: "categoryName",
       key: "categoryName",
       sortable: true,
     },
     {
-      header: "Parent Category",
+      header: "Tên danh mục cha",
       field: "parentCategoryName",
       key: "parentCategoryName",
       sortable: true,
     },
     {
-      header: "Description",
+      header: "Mô tả",
       field: "description",
       key: "description",
       sortable: true,
     },
     {
-      header: "Created Date",
+      header: "Ngày tạo",
       field: "createddate",
       key: "createddate",
       sortable: true,
     },
     {
-      header: "Updated Date",
+      header: "Ngày cập nhật",
       field: "updateddate",
       key: "updateddate",
       sortable: true,
     },
     {
-      header: "Status",
+      header: "Trạng thái",
       field: "status",
       key: "status",
       sortable: true,
       body: (data) => (
         <span
-          className={`badge fw-medium fs-10 ${data.status === "Active" ? "bg-success" : "bg-danger"
+          className={`badge fw-medium fs-10 ${data.status === "Hoạt động" ? "bg-success" : "bg-danger"
             }`}
         >
           {data.status}
@@ -227,8 +228,8 @@ const SubCategoryList = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4 className="fw-bold">Sub Categories</h4>
-                <h6>Manage your sub categories</h6>
+                <h4 className="fw-bold">Danh mục con</h4>
+                <h6>Quản lý danh sách danh mục con</h6>
               </div>
             </div>
             <TableTopHead />
@@ -240,7 +241,7 @@ const SubCategoryList = () => {
                 data-bs-target="#add-sub-category"
               >
                 <i className="ti ti-circle-plus me-1"></i>
-                Add Sub Category
+                Thêm danh mục con
               </Link>
             </div>
           </div>

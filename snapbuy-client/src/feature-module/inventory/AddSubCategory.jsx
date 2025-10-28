@@ -51,7 +51,7 @@ const AddSubCategory = ({ parentCategories, onSuccess }) => {
       };
 
       await createCategory(newSubCategory);
-      message.success("Thêm sub category thành công!");
+      message.success("Thêm danh mục con thành công!");
 
       const modalElement = document.getElementById("add-sub-category");
       let modal = Modal.getInstance(modalElement);
@@ -74,9 +74,9 @@ const AddSubCategory = ({ parentCategories, onSuccess }) => {
 
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error("Error adding sub category:", error);
+      console.error("Lỗi tại thêm danh mục con", error);
       const errorMessage =
-        error.response?.data?.message || "Không thể thêm sub category";
+        error.response?.data?.message || "Không thể thêm danh mục con";
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -90,7 +90,7 @@ const AddSubCategory = ({ parentCategories, onSuccess }) => {
           <div className="modal-content">
             <div className="modal-header border-0 custom-modal-header">
               <div className="page-title">
-                <h4>Add Sub Category</h4>
+                <h4>Thêm danh mục con</h4>
               </div>
               <button
                 type="button"
@@ -106,7 +106,7 @@ const AddSubCategory = ({ parentCategories, onSuccess }) => {
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
                   <label className="form-label">
-                    Parent Category<span className="text-danger">*</span>
+                    Danh mục cha<span className="text-danger">*</span>
                   </label>
                   <select
                     name="parentCategoryId"
@@ -115,7 +115,7 @@ const AddSubCategory = ({ parentCategories, onSuccess }) => {
                     onChange={handleInputChange}
                     required
                   >
-                    <option value="">Select Parent Category</option>
+                    <option value="">Chọn danh mục cha</option>
                     {parentCategories.map((parent) => (
                       <option key={parent.categoryId} value={parent.categoryId}>
                         {parent.name || parent.categoryName}
@@ -126,7 +126,7 @@ const AddSubCategory = ({ parentCategories, onSuccess }) => {
 
                 <div className="mb-3">
                   <label className="form-label">
-                    Sub Category Name<span className="text-danger">*</span>
+                    Tên danh mục con<span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
@@ -139,7 +139,7 @@ const AddSubCategory = ({ parentCategories, onSuccess }) => {
                 </div>
 
                 <div className="mb-3 input-blocks">
-                  <label className="form-label">Description</label>
+                  <label className="form-label">Mô tả</label>
                   <textarea
                     name="description"
                     className="form-control"
@@ -151,7 +151,7 @@ const AddSubCategory = ({ parentCategories, onSuccess }) => {
 
                 <div className="mb-0">
                   <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                    <span className="status-label">Status</span>
+                    <span className="status-label">Trạng thái</span>
                     <input
                       type="checkbox"
                       id="add-subcat-status"
@@ -170,7 +170,7 @@ const AddSubCategory = ({ parentCategories, onSuccess }) => {
                     data-bs-dismiss="modal"
                     disabled={loading}
                   >
-                    Cancel
+                    Huỷ
                   </button>
                   <button
                     type="submit"

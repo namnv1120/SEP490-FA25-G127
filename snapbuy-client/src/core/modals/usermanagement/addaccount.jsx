@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import CommonSelect from "../../../components/select/common-select";
-// import { createUser } from "../../../services/accountService";
-const AddUsers = ({ onUserAdded }) => {
+import { createAccount } from "../../../services/AccountService";
+
+const AddAccount = ({ onUserAdded }) => {
   const status = [
     { value: "Choose", label: "Choose" },
     { value: "Manager", label: "Manager" },
@@ -26,8 +26,7 @@ const AddUsers = ({ onUserAdded }) => {
   });
 
   const handleTogglePassword = () => setShowPassword(!showPassword);
-  const handleToggleConfirmPassword = () =>
-    setConfirmPassword(!showConfirmPassword);
+  const handleToggleConfirmPassword = () => setConfirmPassword(!showConfirmPassword);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,6 +37,13 @@ const AddUsers = ({ onUserAdded }) => {
     }
 
     try {
+      const token = localStorage.getItem("authToken");
+      const tokenType = localStorage.getItem("authTokenType") || "Bearer";
+      if (!token) {
+        alert("Unauthorized: No token found");
+        return;
+      }
+
       const form = new FormData();
       form.append("username", formData.username);
       form.append("phone", formData.phone);
@@ -49,7 +55,11 @@ const AddUsers = ({ onUserAdded }) => {
         form.append("file", formData.avatar);
       }
 
-      await createUser(form);
+      await createAccount(form, {
+        headers: {
+          Authorization: `${tokenType} ${token}`,
+        },
+      });
 
       if (onUserAdded) onUserAdded();
 
@@ -66,27 +76,29 @@ const AddUsers = ({ onUserAdded }) => {
       setSelectedStatus(null);
       setPreview(null);
 
-      const modalElement = document.getElementById("add-units");
+      const modalElement = document.getElementById("add-account");
       if (modalElement) {
         const modal = window.bootstrap.Modal.getInstance(modalElement);
         modal?.hide();
       }
+
+      alert("Account created successfully!");
     } catch (error) {
-      console.error("Error creating user:", error);
-      alert("Failed to create user!");
+      console.error("Error creating account:", error);
+      alert("Failed to create account!");
     }
   };
 
   return (
     <div>
-      <div className="modal fade" id="add-units">
+      <div className="modal fade" id="add-account">
         <div className="modal-dialog modal-dialog-centered custom-modal-two">
           <div className="modal-content">
             <div className="page-wrapper-new p-0">
               <div className="content">
                 <div className="modal-header border-0 custom-modal-header">
                   <div className="page-title">
-                    <h4>Add User</h4>
+                    <h4>Add Account</h4>
                   </div>
                   <button
                     type="button"
@@ -127,9 +139,7 @@ const AddUsers = ({ onUserAdded }) => {
                                   onChange={(e) => {
                                     const file = e.target.files[0];
                                     setFormData({ ...formData, avatar: file });
-                                    setPreview(
-                                      file ? URL.createObjectURL(file) : null
-                                    );
+                                    setPreview(file ? URL.createObjectURL(file) : null);
                                   }}
                                 />
                                 <div className="image-uploads">
@@ -149,10 +159,7 @@ const AddUsers = ({ onUserAdded }) => {
                             className="form-control"
                             value={formData.username}
                             onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                username: e.target.value,
-                              })
+                              setFormData({ ...formData, username: e.target.value })
                             }
                           />
                         </div>
@@ -166,10 +173,7 @@ const AddUsers = ({ onUserAdded }) => {
                             className="form-control"
                             value={formData.phone}
                             onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                phone: e.target.value,
-                              })
+                              setFormData({ ...formData, phone: e.target.value })
                             }
                           />
                         </div>
@@ -183,10 +187,7 @@ const AddUsers = ({ onUserAdded }) => {
                             className="form-control"
                             value={formData.email}
                             onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                email: e.target.value,
-                              })
+                              setFormData({ ...formData, email: e.target.value })
                             }
                           />
                         </div>
@@ -201,10 +202,7 @@ const AddUsers = ({ onUserAdded }) => {
                             value={selectedStatus}
                             onChange={(e) => {
                               setSelectedStatus(e.value);
-                              setFormData((prev) => ({
-                                ...prev,
-                                role: e.value,
-                              }));
+                              setFormData((prev) => ({ ...prev, role: e.value }));
                             }}
                             placeholder="Choose"
                             filter={false}
@@ -222,10 +220,7 @@ const AddUsers = ({ onUserAdded }) => {
                               placeholder="Enter your password"
                               value={formData.password}
                               onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  password: e.target.value,
-                                })
+                                setFormData({ ...formData, password: e.target.value })
                               }
                             />
                             <span
@@ -271,10 +266,7 @@ const AddUsers = ({ onUserAdded }) => {
                             className="form-control mb-1"
                             value={formData.description}
                             onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                description: e.target.value,
-                              })
+                              setFormData({ ...formData, description: e.target.value })
                             }
                           />
                           <p>Maximum 600 Characters</p>
@@ -282,7 +274,6 @@ const AddUsers = ({ onUserAdded }) => {
                       </div>
                     </div>
 
-                    {/* Footer */}
                     <div className="modal-footer-btn">
                       <button
                         type="button"
@@ -306,4 +297,4 @@ const AddUsers = ({ onUserAdded }) => {
   );
 };
 
-export default AddUsers;
+export default AddAccount;

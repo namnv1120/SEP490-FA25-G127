@@ -1,6 +1,7 @@
 package com.g127.snapbuy.service;
 
 import com.g127.snapbuy.dto.request.ProductCreateRequest;
+import com.g127.snapbuy.dto.request.ProductImportRequest;
 import com.g127.snapbuy.dto.request.ProductUpdateRequest;
 import com.g127.snapbuy.dto.response.ProductResponse;
 
@@ -18,4 +19,6 @@ public interface ProductService {
     List<ProductResponse> getAllProducts();
 
     void deleteProduct(UUID id);
+
+    List<ProductResponse> importProducts(List<ProductImportRequest> request);
 }

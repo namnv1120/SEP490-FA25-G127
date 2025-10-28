@@ -55,11 +55,14 @@ public class InventoryServiceImpl implements InventoryService {
         Inventory inventory = inventoryRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
 
-        int oldQty = inventory.getQuantityInStock();
-        inventoryMapper.updateEntity(request, inventory);
-
-        if (inventory.getQuantityInStock() < 0) {
-            throw new AppException(ErrorCode.INVALID_STOCK_OPERATION);
+        if (request.getMinimumStock() != null) {
+            inventory.setMinimumStock(request.getMinimumStock());
+        }
+        if (request.getMaximumStock() != null) {
+            inventory.setMaximumStock(request.getMaximumStock());
+        }
+        if (request.getReorderPoint() != null) {
+            inventory.setReorderPoint(request.getReorderPoint());
         }
 
         inventory.setLastUpdated(LocalDateTime.now());
@@ -73,6 +76,7 @@ public class InventoryServiceImpl implements InventoryService {
 
         return inventoryMapper.toResponse(saved);
     }
+
 
     @Override
     public InventoryResponse getInventoryById(UUID id) {
