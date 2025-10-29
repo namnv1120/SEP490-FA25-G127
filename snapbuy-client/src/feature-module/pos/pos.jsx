@@ -49,7 +49,13 @@ const Pos = () => {
           categoryId: p.categoryId || p.category?.id || null,
           categoryName: p.categoryName || p.category?.name || "N/A",
           unitPrice: p.unitPrice ?? p.unit_price ?? 0,
-          unitsInStock: p.unitsInStock ?? p.quantity ?? 0,
+          unitsInStock:
+            p.unitsInStock ??
+            p.quantityInStock ??
+            p.soLuongTon ??
+            p.inventoryQuantity ??
+            p.stock ??
+            0,
           supplierName: p.supplierName || p.supplier?.name || "",
         }));
         setProducts(mapped);
@@ -285,11 +291,7 @@ const Pos = () => {
                               <Link to="#">{product.productName}</Link>
                             </h6>
                             <div className="d-flex align-items-center justify-content-between price">
-                              <span>
-                                {product.unitsInStock
-                                  ? `${product.unitsInStock} SP`
-                                  : "Hết hàng"}
-                              </span>
+                              <span>{`${product.unitsInStock ?? 0} SP`}</span>
                               <p>{product.unitPrice.toLocaleString()}₫</p>
                             </div>
                           </div>
