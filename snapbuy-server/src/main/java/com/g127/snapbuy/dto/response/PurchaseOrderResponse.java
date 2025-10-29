@@ -15,5 +15,9 @@ public record PurchaseOrderResponse(
         String notes,
         LocalDateTime orderDate,
         LocalDateTime receivedDate,
-        List<PurchaseOrderDetailResponse> details
+        List<PurchaseOrderDetailResponse> details,
+        String supplierCode,
+        String supplierName,
+        String fullName,
+        String username
 ) {}
