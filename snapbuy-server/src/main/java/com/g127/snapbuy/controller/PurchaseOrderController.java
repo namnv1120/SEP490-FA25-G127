@@ -8,6 +8,7 @@ import com.g127.snapbuy.dto.response.PurchaseOrderResponse;
 import com.g127.snapbuy.service.PurchaseOrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
@@ -67,27 +68,25 @@ public class PurchaseOrderController {
     @GetMapping
     @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<List<PurchaseOrderResponse>> getAll() {
-        ApiResponse<List<PurchaseOrderResponse>> res = new ApiResponse<>();
-        res.setResult(service.findAll());
-        return res;
+        ApiResponse<List<PurchaseOrderResponse>> response = new ApiResponse<>();
+        response.setResult(service.findAll());
+        return response;
     }
 
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
-    public ApiResponse<org.springframework.data.domain.Page<PurchaseOrderResponse>> search(
+    public ApiResponse<Page<PurchaseOrderResponse>> search(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) UUID supplierId,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-
-        var pageable = org.springframework.data.domain.PageRequest.of(Math.max(page,0), Math.min(Math.max(size,1), 200),
+        var pageable = org.springframework.data.domain.PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 200),
                 org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "orderDate"));
-
-        ApiResponse<org.springframework.data.domain.Page<PurchaseOrderResponse>> res = new ApiResponse<>();
-        res.setResult(service.search(status, supplierId, from, to, pageable));
-        return res;
+        ApiResponse<org.springframework.data.domain.Page<PurchaseOrderResponse>> response = new ApiResponse<>();
+        response.setResult(service.search(status, supplierId, from, to, pageable));
+        return response;
     }
 
 }

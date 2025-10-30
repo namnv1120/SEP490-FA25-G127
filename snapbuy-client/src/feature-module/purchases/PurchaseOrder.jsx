@@ -4,8 +4,8 @@ import CommonFooter from "../../components/footer/commonFooter";
 import TableTopHead from "../../components/table-top-head";
 import PrimeDataTable from "../../components/data-table";
 import SearchFromApi from "../../components/data-table/search";
-import { getAllPurchaseOrders } from "../../services/PurchaseOrderService"; // ✅ import service
-import { message, Spin } from "antd"; // ✅ để hiển thị thông báo và loading
+import { getAllPurchaseOrders } from "../../services/PurchaseOrderService";
+import { message, Spin } from "antd";
 
 const PurchaseOrder = () => {
   const [listData, setListData] = useState([]);
@@ -15,6 +15,39 @@ const PurchaseOrder = () => {
   const [rows, setRows] = useState(10);
   const [_searchQuery, setSearchQuery] = useState(undefined);
 
+  // ✅ Định dạng ngày giờ kiểu Việt Nam
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "—";
+    return new Date(dateString).toLocaleString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  // ✅ Định dạng tiền tệ
+  const formatCurrency = (amount) => {
+    if (amount === undefined || amount === null) return "—";
+    return `${Number(amount).toLocaleString("vi-VN")} ₫`;
+  };
+
+  // ✅ Badge trạng thái có màu
+  const renderStatusBadge = (status) => {
+    switch (status?.toLowerCase()) {
+      case "chờ duyệt":
+        return <span className="badge bg-warning text-dark">Chờ duyệt</span>;
+      case "đã duyệt":
+        return <span className="badge bg-info">Đã duyệt</span>;
+      case "đã nhận hàng":
+        return <span className="badge bg-success">Đã nhận hàng</span>;
+      case "đã huỷ":
+        return <span className="badge bg-danger">Đã huỷ</span>;
+    }
+  };
+
+  // ✅ Cột bảng
   const columns = [
     {
       header: (
@@ -32,24 +65,72 @@ const PurchaseOrder = () => {
       sortable: false,
       key: "select",
     },
-    { header: "Supplier ID", field: "supplier_id", key: "supplier_id" },
-    { header: "Account ID", field: "account_id", key: "account_id" },
-    { header: "Order Date", field: "order_date", key: "order_date" },
-    { header: "Received Date", field: "received_date", key: "received_date" },
-    { header: "Status", field: "status", key: "status" },
-    { header: "Total Amount", field: "total_amount", key: "total_amount" },
+    { header: "Nhà cung cấp", field: "supplierName", key: "supplierName" },
+    { header: "Người tạo đơn", field: "fullName", key: "fullName" },
+    {
+      header: "Ngày tạo phiếu",
+      body: (row) => formatDateTime(row.orderDate),
+      key: "orderDate",
+    },
+    {
+      header: "Ngày nhận phiếu",
+      body: (row) => formatDateTime(row.receivedDate),
+      key: "receivedDate",
+    },
+    {
+      header: "Tổng tiền",
+      body: (row) => formatCurrency(row.totalAmount),
+      key: "totalAmount",
+    },
+    {
+      header: "Trạng thái",
+      body: (row) => renderStatusBadge(row.status),
+      key: "status",
+    },
+    {
+      header: "",
+      key: "actions",
+      sortable: false,
+      body: (row) => (
+        <div className="edit-delete-action d-flex align-items-center">
+          <button
+            className="me-2 p-2 border rounded bg-transparent"
+          // onClick={() => handleEditClick(row)}
+          >
+            <i className="feather icon-edit"></i>
+          </button>
+          <button
+            className="p-2 border rounded bg-transparent"
+            onClick={() => message.info("Tính năng xoá sẽ thêm sau")}
+          >
+            <i className="feather icon-trash-2"></i>
+          </button>
+        </div>
+      ),
+    },
   ];
 
   const handleSearch = (value) => {
     setSearchQuery(value);
   };
 
+  // ✅ Gọi API lấy dữ liệu
   const fetchPurchaseOrders = async () => {
     try {
       setLoading(true);
       const data = await getAllPurchaseOrders();
-      setListData(data);
-      setTotalRecords(data.length || 0);
+
+      // 🔹 Chuẩn hoá dữ liệu
+      const formatted = data.map((item) => ({
+        ...item,
+        orderDate: item.orderDate || item.createdAt,
+        receivedDate: item.receivedDate || null,
+        totalAmount: item.totalAmount ?? 0,
+        status: item.status || "Chờ duyệt",
+      }));
+
+      setListData(formatted);
+      setTotalRecords(formatted.length);
     } catch (error) {
       console.error("❌ Lỗi khi tải đơn hàng:", error);
       message.error("Không thể tải danh sách đơn đặt hàng!");
@@ -73,7 +154,7 @@ const PurchaseOrder = () => {
                 <h6>Quản lý danh sách các đơn đặt hàng về kho</h6>
               </div>
             </div>
-            <TableTopHead />
+            <TableTopHead onRefresh={fetchPurchaseOrders} />
           </div>
 
           <div className="card table-list-card">

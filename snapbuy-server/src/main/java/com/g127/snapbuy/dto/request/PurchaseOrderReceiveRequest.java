@@ -5,11 +5,10 @@ import java.util.List;
 import java.util.UUID;
 
 public record PurchaseOrderReceiveRequest(
-        @NotNull UUID accountId,
-        List<ReceivedItem> items,
+        List<Item> items,
         String notes
 ) {
-    public record ReceivedItem(
+    public record Item(
             @NotNull UUID purchaseOrderDetailId,
             @PositiveOrZero int receivedQuantity
     ) {}

@@ -53,12 +53,12 @@ const ProductList = () => {
           productId: product.productId || index + 1,
           productCode: product.code || product.productCode || "N/A",
           productName: product.name || product.productName || "N/A",
-          productImage: fullImageUrl, // 👈 SỬA: Dùng full URL
+          productImage: fullImageUrl, 
           category: product.category?.name || product.categoryName || "N/A",
           description: product.description || "N/A",
           supplier: product.supplier?.name || product.supplierName || "N/A",
           dimensions: product.dimensions || "N/A",
-          imageUrl: imageUrl, // Giữ URL gốc để export
+          imageUrl: imageUrl, 
           unitprice: `${product.unitPrice?.toLocaleString() || "0.00"} đ`,
           unit: product.unit || "N/A",
           qty: product.quantityInStock?.toString() || product.qty?.toString() || "0",

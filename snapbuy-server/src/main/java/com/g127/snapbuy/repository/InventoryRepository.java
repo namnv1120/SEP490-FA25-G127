@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface InventoryRepository extends JpaRepository<Inventory, UUID> {
+
     void deleteAllByProduct_ProductId(UUID productId);
 
     Optional<Inventory> findByProduct(Product product);
@@ -17,9 +18,9 @@ public interface InventoryRepository extends JpaRepository<Inventory, UUID> {
     Optional<Inventory> findByProduct_ProductId(UUID productId);
 
     @Query(value = """
-                SELECT TOP 1 *
-                FROM inventory WITH (UPDLOCK, ROWLOCK)
-                WHERE product_id = :productId
-            """, nativeQuery = true)
+        SELECT TOP 1 *
+        FROM inventory WITH (UPDLOCK, ROWLOCK)
+        WHERE product_id = :productId
+    """, nativeQuery = true)
     Optional<Inventory> lockByProductId(@Param("productId") UUID productId);
 }

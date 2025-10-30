@@ -24,5 +24,3 @@ public interface PurchaseOrderService {
 
     Page<PurchaseOrderResponse> search(String status, UUID supplierId, LocalDateTime from, LocalDateTime to, Pageable pageable);
 }
-
-
