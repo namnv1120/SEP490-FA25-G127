@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import CommonSelect from "../../../components/select/common-select";
+
 import { logo, scanImg } from "../../../utils/imagepath";
 import {
   createCustomer,
@@ -8,6 +8,7 @@ import {
 } from "../../../services/customerService";
 import orderService from "../../../services/orderService";
 import ProductService from "../../../services/ProductService";
+import { createMomoPayment } from "@/services/momoService";
 
 const PosModals = () => {
   const [input, setInput] = useState("");
@@ -21,6 +22,7 @@ const PosModals = () => {
   const [selectedOrderProducts, setSelectedOrderProducts] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [products, setProducts] = useState([]);
+  const [qrUrl, setQrUrl] = useState(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -77,7 +79,9 @@ const PosModals = () => {
       return;
     }
 
-    console.log(`🛒 Đang tải danh sách sản phẩm cho đơn hàng ID: ${orderId}...`);
+    console.log(
+      `🛒 Đang tải danh sách sản phẩm cho đơn hàng ID: ${orderId}...`
+    );
 
     try {
       const response = await orderService.getOrderById(orderId);
@@ -90,6 +94,17 @@ const PosModals = () => {
       if (error.response) {
         console.error("📦 Chi tiết lỗi từ server:", error.response.data);
       }
+    }
+  };
+
+  const handlePayWithMomo = async () => {
+    try {
+      const orderId = selectedOrder.id;
+      const paymentData = { orderId };
+      const result = await createMomoPayment(paymentData);
+      setQrUrl(result.qrCodeUrl);
+    } catch (error) {
+      alert(error.message);
     }
   };
 
@@ -817,10 +832,15 @@ const PosModals = () => {
       </div>
       {/* /Orders */}
       {/* Scan */}
-      <div className="modal fade modal-default" id="scan-payment">
+      <div
+        className="modal fade modal-default"
+        id="momo-payment"
+        aria-labelledby="momo-payment"
+      >
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
-            <div className="modal-body p-0">
+            <div className="modal-header">
+              <h5 className="modal-title">Thanh toán qua Momo</h5>
               <button
                 type="button"
                 className="close"
@@ -829,17 +849,29 @@ const PosModals = () => {
               >
                 <span aria-hidden="true">×</span>
               </button>
-              <div className="success-wrap scan-wrap text-center">
-                <h5>
-                  <span className="text-gray-6">Amount to Pay :</span> $150
-                </h5>
-                <div className="scan-img">
-                  <img src={scanImg} alt="img" />
-                </div>
-                <p className="mb-3">
-                  Scan your Phone or UPI App to Complete the payment
-                </p>
-              </div>
+            </div>
+            <div className="modal-body text-center">
+              {qrUrl ? (
+                <>
+                  <p className="mb-3">
+                    Quét mã QR bằng ứng dụng Momo để thanh toán
+                  </p>
+                  <img
+                    src={qrUrl}
+                    alt="Momo QR Code"
+                    style={{
+                      width: "250px",
+                      height: "250px",
+                      objectFit: "contain",
+                    }}
+                  />
+                  <p className="mt-3 text-muted">
+                    Đơn hàng: #{selectedOrder?.orderNumber}
+                  </p>
+                </>
+              ) : (
+                <p>Đang tạo mã QR, vui lòng chờ...</p>
+              )}
             </div>
           </div>
         </div>
