@@ -29,8 +29,7 @@ public class AccountServiceImpl implements AccountService {
     private final AccountMapper accountMapper;
     private final PasswordEncoder passwordEncoder;
 
-    private static final Set<String> FORBIDDEN_STAFF_ROLES =
-            Set.of("Quản trị viên", "Chủ cửa hàng");
+    private static final Set<String> FORBIDDEN_STAFF_ROLES = Set.of("Quản trị viên", "Chủ cửa hàng");
 
     private String getCurrentUsername() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -40,14 +39,11 @@ public class AccountServiceImpl implements AccountService {
     private boolean isAdmin() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null) return false;
-        return auth.getAuthorities().stream()
-                .anyMatch(a -> "ROLE_Quản trị viên".equalsIgnoreCase(a.getAuthority()));
+        return auth.getAuthorities().stream().anyMatch(a -> "ROLE_Quản trị viên".equalsIgnoreCase(a.getAuthority()));
     }
 
     private void ensureActive(Role r) {
-        if (r.getIsActive() != null && !r.getIsActive()) {
-            throw new IllegalStateException("Vai trò đang ở trạng thái không hoạt động");
-        }
+        if (r.getIsActive() != null && !r.getIsActive()) throw new IllegalStateException("Vai trò đang không hoạt động");
     }
 
     @Override
@@ -65,92 +61,71 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @PreAuthorize("hasRole('Chủ cửa hàng')")
     public AccountResponse createStaff(AccountCreateRequest req) {
-        if (req.getPassword() == null || req.getConfirmPassword() == null
-                || !req.getPassword().equals(req.getConfirmPassword())) {
-            throw new IllegalArgumentException("Mật khẩu xác nhận không khớp");
-        }
-
-        String username = req.getUsername().toLowerCase();
-        if (username.contains(" ")) {
-            throw new IllegalArgumentException("Tên đăng nhập không được chứa khoảng trắng");
-        }
-        if (accountRepository.existsByUsernameIgnoreCase(username)) {
-            throw new IllegalArgumentException("Tên đăng nhập đã tồn tại");
-        }
-        if (accountRepository.existsByEmailIgnoreCase(req.getEmail())) {
-            throw new IllegalArgumentException("Email đã tồn tại");
-        }
-        if (req.getPhone() != null && !req.getPhone().isBlank()
-                && accountRepository.existsByPhone(req.getPhone())) {
-            throw new IllegalArgumentException("Số điện thoại đã tồn tại");
-        }
+        validateNewAccount(req);
 
         List<String> roleNames = Optional.ofNullable(req.getRoles()).orElse(List.of());
-        if (roleNames.isEmpty()) {
-            throw new IllegalArgumentException("Nhân viên phải có ít nhất 1 vai trò");
-        }
-
+        if (roleNames.isEmpty()) throw new IllegalArgumentException("Nhân viên phải có ít nhất 1 vai trò");
         for (String rn : roleNames) {
             if (FORBIDDEN_STAFF_ROLES.stream().anyMatch(f -> f.equalsIgnoreCase(rn))) {
                 throw new IllegalArgumentException("Vai trò không hợp lệ cho nhân viên: " + rn);
             }
         }
 
-        Set<Role> staffRoles = new HashSet<>();
-        for (String rn : roleNames) {
-            Role r = roleRepository.findByRoleNameIgnoreCase(rn)
-                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò: " + rn));
-            ensureActive(r);
-            staffRoles.add(r);
-        }
+        Set<Role> staffRoles = roleNames.stream()
+                .map(rn -> roleRepository.findByRoleNameIgnoreCase(rn)
+                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò: " + rn)))
+                .peek(this::ensureActive)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
         Account acc = accountMapper.toEntity(req);
-        acc.setAccountId(UUID.randomUUID());
-        acc.setUsername(username);
+        acc.setUsername(req.getUsername().toLowerCase());
         acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
-        acc.setRoles(staffRoles);
+        acc.setRoles(new LinkedHashSet<>());
 
         try {
             acc = accountRepository.save(acc);
+            acc.getRoles().addAll(staffRoles);
+            acc = accountRepository.save(acc);
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            throw new IllegalArgumentException("Dữ liệu trùng lặp hoặc không hợp lệ");
+            throw new IllegalArgumentException("Tên đăng nhập/Email/SĐT đã tồn tại hoặc dữ liệu không hợp lệ");
         }
         return accountMapper.toResponse(acc);
     }
 
-    // Tạo tài khoản với 1 vai trò chỉ định (tiếng Việt)
     private AccountResponse createWithSingleRole(AccountCreateRequest req, String roleName) {
-        if (req.getPassword() == null || req.getConfirmPassword() == null
-                || !req.getPassword().equals(req.getConfirmPassword())) {
-            throw new IllegalArgumentException("Mật khẩu xác nhận không khớp");
-        }
-
-        String username = req.getUsername().toLowerCase();
-        if (username.contains(" ")) {
-            throw new IllegalArgumentException("Tên đăng nhập không được chứa khoảng trắng");
-        }
-        if (accountRepository.existsByUsernameIgnoreCase(username)) {
-            throw new IllegalArgumentException("Tên đăng nhập đã tồn tại");
-        }
-        if (accountRepository.existsByEmailIgnoreCase(req.getEmail())) {
-            throw new IllegalArgumentException("Email đã tồn tại");
-        }
-        if (req.getPhone() != null && !req.getPhone().isBlank()
-                && accountRepository.existsByPhone(req.getPhone())) {
-            throw new IllegalArgumentException("Số điện thoại đã tồn tại");
-        }
+        validateNewAccount(req);
 
         Role role = roleRepository.findByRoleName(roleName)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò: " + roleName));
         ensureActive(role);
 
         Account account = accountMapper.toEntity(req);
-        account.setAccountId(UUID.randomUUID());
-        account.setUsername(username);
+        account.setUsername(req.getUsername().toLowerCase());
         account.setPasswordHash(passwordEncoder.encode(req.getPassword()));
-        account.setRoles(Set.of(role));
+        account.setRoles(new LinkedHashSet<>());
 
-        return accountMapper.toResponse(accountRepository.save(account));
+        try {
+            account = accountRepository.save(account);
+            account.getRoles().add(role);
+            account = accountRepository.save(account);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("Tên đăng nhập/Email/SĐT đã tồn tại hoặc dữ liệu không hợp lệ");
+        }
+        return accountMapper.toResponse(account);
+    }
+
+    private void validateNewAccount(AccountCreateRequest req) {
+        if (req.getPassword() == null || req.getConfirmPassword() == null
+                || !req.getPassword().equals(req.getConfirmPassword())) {
+            throw new IllegalArgumentException("Mật khẩu xác nhận không khớp");
+        }
+        String username = req.getUsername().toLowerCase();
+        if (username.contains(" ")) throw new IllegalArgumentException("Tên đăng nhập không được chứa khoảng trắng");
+        if (accountRepository.existsByUsernameIgnoreCase(username)) throw new IllegalArgumentException("Tên đăng nhập đã tồn tại");
+        if (accountRepository.existsByEmailIgnoreCase(req.getEmail())) throw new IllegalArgumentException("Email đã tồn tại");
+        if (req.getPhone() != null && !req.getPhone().isBlank() && accountRepository.existsByPhone(req.getPhone())) {
+            throw new IllegalArgumentException("Số điện thoại đã tồn tại");
+        }
     }
 
     @Override
@@ -164,9 +139,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @PreAuthorize("hasRole('Quản trị viên')")
     public List<AccountResponse> getAccounts() {
-        return accountRepository.findAll().stream()
-                .map(accountMapper::toResponse)
-                .collect(Collectors.toList());
+        return accountRepository.findAll().stream().map(accountMapper::toResponse).toList();
     }
 
     @Override
@@ -179,15 +152,13 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public AccountResponse changePassword(UUID accountId, ChangePasswordRequest req) {
-        if (!Objects.equals(req.getNewPassword(), req.getConfirmNewPassword())) {
+        if (!Objects.equals(req.getNewPassword(), req.getConfirmNewPassword()))
             throw new IllegalArgumentException("Mật khẩu xác nhận không khớp");
-        }
 
         Account acc = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
-        if (!passwordEncoder.matches(req.getOldPassword(), acc.getPasswordHash())) {
+        if (!passwordEncoder.matches(req.getOldPassword(), acc.getPasswordHash()))
             throw new IllegalArgumentException("Mật khẩu cũ không đúng");
-        }
 
         acc.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
         return accountMapper.toResponse(accountRepository.save(acc));
@@ -195,17 +166,15 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public void changePasswordForCurrentUser(ChangePasswordRequest req) {
-        if (!Objects.equals(req.getNewPassword(), req.getConfirmNewPassword())) {
+        if (!Objects.equals(req.getNewPassword(), req.getConfirmNewPassword()))
             throw new IllegalArgumentException("Mật khẩu xác nhận không khớp");
-        }
 
         String username = getCurrentUsername();
         Account acc = accountRepository.findByUsername(username)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
 
-        if (!passwordEncoder.matches(req.getOldPassword(), acc.getPasswordHash())) {
+        if (!passwordEncoder.matches(req.getOldPassword(), acc.getPasswordHash()))
             throw new IllegalArgumentException("Mật khẩu cũ không đúng");
-        }
 
         acc.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
         accountRepository.save(acc);
@@ -233,15 +202,12 @@ public class AccountServiceImpl implements AccountService {
 
         if ("Quản trị viên".equalsIgnoreCase(role.getRoleName())) {
             long adminCount = accountRepository.countAccountsByRoleId(roleId);
-            if (adminCount <= 1) {
-                throw new IllegalStateException("Không thể gỡ vai trò Quản trị viên cuối cùng");
-            }
+            if (adminCount <= 1) throw new IllegalStateException("Không thể gỡ vai trò Quản trị viên cuối cùng");
         }
 
         String currentUser = getCurrentUsername();
-        if (acc.getUsername().equalsIgnoreCase(currentUser)) {
+        if (acc.getUsername().equalsIgnoreCase(currentUser))
             throw new IllegalStateException("Bạn không thể tự gỡ vai trò của chính mình");
-        }
 
         acc.getRoles().remove(role);
         accountRepository.save(acc);
@@ -254,20 +220,16 @@ public class AccountServiceImpl implements AccountService {
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
 
         boolean forbidden = staff.getRoles().stream()
-                .anyMatch(r -> FORBIDDEN_STAFF_ROLES.stream()
-                        .anyMatch(f -> f.equalsIgnoreCase(r.getRoleName())));
-        if (forbidden) {
-            throw new IllegalArgumentException("Không thể chỉnh sửa Quản trị viên hoặc Chủ cửa hàng");
-        }
+                .anyMatch(r -> FORBIDDEN_STAFF_ROLES.stream().anyMatch(f -> f.equalsIgnoreCase(r.getRoleName())));
+        if (forbidden) throw new IllegalArgumentException("Không thể chỉnh sửa Quản trị viên hoặc Chủ cửa hàng");
 
         if (req.getFullName() != null) staff.setFullName(req.getFullName());
         if (req.getEmail() != null) staff.setEmail(req.getEmail());
         if (req.getPhone() != null) staff.setPhone(req.getPhone());
         if (req.getAvatarUrl() != null) staff.setAvatarUrl(req.getAvatarUrl());
         if (req.getActive() != null) {
-            if (staff.getUsername().equalsIgnoreCase(getCurrentUsername())) {
+            if (staff.getUsername().equalsIgnoreCase(getCurrentUsername()))
                 throw new IllegalStateException("Bạn không thể tự vô hiệu hóa chính mình");
-            }
             staff.setIsActive(req.getActive());
         }
 
@@ -281,18 +243,15 @@ public class AccountServiceImpl implements AccountService {
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
 
         for (String rn : req.getRoles()) {
-            if (FORBIDDEN_STAFF_ROLES.stream().anyMatch(f -> f.equalsIgnoreCase(rn))) {
+            if (FORBIDDEN_STAFF_ROLES.stream().anyMatch(f -> f.equalsIgnoreCase(rn)))
                 throw new IllegalArgumentException("Vai trò không hợp lệ cho nhân viên: " + rn);
-            }
         }
 
-        Set<Role> newRoles = new HashSet<>();
-        for (String rn : req.getRoles()) {
-            Role r = roleRepository.findByRoleNameIgnoreCase(rn)
-                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò: " + rn));
-            ensureActive(r);
-            newRoles.add(r);
-        }
+        Set<Role> newRoles = req.getRoles().stream()
+                .map(rn -> roleRepository.findByRoleNameIgnoreCase(rn)
+                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò: " + rn)))
+                .peek(this::ensureActive)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
         staff.getRoles().clear();
         staff.getRoles().addAll(newRoles);
@@ -328,9 +287,8 @@ public class AccountServiceImpl implements AccountService {
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
 
         String currentUser = getCurrentUsername();
-        if (!Objects.equals(acc.getUsername(), currentUser) && !isAdmin()) {
+        if (!Objects.equals(acc.getUsername(), currentUser) && !isAdmin())
             throw new IllegalStateException("Bạn chỉ có thể cập nhật tài khoản của chính mình");
-        }
 
         if (req.getFullName() != null) acc.setFullName(req.getFullName());
         if (req.getEmail() != null) acc.setEmail(req.getEmail());
@@ -350,16 +308,13 @@ public class AccountServiceImpl implements AccountService {
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
 
         String currentUser = getCurrentUsername();
-        if (currentUser != null && currentUser.equalsIgnoreCase(acc.getUsername())) {
+        if (currentUser != null && currentUser.equalsIgnoreCase(acc.getUsername()))
             throw new IllegalStateException("Bạn không thể xóa tài khoản của chính mình");
-        }
 
         boolean hasProtectedRole = acc.getRoles().stream()
                 .anyMatch(r -> "Quản trị viên".equalsIgnoreCase(r.getRoleName())
                         || "Chủ cửa hàng".equalsIgnoreCase(r.getRoleName()));
-        if (hasProtectedRole) {
-            throw new IllegalStateException("Không thể xóa tài khoản có vai trò Quản trị viên hoặc Chủ cửa hàng");
-        }
+        if (hasProtectedRole) throw new IllegalStateException("Không thể xóa tài khoản có vai trò được bảo vệ");
 
         accountRepository.delete(acc);
     }
