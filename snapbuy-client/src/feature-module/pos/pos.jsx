@@ -229,25 +229,44 @@ const Pos = () => {
                     </h6>
                     <span>{categories.length} mục</span>
                   </div>
-                  {categories.map((cat) => (
-                    <div
-                      key={cat.categoryId}
-                      onClick={() => setActiveTab(cat.categoryId)}
-                      className={`owl-item ${
-                        activeTab === cat.categoryId ? "active" : ""
-                      }`}
-                    >
-                      <h6 className="text-center">{cat.categoryName}</h6>
-                      <span>
-                        {
-                          products.filter(
-                            (p) => p.categoryId === cat.categoryId
-                          ).length
-                        }{" "}
-                        sản phẩm
-                      </span>
-                    </div>
-                  ))}
+
+                  {categories
+                    // Chỉ lấy danh mục cha có sản phẩm trong các danh mục con
+                    .filter((cat) => {
+                      // Lấy tất cả ID của danh mục con của cat hiện tại
+                      const childIds = categories
+                        .filter((c) => c.parentCategoryId === cat.categoryId)
+                        .map((c) => c.categoryId);
+
+                      // Kiểm tra xem có sản phẩm nào thuộc các danh mục con đó không
+                      return products.some((p) =>
+                        childIds.includes(p.categoryId)
+                      );
+                    })
+                    .map((cat) => (
+                      <div
+                        key={cat.categoryId}
+                        onClick={() => setActiveTab(cat.categoryId)}
+                        className={`owl-item ${
+                          activeTab === cat.categoryId ? "active" : ""
+                        }`}
+                      >
+                        <h6 className="text-center">{cat.categoryName}</h6>
+                        <span>
+                          {
+                            products.filter((p) => {
+                              const childIds = categories
+                                .filter(
+                                  (c) => c.parentCategoryId === cat.categoryId
+                                )
+                                .map((c) => c.categoryId);
+                              return childIds.includes(p.categoryId);
+                            }).length
+                          }{" "}
+                          sản phẩm
+                        </span>
+                      </div>
+                    ))}
                 </Slider>
 
                 <div className="pos-products">

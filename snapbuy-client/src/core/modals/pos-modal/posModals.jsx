@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-
-import { logo, scanImg } from "../../../utils/imagepath";
+import { logo} from "../../../utils/imagepath";
 import {
   createCustomer,
   getCustomerByPhone,
 } from "../../../services/customerService";
 import orderService from "../../../services/orderService";
 import ProductService from "../../../services/ProductService";
-import { createMomoPayment } from "@/services/momoService";
+import { createMomoPayment } from "../../../services/momoService";
 
 const PosModals = () => {
   const [input, setInput] = useState("");
