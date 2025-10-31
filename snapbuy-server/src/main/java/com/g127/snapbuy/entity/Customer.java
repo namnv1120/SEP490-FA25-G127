@@ -49,4 +49,7 @@ public class Customer {
         Other;
     }
 
+    //user point
+    @Column(name = "points", nullable = false)
+    private Integer points = 0;
 }
