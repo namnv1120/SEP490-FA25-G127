@@ -21,4 +21,6 @@ public interface ProductService {
     void deleteProduct(UUID id);
 
     List<ProductResponse> importProducts(List<ProductImportRequest> request);
+
+    List<ProductResponse> getProductsBySupplierId(UUID supplierId);
 }

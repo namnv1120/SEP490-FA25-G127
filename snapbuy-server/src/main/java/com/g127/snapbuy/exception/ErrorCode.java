@@ -21,6 +21,7 @@ public enum ErrorCode {
     INVENTORY_ALREADY_EXISTS(2008, "Tồn kho cho sản phẩm này đã tồn tại"),
     INVALID_STOCK_OPERATION(2009, "Thao tác tồn kho không hợp lệ — số lượng không được âm"),
     ORDER_NOT_FOUND(2010, "Không tìm thấy đơn hàng"),
+    PURCHASE_ORDER_NOT_FOUND(2011, "Không tìm thấy phiếu tạo đơn"),
 
     AUTH_INVALID(3001, "Tên đăng nhập hoặc mật khẩu không đúng"),
     TOKEN_INVALID(3002, "Token không hợp lệ"),

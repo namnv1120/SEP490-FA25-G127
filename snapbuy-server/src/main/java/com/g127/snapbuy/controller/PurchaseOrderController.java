@@ -89,4 +89,12 @@ public class PurchaseOrderController {
         return response;
     }
 
+    @DeleteMapping("{id}")
+    public ApiResponse<String> delete(@PathVariable("id") UUID id) {
+        service.deletePurchaseOrder(id);
+        ApiResponse<String> response = new ApiResponse<>();
+        response.setResult("Xoá phiếu thành công");
+        return response;
+    }
+
 }

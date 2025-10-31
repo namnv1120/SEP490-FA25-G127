@@ -99,3 +99,16 @@ export const importProducts = async (products) => {
     throw error;
   }
 };
+
+export const getProductsBySupplierId = async (supplierId) => {
+  try {
+    const response = await axios.get(
+      `${REST_API_BASE_URL}/supplier/${supplierId}`,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi lấy sản phẩm theo nhà cung cấp:", error);
+    throw error;
+  }
+};

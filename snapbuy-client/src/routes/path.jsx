@@ -50,6 +50,13 @@ const PurchaseOrder = lazy(() =>
 const PurchaseOrderDetail = lazy(() =>
   import("../feature-module/purchases/PurchaseOrderDetail")
 );
+const AddPurchaseOrder = lazy(() =>
+  import("../feature-module/purchases/AddPurchaseOrder")
+);
+const EditPurchaseOrder = lazy(() =>
+  import("../feature-module/purchases/EditPurchaseOrder")
+);
+
 
 const routes = all_routes;
 
@@ -178,6 +185,20 @@ export const authRoutes = [
     path: routes.purchaseorderdetail,
     name: "purchaseorderdetail",
     element: <PurchaseOrderDetail />,
+    route: Route,
+  },
+  {
+    id: 19,
+    path: routes.addpurchaseorder,
+    name: "add-purchaseorder",
+    element: <AddPurchaseOrder />,
+    route: Route,
+  },
+  {
+    id: 20,
+    path: routes.editpurchaseorder,
+    name: "edit-purchaseorder",
+    element: <EditPurchaseOrder />,
     route: Route,
   },
   {

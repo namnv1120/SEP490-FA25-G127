@@ -4,18 +4,23 @@ import CommonFooter from "../../components/footer/commonFooter";
 import TableTopHead from "../../components/table-top-head";
 import PrimeDataTable from "../../components/data-table";
 import SearchFromApi from "../../components/data-table/search";
-import { getAllPurchaseOrders } from "../../services/PurchaseOrderService";
+import { getAllPurchaseOrders, deletePurchaseOrder } from "../../services/PurchaseOrderService";
 import { message, Spin } from "antd";
+import { all_routes } from "../../routes/all_routes";
+import DeleteModal from "../../components/delete-modal";
+import { Modal } from "bootstrap";
 
 const PurchaseOrder = () => {
+  const route = all_routes;
   const [listData, setListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
-  const [_searchQuery, setSearchQuery] = useState(undefined);
+  const [searchQuery, setSearchQuery] = useState(undefined);
+  const [selectedItem, setSelectedItem] = useState(null);
 
-  // ✅ Định dạng ngày giờ kiểu Việt Nam
+  // ✅ Format ngày giờ
   const formatDateTime = (dateString) => {
     if (!dateString) return "—";
     return new Date(dateString).toLocaleString("vi-VN", {
@@ -27,13 +32,13 @@ const PurchaseOrder = () => {
     });
   };
 
-  // ✅ Định dạng tiền tệ
+  // ✅ Format tiền tệ
   const formatCurrency = (amount) => {
     if (amount === undefined || amount === null) return "—";
     return `${Number(amount).toLocaleString("vi-VN")} ₫`;
   };
 
-  // ✅ Badge trạng thái có màu
+  // ✅ Badge trạng thái
   const renderStatusBadge = (status) => {
     switch (status?.toLowerCase()) {
       case "chờ duyệt":
@@ -44,83 +49,21 @@ const PurchaseOrder = () => {
         return <span className="badge bg-success">Đã nhận hàng</span>;
       case "đã huỷ":
         return <span className="badge bg-danger">Đã huỷ</span>;
+      default:
+        return <span className="badge bg-secondary">Không xác định</span>;
     }
   };
-
-  // ✅ Cột bảng
-  const columns = [
-    {
-      header: (
-        <label className="checkboxs">
-          <input type="checkbox" id="select-all" />
-          <span className="checkmarks" />
-        </label>
-      ),
-      body: () => (
-        <label className="checkboxs">
-          <input type="checkbox" />
-          <span className="checkmarks" />
-        </label>
-      ),
-      sortable: false,
-      key: "select",
-    },
-    { header: "Nhà cung cấp", field: "supplierName", key: "supplierName" },
-    { header: "Người tạo đơn", field: "fullName", key: "fullName" },
-    {
-      header: "Ngày tạo phiếu",
-      body: (row) => formatDateTime(row.orderDate),
-      key: "orderDate",
-    },
-    {
-      header: "Ngày nhận phiếu",
-      body: (row) => formatDateTime(row.receivedDate),
-      key: "receivedDate",
-    },
-    {
-      header: "Tổng tiền",
-      body: (row) => formatCurrency(row.totalAmount),
-      key: "totalAmount",
-    },
-    {
-      header: "Trạng thái",
-      body: (row) => renderStatusBadge(row.status),
-      key: "status",
-    },
-    {
-      header: "",
-      key: "actions",
-      sortable: false,
-      body: (row) => (
-        <div className="edit-delete-action d-flex align-items-center">
-          <button
-            className="me-2 p-2 border rounded bg-transparent"
-          // onClick={() => handleEditClick(row)}
-          >
-            <i className="feather icon-edit"></i>
-          </button>
-          <button
-            className="p-2 border rounded bg-transparent"
-            onClick={() => message.info("Tính năng xoá sẽ thêm sau")}
-          >
-            <i className="feather icon-trash-2"></i>
-          </button>
-        </div>
-      ),
-    },
-  ];
 
   const handleSearch = (value) => {
     setSearchQuery(value);
   };
 
-  // ✅ Gọi API lấy dữ liệu
+  // ✅ Fetch danh sách đơn hàng
   const fetchPurchaseOrders = async () => {
     try {
       setLoading(true);
       const data = await getAllPurchaseOrders();
 
-      // 🔹 Chuẩn hoá dữ liệu
       const formatted = data.map((item) => ({
         ...item,
         orderDate: item.orderDate || item.createdAt,
@@ -143,65 +86,138 @@ const PurchaseOrder = () => {
     fetchPurchaseOrders();
   }, []);
 
+  // ✅ Mở modal xác nhận xoá
+  const handleDeleteClick = (item) => {
+    setSelectedItem(item);
+    setTimeout(() => {
+      const modalElement = document.getElementById("delete-modal");
+      if (modalElement) {
+        const modal = new Modal(modalElement);
+        modal.show();
+      } else {
+        console.error("❌ Không tìm thấy modal xoá");
+      }
+    }, 0);
+  };
+
+  // ✅ Xác nhận xoá
+  const handleDeleteConfirm = async (purchaseOrderId) => {
+    try {
+      await deletePurchaseOrder(purchaseOrderId);
+      await fetchPurchaseOrders();
+      setSelectedItem(null);
+
+      // Đóng modal thủ công
+      const modalElement = document.getElementById("delete-modal");
+      if (modalElement) {
+        const modal = Modal.getInstance(modalElement);
+        if (modal) modal.hide();
+      }
+
+      message.success("Đã xoá đơn đặt hàng thành công!");
+    } catch (error) {
+      console.error("❌ Lỗi khi xoá đơn hàng:", error);
+      message.error("Không thể xoá đơn đặt hàng!");
+    }
+  };
+
+  // ✅ Huỷ xoá
+  const handleDeleteCancel = () => {
+    setSelectedItem(null);
+  };
+
+  // ✅ Cột bảng
+  const columns = [
+    {
+      header: (
+        <label className="checkboxs">
+          <input type="checkbox" id="select-all" />
+          <span className="checkmarks" />
+        </label>
+      ),
+      body: () => (
+        <label className="checkboxs">
+          <input type="checkbox" />
+          <span className="checkmarks" />
+        </label>
+      ),
+      sortable: false,
+      key: "select",
+    },
+    { header: "Mã tạo đơn", field: "purchaseOrderNumber", key: "purchaseOrderNumber" },
+    { header: "Nhà cung cấp", field: "supplierName", key: "supplierName" },
+    { header: "Người tạo đơn", field: "fullName", key: "fullName" },
+    {
+      header: "Ngày tạo phiếu",
+      body: (row) => formatDateTime(row.orderDate),
+      field: "orderDate",
+      key: "orderDate",
+    },
+    {
+      header: "Ngày nhận phiếu",
+      body: (row) => formatDateTime(row.receivedDate),
+      field: "receivedDate",
+      key: "receivedDate",
+    },
+    {
+      header: "Tổng tiền",
+      body: (row) => formatCurrency(row.totalAmount),
+      field: "totalAmount",
+      key: "totalAmount",
+    },
+    {
+      header: "Trạng thái",
+      body: (row) => renderStatusBadge(row.status),
+      field: "status",
+      key: "status",
+    },
+    {
+      header: "",
+      field: "actions",
+      key: "actions",
+      sortable: false,
+      body: (row) => (
+        <div className="edit-delete-action d-flex align-items-center">
+          <Link
+            to={route.editpurchaseorder?.replace(":id", row.purchaseOrderId)}
+            className="me-2 p-2 border rounded bg-transparent"
+          >
+            <i className="feather icon-edit"></i>
+          </Link>
+          <button
+            className="p-2 d-flex align-items-center border rounded bg-transparent"
+            onClick={() => handleDeleteClick(row)}
+          >
+            <i className="feather icon-trash-2"></i>
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <div>
+    <>
       <div className="page-wrapper">
         <div className="content">
           <div className="page-header">
-            <div className="d-flex align-items-center justify-content-between w-100">
+            <div className="add-item d-flex">
               <div className="page-title">
                 <h4>Đơn đặt hàng</h4>
-                <h6>Quản lý danh sách các đơn đặt hàng về kho</h6>
+                <h6>Quản lý danh sách đơn đặt hàng về kho</h6>
               </div>
             </div>
             <TableTopHead onRefresh={fetchPurchaseOrders} />
+            <div className="page-btn">
+              <Link to={route.addpurchaseorder} className="btn btn-primary">
+                <i className="ti ti-circle-plus me-1"></i>
+                Tạo đơn đặt hàng
+              </Link>
+            </div>
           </div>
 
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <SearchFromApi
-                callback={handleSearch}
-                rows={rows}
-                setRows={setRows}
-              />
-              <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                <div className="dropdown">
-                  <Link
-                    to="#"
-                    className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                    data-bs-toggle="dropdown"
-                  >
-                    Sort By : Last 7 Days
-                  </Link>
-                  <ul className="dropdown-menu dropdown-menu-end p-3">
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Recently Added
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Ascending
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Descending
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Last Month
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Last 7 Days
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-              </div>
+              <SearchFromApi callback={handleSearch} rows={rows} setRows={setRows} />
             </div>
 
             <div className="card-body p-0">
@@ -226,9 +242,18 @@ const PurchaseOrder = () => {
             </div>
           </div>
         </div>
+
+        {/* Modal xác nhận xoá */}
+        <DeleteModal
+          itemId={selectedItem?.purchaseOrderId}
+          itemName={selectedItem?.purchaseOrderNumber}
+          onDelete={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+        />
+
         <CommonFooter />
       </div>
-    </div>
+    </>
   );
 };
 

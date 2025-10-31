@@ -66,15 +66,19 @@ public class ProductController {
     @PostMapping("/import")
     public ApiResponse<List<ProductResponse>> importProducts(
             @RequestBody @Valid List<ProductImportRequest> requests) {
-        log.info("📥 Received import request for {} products", requests.size());
-
         ApiResponse<List<ProductResponse>> response = new ApiResponse<>();
         List<ProductResponse> importedProducts = productService.importProducts(requests);
-
         response.setResult(importedProducts);
-        response.setMessage(String.format("Successfully imported %d out of %d products",
-                importedProducts.size(), requests.size()));
 
         return response;
     }
+
+    @GetMapping("/supplier/{supplierId}")
+    public ApiResponse<List<ProductResponse>> getProductsBySupplierId(@PathVariable("supplierId") UUID supplierId) {
+        ApiResponse<List<ProductResponse>> response = new ApiResponse<>();
+        response.setResult(productService.getProductsBySupplierId(supplierId));
+
+        return response;
+    }
+
 }

@@ -136,7 +136,7 @@ const ProductList = () => {
       fetchProducts();
       setSelectedProduct(null);
 
-      // 🔒 Đóng modal thủ công
+      //Đóng modal thủ công
       const modalElement = document.getElementById("delete-modal");
       if (modalElement) {
         const modal = Modal.getInstance(modalElement);
@@ -266,7 +266,7 @@ const ProductList = () => {
               onRefresh={handleRefresh}
             />
             <div className="page-btn">
-              <Link to={route.addproduct} className="btn btn-primary">
+              <Link to={route.addpurchaseorder} className="btn btn-primary">
                 <i className="ti ti-circle-plus me-1"></i>
                 Thêm sản phẩm mới
               </Link>

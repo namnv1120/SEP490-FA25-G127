@@ -23,4 +23,6 @@ public interface PurchaseOrderService {
     List<PurchaseOrderResponse> findAll();
 
     Page<PurchaseOrderResponse> search(String status, UUID supplierId, LocalDateTime from, LocalDateTime to, Pageable pageable);
+
+    void deletePurchaseOrder(UUID poId);
 }

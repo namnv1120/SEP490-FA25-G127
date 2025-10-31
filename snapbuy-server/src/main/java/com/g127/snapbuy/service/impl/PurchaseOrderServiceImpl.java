@@ -5,6 +5,8 @@ import com.g127.snapbuy.dto.request.PurchaseOrderCreateRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderReceiveRequest;
 import com.g127.snapbuy.dto.response.PurchaseOrderResponse;
 import com.g127.snapbuy.entity.*;
+import com.g127.snapbuy.exception.AppException;
+import com.g127.snapbuy.exception.ErrorCode;
 import com.g127.snapbuy.mapper.PurchaseOrderMapper;
 import com.g127.snapbuy.repository.*;
 import com.g127.snapbuy.service.PurchaseOrderService;
@@ -324,6 +326,24 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         ));
     }
 
+    @Override
+    @Transactional
+    public void deletePurchaseOrder(UUID poId) {
+        PurchaseOrder purchaseOrder = purchaseOrderRepo.findById(poId)
+                .orElseThrow(() -> new AppException(ErrorCode.PURCHASE_ORDER_NOT_FOUND));
+
+        try {
+            detailRepo.deleteAllByPurchaseOrderId(poId);
+            detailRepo.flush();
+            purchaseOrderRepo.delete(purchaseOrder);
+            purchaseOrderRepo.flush();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi xoá phiếu nhập hàng: " + e.getMessage(), e);
+        }
+    }
+
+
     private PurchaseOrderResponse mapResponse(PurchaseOrder po, List<PurchaseOrderDetail> details) {
         Supplier supplier = po.getSupplierId() != null ? supplierRepo.findById(po.getSupplierId()).orElse(null) : null;
         Account account = po.getAccountId() != null ? accountRepo.findById(po.getAccountId()).orElse(null) : null;
@@ -363,4 +383,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         if (n.toLowerCase().contains("test")) return "";
         return n;
     }
+
+
 }

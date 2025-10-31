@@ -23,3 +23,57 @@ export const getAllPurchaseOrders = async () => {
     throw error;
   }
 };
+
+export const createPurchaseOrder = async (orderData) => {
+  try {
+    const response = await axios.post(
+      REST_API_BASE_URL,
+      orderData,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi tạo đơn đặt hàng:", error);
+    throw error;
+  }
+};
+
+export const getPurchaseOrderById = async (orderId) => {
+  try {
+    const response = await axios.get(
+      `${REST_API_BASE_URL}/${orderId}`,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi lấy đơn đặt hàng theo ID:", error);
+    throw error;
+  }
+};
+
+export const updatePurchaseOrder = async (orderId, updatedData) => {
+  try {
+    const response = await axios.put(
+      `${REST_API_BASE_URL}/${orderId}`,
+      updatedData,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi cập nhật đơn đặt hàng:", error);
+    throw error;
+  }
+};
+
+export const deletePurchaseOrder = async (orderId) => {
+  try {
+    const response = await axios.delete(
+      `${REST_API_BASE_URL}/${orderId}`,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi xóa đơn đặt hàng:", error);
+    throw error;
+  }
+};

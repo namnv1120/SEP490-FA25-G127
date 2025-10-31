@@ -20,4 +20,6 @@ public interface PurchaseOrderDetailRepository extends JpaRepository<PurchaseOrd
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select d from PurchaseOrderDetail d where d.purchaseOrderId = :poId")
     List<PurchaseOrderDetail> findAllForUpdateByPurchaseOrderId(@Param("poId") UUID poId);
+
+    void deleteAllByPurchaseOrderId(UUID purchaseOrderId);
 }

@@ -275,4 +275,33 @@ public class ProductServiceImpl implements ProductService {
         return importedProducts;
     }
 
+    @Override
+    public List<ProductResponse> getProductsBySupplierId(UUID supplierId) {
+        Supplier supplier = supplierRepository.findById(supplierId)
+                .orElseThrow(() -> new AppException(ErrorCode.SUPPLIER_NOT_FOUND));
+
+        List<Product> products = productRepository.findBySupplier_SupplierId(supplierId);
+
+        if (products.isEmpty()) {
+            log.info("⚠️ Không tìm thấy sản phẩm nào: {}", supplier.getSupplierName());
+            return List.of();
+        }
+
+        return products.stream().map(product -> {
+            ProductResponse response = productMapper.toResponse(product);
+
+            productPriceRepository.findTopByProduct_ProductIdOrderByValidFromDesc(product.getProductId())
+                    .ifPresent(latestPrice -> {
+                        response.setUnitPrice(latestPrice.getUnitPrice());
+                        response.setCostPrice(latestPrice.getCostPrice());
+                    });
+
+            inventoryRepository.findByProduct_ProductId(product.getProductId())
+                    .ifPresent(inventory -> response.setQuantityInStock(inventory.getQuantityInStock()));
+
+            return response;
+        }).toList();
+    }
+
+
 }
