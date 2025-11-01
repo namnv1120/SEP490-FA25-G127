@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { logo} from "../../../utils/imagepath";
+import { logo } from "../../../utils/imagepath";
 import {
   createCustomer,
   getCustomerByPhone,
@@ -78,21 +78,15 @@ const PosModals = () => {
       return;
     }
 
-    console.log(
-      `🛒 Đang tải danh sách sản phẩm cho đơn hàng ID: ${orderId}...`
-    );
-
     try {
       const response = await orderService.getOrderById(orderId);
-      console.log("✅ Dữ liệu sản phẩm trong đơn hàng:", response?.items || []);
-      console.log("📦 Toàn bộ dữ liệu đơn hàng:", response);
+      console.log("📦 Dữ liệu đơn hàng:", response);
 
-      setSelectedProducts(response.items || []);
+      setSelectedOrderId(orderId);
+      setSelectedOrder(response);
+      setSelectedOrderProducts(response.orderDetails || []); // ✅ đúng field
     } catch (error) {
       console.error("❌ Lỗi khi xem sản phẩm:", error);
-      if (error.response) {
-        console.error("📦 Chi tiết lỗi từ server:", error.response.data);
-      }
     }
   };
 
@@ -358,7 +352,7 @@ const PosModals = () => {
                 type="button"
                 className="close"
                 data-bs-dismiss="modal"
-                aria-label="Close"
+                aria-label="Đóng"
               >
                 <span aria-hidden="true">×</span>
               </button>
@@ -374,35 +368,106 @@ const PosModals = () => {
                   <div className="card-body">
                     <div className="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-3">
                       <span className="badge bg-dark fs-12">
-                        Mã đơn: #{selectedOrderId}
+                        Mã đơn hàng: #
+                        {selectedOrder?.orderNumber || selectedOrderId}
                       </span>
-                      <p className="fs-16">
+                      <p className="fs-16 mb-0">
                         Số lượng sản phẩm: {selectedOrderProducts.length}
                       </p>
                     </div>
 
                     <div className="product-wrap h-auto">
-                      {selectedOrderProducts.map((item) => (
-                        <div
-                          key={item.productId}
-                          className="product-list bg-white align-items-center justify-content-between"
-                        >
-                          <div className="d-flex align-items-center product-info">
-                            <Link to="#" className="pro-img">
-                              <img src={item.imageUrl} alt={item.productName} />
-                            </Link>
-                            <div className="info">
-                              <h6>
-                                <Link to="#">{item.productName}</Link>
-                              </h6>
-                              <p>Số lượng: {item.quantity}</p>
+                      {selectedOrderProducts.map((detail, index) => {
+                        const productInfo = products.find(
+                          (p) => p.productId === detail.productId
+                        );
+
+                        return (
+                          <div
+                            key={index}
+                            className="product-list bg-white d-flex align-items-center justify-content-between p-3 mb-2 rounded shadow-sm"
+                          >
+                            <div className="d-flex align-items-center">
+                              <div className="pro-img me-3">
+                                <img
+                                  src={productInfo?.imageUrl || "/no-image.png"}
+                                  alt={productInfo?.productName || "Sản phẩm"}
+                                  style={{
+                                    width: "70px",
+                                    height: "70px",
+                                    objectFit: "cover",
+                                    borderRadius: "8px",
+                                  }}
+                                />
+                              </div>
+                              <div>
+                                <h6 className="mb-1 text-dark fw-bold">
+                                  {productInfo?.productName || "Không rõ tên"}
+                                </h6>
+                                <p className="mb-0 text-muted small">
+                                  Mã SP:{" "}
+                                  {productInfo?.productCode || detail.productId}
+                                </p>
+                                <p className="mb-0 text-muted small">
+                                  SL: {detail.quantity} | Giảm giá:{" "}
+                                  {detail.discount || 0}%
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="text-end">
+                              <p className="fw-bold text-success mb-1">
+                                {(detail.unitPrice || 0).toLocaleString(
+                                  "vi-VN"
+                                )}{" "}
+                                ₫
+                              </p>
+                              <p className="text-muted small mb-0">
+                                Thành tiền:{" "}
+                                <strong>
+                                  {(
+                                    (detail.unitPrice || 0) *
+                                    (detail.quantity || 0) *
+                                    (1 - (detail.discount || 0) / 100)
+                                  ).toLocaleString("vi-VN")}{" "}
+                                  ₫
+                                </strong>
+                              </p>
                             </div>
                           </div>
-                          <p className="text-teal fw-bold">
-                            {(item.price || item.unitPrice)?.toLocaleString()}₫
-                          </p>
-                        </div>
-                      ))}
+                        );
+                      })}
+                    </div>
+
+                    <div className="border-top mt-3 pt-3">
+                      <p className="fw-bold mb-1">
+                        Tổng tiền hàng:{" "}
+                        <span className="text-primary">
+                          {selectedOrder?.totalAmount?.toLocaleString(
+                            "vi-VN"
+                          ) || 0}{" "}
+                          ₫
+                        </span>
+                      </p>
+                      <p className="mb-1">
+                        Thuế:{" "}
+                        {selectedOrder?.taxAmount?.toLocaleString("vi-VN") || 0}{" "}
+                        ₫
+                      </p>
+                      <p className="mb-1">
+                        Giảm giá:{" "}
+                        {selectedOrder?.discountAmount?.toLocaleString(
+                          "vi-VN"
+                        ) || 0}{" "}
+                        ₫
+                      </p>
+                      <p className="mb-0 text-muted">
+                        Phương thức thanh toán:{" "}
+                        <strong>
+                          {selectedOrder?.payment?.paymentMethod ||
+                            "Chưa xác định"}
+                        </strong>
+                      </p>
                     </div>
                   </div>
                 </div>

@@ -25,17 +25,48 @@ const Pos = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const location = useLocation();
 
+  // --- 1) Khi fetch categories: ánh xạ (normalize) các trường từ backend
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const data = await getAllCategories();
-        setCategories(data || []);
+        const mapped = (data || []).map((c, index) => ({
+          categoryId: c.category_id ?? c.categoryId ?? c.id ?? `cat-${index}`, // an toàn nếu tên trường khác nhau
+          categoryName:
+            c.category_name ?? c.categoryName ?? c.name ?? "No name",
+          description: c.description ?? c.desc ?? "",
+          parentCategoryId: c.parent_category_id ?? c.parentCategoryId ?? null,
+          active: c.active ?? true,
+        }));
+        setCategories(mapped);
       } catch (err) {
         console.error("Lỗi khi lấy danh mục:", err);
+        setCategories([]);
       }
     };
     fetchCategories();
   }, []);
+
+  // --- 2) Khi chọn activeTab: nếu là id của parent => hiển thị sản phẩm của tất cả child categories
+  useEffect(() => {
+    if (activeTab === "all") {
+      setFilteredProducts(products);
+    } else {
+      // tìm các danh mục con thuộc parent activeTab (nếu activeTab là parent id)
+      const childIds = categories
+        .filter((c) => c.parentCategoryId === activeTab)
+        .map((c) => c.categoryId);
+
+      // nếu không có child nào, thử coi activeTab có phải là chính category của product (fallback)
+      if (childIds.length === 0) {
+        setFilteredProducts(products.filter((p) => p.categoryId === activeTab));
+      } else {
+        setFilteredProducts(
+          products.filter((p) => childIds.includes(p.categoryId))
+        );
+      }
+    }
+  }, [activeTab, products, categories]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -215,6 +246,7 @@ const Pos = () => {
                   {...settings}
                   className="tabs owl-carousel pos-category"
                 >
+                  {/* Tất cả danh mục */}
                   <div
                     onClick={() => setActiveTab("all")}
                     className={`owl-item ${
@@ -230,19 +262,15 @@ const Pos = () => {
                     <span>{categories.length} mục</span>
                   </div>
 
+                  {/* Danh mục con có cha tồn tại */}
                   {categories
-                    // Chỉ lấy danh mục cha có sản phẩm trong các danh mục con
-                    .filter((cat) => {
-                      // Lấy tất cả ID của danh mục con của cat hiện tại
-                      const childIds = categories
-                        .filter((c) => c.parentCategoryId === cat.categoryId)
-                        .map((c) => c.categoryId);
-
-                      // Kiểm tra xem có sản phẩm nào thuộc các danh mục con đó không
-                      return products.some((p) =>
-                        childIds.includes(p.categoryId)
-                      );
-                    })
+                    .filter(
+                      (cat) =>
+                        cat.parentCategoryId !== null && // là danh mục con
+                        categories.some(
+                          (parent) => parent.categoryId === cat.parentCategoryId // cha có tồn tại
+                        )
+                    )
                     .map((cat) => (
                       <div
                         key={cat.categoryId}
@@ -254,14 +282,9 @@ const Pos = () => {
                         <h6 className="text-center">{cat.categoryName}</h6>
                         <span>
                           {
-                            products.filter((p) => {
-                              const childIds = categories
-                                .filter(
-                                  (c) => c.parentCategoryId === cat.categoryId
-                                )
-                                .map((c) => c.categoryId);
-                              return childIds.includes(p.categoryId);
-                            }).length
+                            products.filter(
+                              (p) => p.categoryId === cat.categoryId
+                            ).length
                           }{" "}
                           sản phẩm
                         </span>
