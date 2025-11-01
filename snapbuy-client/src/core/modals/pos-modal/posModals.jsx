@@ -11,7 +11,7 @@ import {
 import {
   createCustomer,
   getCustomerByPhone,
-} from "../../../services/customerService";
+} from "../../../services/CustomerService";
 
 const PosModals = () => {
   const [selectedTaxType, setSelectedTaxType] = useState(null);

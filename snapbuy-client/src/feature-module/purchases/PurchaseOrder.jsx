@@ -4,11 +4,18 @@ import CommonFooter from "../../components/footer/commonFooter";
 import TableTopHead from "../../components/table-top-head";
 import PrimeDataTable from "../../components/data-table";
 import SearchFromApi from "../../components/data-table/search";
-import { getAllPurchaseOrders, deletePurchaseOrder } from "../../services/PurchaseOrderService";
-import { message, Spin } from "antd";
+import {
+  getAllPurchaseOrders,
+  deletePurchaseOrder,
+  approvePurchaseOrder,
+  cancelPurchaseOrder,
+  receivePurchaseOrder,
+} from "../../services/PurchaseOrderService";
+import { message, Spin, Button } from "antd";
 import { all_routes } from "../../routes/all_routes";
 import DeleteModal from "../../components/delete-modal";
 import { Modal } from "bootstrap";
+
 
 const PurchaseOrder = () => {
   const route = all_routes;
@@ -20,7 +27,27 @@ const PurchaseOrder = () => {
   const [searchQuery, setSearchQuery] = useState(undefined);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // ✅ Format ngày giờ
+  // Thêm vào đầu component PurchaseOrder
+  const getAccountRole = () => {
+    const role = localStorage.getItem("role");
+    return role;
+  };
+
+  const isAdmin = () => {
+    const role = getAccountRole();
+    return role === "Quản trị viên"
+  };
+
+  const isOwner = () => {
+    const role = getAccountRole();
+    return role === "Chủ cửa hàng"
+  };
+
+  const canApprove = () => {
+    const result = isAdmin() || isOwner();
+    return result;
+  };
+
   const formatDateTime = (dateString) => {
     if (!dateString) return "—";
     return new Date(dateString).toLocaleString("vi-VN", {
@@ -32,13 +59,11 @@ const PurchaseOrder = () => {
     });
   };
 
-  // ✅ Format tiền tệ
   const formatCurrency = (amount) => {
     if (amount === undefined || amount === null) return "—";
     return `${Number(amount).toLocaleString("vi-VN")} ₫`;
   };
 
-  // ✅ Badge trạng thái
   const renderStatusBadge = (status) => {
     switch (status?.toLowerCase()) {
       case "chờ duyệt":
@@ -47,10 +72,8 @@ const PurchaseOrder = () => {
         return <span className="badge bg-info">Đã duyệt</span>;
       case "đã nhận hàng":
         return <span className="badge bg-success">Đã nhận hàng</span>;
-      case "đã huỷ":
-        return <span className="badge bg-danger">Đã huỷ</span>;
       default:
-        return <span className="badge bg-secondary">Không xác định</span>;
+        return <span className="badge bg-danger">Đã huỷ</span>;
     }
   };
 
@@ -86,7 +109,128 @@ const PurchaseOrder = () => {
     fetchPurchaseOrders();
   }, []);
 
-  // ✅ Mở modal xác nhận xoá
+  const handleBulkAction = async (action) => {
+    try {
+      const checkboxes = document.querySelectorAll('.table-list-card input[type="checkbox"]:checked');
+      const selectedIds = [];
+
+      checkboxes.forEach((cb) => {
+        const id = cb.dataset.id;
+        if (id && id !== "select-all") selectedIds.push(id);
+      });
+
+      if (selectedIds.length === 0) {
+        message.warning("Vui lòng chọn ít nhất một đơn hàng!");
+        return;
+      }
+
+      if (action === "approve" && !canApprove()) {
+        message.error("Chỉ Chủ cửa hàng và Quản trị viên mới có quyền duyệt đơn!");
+        return;
+      }
+
+      const validOrders = [];
+      const invalidOrders = [];
+
+      for (const id of selectedIds) {
+        const order = listData.find(o => o.purchaseOrderId === id);
+
+        if (!order) {
+          invalidOrders.push(id);
+          continue;
+        }
+        const status = order.status?.toLowerCase();
+
+        if (action === "approve") {
+          if (status === "chờ duyệt") {
+            validOrders.push(id);
+          } else {
+            invalidOrders.push(`${order.purchaseOrderNumber} (${order.status})`);
+          }
+        }
+        else if (action === "cancel") {
+          if (status === "chờ duyệt" || status === "đã duyệt") {
+            validOrders.push(id);
+          } else {
+            invalidOrders.push(`${order.purchaseOrderNumber} (${order.status})`);
+          }
+        }
+        else if (action === "receive") {
+          if (status === "đã duyệt") {
+            validOrders.push(id);
+          } else if (status === "chờ duyệt") {
+            invalidOrders.push(`${order.purchaseOrderNumber} - Chưa được duyệt`);
+          } else {
+            invalidOrders.push(`${order.purchaseOrderNumber} (${order.status})`);
+          }
+        }
+      }
+
+      if (invalidOrders.length > 0) {
+        const actionText =
+          action === "approve" ? "duyệt" :
+            action === "cancel" ? "huỷ" :
+              "nhận hàng";
+
+        message.warning({
+          content: (
+            <div>
+              <p>Không thể {actionText} các đơn sau:</p>
+              <ul style={{ marginTop: 8, paddingLeft: 20 }}>
+                {invalidOrders.slice(0, 5).map((item, idx) => (
+                  <li key={idx}>{item}</li>
+                ))}
+                {invalidOrders.length > 5 && <li>... và {invalidOrders.length - 5} đơn khác</li>}
+              </ul>
+            </div>
+          ),
+          duration: 5,
+        });
+      }
+
+      setLoading(true);
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const id of validOrders) {
+        try {
+          if (action === "approve") {
+            await approvePurchaseOrder(id, { notes: "Duyệt hàng loạt" });
+          } else if (action === "cancel") {
+            await cancelPurchaseOrder(id);
+          } else if (action === "receive") {
+            await receivePurchaseOrder(id, { notes: "Nhận hàng loạt" });
+          }
+          successCount++;
+        } catch (err) {
+          console.error(`Lỗi khi xử lý đơn hàng ${id}:`, err);
+          errorCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        message.success(`Đã xử lý thành công ${successCount} đơn hàng!`);
+      }
+      if (errorCount > 0) {
+        message.error(`Có ${errorCount} đơn hàng xử lý thất bại!`);
+      }
+
+      await fetchPurchaseOrders();
+
+      document.querySelectorAll('.table-list-card input[type="checkbox"]:checked').forEach(cb => {
+        cb.checked = false;
+      });
+
+    } catch (err) {
+      console.error(err);
+      message.error("Có lỗi xảy ra khi cập nhật!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   const handleDeleteClick = (item) => {
     setSelectedItem(item);
     setTimeout(() => {
@@ -121,12 +265,24 @@ const PurchaseOrder = () => {
     }
   };
 
-  // ✅ Huỷ xoá
+
   const handleDeleteCancel = () => {
     setSelectedItem(null);
   };
 
-  // ✅ Cột bảng
+  useEffect(() => {
+    const selectAllCheckbox = document.getElementById("select-all");
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener("change", (e) => {
+        const checkboxes = document.querySelectorAll('.table-list-card input[type="checkbox"][data-id]');
+        checkboxes.forEach((cb) => {
+          cb.checked = e.target.checked;
+        });
+      });
+    }
+  }, [listData]);
+
+
   const columns = [
     {
       header: (
@@ -135,15 +291,16 @@ const PurchaseOrder = () => {
           <span className="checkmarks" />
         </label>
       ),
-      body: () => (
+      body: (row) => (
         <label className="checkboxs">
-          <input type="checkbox" />
+          <input type="checkbox" data-id={row.purchaseOrderId} />
           <span className="checkmarks" />
         </label>
       ),
       sortable: false,
       key: "select",
     },
+
     { header: "Mã tạo đơn", field: "purchaseOrderNumber", key: "purchaseOrderNumber" },
     { header: "Nhà cung cấp", field: "supplierName", key: "supplierName" },
     { header: "Người tạo đơn", field: "fullName", key: "fullName" },
@@ -207,12 +364,43 @@ const PurchaseOrder = () => {
               </div>
             </div>
             <TableTopHead onRefresh={fetchPurchaseOrders} />
-            <div className="page-btn">
+            <div className="page-btn d-flex align-items-center gap-2">
+              {canApprove() && (
+                <button
+                  type="button"
+                  className="btn btn-success"
+                  onClick={() => handleBulkAction("approve")}
+                >
+                  <i className="ti ti-check me-1"></i>
+                  Duyệt
+                </button>
+              )}
+
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => handleBulkAction("cancel")}
+              >
+                <i className="ti ti-x me-1"></i>
+                Huỷ
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => handleBulkAction("receive")}
+              >
+                <i className="ti ti-package me-1"></i>
+                Đã nhận hàng
+              </button>
+
               <Link to={route.addpurchaseorder} className="btn btn-primary">
                 <i className="ti ti-circle-plus me-1"></i>
                 Tạo đơn đặt hàng
               </Link>
             </div>
+
+
           </div>
 
           <div className="card table-list-card">

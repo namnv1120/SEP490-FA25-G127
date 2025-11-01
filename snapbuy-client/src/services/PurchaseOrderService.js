@@ -77,3 +77,48 @@ export const deletePurchaseOrder = async (orderId) => {
     throw error;
   }
 };
+
+export const approvePurchaseOrder = async (orderId, approveData = {}) => {
+  try {
+    const response = await axios.put(
+      `${REST_API_BASE_URL}/${orderId}/approve`,
+      approveData, // Cần thêm request body này
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi phê duyệt đơn đặt hàng:", error);
+    throw error;
+  }
+};
+
+export const receivePurchaseOrder = async (orderId, receiveData = {}) => {
+  try {
+    const response = await axios.put(
+      `${REST_API_BASE_URL}/${orderId}/receive`,
+      receiveData, // Cần thêm request body này
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi nhận đơn đặt hàng:", error);
+    throw error;
+  }
+};
+
+// cancelPurchaseOrder đã đúng vì không cần body
+export const cancelPurchaseOrder = async (orderId) => {
+  try {
+    const response = await axios.put(
+      `${REST_API_BASE_URL}/${orderId}/cancel`,
+      {}, // Thêm empty body
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi hủy đơn đặt hàng:", error);
+    throw error;
+  }
+};
+
+

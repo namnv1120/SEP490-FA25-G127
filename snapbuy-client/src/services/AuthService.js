@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode'; // ✅ Import thêm
 
-const REST_API_BASE_URL = 'http://localhost:8080/api/auth'; // URL cho đăng nhập, đăng ký
+const REST_API_BASE_URL = 'http://localhost:8080/api/auth';
 
 // API đăng nhập
 export const login = async (username, password) => {
@@ -13,6 +14,20 @@ export const login = async (username, password) => {
     if (token) {
       localStorage.setItem('authToken', token);
       localStorage.setItem('authTokenType', tokenType || 'Bearer');
+      
+      try {
+        const decoded = jwtDecode(token);
+
+        if (decoded.roles && decoded.roles.length > 0) {
+          const role = decoded.roles[0].authority;
+          const cleanRole = role.replace('ROLE_', '');
+          localStorage.setItem('role', cleanRole);
+        } else {
+          console.warn("⚠️ No roles found in JWT");
+        }
+      } catch (decodeError) {
+        console.error("❌ Error decoding JWT:", decodeError);
+      }
       return response.data.result;
     } else {
       throw new Error('Login failed: No token received.');
@@ -24,6 +39,7 @@ export const login = async (username, password) => {
 };
 
 export const logout = () => {
-  // Xoá token khỏi localStorage
   localStorage.removeItem('authToken');
+  localStorage.removeItem('authTokenType');
+  localStorage.removeItem('role');
 };
