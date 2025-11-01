@@ -5,7 +5,6 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -13,10 +12,7 @@ import java.util.UUID;
 @Builder
 public class OrderCreateRequest {
 
-    private UUID customerId;
-
-    @NotNull(message = "Vui lòng chọn tài khoản tạo đơn.")
-    private UUID accountId;
+    private String phone;
 
     private String notes;
 

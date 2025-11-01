@@ -1,7 +1,8 @@
 package com.g127.snapbuy.service.impl;
 
-import com.g127.snapbuy.dto.request.*;
-import com.g127.snapbuy.dto.response.*;
+import com.g127.snapbuy.dto.request.OrderCreateRequest;
+import com.g127.snapbuy.dto.request.OrderDetailRequest;
+import com.g127.snapbuy.dto.response.OrderResponse;
 import com.g127.snapbuy.entity.*;
 import com.g127.snapbuy.mapper.OrderMapper;
 import com.g127.snapbuy.repository.*;
@@ -9,6 +10,8 @@ import com.g127.snapbuy.service.MoMoService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -33,26 +36,45 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
     private final OrderMapper orderMapper;
     private final MoMoService moMoService;
 
+    private UUID resolveCurrentAccountId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getName() == null) {
+            throw new IllegalStateException("Không xác định được tài khoản đăng nhập");
+        }
+        String username = auth.getName();
+        return accountRepository.findByUsername(username)
+                .map(Account::getAccountId)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản: " + username));
+    }
+
+    private Customer getGuestCustomer() {
+        UUID guestId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        return customerRepository.findById(guestId)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy khách lẻ mặc định"));
+    }
+
+    private Customer resolveCustomerStrict(String phone) {
+        if (phone == null || phone.isBlank()) {
+            return getGuestCustomer();
+        }
+        Customer found = customerRepository.getCustomerByPhone(phone.trim());
+        if (found == null) {
+            throw new NoSuchElementException("Không tìm thấy khách với số điện thoại: " + phone.trim());
+        }
+        return found;
+    }
+
     @Override
     @Transactional
     public OrderResponse createOrder(OrderCreateRequest req) {
-        if (req.getAccountId() == null)
-            throw new IllegalArgumentException("Thiếu accountId");
         if (req.getItems() == null || req.getItems().isEmpty())
             throw new IllegalArgumentException("Đơn hàng phải có ít nhất 1 sản phẩm");
 
-        Account creator = accountRepository.findById(req.getAccountId())
+        UUID currentAccountId = resolveCurrentAccountId();
+        Account creator = accountRepository.findById(currentAccountId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
 
-        Customer customer;
-        if (req.getCustomerId() == null || req.getCustomerId().toString().isEmpty()) {
-            UUID defaultCustomerId = UUID.fromString("00000000-0000-0000-0000-000000000001");
-            customer = customerRepository.findById(defaultCustomerId)
-                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy khách vãng lai mặc định"));
-        } else {
-            customer = customerRepository.findById(req.getCustomerId())
-                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy khách hàng"));
-        }
+        Customer customer = resolveCustomerStrict(req.getPhone());
 
         String orderNumber = generateOrderNumber();
         Order order = new Order();
@@ -161,7 +183,21 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         }
 
         orderRepository.save(order);
-        return orderMapper.toResponse(order, orderDetails, payment);
+
+        BigDecimal subtotal = BigDecimal.ZERO;
+        for (var i : req.getItems()) {
+            BigDecimal up = i.getUnitPrice();
+            if (up == null || up.compareTo(BigDecimal.ZERO) <= 0) {
+                ProductPrice price = productPriceRepository.findCurrentPriceByProductId(i.getProductId())
+                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy giá đang hiệu lực"));
+                up = price.getUnitPrice();
+            }
+            subtotal = subtotal.add(up.multiply(BigDecimal.valueOf(i.getQuantity())));
+        }
+
+        OrderResponse resp = orderMapper.toResponse(order, orderDetails, payment);
+        resp.setSubtotal(subtotal);
+        return resp;
     }
 
     @Override
@@ -170,7 +206,13 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
         Payment payment = paymentRepository.findByOrder(order);
-        return orderMapper.toResponse(order, details, payment);
+
+        OrderResponse resp = orderMapper.toResponse(order, details, payment);
+        BigDecimal subtotal = details.stream()
+                .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        resp.setSubtotal(subtotal);
+        return resp;
     }
 
     @Override
@@ -179,7 +221,12 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                 .map(order -> {
                     List<OrderDetail> details = orderDetailRepository.findByOrder(order);
                     Payment payment = paymentRepository.findByOrder(order);
-                    return orderMapper.toResponse(order, details, payment);
+                    OrderResponse resp = orderMapper.toResponse(order, details, payment);
+                    BigDecimal subtotal = details.stream()
+                            .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    resp.setSubtotal(subtotal);
+                    return resp;
                 })
                 .toList();
     }
@@ -217,7 +264,12 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         orderRepository.save(order);
         paymentRepository.save(payment);
 
-        return orderMapper.toResponse(order, details, payment);
+        OrderResponse resp = orderMapper.toResponse(order, details, payment);
+        BigDecimal subtotal = details.stream()
+                .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        resp.setSubtotal(subtotal);
+        return resp;
     }
 
     @Override
@@ -229,11 +281,17 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         order.setUpdatedDate(LocalDateTime.now());
         orderRepository.save(order);
 
-        return orderMapper.toResponse(
+        OrderResponse resp = orderMapper.toResponse(
                 order,
                 orderDetailRepository.findByOrder(order),
                 paymentRepository.findByOrder(order)
         );
+        List<OrderDetail> details = orderDetailRepository.findByOrder(order);
+        BigDecimal subtotal = details.stream()
+                .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        resp.setSubtotal(subtotal);
+        return resp;
     }
 
     @Override
@@ -242,11 +300,24 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         finalizePayment(id);
 
         Order order = orderRepository.findById(id).orElseThrow();
-        return orderMapper.toResponse(
-                order,
-                orderDetailRepository.findByOrder(order),
-                paymentRepository.findByOrder(order)
-        );
+        List<OrderDetail> details = orderDetailRepository.findByOrder(order);
+        Payment payment = paymentRepository.findByOrder(order);
+        OrderResponse resp = orderMapper.toResponse(order, details, payment);
+        BigDecimal subtotal = details.stream()
+                .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        resp.setSubtotal(subtotal);
+        return resp;
+    }
+
+    @Override
+    @Transactional
+    public void finalizePaymentByReference(String transactionReference) {
+        Payment payment = paymentRepository.findByTransactionReference(transactionReference)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Không tìm thấy thanh toán với reference: " + transactionReference));
+
+        finalizePayment(payment.getOrder().getOrderId());
     }
 
     @Override
@@ -293,16 +364,6 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
 
         log.info("Hoàn tất thanh toán cho đơn {}, đã ghi {} lịch sử tồn kho",
                 order.getOrderNumber(), details.size());
-    }
-
-    @Override
-    @Transactional
-    public void finalizePaymentByReference(String transactionReference) {
-        Payment payment = paymentRepository.findByTransactionReference(transactionReference)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "Không tìm thấy thanh toán với reference: " + transactionReference));
-
-        finalizePayment(payment.getOrder().getOrderId());
     }
 
     private String generateOrderNumber() {
