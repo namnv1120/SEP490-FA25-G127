@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import AddAccount from "../../core/modals/usermanagement/addaccount";
@@ -12,7 +13,6 @@ const Accounts = () => {
   const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [selectedAccount, setSelectedAccount] = useState(null);
 
-  // Fetch accounts khi component mount
   useEffect(() => {
     fetchAccounts();
   }, []);
@@ -43,7 +43,8 @@ const Accounts = () => {
     {
       title: "Email",
       dataIndex: "email",
-      sorter: (a, b) => a.email.length - b.email.length,
+      width: "20%",
+      sorter: (a, b) => a.email.localeCompare(b.email),
     },
     {
       title: "Số điện thoại",
@@ -76,14 +77,13 @@ const Accounts = () => {
       title: "",
       dataIndex: "actions",
       key: "actions",
+      width: "5%",
+      align: "center",
       render: (text, record) => (
-        <div className="action-table-data">
-          <div className="edit-delete-action">
+        <div className="action-table-data text-center">
+          <div className="edit-delete-action d-flex justify-content-center">
             <Link className="me-2 p-2" to="#">
-              <i
-                data-feather="eye"
-                className="feather feather-eye action-eye"
-              ></i>
+              <i data-feather="eye" className="feather feather-eye action-eye"></i>
             </Link>
             <Link
               className="me-2 p-2"
@@ -98,13 +98,10 @@ const Accounts = () => {
               className="confirm-text p-2"
               to="#"
               onClick={() => setSelectedAccountId(record.id)}
+              data-bs-toggle="modal"
+              data-bs-target="#delete-modal"
             >
-              <i
-                data-feather="trash-2"
-                className="feather-trash-2"
-                data-bs-toggle="modal"
-                data-bs-target="#delete-modal"
-              ></i>
+              <i data-feather="trash-2" className="feather-trash-2"></i>
             </Link>
           </div>
         </div>
@@ -148,17 +145,17 @@ const Accounts = () => {
                     className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
                     data-bs-toggle="dropdown"
                   >
-                    Status
+                    Trạng thái
                   </Link>
                   <ul className="dropdown-menu dropdown-menu-end p-3">
                     <li>
                       <Link to="#" className="dropdown-item rounded-1">
-                        Active
+                        Hoạt động
                       </Link>
                     </li>
                     <li>
                       <Link to="#" className="dropdown-item rounded-1">
-                        Inactive
+                        Ngừng hoạt động
                       </Link>
                     </li>
                   </ul>
@@ -179,6 +176,7 @@ const Accounts = () => {
         </div>
       </div>
 
+      {/* Modal thêm và chỉnh sửa */}
       <AddAccount id="add-account" onCreated={fetchAccounts} />
       <EditAccount
         id="edit-account"
@@ -186,7 +184,6 @@ const Accounts = () => {
         onUpdated={fetchAccounts}
         onClose={() => setSelectedAccount(null)}
       />
-
 
     </div>
   );

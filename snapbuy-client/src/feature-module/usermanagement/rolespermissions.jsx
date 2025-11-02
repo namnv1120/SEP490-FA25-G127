@@ -162,17 +162,17 @@ const RolesPermissions = () => {
                     className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
                     data-bs-toggle="dropdown"
                   >
-                    Status
+                    Trạng thái
                   </Link>
                   <ul className="dropdown-menu dropdown-menu-end p-3">
                     <li>
                       <Link to="#" className="dropdown-item rounded-1">
-                        Active
+                        Đang hoạt động
                       </Link>
                     </li>
                     <li>
                       <Link to="#" className="dropdown-item rounded-1">
-                        Inactive
+                        Ngừng hoạt động
                       </Link>
                     </li>
                   </ul>

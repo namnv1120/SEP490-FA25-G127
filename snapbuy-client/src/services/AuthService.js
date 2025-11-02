@@ -3,13 +3,19 @@ import { jwtDecode } from 'jwt-decode'; // ✅ Import thêm
 
 const REST_API_BASE_URL = 'http://localhost:8080/api/auth';
 
-// API đăng nhập
+// 🔐 API đăng nhập
 export const login = async (username, password) => {
-  if (!username || !password) throw new Error('Username and password are required.');
+  if (!username || !password)
+    throw new Error('Username and password are required.');
 
   try {
-    const response = await axios.post(`${REST_API_BASE_URL}/login`, { username, password });
-    const { token, tokenType } = response.data.result;
+    const response = await axios.post(`${REST_API_BASE_URL}/login`, {
+      username,
+      password,
+    });
+
+    const { token, tokenType, accountId, roleName, fullName } =
+      response.data.result || {};
 
     if (token) {
       localStorage.setItem('authToken', token);
@@ -26,6 +32,22 @@ export const login = async (username, password) => {
     } else {
       throw new Error('Login failed: No token received.');
     }
+
+    // ✅ Lưu thêm thông tin người dùng đang đăng nhập
+    if (accountId) {
+      localStorage.setItem('accountId', accountId);
+    }
+    if (username) {
+      localStorage.setItem('username', username);
+    }
+    if (fullName) {
+      localStorage.setItem('fullName', fullName);
+    }
+    if (roleName) {
+      localStorage.setItem('roleName', roleName);
+    }
+
+    return response.data.result;
   } catch (error) {
     throw new Error(error.response ? error.response.data.message : error.message);
   }
