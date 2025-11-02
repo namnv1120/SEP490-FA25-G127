@@ -303,6 +303,25 @@
         }
     }
 }
+.product-info.out-of-stock {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+
+  .price {
+    .text-danger {
+      color: red !important;
+      font-weight: bold;
+    }
+  }
+
+  &:hover {
+    border-color: transparent;
+    .pro-img img {
+      transform: none;
+    }
+  }
+}
 .qty-item {
     position: relative;
     display: inline-block;

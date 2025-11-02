@@ -26,6 +26,7 @@ const Pos = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const location = useLocation();
   const [orderCreated, setOrderCreated] = useState(false);
+  const [orderNotes, setOrderNotes] = useState("");
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -163,12 +164,14 @@ const Pos = () => {
     }
 
     try {
-      const results = await getCustomerByPhone(value);
-      const filtered = (results || []).filter(
-        (c) => c.phone && c.phone.toLowerCase().includes(value.toLowerCase())
-      );
+      const result = await getCustomerByPhone(value);
+      const customer = result?.result || result;
 
-      setCustomerSuggestions(filtered);
+      if (customer && customer.phone?.includes(value)) {
+        setCustomerSuggestions([customer]);
+      } else {
+        setCustomerSuggestions([]);
+      }
     } catch (err) {
       console.error("Lỗi khi tìm khách hàng:", err);
       setCustomerSuggestions([]);
@@ -193,37 +196,38 @@ const Pos = () => {
     };
   }, []);
 
+  // Tạo đơn hàng
   const handleCreateOrder = async () => {
     if (selectedProducts.length === 0) {
       alert("Vui lòng chọn sản phẩm trước khi tạo đơn!");
       return;
     }
-    if (!selectedCustomer) {
-      alert("Vui lòng chọn khách hàng!");
-      return;
-    }
 
     try {
+      const employeeId = "00000000-0000-0000-0000-000000000002";
+
       const orderData = {
-        customerId: selectedCustomer.customerId,
-        items: selectedProducts.map((p) => ({
-          productId: p.productId,
-          quantity: p.quantity,
-          price: p.unitPrice,
-        })),
+        employeeId,
+        orderDate: new Date().toISOString(),
+        createdBy: username || "POS User",
+        status: "PENDING",
         subTotal,
         discountAmount: discountAmount || 0,
         total,
         notes: orderNotes || "",
-        createdBy: localStorage.getItem("username") || "POS User",
+        items: selectedProducts.map((p) => ({
+          productId: p.productId,
+          quantity: Number(p.quantity),
+          price: Number(p.unitPrice),
+        })),
       };
 
+      console.log("📦 Dữ liệu gửi lên backend:", orderData);
       const createdOrder = await orderService.createOrder(orderData);
 
-      console.log("Đơn hàng tạo thành công:", createdOrder);
+      console.log("✅ Đơn hàng tạo thành công:", createdOrder);
       alert("✅ Tạo đơn hàng thành công!");
       setOrderCreated(true);
-      setCurrentOrderId(createdOrder.orderId);
     } catch (error) {
       console.error("❌ Lỗi khi tạo đơn hàng:", error);
       if (error.response) {
@@ -304,13 +308,13 @@ const Pos = () => {
                     <span>{categories.length} mục</span>
                   </div>
 
-                  {/* Danh mục con có cha tồn tại */}
+                  {/* Danh mục con */}
                   {categories
                     .filter(
                       (cat) =>
-                        cat.parentCategoryId !== null && // là danh mục con
+                        cat.parentCategoryId !== null &&
                         categories.some(
-                          (parent) => parent.categoryId === cat.parentCategoryId // cha có tồn tại
+                          (parent) => parent.categoryId === cat.parentCategoryId
                         )
                     )
                     .map((cat) => (
@@ -362,8 +366,16 @@ const Pos = () => {
                               isProductSelected(product.productId)
                                 ? "highlight"
                                 : ""
+                            } ${
+                              product.unitsInStock === 0 ? "out-of-stock" : ""
                             }`}
-                            onClick={() => handleAddProduct(product)}
+                            onClick={() => {
+                              if (product.unitsInStock > 0) {
+                                handleAddProduct(product);
+                              } else {
+                                alert("Sản phẩm này đã hết hàng!");
+                              }
+                            }}
                           >
                             <Link to="#" className="pro-img">
                               <img
@@ -371,11 +383,19 @@ const Pos = () => {
                                 alt={product.productName}
                               />
                             </Link>
+
                             <h6 className="product-name">
                               <Link to="#">{product.productName}</Link>
                             </h6>
+
                             <div className="d-flex align-items-center justify-content-between price">
-                              <span>{`${product.unitsInStock ?? 0} SP`}</span>
+                              {product.unitsInStock > 0 ? (
+                                <span>{`${product.unitsInStock} SP`}</span>
+                              ) : (
+                                <span className="text-danger fw-bold">
+                                  Hết hàng
+                                </span>
+                              )}
                               <p>{product.unitPrice.toLocaleString()}₫</p>
                             </div>
                           </div>
@@ -417,49 +437,63 @@ const Pos = () => {
                 >
                   <h4 className="mb-3">Thông tin khách hàng</h4>
                   <div
-                    className="input-block d-flex align-items-center"
+                    className="d-flex align-items-center gap-2"
                     style={{ position: "relative" }}
                   >
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="Nhập số điện thoại khách hàng"
+                      placeholder="Nhập số điện thoại khách hàng..."
                       value={customerInput}
                       onChange={handleCustomerInput}
                       autoComplete="off"
                     />
 
-                    {customerSuggestions.length > 0 && (
-                      <ul className="customer-suggestions list-group position-absolute w-100">
-                        {customerSuggestions.map((c) => (
-                          <li
-                            key={c.customerId}
-                            className="list-group-item list-group-item-action"
-                            onClick={() => selectCustomer(c)}
-                            style={{ cursor: "pointer" }}
-                          >
-                            <strong>{c.fullName}</strong> <br />
-                            <span>{c.phone}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-
                     <Link
                       to="#"
-                      className="btn btn-primary btn-icon ms-2"
+                      className="btn btn-primary btn-icon"
                       data-bs-toggle="modal"
                       data-bs-target="#create"
+                      title="Thêm khách hàng mới"
                     >
                       <i className="feather icon-user-plus feather-16" />
                     </Link>
                   </div>
 
+                  {/* Danh sách gợi ý */}
+                  {customerSuggestions.length > 0 && (
+                    <ul
+                      className="list-group position-absolute w-100 shadow-sm rounded mt-1"
+                      style={{
+                        zIndex: 1000,
+                        background: "#fff",
+                        maxHeight: "200px",
+                        overflowY: "auto",
+                      }}
+                    >
+                      {customerSuggestions.map((c) => (
+                        <li
+                          key={c.customerId}
+                          className="list-group-item list-group-item-action"
+                          onClick={() => selectCustomer(c)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          <div className="fw-semibold">{c.fullName}</div>
+                          <div className="text-muted small">{c.phone}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {/* Thông tin khách hàng được chọn */}
                   {selectedCustomer && (
-                    <div className="mt-2">
-                      <strong>Khách hàng:</strong> {selectedCustomer.fullName}{" "}
-                      <br />
-                      <strong>SĐT:</strong> {selectedCustomer.phone}
+                    <div className="mt-3 p-2 rounded border bg-light">
+                      <div>
+                        <strong>Tên:</strong> {selectedCustomer.fullName}
+                      </div>
+                      <div>
+                        <strong>SĐT:</strong> {selectedCustomer.phone}
+                      </div>
                     </div>
                   )}
                 </div>

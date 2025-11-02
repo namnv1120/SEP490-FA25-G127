@@ -1,12 +1,12 @@
-import axios from 'axios';
+import axios from "axios";
 
-const REST_API_BASE_URL = 'http://localhost:8080/api/orders';
+const REST_API_BASE_URL = "http://localhost:8080/api/orders";
 
 // Hàm lấy header có token
 const getAuthHeader = () => {
-  const token = localStorage.getItem('authToken');
-  const tokenType = localStorage.getItem('authTokenType') || 'Bearer';
-  if (!token) throw new Error('Unauthorized: No token found');
+  const token = localStorage.getItem("authToken");
+  const tokenType = localStorage.getItem("authTokenType") || "Bearer";
+  if (!token) throw new Error("Unauthorized: No token found");
   return { Authorization: `${tokenType} ${token}` };
 };
 
@@ -18,7 +18,7 @@ const orderService = {
       });
       return res.data.result;
     } catch (error) {
-      console.error('Lỗi khi tải danh sách đơn hàng:', error);
+      console.error("Lỗi khi tải danh sách đơn hàng:", error);
       throw error;
     }
   },
@@ -31,7 +31,7 @@ const orderService = {
       });
       return res.data.result;
     } catch (error) {
-      console.error('Lỗi khi tải chi tiết đơn hàng:', error);
+      console.error("Lỗi khi tải chi tiết đơn hàng:", error);
       throw error;
     }
   },
@@ -41,13 +41,16 @@ const orderService = {
     try {
       const res = await axios.post(REST_API_BASE_URL, orderData, {
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           ...getAuthHeader(),
         },
       });
       return res.data.result;
     } catch (error) {
-      console.error('Lỗi khi tạo đơn hàng:', error);
+      if (error.response) {
+        console.error("📩 Backend trả về:", error.response.data);
+      }
+      console.error("Lỗi khi tạo đơn hàng:", error);
       throw error;
     }
   },
@@ -55,12 +58,16 @@ const orderService = {
   // Đặt đơn hàng ở trạng thái “chờ” (hold)
   holdOrder: async (id) => {
     try {
-      const res = await axios.post(`${REST_API_BASE_URL}/${id}/hold`, {}, {
-        headers: getAuthHeader(),
-      });
+      const res = await axios.post(
+        `${REST_API_BASE_URL}/${id}/hold`,
+        {},
+        {
+          headers: getAuthHeader(),
+        }
+      );
       return res.data.result;
     } catch (error) {
-      console.error('Lỗi khi giữ đơn hàng:', error);
+      console.error("Lỗi khi giữ đơn hàng:", error);
       throw error;
     }
   },
@@ -68,12 +75,16 @@ const orderService = {
   // Hoàn tất đơn hàng
   completeOrder: async (id) => {
     try {
-      const res = await axios.post(`${REST_API_BASE_URL}/${id}/complete`, {}, {
-        headers: getAuthHeader(),
-      });
+      const res = await axios.post(
+        `${REST_API_BASE_URL}/${id}/complete`,
+        {},
+        {
+          headers: getAuthHeader(),
+        }
+      );
       return res.data.result;
     } catch (error) {
-      console.error('Lỗi khi hoàn tất đơn hàng:', error);
+      console.error("Lỗi khi hoàn tất đơn hàng:", error);
       throw error;
     }
   },
@@ -81,12 +92,16 @@ const orderService = {
   // Hủy đơn hàng
   cancelOrder: async (id) => {
     try {
-      const res = await axios.post(`${REST_API_BASE_URL}/${id}/cancel`, {}, {
-        headers: getAuthHeader(),
-      });
+      const res = await axios.post(
+        `${REST_API_BASE_URL}/${id}/cancel`,
+        {},
+        {
+          headers: getAuthHeader(),
+        }
+      );
       return res.data.result;
     } catch (error) {
-      console.error('Lỗi khi hủy đơn hàng:', error);
+      console.error("Lỗi khi hủy đơn hàng:", error);
       throw error;
     }
   },

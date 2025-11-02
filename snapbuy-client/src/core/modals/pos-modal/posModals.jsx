@@ -276,7 +276,7 @@ const PosModals = () => {
               {selectedOrder ? (
                 <>
                   <div className="text-center mb-3">
-                    <img src={logo} width={100} height={30} alt="Logo" />
+                    <img src="src/assets/img/logo.png" width={100} height={30} alt="Logo" />
                     <h6 className="mt-2">Hóa đơn bán hàng</h6>
                     <p>Mã đơn: #{selectedOrder.orderNumber}</p>
                     <p>
@@ -284,26 +284,68 @@ const PosModals = () => {
                     </p>
                   </div>
 
-                  <table className="table w-100">
-                    <thead>
+                  <table className="table w-100 align-middle">
+                    <thead className="table-light">
                       <tr>
-                        <th>Sản phẩm</th>
-                        <th>Số lượng</th>
-                        <th>Giá</th>
-                        <th className="text-end">Thành tiền</th>
+                        <th style={{ width: "55%" }}>Sản phẩm</th>
+                        <th style={{ width: "15%", textAlign: "center" }}>
+                          Số lượng
+                        </th>
+                        <th style={{ width: "15%", textAlign: "right" }}>
+                          Giá
+                        </th>
+                        <th style={{ width: "15%", textAlign: "right" }}>
+                          Thành tiền
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {selectedOrder.items?.map((item, index) => (
-                        <tr key={index}>
-                          <td>{item.productName}</td>
-                          <td>{item.quantity}</td>
-                          <td>{item.price.toLocaleString()}₫</td>
-                          <td className="text-end">
-                            {(item.price * item.quantity).toLocaleString()}₫
-                          </td>
-                        </tr>
-                      ))}
+                      {(selectedOrder.orderDetails || []).map(
+                        (detail, index) => {
+                          const productInfo = products.find(
+                            (p) => p.productId === detail.productId
+                          );
+                          const productName =
+                            productInfo?.productName || "Không rõ";
+                          const unitPrice =
+                            detail.unitPrice || productInfo?.unitPrice || 0;
+                          const quantity = detail.quantity || 0;
+                          const discount = detail.discount || 0;
+                          const total =
+                            unitPrice * quantity * (1 - discount / 100);
+
+                          return (
+                            <tr key={index}>
+                              {/* Tên sản phẩm xuống dòng nếu dài */}
+                              <td
+                                style={{
+                                  whiteSpace: "normal",
+                                  wordBreak: "break-word",
+                                  lineHeight: "1.4",
+                                }}
+                              >
+                                <div className="fw-medium text-dark">
+                                  {productName}
+                                </div>
+                                {discount > 0 && (
+                                  <small className="text-muted">
+                                    Giảm {discount}%
+                                  </small>
+                                )}
+                              </td>
+                              <td style={{ textAlign: "center" }}>
+                                {quantity}
+                              </td>
+                              <td style={{ textAlign: "right" }}>
+                                {unitPrice.toLocaleString("vi-VN")}₫
+                              </td>
+                              <td style={{ textAlign: "right" }}>
+                                {total.toLocaleString("vi-VN")}₫
+                              </td>
+                            </tr>
+                          );
+                        }
+                      )}
                     </tbody>
                   </table>
 
