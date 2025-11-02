@@ -45,7 +45,7 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
 
           if (data.avatarUrl) setAvatar(data.avatarUrl);
         })
-        .catch((err) => console.error("Error fetching account data:", err));
+        .catch(() => {});
     }
   }, [accountId]);
 
@@ -76,7 +76,6 @@ const EditAccount = ({ accountId, onClose, onUpdated }) => {
       if (onUpdated) onUpdated();
       if (onClose) onClose();
     } catch (error) {
-      console.error("Error updating account:", error);
       alert("Failed to update account. Please try again!");
     }
   };

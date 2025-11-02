@@ -50,11 +50,8 @@
 @use "layout/theme-color";
 
 /****** Pages ******/
-@use "pages/chat";
 @use "pages/dashboard";
 @use "pages/sales-dashboard";
-@use "pages/admin-dashboard";
-@use "pages/email";
 @use "pages/error";
 @use "pages/login";
 @use "pages/product";
@@ -63,18 +60,5 @@
 @use "pages/stocks";
 @use "pages/product-list";
 @use "pages/add-product";
-@use "pages/notes";
-@use "pages/barcode";
-@use "pages/employees-grid";
-@use "pages/todo-inbox";
-@use "pages/transfer-list.scss";
-@use "pages/attendance-employee";
 @use "pages/settings";
 @use "pages/pos-design";
-@use "pages/call";
-@use "pages/file-manager";
-@use "pages/ui-pages";
-@use "pages/social-feed";
-@use "pages/super-admin";
-@use "pages/wishlist";
-@use "pages/blogs";

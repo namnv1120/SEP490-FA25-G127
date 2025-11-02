@@ -59,7 +59,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     private void ensureActive(Role r) {
-        if (Boolean.FALSE.equals(r.getIsActive())) {
+        if (Boolean.FALSE.equals(r.getActive())) {
             throw new IllegalStateException("Vai trò đang ở trạng thái không hoạt động");
         }
     }
@@ -85,7 +85,7 @@ public class RoleServiceImpl implements RoleService {
                 .id(r.getRoleId() != null ? r.getRoleId().toString() : null)
                 .roleName(r.getRoleName())
                 .description(r.getDescription())
-                .isActive(Boolean.TRUE.equals(r.getIsActive()))
+                .active(Boolean.TRUE.equals(r.getActive()))
                 .createdDate(r.getCreatedDate() == null ? null :
                         r.getCreatedDate().toInstant().atOffset(ZoneOffset.UTC).toString())
                 .permissions(r.getPermissions() == null ? List.of() :
@@ -107,7 +107,7 @@ public class RoleServiceImpl implements RoleService {
         Role r = new Role();
         r.setRoleName(name);
         r.setDescription(req.getDescription());
-        r.setIsActive(req.getIsActive() == null ? Boolean.TRUE : req.getIsActive());
+        r.setActive(req.getActive() == null ? Boolean.TRUE : req.getActive());
         r.setCreatedDate(new Date());
         r.setPermissions(new HashSet<>());
         return toResponse(roleRepository.save(r));
@@ -119,10 +119,10 @@ public class RoleServiceImpl implements RoleService {
         if (activeFilter.isPresent()) {
             Boolean f = activeFilter.get();
             all = all.stream()
-                    .filter(r -> Objects.equals(Boolean.TRUE.equals(r.getIsActive()), f))
+                    .filter(r -> Objects.equals(Boolean.TRUE.equals(r.getActive()), f))
                     .toList();
         } else {
-            all = all.stream().filter(r -> Boolean.TRUE.equals(r.getIsActive())).toList();
+            all = all.stream().filter(r -> Boolean.TRUE.equals(r.getActive())).toList();
         }
         return all.stream().map(this::toResponse).toList();
     }
@@ -164,8 +164,8 @@ public class RoleServiceImpl implements RoleService {
             r.setDescription(req.getDescription());
         }
 
-        if (req.getIsActive() != null) {
-            r.setIsActive(req.getIsActive());
+        if (req.getActive() != null) {
+            r.setActive(req.getActive());
         }
 
         return toResponse(roleRepository.save(r));

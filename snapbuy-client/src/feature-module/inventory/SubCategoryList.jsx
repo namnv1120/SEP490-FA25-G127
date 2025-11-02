@@ -50,10 +50,10 @@ const SubCategoryList = () => {
 
         return {
           categoryId: cat.categoryId,
-          categoryName: cat.name || cat.categoryName || "N/A",
-          parentCategoryName: parent ? (parent.name || parent.categoryName) : "N/A",
+          categoryName: cat.name || cat.categoryName || "Không có",
+          parentCategoryName: parent ? (parent.name || parent.categoryName) : "Không có",
           parentCategoryId: cat.parentCategoryId,
-          description: cat.description || "N/A",
+          description: cat.description || "Không có",
           createddate: cat.createdDate
             ? new Date(cat.createdDate).toLocaleDateString("vi-VN", {
               year: "numeric",
@@ -62,7 +62,7 @@ const SubCategoryList = () => {
               hour: "2-digit",
               minute: "2-digit",
             })
-            : "N/A",
+            : "Không có",
           updateddate: cat.updatedDate
             ? new Date(cat.updatedDate).toLocaleDateString("vi-VN", {
               year: "numeric",
@@ -71,7 +71,7 @@ const SubCategoryList = () => {
               hour: "2-digit",
               minute: "2-digit",
             })
-            : "N/A",
+            : "Không có",
           status: cat.active === 1 || cat.active === true ? "Hoạt động" : "Không hoạt động",
         };
       });
@@ -79,7 +79,7 @@ const SubCategoryList = () => {
       setSubCategories(mapped);
       setTotalRecords(mapped.length);
     } catch (err) {
-      console.error("❌ Lỗi khi tải danh sách danh mục con", err);
+      console.error("❌ Lỗi khi tải danh sách danh mục con:", err);
       setError("Lỗi khi tải danh sách danh mục con. Vui lòng thử lại.");
     } finally {
       setLoading(false);
@@ -126,7 +126,7 @@ const SubCategoryList = () => {
       await fetchSubCategories();
       message.success("Xoá danh mục con thành công!");
     } catch (err) {
-      console.error("❌ Lỗi khi xoá danh mục con", err);
+      console.error("❌ Lỗi khi xoá danh mục con:", err);
       message.error("Không thể xoá danh mục con. Vui lòng thử lại.");
     } finally {
       setSelectedSubCategory(null);
@@ -255,7 +255,7 @@ const SubCategoryList = () => {
           {loading && (
             <div className="text-center my-5">
               <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
+                <span className="visually-hidden">Đang tải...</span>
               </div>
             </div>
           )}

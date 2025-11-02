@@ -10,9 +10,6 @@ const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
 const ProductList = lazy(() =>
   import("../feature-module/inventory/ProductList")
 );
-const ProductDetail = lazy(() =>
-  import("../feature-module/inventory/ProductDetail")
-);
 const AddProduct = lazy(() => import("../feature-module/inventory/AddProduct"));
 const EditProduct = lazy(() => import("../feature-module/inventory/EditProduct"));
 const ProductPriceList = lazy(() => import("../feature-module/inventory/ProductPriceList"));
@@ -36,20 +33,28 @@ const Login = lazy(() =>
 const Forgotpassword = lazy(() =>
   import("../feature-module/pages/authentication/ForgotPassword")
 );
-const PosSettings = lazy(
-  () => import("../feature-module/settings/websitesettings/possettings")
+const PosSettings = lazy(() =>
+  import("../feature-module/settings/websitesettings/possettings")
 );
-const PosOrder = lazy(
-  () => import("../feature-module/sales/pos-order/posOrder")
+const PosOrder = lazy(() =>
+  import("../feature-module/sales/pos-order/posOrder")
 );
 
+<<<<<<< HEAD
 const Customers = lazy(() => import("../feature-module/people/Customer"));
 const PurchaseOrder = lazy(() =>
   import("../feature-module/purchases/PurchaseOrder")
 );
-const PurchaseOrderDetail = lazy(() =>
-  import("../feature-module/purchases/PurchaseOrderDetail")
+const AddPurchaseOrder = lazy(() =>
+  import("../feature-module/purchases/AddPurchaseOrder")
 );
+const EditPurchaseOrder = lazy(() =>
+  import("../feature-module/purchases/EditPurchaseOrder")
+);
+
+=======
+const Customers = lazy(() => import("../feature-module/people/customers"));
+>>>>>>> thuyduong
 
 const routes = all_routes;
 
@@ -61,6 +66,16 @@ export const authRoutes = [
     element: <Dashboard />,
     route: Route,
   },
+<<<<<<< HEAD
+=======
+  {
+    id: 76,
+    path: routes.possettings,
+    name: "possettings",
+    element: <PosSettings />,
+    route: Route,
+  },
+>>>>>>> thuyduong
   {
     id: 2,
     path: routes.customers,
@@ -90,6 +105,30 @@ export const authRoutes = [
     route: Route,
   },
   {
+<<<<<<< HEAD
+=======
+    id: 106,
+    path: routes.permissions,
+    name: "permissions",
+    element: <Permissions />,
+    route: Route,
+  },
+  // {
+  //   id: 107,
+  //   path: routes.deleteaccount,
+  //   name: "deleteaccount",
+  //   element: <DeleteAccount />,
+  //   route: Route,
+  // },
+  {
+    id: 121,
+    path: routes.posorder,
+    name: "pos-orders",
+    element: <PosOrder />,
+    route: Route,
+  },
+  {
+>>>>>>> thuyduong
     id: 6,
     path: routes.formhorizontal,
     name: "formhorizontal",
@@ -97,14 +136,14 @@ export const authRoutes = [
     route: Route,
   },
   {
-    id: 8,
+    id: 7,
     path: routes.products,
     name: "products",
     element: <ProductList />,
     route: Route,
   },
   {
-    id: 7,
+    id: 8,
     path: routes.suppliers,
     name: "suppliers",
     element: <Suppliers />,
@@ -112,72 +151,72 @@ export const authRoutes = [
   },
   {
     id: 9,
-    path: routes.productdetail,
-    name: "product-details",
-    element: <ProductDetail />,
-    route: Route,
-  },
-  {
-    id: 10,
     path: routes.addproduct,
     name: "add-product",
     element: <AddProduct />,
     route: Route,
   },
   {
-    id: 11,
+    id: 10,
     path: routes.editproduct,
     name: "edit-product",
     element: <EditProduct />,
     route: Route,
   },
   {
-    id: 12,
+    id: 11,
     path: routes.categories,
     name: "categories",
     element: <CategoryList />,
     route: Route,
   },
   {
-    id: 13,
+    id: 12,
     path: routes.subcategories,
     name: "sub-categories",
     element: <SubCategories />,
     route: Route,
   },
   {
-    id: 14,
+    id: 13,
     path: routes.inventories,
     name: "inventories",
     element: <InventoryList />,
     route: Route,
   },
   {
-    id: 15,
+    id: 14,
     path: routes.productprices,
     name: "product-prices",
     element: <ProductPriceList />,
     route: Route,
   },
   {
-    id: 16,
+    id: 15,
     path: routes.editproductprice,
     name: "edit-product-price",
     element: <EditProductPrice />,
     route: Route,
   },
   {
-    id: 17,
+    id: 16,
     path: routes.purchaseorders,
     name: "purchaseorders",
     element: <PurchaseOrder />,
     route: Route,
   },
   {
+    id: 17,
+    path: routes.addpurchaseorder,
+    name: "add-purchaseorder",
+    element: <AddPurchaseOrder />,
+    route: Route,
+  },
+  {
     id: 18,
-    path: routes.purchaseorderdetail,
-    name: "purchaseorderdetail",
-    element: <PurchaseOrderDetail />,
+    path: routes.editpurchaseorder,
+    name: "edit-purchaseorder",
+    element: <EditPurchaseOrder />,
     route: Route,
   },
   {

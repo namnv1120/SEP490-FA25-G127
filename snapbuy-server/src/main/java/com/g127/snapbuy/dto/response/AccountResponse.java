@@ -14,4 +14,5 @@ public class AccountResponse {
     private String phone;
     private String avatarUrl;
     private List<String> roles;
+    private Boolean active;
 }

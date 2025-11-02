@@ -167,7 +167,6 @@ export { default as media22 } from "../../assets/img/media/media-22.jpg";
 export { default as media24 } from "../../assets/img/media/media-22.jpg";
 export { default as phoneAdd1 } from "../../assets/img/products/phone-add-1.png";
 export { default as phoneAdd2 } from "../../assets/img/products/phone-add-2.png";
-export { default as logo } from "../../assets/img/logo.svg";
 export { default as logoSmall } from "../../assets/img/logo-small.png";
 export { default as logoWhite } from "../../assets/img/logo-white.svg";
 

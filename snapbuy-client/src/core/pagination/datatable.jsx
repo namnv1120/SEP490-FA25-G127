@@ -1,14 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Table } from "antd";
 import Pagination from "./pagination";
 
 const Datatable = ({ columns, dataSource }) => {
   const [, setSearchText] = useState("");
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [filteredDataSource, setFilteredDataSource] = useState(dataSource);
+  const [filteredDataSource, setFilteredDataSource] = useState(dataSource || []);
 
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setFilteredDataSource(dataSource || []);
+    setCurrent(1); 
+  }, [dataSource]);
 
   const onSelectChange = (newSelectedRowKeys) => {
     setSelectedRowKeys(newSelectedRowKeys);
@@ -48,7 +53,7 @@ const Datatable = ({ columns, dataSource }) => {
                 type="search"
                 onChange={(e) => handleSearch(e.target.value)}
                 className="form-control form-control-sm"
-                placeholder="Search"
+                placeholder="Tìm kiếm"
                 aria-controls="DataTables_Table_0"
               />
             </label>
@@ -61,7 +66,7 @@ const Datatable = ({ columns, dataSource }) => {
         rowSelection={rowSelection}
         columns={columns}
         dataSource={paginatedData}
-        rowKey={(record, index) => record.id || record.userId || index}
+        rowKey={(record) => record.id || record.userId || String(record.username) || String(record.email)}
         pagination={false}
       />
 

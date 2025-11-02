@@ -11,7 +11,7 @@ public class RoleResponse {
     private String id;
     private String roleName;
     private String description;
-    private Boolean isActive;
+    private Boolean active;
     private String createdDate;
     private List<PermissionResponse> permissions;
 }

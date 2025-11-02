@@ -84,7 +84,6 @@ const AddAccount = ({ onUserAdded }) => {
 
       alert("Account created successfully!");
     } catch (error) {
-      console.error("Error creating account:", error);
       alert("Failed to create account!");
     }
   };

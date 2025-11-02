@@ -11,5 +11,5 @@ public class RoleUpdateRequest {
     @Size(max = 4000)
     private String description;
 
-    private Boolean isActive;
+    private Boolean active;
 }

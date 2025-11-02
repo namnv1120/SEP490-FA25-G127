@@ -2,9 +2,7 @@ package com.g127.snapbuy.dto.request;
 
 import jakarta.validation.constraints.*;
 import lombok.*;
-import org.hibernate.validator.constraints.URL;
-
-import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 @Builder
@@ -24,11 +22,11 @@ public class ProductCreateRequest {
     @Size(max = 10000, message = "Mô tả không được vượt quá 10000 ký tự.")
     private String description;
 
-    @NotNull(message = "Vui lòng chọn danh mục.")
-    private UUID categoryId;
+    @NotBlank(message = "Vui lòng chọn danh mục.")
+    private String categoryId;
 
-    @NotNull(message = "Vui lòng chọn danh mục.")
-    private UUID supplierId;
+    @NotBlank(message = "Vui lòng chọn nhà cung cấp.")
+    private String supplierId;
 
     @Size(max = 20, message = "Đơn vị tính không được vượt quá 20 ký tự.")
     private String unit;
@@ -36,9 +34,7 @@ public class ProductCreateRequest {
     @Size(max = 50, message = "Kích thước không được vượt quá 50 ký tự.")
     private String dimensions;
 
-    @Size(max = 500, message = "URL ảnh không được vượt quá 500 ký tự.")
-    @URL(message = "URL ảnh không đúng định dạng. Vui lòng kiểm tra lại.")
-    private String imageUrl;
-
     private Boolean active;
+
+    private MultipartFile image;
 }

@@ -13,7 +13,6 @@ const DeleteModal = ({ itemId, itemName, onDelete, onCancel }) => {
           modal.hide();
         }
       } catch (error) {
-        console.error("Lỗi khi xoá mục:", error);
         message.error("Lỗi khi xoá mục. Vui lòng thử lại.");
       }
     }
@@ -30,8 +29,8 @@ const DeleteModal = ({ itemId, itemName, onDelete, onCancel }) => {
       <div className="modal fade" id="delete-modal">
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
-            <div className="page-wrapper-new p-0">
-              <div className="content p-5 px-3 text-center">
+            <div className="p-0">
+              <div className="p-5 px-3 text-center">
                 <span className="rounded-circle d-inline-flex p-2 bg-danger-transparent mb-2">
                   <i className="ti ti-trash fs-24 text-danger" />
                 </span>

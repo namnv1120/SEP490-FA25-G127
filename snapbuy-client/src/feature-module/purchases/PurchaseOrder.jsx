@@ -1,19 +1,288 @@
+/* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import CommonFooter from "../../components/footer/commonFooter";
 import TableTopHead from "../../components/table-top-head";
 import PrimeDataTable from "../../components/data-table";
 import SearchFromApi from "../../components/data-table/search";
-import { getAllPurchaseOrders } from "../../services/PurchaseOrderService"; // ✅ import service
-import { message, Spin } from "antd"; // ✅ để hiển thị thông báo và loading
+import {
+  getAllPurchaseOrders,
+  deletePurchaseOrder,
+  approvePurchaseOrder,
+  cancelPurchaseOrder,
+  receivePurchaseOrder,
+} from "../../services/PurchaseOrderService";
+import { message, Spin, Button } from "antd";
+import { all_routes } from "../../routes/all_routes";
+import DeleteModal from "../../components/delete-modal";
+import { Modal } from "bootstrap";
+import PurchaseOrderDetailModal from "./PurchaseOrderDetailModal";
+
 
 const PurchaseOrder = () => {
+  const route = all_routes;
   const [listData, setListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
-  const [_searchQuery, setSearchQuery] = useState(undefined);
+  const [searchQuery, setSearchQuery] = useState(undefined);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+
+  // Thêm vào đầu component PurchaseOrder
+  const getAccountRole = () => {
+    const role = localStorage.getItem("role");
+    return role;
+  };
+
+  const isAdmin = () => {
+    const role = getAccountRole();
+    return role === "Quản trị viên"
+  };
+
+  const isOwner = () => {
+    const role = getAccountRole();
+    return role === "Chủ cửa hàng"
+  };
+
+  const canApprove = () => {
+    const result = isAdmin() || isOwner();
+    return result;
+  };
+
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "—";
+    return new Date(dateString).toLocaleString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const formatCurrency = (amount) => {
+    if (amount === undefined || amount === null) return "—";
+    return `${Number(amount).toLocaleString("vi-VN")} ₫`;
+  };
+
+  const renderStatusBadge = (status) => {
+    switch (status?.toLowerCase()) {
+      case "chờ duyệt":
+        return <span className="badge bg-warning text-dark">Chờ duyệt</span>;
+      case "đã duyệt":
+        return <span className="badge bg-info">Đã duyệt</span>;
+      case "đã nhận hàng":
+        return <span className="badge bg-success">Đã nhận hàng</span>;
+      default:
+        return <span className="badge bg-danger">Đã huỷ</span>;
+    }
+  };
+
+  const handleSearch = (value) => {
+    setSearchQuery(value);
+  };
+
+  // ✅ Fetch danh sách đơn hàng
+  const fetchPurchaseOrders = async () => {
+    try {
+      setLoading(true);
+      const data = await getAllPurchaseOrders();
+
+      const formatted = data.map((item) => ({
+        ...item,
+        orderDate: item.orderDate || item.createdAt,
+        receivedDate: item.receivedDate || null,
+        totalAmount: item.totalAmount ?? 0,
+        status: item.status || "Chờ duyệt",
+      }));
+
+      setListData(formatted);
+      setTotalRecords(formatted.length);
+    } catch (error) {
+      message.error("Không thể tải danh sách đơn đặt hàng!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPurchaseOrders();
+  }, []);
+
+  const handleBulkAction = async (action) => {
+    try {
+      const checkboxes = document.querySelectorAll('.table-list-card input[type="checkbox"]:checked');
+      const selectedIds = [];
+
+      checkboxes.forEach((cb) => {
+        const id = cb.dataset.id;
+        if (id && id !== "select-all") selectedIds.push(id);
+      });
+
+      if (selectedIds.length === 0) {
+        message.warning("Vui lòng chọn ít nhất một đơn hàng!");
+        return;
+      }
+
+      if (action === "approve" && !canApprove()) {
+        message.error("Chỉ Chủ cửa hàng và Quản trị viên mới có quyền duyệt đơn!");
+        return;
+      }
+
+      const validOrders = [];
+      const invalidOrders = [];
+
+      for (const id of selectedIds) {
+        const order = listData.find(o => o.purchaseOrderId === id);
+
+        if (!order) {
+          invalidOrders.push(id);
+          continue;
+        }
+        const status = order.status?.toLowerCase();
+
+        if (action === "approve") {
+          if (status === "chờ duyệt") {
+            validOrders.push(id);
+          } else {
+            invalidOrders.push(`${order.purchaseOrderNumber} (${order.status})`);
+          }
+        }
+        else if (action === "cancel") {
+          if (status === "chờ duyệt" || status === "đã duyệt") {
+            validOrders.push(id);
+          } else {
+            invalidOrders.push(`${order.purchaseOrderNumber} (${order.status})`);
+          }
+        }
+        else if (action === "receive") {
+          if (status === "đã duyệt") {
+            validOrders.push(id);
+          } else if (status === "chờ duyệt") {
+            invalidOrders.push(`${order.purchaseOrderNumber} - Chưa được duyệt`);
+          } else {
+            invalidOrders.push(`${order.purchaseOrderNumber} (${order.status})`);
+          }
+        }
+      }
+
+      if (invalidOrders.length > 0) {
+        const actionText =
+          action === "approve" ? "duyệt" :
+            action === "cancel" ? "huỷ" :
+              "nhận hàng";
+
+        message.warning({
+          content: (
+            <div>
+              <p>Không thể {actionText} các đơn sau:</p>
+              <ul style={{ marginTop: 8, paddingLeft: 20 }}>
+                {invalidOrders.slice(0, 5).map((item, idx) => (
+                  <li key={idx}>{item}</li>
+                ))}
+                {invalidOrders.length > 5 && <li>... và {invalidOrders.length - 5} đơn khác</li>}
+              </ul>
+            </div>
+          ),
+          duration: 5,
+        });
+      }
+
+      setLoading(true);
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const id of validOrders) {
+        try {
+          if (action === "approve") {
+            await approvePurchaseOrder(id, { notes: "Duyệt hàng loạt" });
+          } else if (action === "cancel") {
+            await cancelPurchaseOrder(id);
+          } else if (action === "receive") {
+            await receivePurchaseOrder(id, { notes: "Nhận hàng loạt" });
+          }
+          successCount++;
+        } catch (err) {
+          errorCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        message.success(`Đã xử lý thành công ${successCount} đơn hàng!`);
+      }
+      if (errorCount > 0) {
+        message.error(`Có ${errorCount} đơn hàng xử lý thất bại!`);
+      }
+
+      await fetchPurchaseOrders();
+
+      document.querySelectorAll('.table-list-card input[type="checkbox"]:checked').forEach(cb => {
+        cb.checked = false;
+      });
+
+    } catch (err) {
+      console.error(err);
+      message.error("Có lỗi xảy ra khi cập nhật!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleDeleteClick = (item) => {
+    setSelectedItem(item);
+    setTimeout(() => {
+      const modalElement = document.getElementById("delete-modal");
+      if (modalElement) {
+        const modal = new Modal(modalElement);
+        modal.show();
+      } else {
+        console.error("Không tìm thấy phần tử modal xoá!");
+      }
+    }, 0);
+  };
+
+  // ✅ Xác nhận xoá
+  const handleDeleteConfirm = async (purchaseOrderId) => {
+    try {
+      await deletePurchaseOrder(purchaseOrderId);
+      await fetchPurchaseOrders();
+      setSelectedItem(null);
+
+      // Đóng modal thủ công
+      const modalElement = document.getElementById("delete-modal");
+      if (modalElement) {
+        const modal = Modal.getInstance(modalElement);
+        if (modal) modal.hide();
+      }
+
+      message.success("Đã xoá đơn đặt hàng thành công!");
+    } catch (error) {
+      message.error("Không thể xoá đơn đặt hàng!");
+    }
+  };
+
+
+  const handleDeleteCancel = () => {
+    setSelectedItem(null);
+  };
+
+  useEffect(() => {
+    const selectAllCheckbox = document.getElementById("select-all");
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener("change", (e) => {
+        const checkboxes = document.querySelectorAll('.table-list-card input[type="checkbox"][data-id]');
+        checkboxes.forEach((cb) => {
+          cb.checked = e.target.checked;
+        });
+      });
+    }
+  }, [listData]);
+
 
   const columns = [
     {
@@ -23,105 +292,138 @@ const PurchaseOrder = () => {
           <span className="checkmarks" />
         </label>
       ),
-      body: () => (
+      body: (row) => (
         <label className="checkboxs">
-          <input type="checkbox" />
+          <input type="checkbox" data-id={row.purchaseOrderId} />
           <span className="checkmarks" />
         </label>
       ),
       sortable: false,
       key: "select",
     },
-    { header: "Supplier ID", field: "supplier_id", key: "supplier_id" },
-    { header: "Account ID", field: "account_id", key: "account_id" },
-    { header: "Order Date", field: "order_date", key: "order_date" },
-    { header: "Received Date", field: "received_date", key: "received_date" },
-    { header: "Status", field: "status", key: "status" },
-    { header: "Total Amount", field: "total_amount", key: "total_amount" },
+
+    {
+      header: "Mã tạo đơn",
+      field: "purchaseOrderNumber",
+      key: "purchaseOrderNumber",
+      body: (row) => (
+        <button
+          type="button"
+          className="btn btn-link p-0 text-primary text-decoration-none"
+          onClick={() => {
+            setSelectedOrderId(row.purchaseOrderId);
+            setDetailModalOpen(true);
+          }}
+          style={{ cursor: "pointer" }}
+        >
+          {row.purchaseOrderNumber}
+        </button>
+      ),
+    },
+    { header: "Nhà cung cấp", field: "supplierName", key: "supplierName" },
+    { header: "Người tạo đơn", field: "fullName", key: "fullName" },
+    {
+      header: "Ngày tạo phiếu",
+      body: (row) => formatDateTime(row.orderDate),
+      field: "orderDate",
+      key: "orderDate",
+    },
+    {
+      header: "Ngày nhận phiếu",
+      body: (row) => formatDateTime(row.receivedDate),
+      field: "receivedDate",
+      key: "receivedDate",
+    },
+    {
+      header: "Tổng tiền",
+      body: (row) => formatCurrency(row.totalAmount),
+      field: "totalAmount",
+      key: "totalAmount",
+    },
+    {
+      header: "Trạng thái",
+      body: (row) => renderStatusBadge(row.status),
+      field: "status",
+      key: "status",
+    },
+    {
+      header: "",
+      field: "actions",
+      key: "actions",
+      sortable: false,
+      body: (row) => (
+        <div className="edit-delete-action d-flex align-items-center">
+          <Link
+            to={route.editpurchaseorder?.replace(":id", row.purchaseOrderId)}
+            className="me-2 p-2 border rounded bg-transparent"
+          >
+            <i className="feather icon-edit"></i>
+          </Link>
+          <button
+            className="p-2 d-flex align-items-center border rounded bg-transparent"
+            onClick={() => handleDeleteClick(row)}
+          >
+            <i className="feather icon-trash-2"></i>
+          </button>
+        </div>
+      ),
+    },
   ];
 
-  const handleSearch = (value) => {
-    setSearchQuery(value);
-  };
-
-  const fetchPurchaseOrders = async () => {
-    try {
-      setLoading(true);
-      const data = await getAllPurchaseOrders();
-      setListData(data);
-      setTotalRecords(data.length || 0);
-    } catch (error) {
-      console.error("❌ Lỗi khi tải đơn hàng:", error);
-      message.error("Không thể tải danh sách đơn đặt hàng!");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✅ Gọi 1 lần khi load trang
-  useEffect(() => {
-    fetchPurchaseOrders();
-  }, []);
-
   return (
-    <div>
+    <>
       <div className="page-wrapper">
         <div className="content">
           <div className="page-header">
-            <div className="d-flex align-items-center justify-content-between w-100">
+            <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Purchase Order</h4>
-                <h6>Manage Your Purchase Orders</h6>
+                <h4>Đơn đặt hàng</h4>
+                <h6>Quản lý danh sách đơn đặt hàng về kho</h6>
               </div>
             </div>
-            <TableTopHead />
+            <TableTopHead onRefresh={fetchPurchaseOrders} />
+            <div className="page-btn d-flex align-items-center gap-2">
+              {canApprove() && (
+                <button
+                  type="button"
+                  className="btn btn-success"
+                  onClick={() => handleBulkAction("approve")}
+                >
+                  <i className="ti ti-check me-1"></i>
+                  Duyệt
+                </button>
+              )}
+
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => handleBulkAction("cancel")}
+              >
+                <i className="ti ti-x me-1"></i>
+                Huỷ
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => handleBulkAction("receive")}
+              >
+                <i className="ti ti-package me-1"></i>
+                Đã nhận hàng
+              </button>
+
+              <Link to={route.addpurchaseorder} className="btn btn-primary">
+                <i className="ti ti-circle-plus me-1"></i>
+                Tạo đơn đặt hàng
+              </Link>
+            </div>
+
+
           </div>
 
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <SearchFromApi
-                callback={handleSearch}
-                rows={rows}
-                setRows={setRows}
-              />
-              <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                <div className="dropdown">
-                  <Link
-                    to="#"
-                    className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                    data-bs-toggle="dropdown"
-                  >
-                    Sort By : Last 7 Days
-                  </Link>
-                  <ul className="dropdown-menu dropdown-menu-end p-3">
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Recently Added
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Ascending
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Descending
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Last Month
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Last 7 Days
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-              </div>
+              <SearchFromApi callback={handleSearch} rows={rows} setRows={setRows} />
             </div>
 
             <div className="card-body p-0">
@@ -146,9 +448,28 @@ const PurchaseOrder = () => {
             </div>
           </div>
         </div>
+
+        {/* Modal xác nhận xoá */}
+        <DeleteModal
+          itemId={selectedItem?.purchaseOrderId}
+          itemName={selectedItem?.purchaseOrderNumber}
+          onDelete={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+        />
+
+        {/* Modal chi tiết đơn hàng */}
+        <PurchaseOrderDetailModal
+          isOpen={detailModalOpen}
+          onClose={() => {
+            setDetailModalOpen(false);
+            setSelectedOrderId(null);
+          }}
+          purchaseOrderId={selectedOrderId}
+        />
+
         <CommonFooter />
       </div>
-    </div>
+    </>
   );
 };
 

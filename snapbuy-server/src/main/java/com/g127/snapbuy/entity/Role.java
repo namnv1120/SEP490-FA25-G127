@@ -23,7 +23,7 @@ public class Role {
     private String description;
 
     @Column(name = "active")
-    private Boolean isActive = true;
+    private Boolean active = true;
 
     @Column(name = "created_date")
     private Date createdDate;

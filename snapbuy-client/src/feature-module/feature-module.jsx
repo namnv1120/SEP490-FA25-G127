@@ -7,6 +7,7 @@ import { authRoutes, posPage, unAuthRoutes } from "../routes/path";
 import { useEffect, useState } from "react";
 import HorizontalSidebar from "../components/layouts/horizontalSidebar";
 import PosHeader from "./pos/posHeader";
+import PageTitle from "../components/PageTitle";
 
 const FeatureModule = () => {
   const location = useLocation();
@@ -60,6 +61,7 @@ const FeatureModule = () => {
   if (isUnAuthRoute) {
     return (
       <div>
+        <PageTitle />
         <Outlet />
       </div>
     );
@@ -68,6 +70,7 @@ const FeatureModule = () => {
   if (isPosPage) {
     return (
       <div className={`main-wrapper ${toggleHeader ? "header-collapse" : ""}`}>
+        <PageTitle />
         <PosHeader />
         <div style={{ display: "none" }}>
           <ThemeSettings />
@@ -81,6 +84,7 @@ const FeatureModule = () => {
     return (
       <div className={`main-wrapper ${toggleHeader ? "header-collapse" : ""}`}>
         <>
+          <PageTitle />
           <style>
             {`
               :root {
@@ -126,7 +130,12 @@ const FeatureModule = () => {
     );
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <PageTitle />
+      <Outlet />
+    </>
+  );
 };
 
 export default FeatureModule;

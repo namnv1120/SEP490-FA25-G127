@@ -4,7 +4,7 @@ import { SidebarData } from "../../core/json/siderbar_data";
 // import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { all_routes } from "../../routes/all_routes";
-import { customer15, logo, logoSmall, logoWhite } from "../../utils/imagepath";
+import { customer15, logoSmall, logoWhite } from "../../utils/imagepath";
 
 const Sidebar = () => {
   const route = all_routes;
@@ -60,9 +60,6 @@ const Sidebar = () => {
         <>
           {/* Logo */}
           <div className="sidebar-logo">
-            <Link to={route.newdashboard} className="logo logo-normal">
-              <img src={logo} alt="Img" />
-            </Link>
             <Link to={route.newdashboard} className="logo logo-white">
               <img src={logoWhite} alt="Img" />
             </Link>

@@ -35,7 +35,7 @@ const EditProductPrice = () => {
       const data = await getAllProducts();
       setProducts(data);
     } catch (error) {
-      console.error("Lỗi khi tải sản phẩm:", error);
+      console.error("❌ Lỗi lấy danh sách sản phẩm:", error);
       message.error("Lỗi khi tải danh sách sản phẩm");
     } finally {
       setLoadingProducts(false);
@@ -59,7 +59,7 @@ const EditProductPrice = () => {
         costPrice: data.costPrice || "",
       });
     } catch (error) {
-      console.error("Lỗi khi tải giá sản phẩm:", error);
+      console.error("❌ Lỗi khi tải thông tin giá sản phẩm:", error);
       message.error("Lỗi khi tải thông tin giá sản phẩm");
       navigate(route.productprices);
     } finally {
@@ -135,7 +135,6 @@ const EditProductPrice = () => {
       message.success("Cập nhật giá sản phẩm thành công!");
       navigate(route.productprices);
     } catch (error) {
-      console.error("❌ Lỗi cập nhật giá sản phẩm:", error);
       message.error(error.response?.data?.message || "Lỗi khi cập nhật giá sản phẩm. Vui lòng thử lại.");
     } finally {
       setLoading(false);

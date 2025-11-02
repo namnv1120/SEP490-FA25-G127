@@ -15,6 +15,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import org.springframework.beans.factory.annotation.Value;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,19 +37,47 @@ public class ProductServiceImpl implements ProductService {
     private final InventoryRepository inventoryRepository;
     private final ProductMapper productMapper;
 
+    @Value("${upload.dir}")
+    private String uploadDir;
+
     @Override
     @Transactional
     public ProductResponse createProduct(ProductCreateRequest request) {
         Product product = productMapper.toEntity(request);
 
-        Category category = categoryRepository.findById(request.getCategoryId())
+        // Category
+        Category category = categoryRepository.findById(UUID.fromString(request.getCategoryId()))
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
         product.setCategory(category);
 
-        if (request.getSupplierId() != null) {
-            Supplier supplier = supplierRepository.findById(request.getSupplierId())
+        // Supplier
+        if (request.getSupplierId() != null && !request.getSupplierId().isEmpty()) {
+            Supplier supplier = supplierRepository.findById(UUID.fromString(request.getSupplierId()))
                     .orElseThrow(() -> new AppException(ErrorCode.SUPPLIER_NOT_FOUND));
             product.setSupplier(supplier);
+        }
+
+        if (request.getImage() != null && !request.getImage().isEmpty()) {
+            try {
+                String fileName = System.currentTimeMillis() + "_" + request.getImage().getOriginalFilename();
+
+                Path uploadPath = Paths.get(uploadDir, "products").toAbsolutePath();
+
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+
+                Path filePath = uploadPath.resolve(fileName);
+                request.getImage().transferTo(filePath.toFile());
+
+                product.setImageUrl("/uploads/products/" + fileName);
+
+                log.info("✅ Saved image: {}", product.getImageUrl());
+
+            } catch (Exception e) {
+                log.error("❌ Lỗi khi lưu ảnh sản phẩm", e);
+                throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
+            }
         }
 
         product.setCreatedDate(LocalDateTime.now());
@@ -52,6 +85,7 @@ public class ProductServiceImpl implements ProductService {
 
         Product savedProduct = productRepository.save(product);
 
+        // Giá mặc định
         ProductPrice price = new ProductPrice();
         price.setProduct(savedProduct);
         price.setUnitPrice(new java.math.BigDecimal("0.00"));
@@ -59,6 +93,7 @@ public class ProductServiceImpl implements ProductService {
         price.setValidFrom(LocalDateTime.now());
         productPriceRepository.save(price);
 
+        // Kho mặc định
         Inventory inventory = new Inventory();
         inventory.setProduct(savedProduct);
         inventory.setQuantityInStock(0);
@@ -70,6 +105,7 @@ public class ProductServiceImpl implements ProductService {
 
         return productMapper.toResponse(savedProduct);
     }
+
 
     @Override
     public ProductResponse updateProduct(UUID id, ProductUpdateRequest request) {
@@ -238,5 +274,34 @@ public class ProductServiceImpl implements ProductService {
 
         return importedProducts;
     }
+
+    @Override
+    public List<ProductResponse> getProductsBySupplierId(UUID supplierId) {
+        Supplier supplier = supplierRepository.findById(supplierId)
+                .orElseThrow(() -> new AppException(ErrorCode.SUPPLIER_NOT_FOUND));
+
+        List<Product> products = productRepository.findBySupplier_SupplierId(supplierId);
+
+        if (products.isEmpty()) {
+            log.info("⚠️ Không tìm thấy sản phẩm nào: {}", supplier.getSupplierName());
+            return List.of();
+        }
+
+        return products.stream().map(product -> {
+            ProductResponse response = productMapper.toResponse(product);
+
+            productPriceRepository.findTopByProduct_ProductIdOrderByValidFromDesc(product.getProductId())
+                    .ifPresent(latestPrice -> {
+                        response.setUnitPrice(latestPrice.getUnitPrice());
+                        response.setCostPrice(latestPrice.getCostPrice());
+                    });
+
+            inventoryRepository.findByProduct_ProductId(product.getProductId())
+                    .ifPresent(inventory -> response.setQuantityInStock(inventory.getQuantityInStock()));
+
+            return response;
+        }).toList();
+    }
+
 
 }

@@ -26,24 +26,18 @@ const ImportExcelModal = ({
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
 
-        // ✅ Đọc dữ liệu với header
         const jsonData = XLSX.utils.sheet_to_json(sheet, {
           raw: false,  // Format dữ liệu
           defval: ""   // Giá trị mặc định cho ô trống
         });
-
-        console.log("📊 Raw Excel Data:", jsonData);
 
         if (jsonData.length === 0) {
           message.warning("File Excel không có dữ liệu!");
           return;
         }
 
-        // ✅ Map dữ liệu
         const mapped = jsonData.map((row, i) => mapExcelRow(row, i));
-        console.log("✅ Mapped Data:", mapped);
 
-        // ✅ Update cả fileList và fileData cùng lúc
         setFileList([{
           uid: file.uid,
           name: file.name,
@@ -54,15 +48,13 @@ const ImportExcelModal = ({
         message.success(`Đã tải ${mapped.length} dòng dữ liệu`);
 
       } catch (err) {
-        console.error("❌ Lỗi đọc Excel:", err);
         message.error("Lỗi khi đọc dữ liệu Excel. Vui lòng kiểm tra file!");
         setFileData([]);
         setFileList([]);
       }
     };
 
-    reader.onerror = (error) => {
-      console.error("❌ FileReader Error:", error);
+    reader.onerror = () => {
       message.error("Không thể đọc file!");
     };
 
@@ -81,7 +73,6 @@ const ImportExcelModal = ({
       message.success("Nhập dữ liệu thành công!");
       handleClose();
     } catch (err) {
-      console.error("❌ Import Error:", err);
       message.error(err.message || "Nhập dữ liệu thất bại!");
     } finally {
       setLoading(false);
@@ -108,7 +99,7 @@ const ImportExcelModal = ({
       open={visible}
       onCancel={handleClose}
       width={1200}
-      destroyOnClose={true}
+      destroyOnHidden={true}
       footer={[
         <Button
           key="template"

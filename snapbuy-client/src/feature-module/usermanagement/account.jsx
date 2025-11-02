@@ -1,13 +1,11 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import AddAccount from "../../core/modals/usermanagement/addaccount";
 import EditAccount from "../../core/modals/usermanagement/editaccount";
-
-import TooltipIcons from "../../components/tooltip-content/tooltipIcons";
-import RefreshIcon from "../../components/tooltip-content/refresh";
-import CollapesIcon from "../../components/tooltip-content/collapes";
+import TableTopHead from "../../components/table-top-head";
 import Table from "../../core/pagination/datatable";
-import { getAllAccounts, deleteAccount } from "../../services/AccountService";
+import { getAllAccounts } from "../../services/AccountService";
 
 const Accounts = () => {
   const [dataSource, setDataSource] = useState([]);
@@ -15,7 +13,6 @@ const Accounts = () => {
   const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [selectedAccount, setSelectedAccount] = useState(null);
 
-  // Fetch accounts khi component mount
   useEffect(() => {
     fetchAccounts();
   }, []);
@@ -24,95 +21,69 @@ const Accounts = () => {
     setLoading(true);
     try {
       const accountsData = await getAllAccounts();
-      setDataSource(accountsData);
+      setDataSource(Array.isArray(accountsData) ? accountsData : []);
     } catch (error) {
-      console.error("Error fetching accounts:", error);
+      setDataSource([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (!selectedAccount) return;
-    try {
-      await deleteAccount(selectedAccount.id);
-      await fetchAccounts();
-    } catch (error) {
-      console.error("Failed to delete account:", error);
-    }
-  };
-
   const columns = [
     {
-      title: "Account Name",
-      dataIndex: "username",
-      render: (text, record) => (
-        <span className="userimgname">
-          <Link to="#" className="avatar avatar-md me-2">
-            <img alt="" src={record.img || "/default-avatar.png"} />
-          </Link>
-          <div>
-            <Link to="#">{text}</Link>
-          </div>
-        </span>
-      ),
-      sorter: (a, b) => a.username.length - b.username.length,
+      title: "Họ và tên",
+      dataIndex: "fullName",
+      sorter: (a, b) => a.fullName.length - b.fullName.length,
     },
     {
-      title: "Phone",
-      dataIndex: "phone",
-      sorter: (a, b) => a.phone.length - b.phone.length,
+      title: "Tên đăng nhập",
+      dataIndex: "username",
+      sorter: (a, b) => a.username.length - b.username.length,
     },
     {
       title: "Email",
       dataIndex: "email",
-      sorter: (a, b) => a.email.length - b.email.length,
+      width: "20%",
+      sorter: (a, b) => a.email.localeCompare(b.email),
     },
     {
-      title: "Role",
-      dataIndex: "role",
-      sorter: (a, b) => a.role.length - b.role.length,
+      title: "Số điện thoại",
+      dataIndex: "phone",
+      sorter: (a, b) => a.phone.length - b.phone.length,
     },
     {
-      title: "Created On",
-      dataIndex: "createdon",
-      sorter: (a, b) => a.createdon.length - b.createdon.length,
+      title: "Vai trò",
+      dataIndex: "roles",
+      sorter: (a, b) => a.roles.length - b.roles.length,
     },
     {
-      title: "Status",
-      dataIndex: "status",
-      render: (text) => (
-        <div>
-          {text === "Active" && (
-            <span className="d-inline-flex align-items-center p-1 pe-2 rounded-1 text-white bg-success fs-10">
-              {" "}
-              <i className="ti ti-point-filled me-1 fs-11"></i>
-              {text}
-            </span>
-          )}
-          {text === "Inactive" && (
-            <span className="d-inline-flex align-items-center p-1 pe-2 rounded-1 text-white bg-danger fs-10">
-              {" "}
-              <i className="ti ti-point-filled me-1 fs-11"></i>
-              {text}
-            </span>
-          )}
-        </div>
-      ),
-      sorter: (a, b) => a.status.length - b.status.length,
+      title: "Trạng thái",
+      dataIndex: "active",
+      render: (isActive) => {
+        const active = isActive === true || isActive === 1 || isActive === "1";
+        return (
+          <span
+            className={`d-inline-flex align-items-center p-1 pe-2 rounded-1 text-white fs-10 ${active ? "bg-success" : "bg-danger"}`}
+          >
+            <i className="ti ti-point-filled me-1 fs-11"></i>
+            {active ? "Hoạt động" : "Không hoạt động"}
+          </span>
+        );
+      },
+      sorter: (a, b) => (a.isActive === b.isActive ? 0 : a.isActive ? -1 : 1),
     },
+
     {
-      title: "Actions",
+      title: "",
       dataIndex: "actions",
       key: "actions",
+      width: "5%",
+      align: "center",
       render: (text, record) => (
-        <div className="action-table-data">
-          <div className="edit-delete-action">
+        <div className="action-table-data text-center">
+          <div className="edit-delete-action d-flex justify-content-center">
             <Link className="me-2 p-2" to="#">
-              <i
-                data-feather="eye"
-                className="feather feather-eye action-eye"
-              ></i>
+              <i data-feather="eye" className="feather feather-eye action-eye"></i>
             </Link>
             <Link
               className="me-2 p-2"
@@ -123,17 +94,14 @@ const Accounts = () => {
             >
               <i data-feather="edit" className="feather-edit"></i>
             </Link>
-            <Link 
-              className="confirm-text p-2" 
+            <Link
+              className="confirm-text p-2"
               to="#"
               onClick={() => setSelectedAccountId(record.id)}
+              data-bs-toggle="modal"
+              data-bs-target="#delete-modal"
             >
-              <i
-                data-feather="trash-2"
-                className="feather-trash-2"
-                data-bs-toggle="modal"
-                data-bs-target="#delete-modal"
-              ></i>
+              <i data-feather="trash-2" className="feather-trash-2"></i>
             </Link>
           </div>
         </div>
@@ -148,28 +116,25 @@ const Accounts = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Account List</h4>
-                <h6>Manage Your Accounts</h6>
+                <h4>Tài khoản</h4>
+                <h6>Quản lý danh sách tài khoản</h6>
               </div>
             </div>
-            <ul className="table-top-head">
-              <TooltipIcons />
-              <RefreshIcon onClick={fetchAccounts} />
-              <CollapesIcon />
-            </ul>
+            <TableTopHead
+            />
             <div className="page-btn">
               <Link
                 to="#"
-                className="btn btn-added"
+                className="btn btn-primary"
                 data-bs-toggle="modal"
                 data-bs-target="#add-account"
               >
                 <i className="ti ti-circle-plus me-1"></i>
-                Add New Account
+                Thêm tài khoản
               </Link>
             </div>
           </div>
-          
+
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
               <div className="search-set"></div>
@@ -180,17 +145,17 @@ const Accounts = () => {
                     className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
                     data-bs-toggle="dropdown"
                   >
-                    Status
+                    Trạng thái
                   </Link>
                   <ul className="dropdown-menu dropdown-menu-end p-3">
                     <li>
                       <Link to="#" className="dropdown-item rounded-1">
-                        Active
+                        Hoạt động
                       </Link>
                     </li>
                     <li>
                       <Link to="#" className="dropdown-item rounded-1">
-                        Inactive
+                        Ngừng hoạt động
                       </Link>
                     </li>
                   </ul>
@@ -200,7 +165,7 @@ const Accounts = () => {
 
             <div className="card-body">
               {loading ? (
-                <div className="text-center p-4">Loading accounts...</div>
+                <div className="text-center p-4">Đang tải tài khoản...</div>
               ) : (
                 <div className="table-responsive">
                   <Table columns={columns} dataSource={dataSource} />
@@ -211,6 +176,7 @@ const Accounts = () => {
         </div>
       </div>
 
+      {/* Modal thêm và chỉnh sửa */}
       <AddAccount id="add-account" onCreated={fetchAccounts} />
       <EditAccount
         id="edit-account"
@@ -219,40 +185,6 @@ const Accounts = () => {
         onClose={() => setSelectedAccount(null)}
       />
 
-      <div className="modal fade" id="delete-modal">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="page-wrapper-new p-0">
-              <div className="content p-5 px-3 text-center">
-                <span className="rounded-circle d-inline-flex p-2 bg-danger-transparent mb-2">
-                  <i className="ti ti-trash fs-24 text-danger" />
-                </span>
-                <h4 className="fs-20 fw-bold mb-2 mt-1">Delete Account</h4>
-                <p className="mb-0 fs-16">
-                  Are you sure you want to delete this account?
-                </p>
-                <div className="modal-footer-btn mt-3 d-flex justify-content-center">
-                  <button
-                    type="button"
-                    className="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3 shadow-none"
-                    data-bs-dismiss="modal"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary fs-13 fw-medium p-2 px-3"
-                    onClick={handleDeleteAccount}
-                    data-bs-dismiss="modal"
-                  >
-                    Yes Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

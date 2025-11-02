@@ -26,7 +26,7 @@ const EditInventory = ({ visible, onClose, inventory, onUpdated }) => {
       onUpdated();
       onClose();
     } catch (err) {
-      console.error(err);
+      console.error("Cập nhật thất bại:", err);
       message.error("Cập nhật thất bại!");
     } finally {
       setLoading(false);

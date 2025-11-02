@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-catch */
 import axios from "axios";
 
 const REST_API_BASE_URL = "http://localhost:8080/api/product-prices";
@@ -19,7 +20,6 @@ export const getAllProductPrices = async () => {
     const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
     return response.data?.result || response.data || [];
   } catch (error) {
-    console.error("❌ Lỗi tại product prices:", error);
     throw error;
   }
 };
@@ -32,7 +32,6 @@ export const deleteProductPrice = async (id) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Lỗi xóa product price:", error);
     throw error;
   }
 };
@@ -46,7 +45,6 @@ export const createProductPrice = async (productPriceData) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Lỗi tạo product price:", error);
     throw error;
   }
 };
@@ -60,7 +58,6 @@ export const updateProductPrice = async (id, productPriceData) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Lỗi cập nhật product price:", error);
     throw error;
   }
 };
@@ -73,7 +70,6 @@ export const getProductPriceById = async (id) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Lỗi lấy product price theo ID:", error);
     throw error;
   }
 };

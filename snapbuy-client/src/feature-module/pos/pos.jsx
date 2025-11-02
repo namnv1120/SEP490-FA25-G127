@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
@@ -8,6 +8,8 @@ import CounterTwo from "../../components/counter/counterTwo";
 import { getAllProducts } from "../../services/ProductService";
 import { getAllCategories } from "../../services/CategoryService";
 import { category1 } from "../../utils/imagepath";
+import { getCustomerByPhone } from "../../services/customerService";
+import orderService from "../../services/orderService";
 
 const Pos = () => {
   const [activeTab, setActiveTab] = useState("all");
@@ -16,64 +18,94 @@ const Pos = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [selectedCustomer, setSelectedCustomer] = useState("");
+  const [customerInput, setCustomerInput] = useState("");
+  const [customerSuggestions, setCustomerSuggestions] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [selectedGST] = useState(5);
   const [selectedDiscount] = useState(10);
   const [editingProduct, setEditingProduct] = useState(null);
   const location = useLocation();
+  const [orderCreated, setOrderCreated] = useState(false);
+  const [orderNotes, setOrderNotes] = useState("");
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const data = await getAllCategories();
-        setCategories(data || []);
+        const mapped = (data || []).map((c, index) => ({
+          categoryId: c.category_id ?? c.categoryId ?? c.id ?? `cat-${index}`,
+          categoryName:
+            c.category_name ?? c.categoryName ?? c.name ?? "No name",
+          description: c.description ?? c.desc ?? "",
+          parentCategoryId: c.parent_category_id ?? c.parentCategoryId ?? null,
+          active: c.active ?? true,
+        }));
+        setCategories(mapped);
       } catch (err) {
         console.error("Lỗi khi lấy danh mục:", err);
+        setCategories([]);
       }
     };
     fetchCategories();
   }, []);
 
   useEffect(() => {
+    if (activeTab === "all") {
+      setFilteredProducts(products);
+    } else {
+      const childIds = categories
+        .filter((c) => c.parentCategoryId === activeTab)
+        .map((c) => c.categoryId);
+      if (childIds.length === 0) {
+        setFilteredProducts(products.filter((p) => p.categoryId === activeTab));
+      } else {
+        setFilteredProducts(
+          products.filter((p) => childIds.includes(p.categoryId))
+        );
+      }
+    }
+  }, [activeTab, products, categories]);
+
+  useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const data = await getAllProducts();
-        console.log("Dữ liệu gốc từ API:", data);
-
+        const data = await ProductService.getAllProducts();
         const mapped = data.map((p, index) => ({
           productId: p.productId || index + 1,
-          productCode: p.productCode || p.code || "N/A",
-          productName: p.productName || p.name || "N/A",
+          productCode: p.productCode || p.code || "Không có",
+          productName: p.productName || p.name || "Không có",
           imageUrl: p.imageUrl || p.image || "/no-image.png",
           categoryId: p.categoryId || p.category?.id || null,
-          categoryName: p.categoryName || p.category?.name || "N/A",
+          categoryName: p.categoryName || p.category?.name || "Không có",
           unitPrice: p.unitPrice ?? p.unit_price ?? 0,
-          unitsInStock: p.unitsInStock ?? p.quantity ?? 0,
+          unitsInStock:
+            p.unitsInStock ??
+            p.quantityInStock ??
+            p.soLuongTon ??
+            p.inventoryQuantity ??
+            p.stock ??
+            0,
           supplierName: p.supplierName || p.supplier?.name || "",
         }));
-
-        console.log("Dữ liệu sau khi mapped:", mapped);
         setProducts(mapped);
       } catch (err) {
-        console.error("Lỗi khi lấy sản phẩm:", err);
       }
     };
     fetchProducts();
   }, []);
 
-  // Lọc sản phẩm theo danh mục
   useEffect(() => {
-    if (activeTab === "all") setFilteredProducts(products);
-    else
+    if (activeTab === "all") {
+      setFilteredProducts(products);
+    } else {
       setFilteredProducts(products.filter((p) => p.categoryId === activeTab));
+    }
   }, [activeTab, products]);
 
-  // Tìm kiếm sản phẩm
   const displayedProducts = filteredProducts.filter((p) =>
     p.productName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Khi click vào sản phẩm
   const handleAddProduct = (product) => {
     setSelectedProducts((prev) => {
       const exist = prev.find((p) => p.productId === product.productId);
@@ -88,29 +120,23 @@ const Pos = () => {
     });
   };
 
-  // Kiểm tra sản phẩm có được chọn không
   const isProductSelected = (id) =>
     selectedProducts.some((p) => p.productId === id);
 
-  // Thay đổi số lượng
   const handleQuantityChange = (productId, value) => {
-    setSelectedProducts((prev) => {
-      const updated = prev.map((p) =>
-        p.productId === productId ? { ...p, quantity: value } : p
-      );
-      console.log("Cập nhật số lượng:", updated);
-      return updated;
-    });
-  };
-
-  // Xóa sản phẩm
-  const removeProduct = (productId) => {
     setSelectedProducts((prev) =>
-      prev.filter((p) => p.productId !== productId)
+      prev.map((p) =>
+        p.productId === productId ? { ...p, quantity: value } : p
+      )
     );
   };
 
-  // Tính tổng tiền
+  const removeProduct = (productId) => {
+    setSelectedProducts((prev) =>
+      prev.filter((p) => p.productCode !== productId)
+    );
+  };
+
   const subTotal = selectedProducts.reduce(
     (sum, p) => sum + (p.unitPrice ?? 0) * (p.quantity ?? 1),
     0
@@ -119,17 +145,108 @@ const Pos = () => {
   const discountAmount = (subTotal * selectedDiscount) / 100;
   const total = subTotal + taxAmount - discountAmount;
 
-  // Giữ class body
   useEffect(() => {
     document.body.classList.add("pos-page");
     return () => document.body.classList.remove("pos-page");
   }, [location.pathname]);
 
+  const customerRef = useRef(null);
+
+  const handleCustomerInput = async (e) => {
+    const value = e.target.value;
+    setCustomerInput(value);
+
+    if (!value) {
+      setCustomerSuggestions([]);
+      setSelectedCustomer(null);
+      return;
+    }
+
+    try {
+      const result = await getCustomerByPhone(value);
+      const customer = result?.result || result;
+
+      if (customer && customer.phone?.includes(value)) {
+        setCustomerSuggestions([customer]);
+      } else {
+        setCustomerSuggestions([]);
+      }
+    } catch (err) {
+      console.error("Lỗi khi tìm khách hàng:", err);
+      setCustomerSuggestions([]);
+    }
+  };
+
+  const selectCustomer = (customer) => {
+    setSelectedCustomer(customer);
+    setCustomerInput(customer.phone);
+    setCustomerSuggestions([]);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (customerRef.current && !customerRef.current.contains(event.target)) {
+        setCustomerSuggestions([]);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Tạo đơn hàng
+  const handleCreateOrder = async () => {
+    if (selectedProducts.length === 0) {
+      alert("Vui lòng chọn sản phẩm trước khi tạo đơn!");
+      return;
+    }
+
+    try {
+      const employeeId = "00000000-0000-0000-0000-000000000002";
+
+      const orderData = {
+        employeeId,
+        orderDate: new Date().toISOString(),
+        createdBy: username || "POS User",
+        status: "PENDING",
+        subTotal,
+        discountAmount: discountAmount || 0,
+        total,
+        notes: orderNotes || "",
+        items: selectedProducts.map((p) => ({
+          productId: p.productId,
+          quantity: Number(p.quantity),
+          price: Number(p.unitPrice),
+        })),
+      };
+
+      console.log("📦 Dữ liệu gửi lên backend:", orderData);
+      const createdOrder = await orderService.createOrder(orderData);
+
+      console.log("✅ Đơn hàng tạo thành công:", createdOrder);
+      alert("✅ Tạo đơn hàng thành công!");
+      setOrderCreated(true);
+    } catch (error) {
+      console.error("❌ Lỗi khi tạo đơn hàng:", error);
+      if (error.response) {
+        alert(
+          `Tạo đơn thất bại: ${
+            error.response.data.message || "Lỗi không xác định"
+          }`
+        );
+      } else {
+        alert("Không thể kết nối đến máy chủ, vui lòng thử lại.");
+      }
+    }
+  };
+
   const settings = {
     dots: false,
+    arrows: true,
     autoplay: false,
     slidesToShow: 6,
-    margin: 0,
+    slidesToScroll: 1,
     speed: 500,
     responsive: [
       { breakpoint: 992, settings: { slidesToShow: 6 } },
@@ -174,6 +291,7 @@ const Pos = () => {
                   {...settings}
                   className="tabs owl-carousel pos-category"
                 >
+                  {/* Tất cả danh mục */}
                   <div
                     onClick={() => setActiveTab("all")}
                     className={`owl-item ${
@@ -188,25 +306,35 @@ const Pos = () => {
                     </h6>
                     <span>{categories.length} mục</span>
                   </div>
-                  {categories.map((cat) => (
-                    <div
-                      key={cat.categoryId}
-                      onClick={() => setActiveTab(cat.categoryId)}
-                      className={`owl-item ${
-                        activeTab === cat.categoryId ? "active" : ""
-                      }`}
-                    >
-                      <h6 className="text-center">{cat.categoryName}</h6>
-                      <span>
-                        {
-                          products.filter(
-                            (p) => p.categoryId === cat.categoryId
-                          ).length
-                        }{" "}
-                        sản phẩm
-                      </span>
-                    </div>
-                  ))}
+
+                  {/* Danh mục con */}
+                  {categories
+                    .filter(
+                      (cat) =>
+                        cat.parentCategoryId !== null &&
+                        categories.some(
+                          (parent) => parent.categoryId === cat.parentCategoryId
+                        )
+                    )
+                    .map((cat) => (
+                      <div
+                        key={cat.categoryId}
+                        onClick={() => setActiveTab(cat.categoryId)}
+                        className={`owl-item ${
+                          activeTab === cat.categoryId ? "active" : ""
+                        }`}
+                      >
+                        <h6 className="text-center">{cat.categoryName}</h6>
+                        <span>
+                          {
+                            products.filter(
+                              (p) => p.categoryId === cat.categoryId
+                            ).length
+                          }{" "}
+                          sản phẩm
+                        </span>
+                      </div>
+                    ))}
                 </Slider>
 
                 <div className="pos-products">
@@ -237,8 +365,16 @@ const Pos = () => {
                               isProductSelected(product.productId)
                                 ? "highlight"
                                 : ""
+                            } ${
+                              product.unitsInStock === 0 ? "out-of-stock" : ""
                             }`}
-                            onClick={() => handleAddProduct(product)}
+                            onClick={() => {
+                              if (product.unitsInStock > 0) {
+                                handleAddProduct(product);
+                              } else {
+                                alert("Sản phẩm này đã hết hàng!");
+                              }
+                            }}
                           >
                             <Link to="#" className="pro-img">
                               <img
@@ -246,15 +382,19 @@ const Pos = () => {
                                 alt={product.productName}
                               />
                             </Link>
+
                             <h6 className="product-name">
                               <Link to="#">{product.productName}</Link>
                             </h6>
+
                             <div className="d-flex align-items-center justify-content-between price">
-                              <span>
-                                {product.unitsInStock
-                                  ? `${product.unitsInStock} SP`
-                                  : "Hết hàng"}
-                              </span>
+                              {product.unitsInStock > 0 ? (
+                                <span>{`${product.unitsInStock} SP`}</span>
+                              ) : (
+                                <span className="text-danger fw-bold">
+                                  Hết hàng
+                                </span>
+                              )}
                               <p>{product.unitPrice.toLocaleString()}₫</p>
                             </div>
                           </div>
@@ -289,27 +429,72 @@ const Pos = () => {
                 </div>
 
                 {/* Customer input */}
-                <div className="customer-info block-section">
+                <div
+                  className="customer-info block-section"
+                  ref={customerRef}
+                  style={{ position: "relative" }}
+                >
                   <h4 className="mb-3">Thông tin khách hàng</h4>
-                  <div className="input-block d-flex align-items-center">
-                    <div className="flex-grow-1">
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Nhập số điện thoại khách hàng"
-                        value={selectedCustomer}
-                        onChange={(e) => setSelectedCustomer(e.target.value)}
-                      />
-                    </div>
+                  <div
+                    className="d-flex align-items-center gap-2"
+                    style={{ position: "relative" }}
+                  >
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Nhập số điện thoại khách hàng..."
+                      value={customerInput}
+                      onChange={handleCustomerInput}
+                      autoComplete="off"
+                    />
+
                     <Link
                       to="#"
                       className="btn btn-primary btn-icon"
                       data-bs-toggle="modal"
                       data-bs-target="#create"
+                      title="Thêm khách hàng mới"
                     >
                       <i className="feather icon-user-plus feather-16" />
                     </Link>
                   </div>
+
+                  {/* Danh sách gợi ý */}
+                  {customerSuggestions.length > 0 && (
+                    <ul
+                      className="list-group position-absolute w-100 shadow-sm rounded mt-1"
+                      style={{
+                        zIndex: 1000,
+                        background: "#fff",
+                        maxHeight: "200px",
+                        overflowY: "auto",
+                      }}
+                    >
+                      {customerSuggestions.map((c) => (
+                        <li
+                          key={c.customerId}
+                          className="list-group-item list-group-item-action"
+                          onClick={() => selectCustomer(c)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          <div className="fw-semibold">{c.fullName}</div>
+                          <div className="text-muted small">{c.phone}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {/* Thông tin khách hàng được chọn */}
+                  {selectedCustomer && (
+                    <div className="mt-3 p-2 rounded border bg-light">
+                      <div>
+                        <strong>Tên:</strong> {selectedCustomer.fullName}
+                      </div>
+                      <div>
+                        <strong>SĐT:</strong> {selectedCustomer.phone}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Product Added */}
@@ -409,13 +594,15 @@ const Pos = () => {
                           </td>
                         </tr>
                         <tr>
-                          <td>Thuế</td>
+                          <td>Thuế ({selectedGST}%)</td>
                           <td className="text-end">
                             {taxAmount.toLocaleString()}₫
                           </td>
                         </tr>
                         <tr>
-                          <td className="text-danger">Giảm giá</td>
+                          <td className="text-danger">
+                            Giảm giá ({selectedDiscount}%)
+                          </td>
                           <td className="text-danger text-end">
                             -{discountAmount.toLocaleString()}₫
                           </td>
@@ -432,45 +619,58 @@ const Pos = () => {
                 </div>
 
                 {/* Payment Methods */}
-                <div className="block-section payment-method">
-                  <h4>Phương thức thanh toán</h4>
-                  <div className="row align-items-center justify-content-center methods g-3">
-                    <div className="col-sm-6 col-md-4">
-                      <Link
-                        to="#"
-                        className="payment-item"
-                        data-bs-toggle="modal"
-                        data-bs-target="#payment-cash"
-                      >
-                        <i className="ti ti-cash-banknote fs-18" />
-                        <span>Tiền mặt</span>
-                      </Link>
-                    </div>
-                    <div className="col-sm-6 col-md-4">
-                      <Link
-                        to="#"
-                        className="payment-item"
-                        data-bs-toggle="modal"
-                        data-bs-target="#scan-payment"
-                      >
-                        <i className="ti ti-scan fs-18" />
-                        <span>Quét mã</span>
-                      </Link>
+                {orderCreated && (
+                  <div className="block-section payment-method">
+                    <h4>Phương thức thanh toán</h4>
+                    <div className="row align-items-center justify-content-center methods g-3">
+                      <div className="col-sm-6 col-md-4">
+                        <Link
+                          to="#"
+                          className="payment-item"
+                          data-bs-toggle="modal"
+                          data-bs-target="#payment-cash"
+                        >
+                          <i className="ti ti-cash-banknote fs-18" />
+                          <span>Tiền mặt</span>
+                        </Link>
+                      </div>
+                      <div className="col-sm-6 col-md-4">
+                        <Link
+                          to="#"
+                          className="payment-item"
+                          data-bs-toggle="modal"
+                          data-bs-target="#scan-payment"
+                        >
+                          <i className="ti ti-scan fs-18" />
+                          <span>Quét mã</span>
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Buttons */}
                 <div className="btn-row d-sm-flex align-items-center justify-content-between">
-                  <Link
-                    to="#"
-                    className="btn btn-success d-flex align-items-center justify-content-center flex-fill"
-                    data-bs-toggle="modal"
-                    data-bs-target="#payment-completed"
-                  >
-                    <i className="ti ti-cash-banknote me-1" />
-                    Thanh toán
-                  </Link>
+                  {!orderCreated ? (
+                    <Link
+                      to="#"
+                      className="btn btn-primary d-flex align-items-center justify-content-center flex-fill"
+                      onClick={handleCreateOrder}
+                    >
+                      <i className="ti ti-file-plus me-1" />
+                      Tạo đơn
+                    </Link>
+                  ) : (
+                    <Link
+                      to="#"
+                      className="btn btn-success d-flex align-items-center justify-content-center flex-fill"
+                      data-bs-toggle="modal"
+                      data-bs-target="#select-payment-method"
+                    >
+                      <i className="ti ti-cash-banknote me-1" />
+                      Thanh toán
+                    </Link>
+                  )}
                 </div>
               </aside>
             </div>

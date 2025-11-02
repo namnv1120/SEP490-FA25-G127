@@ -37,7 +37,7 @@ public class Account {
     private String avatarUrl;
 
     @Column(name = "active")
-    private Boolean isActive = true;
+    private Boolean active = true;
 
     @Column(name = "created_date")
     private LocalDateTime createdDate = LocalDateTime.now();

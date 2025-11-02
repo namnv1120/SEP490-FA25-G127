@@ -99,7 +99,6 @@ const AddSupplier = ({ onSuccess }) => {
 
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error("Lỗi khi thêm nhà cung cấp", error);
       const errorMessage =
         error.response?.data?.message || "Lỗi khi thêm nhà cung cấp";
       message.error(errorMessage);

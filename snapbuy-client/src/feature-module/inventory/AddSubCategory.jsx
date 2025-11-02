@@ -88,7 +88,6 @@ const AddSubCategory = ({ parentCategories, onSuccess }) => {
 
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error("Lỗi tại thêm danh mục con", error);
       const errorMessage =
         error.response?.data?.message || "Không thể thêm danh mục con";
       message.error(errorMessage);
@@ -110,7 +109,7 @@ const AddSubCategory = ({ parentCategories, onSuccess }) => {
                 type="button"
                 className="close"
                 data-bs-dismiss="modal"
-                aria-label="Close"
+                aria-label="Đóng"
               >
                 <span aria-hidden="true">×</span>
               </button>

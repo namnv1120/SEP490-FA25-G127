@@ -21,5 +21,6 @@ public interface AccountMapper {
 
     @Mapping(target = "id", expression = "java(account.getAccountId() != null ? account.getAccountId().toString() : null)")
     @Mapping(target = "roles", expression = "java(account.getRoles() != null ? account.getRoles().stream().map(r -> r.getRoleName()).toList() : java.util.List.of())")
+    @Mapping(target = "active", source = "active")
     AccountResponse toResponse(Account account);
 }

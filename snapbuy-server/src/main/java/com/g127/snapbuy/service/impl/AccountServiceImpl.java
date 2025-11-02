@@ -43,7 +43,9 @@ public class AccountServiceImpl implements AccountService {
     }
 
     private void ensureActive(Role r) {
-        if (r.getIsActive() != null && !r.getIsActive()) throw new IllegalStateException("Vai trò đang không hoạt động");
+        if (r.getActive() != null && !r.getActive()) {
+            throw new IllegalStateException("Vai trò đang ở trạng thái không hoạt động");
+        }
     }
 
     @Override
@@ -230,7 +232,8 @@ public class AccountServiceImpl implements AccountService {
         if (req.getActive() != null) {
             if (staff.getUsername().equalsIgnoreCase(getCurrentUsername()))
                 throw new IllegalStateException("Bạn không thể tự vô hiệu hóa chính mình");
-            staff.setIsActive(req.getActive());
+            }
+            staff.setActive(req.getActive());
         }
 
         return accountMapper.toResponse(accountRepository.save(staff));
@@ -273,7 +276,7 @@ public class AccountServiceImpl implements AccountService {
         if (req.getEmail() != null) acc.setEmail(req.getEmail());
         if (req.getPhone() != null) acc.setPhone(req.getPhone());
         if (req.getAvatarUrl() != null) acc.setAvatarUrl(req.getAvatarUrl());
-        if (req.getActive() != null) acc.setIsActive(req.getActive());
+        if (req.getActive() != null) acc.setActive(req.getActive());
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
             acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
         }

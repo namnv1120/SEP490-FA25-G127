@@ -12,5 +12,5 @@ public class RoleCreateRequest {
     @Size(max = 4000, message = "Mô tả quá dài (tối đa 4000 ký tự).")
     private String description;
 
-    private Boolean isActive;
+    private Boolean active;
 }

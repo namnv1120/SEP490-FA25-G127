@@ -40,5 +40,8 @@ public class AccountCreateRequest {
 
     private String avatarUrl;
 
+    @NotNull(message = "Trạng thái hoạt động không được để trống.")
+    private Boolean active = true;
+
     private List<String> roles;
 }

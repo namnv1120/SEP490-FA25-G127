@@ -4,7 +4,6 @@ export const all_routes = {
   products: "/products",
   addproduct: "/products/add",
   editproduct: "/products/edit/:id",
-  productdetail: "/products/detail/:id",
   inventories: "/inventories",
   categories: "/categories",
   subcategories: "/sub-categories",
@@ -26,7 +25,8 @@ export const all_routes = {
 
   // Purchase
   purchaseorders: "/purchase-orders",
-  purchaseorderdetail: "/purchase-orders/detail/:id",
+  addpurchaseorder: "/purchase-orders/add",
+  editpurchaseorder: "/purchase-orders/edit/:id",
 
   // Customers & Suppliers
   customers: "/customers",

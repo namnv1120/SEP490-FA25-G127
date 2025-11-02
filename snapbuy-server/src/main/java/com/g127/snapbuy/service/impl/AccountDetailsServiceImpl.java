@@ -27,7 +27,7 @@ public class AccountDetailsServiceImpl implements AccountDetailsService {
                 .map(r -> r.getRoleName().startsWith("ROLE_") ? r.getRoleName() : "ROLE_" + r.getRoleName())
                 .toArray(String[]::new);
 
-        boolean enabled = Boolean.TRUE.equals(acc.getIsActive());
+        boolean enabled = Boolean.TRUE.equals(acc.getActive());
         return User.withUsername(acc.getUsername())
                 .password(acc.getPasswordHash())
                 .authorities(authorities)

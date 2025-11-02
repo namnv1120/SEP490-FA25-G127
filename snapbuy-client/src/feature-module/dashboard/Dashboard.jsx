@@ -1,10 +1,8 @@
-
 import { Link } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
 import "bootstrap-daterangepicker/daterangepicker.css";
 import Chart from "react-apexcharts";
-import ReactApexChart from "react-apexcharts";
 import { Doughnut } from "react-chartjs-2";
-import ApexCharts from "react-apexcharts";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -18,32 +16,12 @@ import {
   Legend,
 } from "chart.js";
 import { all_routes } from "../../routes/all_routes";
-import {
-  customer11,
-  customer12,
-  customer13,
-  customer14,
-  customer15,
-  customer16,
-  customer17,
-  customer18,
-  product1,
-  product10,
-  product11,
-  product12,
-  product13,
-  product14,
-  product15,
-  product16,
-  product3,
-  product4,
-  product5,
-  product6,
-  product7,
-  product8,
-  product9,
-} from "../../utils/imagepath";
 import CommonDateRangePicker from "../../components/data-range-picker/common-date-range-picker";
+import { getAllPurchaseOrders } from "../../services/PurchaseOrderService";
+import { getAllProducts } from "../../services/ProductService";
+import { getAllCustomers } from "../../services/CustomerService";
+import { getAllCategories } from "../../services/CategoryService";
+import { getAllInventories } from "../../services/InventoryService";
 
 ChartJS.register(
   CategoryScale,
@@ -58,6 +36,157 @@ ChartJS.register(
 );
 const Dashboard = () => {
   const route = all_routes;
+
+  // State for dashboard data
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState({
+    purchaseOrders: [],
+    products: [],
+    customers: [],
+    categories: [],
+    inventories: [],
+  });
+  const [stats, setStats] = useState({
+    totalSales: 0,
+    totalSalesReturn: 0,
+    totalPurchase: 0,
+    totalPurchaseReturn: 0,
+    profit: 0,
+    totalProducts: 0,
+    totalCustomers: 0,
+    totalCategories: 0,
+    todayOrders: 0,
+  });
+
+  // Fetch all data
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [purchaseOrders, products, customers, categories, inventories] = await Promise.all([
+          getAllPurchaseOrders().catch(() => []),
+          getAllProducts().catch(() => []),
+          getAllCustomers().catch(() => []),
+          getAllCategories().catch(() => []),
+          getAllInventories().catch(() => []),
+        ]);
+
+        setDashboardData({
+          purchaseOrders: Array.isArray(purchaseOrders) ? purchaseOrders : [],
+          products: Array.isArray(products) ? products : [],
+          customers: Array.isArray(customers) ? customers : [],
+          categories: Array.isArray(categories) ? categories : [],
+          inventories: Array.isArray(inventories) ? inventories : [],
+        });
+
+        // Calculate statistics
+        calculateStats(purchaseOrders, products, customers, categories);
+      } catch (error) {
+        // Silent error handling
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  // Calculate dashboard statistics
+  const calculateStats = (purchaseOrders, products, customers, categories) => {
+    const orders = Array.isArray(purchaseOrders) ? purchaseOrders : [];
+    const prods = Array.isArray(products) ? products : [];
+    const custs = Array.isArray(customers) ? customers : [];
+    const cats = Array.isArray(categories) ? categories : [];
+
+    // Calculate total purchase amount
+    const totalPurchase = orders.reduce((sum, order) => {
+      const amount = order.totalAmount || order.total || order.amount || 0;
+      return sum + (typeof amount === 'number' ? amount : parseFloat(amount) || 0);
+    }, 0);
+
+    // Calculate today's orders
+    const today = new Date().toDateString();
+    const todayOrders = orders.filter(order => {
+      if (!order.orderDate && !order.createdAt && !order.createdDate) return false;
+      const orderDate = new Date(order.orderDate || order.createdAt || order.createdDate);
+      return orderDate.toDateString() === today;
+    }).length;
+
+    // For now, we'll use purchase orders data as placeholder for sales
+    // In real implementation, you'd have a separate sales/orders API
+    const totalSales = totalPurchase * 1.5; // Placeholder calculation
+    const totalSalesReturn = totalPurchase * 0.3;
+    const totalPurchaseReturn = totalPurchase * 0.2;
+    const profit = totalSales - totalPurchase;
+
+    setStats({
+      totalSales,
+      totalSalesReturn,
+      totalPurchase,
+      totalPurchaseReturn,
+      profit,
+      totalProducts: prods.length,
+      totalCustomers: custs.length,
+      totalCategories: cats.length,
+      todayOrders,
+    });
+  };
+
+  // Format currency helper
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount || 0);
+  };
+
+  // Get recent products - memoized
+  const recentProducts = useMemo(() => {
+    const prods = dashboardData.products || [];
+    return prods
+      .sort((a, b) => {
+        const dateA = new Date(a.createdAt || a.createdDate || 0);
+        const dateB = new Date(b.createdAt || b.createdDate || 0);
+        return dateB - dateA;
+      })
+      .slice(0, 10);
+  }, [dashboardData.products]);
+
+  // Get recent purchase orders - memoized
+  const recentPurchaseOrders = useMemo(() => {
+    const orders = dashboardData.purchaseOrders || [];
+    return orders
+      .sort((a, b) => {
+        const dateA = new Date(a.orderDate || a.createdAt || a.createdDate || 0);
+        const dateB = new Date(b.orderDate || b.createdAt || b.createdDate || 0);
+        return dateB - dateA;
+      })
+      .slice(0, 10);
+  }, [dashboardData.purchaseOrders]);
+
+  // Get top categories - memoized
+  const topCategories = useMemo(() => {
+    const cats = dashboardData.categories || [];
+    const prods = dashboardData.products || [];
+
+    const categoryCounts = {};
+    prods.forEach(prod => {
+      const catId = prod.categoryId || prod.category?.id;
+      if (catId) {
+        categoryCounts[catId] = (categoryCounts[catId] || 0) + 1;
+      }
+    });
+
+    return cats
+      .map(cat => ({
+        ...cat,
+        productCount: categoryCounts[cat.id] || 0,
+      }))
+      .sort((a, b) => b.productCount - a.productCount)
+      .slice(0, 5);
+  }, [dashboardData.categories, dashboardData.products]);
 
   const salesDayChart = {
     chart: {
@@ -475,10 +604,10 @@ const Dashboard = () => {
       <div className="content">
         <div className="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-2">
           <div className="mb-3">
-            <h1 className="mb-1">Welcome, Admin</h1>
+            <h1 className="mb-1">Chào mừng, Admin</h1>
             <p className="fw-medium">
-              You have <span className="text-primary fw-bold">200+</span>{" "}
-              Orders, Today
+              Bạn có <span className="text-primary fw-bold">{stats.todayOrders}+</span>{" "}
+              đơn hàng hôm nay
             </p>
           </div>
           <div className="input-icon-start position-relative mb-3">
@@ -526,9 +655,15 @@ const Dashboard = () => {
                   <i className="ti ti-file-text fs-24" />
                 </span>
                 <div className="ms-2">
-                  <p className="text-white mb-1">Total Sales</p>
+                  <p className="text-white mb-1">Tổng doanh thu</p>
                   <div className="d-inline-flex align-items-center flex-wrap gap-2">
-                    <h4 className="text-white">$48,988,078</h4>
+                    <h4 className="text-white">
+                      {loading ? (
+                        <span className="spinner-border spinner-border-sm text-white" />
+                      ) : (
+                        formatCurrency(stats.totalSales)
+                      )}
+                    </h4>
                     <span className="badge badge-soft-primary">
                       <i className="ti ti-arrow-up me-1" />
                       +22%
@@ -545,9 +680,15 @@ const Dashboard = () => {
                   <i className="ti ti-repeat fs-24" />
                 </span>
                 <div className="ms-2">
-                  <p className="text-white mb-1">Total Sales Return</p>
+                  <p className="text-white mb-1">Trả hàng bán</p>
                   <div className="d-inline-flex align-items-center flex-wrap gap-2">
-                    <h4 className="text-white">$16,478,145</h4>
+                    <h4 className="text-white">
+                      {loading ? (
+                        <span className="spinner-border spinner-border-sm text-white" />
+                      ) : (
+                        formatCurrency(stats.totalSalesReturn)
+                      )}
+                    </h4>
                     <span className="badge badge-soft-danger">
                       <i className="ti ti-arrow-down me-1" />
                       -22%
@@ -564,9 +705,15 @@ const Dashboard = () => {
                   <i className="ti ti-gift fs-24" />
                 </span>
                 <div className="ms-2">
-                  <p className="text-white mb-1">Total Purchase</p>
+                  <p className="text-white mb-1">Tổng mua hàng</p>
                   <div className="d-inline-flex align-items-center flex-wrap gap-2">
-                    <h4 className="text-white">$24,145,789</h4>
+                    <h4 className="text-white">
+                      {loading ? (
+                        <span className="spinner-border spinner-border-sm text-white" />
+                      ) : (
+                        formatCurrency(stats.totalPurchase)
+                      )}
+                    </h4>
                     <span className="badge badge-soft-success">
                       <i className="ti ti-arrow-up me-1" />
                       +22%
@@ -583,9 +730,15 @@ const Dashboard = () => {
                   <i className="ti ti-brand-pocket fs-24" />
                 </span>
                 <div className="ms-2">
-                  <p className="text-white mb-1">Total Purchase Return</p>
+                  <p className="text-white mb-1">Trả hàng mua</p>
                   <div className="d-inline-flex align-items-center flex-wrap gap-2">
-                    <h4 className="text-white">$18,458,747</h4>
+                    <h4 className="text-white">
+                      {loading ? (
+                        <span className="spinner-border spinner-border-sm text-white" />
+                      ) : (
+                        formatCurrency(stats.totalPurchaseReturn)
+                      )}
+                    </h4>
                     <span className="badge badge-soft-success">
                       <i className="ti ti-arrow-up me-1" />
                       +22%
@@ -603,8 +756,14 @@ const Dashboard = () => {
               <div className="card-body">
                 <div className="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
                   <div>
-                    <h4 className="mb-1">$8,458,798</h4>
-                    <p>Profit</p>
+                    <h4 className="mb-1">
+                      {loading ? (
+                        <span className="spinner-border spinner-border-sm" />
+                      ) : (
+                        formatCurrency(stats.profit)
+                      )}
+                    </h4>
+                    <p>Lợi nhuận</p>
                   </div>
                   <span className="revenue-icon bg-cyan-transparent text-cyan">
                     <i className="fa-solid fa-layer-group fs-16" />
@@ -619,7 +778,7 @@ const Dashboard = () => {
                     to="profit-and-loss.html"
                     className="text-decoration-underline fs-13 fw-medium"
                   >
-                    View All
+                    Xem tất cả
                   </Link>
                 </div>
               </div>
@@ -633,7 +792,7 @@ const Dashboard = () => {
                 <div className="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
                   <div>
                     <h4 className="mb-1">$48,988,78</h4>
-                    <p>Invoice Due</p>
+                    <p>Hóa đơn đến hạn</p>
                   </div>
                   <span className="revenue-icon bg-teal-transparent text-teal">
                     <i className="ti ti-chart-pie fs-16" />
@@ -648,7 +807,7 @@ const Dashboard = () => {
                     to={route.invoicereport}
                     className="text-decoration-underline fs-13 fw-medium"
                   >
-                    View All
+                    Xem tất cả
                   </Link>
                 </div>
               </div>
@@ -662,7 +821,7 @@ const Dashboard = () => {
                 <div className="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
                   <div>
                     <h4 className="mb-1">$8,980,097</h4>
-                    <p>Total Expenses</p>
+                    <p>Tổng chi phí</p>
                   </div>
                   <span className="revenue-icon bg-orange-transparent text-orange">
                     <i className="ti ti-lifebuoy fs-16" />
@@ -677,7 +836,7 @@ const Dashboard = () => {
                     to={route.expenselist}
                     className="text-decoration-underline fs-13 fw-medium"
                   >
-                    View All
+                    Xem tất cả
                   </Link>
                 </div>
               </div>
@@ -691,7 +850,7 @@ const Dashboard = () => {
                 <div className="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
                   <div>
                     <h4 className="mb-1">$78,458,798</h4>
-                    <p>Total Payment Returns</p>
+                    <p>Trả tiền tổng</p>
                   </div>
                   <span className="revenue-icon bg-indigo-transparent text-indigo">
                     <i className="ti ti-hash fs-16" />
@@ -706,7 +865,7 @@ const Dashboard = () => {
                     to={route.salesreport}
                     className="text-decoration-underline fs-13 fw-medium"
                   >
-                    View All
+                    Xem tất cả
                   </Link>
                 </div>
               </div>
@@ -724,7 +883,7 @@ const Dashboard = () => {
                     <span className="title-icon bg-soft-primary fs-16 me-2">
                       <i className="ti ti-shopping-cart" />
                     </span>
-                    <h5 className="card-title mb-0">Sales &amp; Purchase</h5>
+                    <h5 className="card-title mb-0">Bán hàng &amp; Mua hàng</h5>
                   </div>
                   <ul className="nav btn-group custom-btn-group">
                     <Link className="btn btn-outline-light" to="#">
@@ -753,16 +912,16 @@ const Dashboard = () => {
                       <div className="border p-2 br-8">
                         <p className="d-inline-flex align-items-center mb-1">
                           <i className="ti ti-circle-filled fs-8 text-primary-300 me-1" />
-                          Total Purchase
+                          Tổng mua hàng
                         </p>
-                        <h4>3K</h4>
+                        <h4>{formatCurrency(stats.totalPurchase)}</h4>
                       </div>
                       <div className="border p-2 br-8">
                         <p className="d-inline-flex align-items-center mb-1">
                           <i className="ti ti-circle-filled fs-8 text-primary me-1" />
-                          Total Sales
+                          Tổng doanh thu
                         </p>
-                        <h4>1K</h4>
+                        <h4>{formatCurrency(stats.totalSales)}</h4>
                       </div>
                     </div>
                     <div id="sales-daychart">
@@ -903,7 +1062,7 @@ const Dashboard = () => {
                   <span className="title-icon bg-soft-pink fs-16 me-2">
                     <i className="ti ti-box" />
                   </span>
-                  <h5 className="card-title mb-0">Top Selling Products</h5>
+                  <h5 className="card-title mb-0">Sản phẩm bán chạy</h5>
                 </div>
                 <div className="dropdown">
                   <Link
@@ -938,7 +1097,7 @@ const Dashboard = () => {
                 <div className="d-flex align-items-center justify-content-between border-bottom">
                   <div className="d-flex align-items-center">
                     <Link to="#" className="avatar avatar-lg">
-                      <img src={product1} alt="img" />
+                    <span className="avatar-initial bg-primary text-white">CC</span>
                     </Link>
                     <div className="ms-2">
                       <h6 className="fw-bold mb-1">
@@ -958,7 +1117,7 @@ const Dashboard = () => {
                 <div className="d-flex align-items-center justify-content-between border-bottom">
                   <div className="d-flex align-items-center">
                     <Link to="#" className="avatar avatar-lg">
-                      <img src={product16} alt="img" />
+                    <span className="avatar-initial bg-primary text-white">YS</span>
                     </Link>
                     <div className="ms-2">
                       <h6 className="fw-bold mb-1">
@@ -978,7 +1137,7 @@ const Dashboard = () => {
                 <div className="d-flex align-items-center justify-content-between border-bottom">
                   <div className="d-flex align-items-center">
                     <Link to="#" className="avatar avatar-lg">
-                      <img src={product3} alt="img" />
+                    <span className="avatar-initial bg-primary text-white">AA</span>
                     </Link>
                     <div className="ms-2">
                       <h6 className="fw-bold mb-1">
@@ -998,7 +1157,7 @@ const Dashboard = () => {
                 <div className="d-flex align-items-center justify-content-between border-bottom">
                   <div className="d-flex align-items-center">
                     <Link to="#" className="avatar avatar-lg">
-                      <img src={product4} alt="img" />
+                    <span className="avatar-initial bg-primary text-white">VC</span>
                     </Link>
                     <div className="ms-2">
                       <h6 className="fw-bold mb-1">
@@ -1018,7 +1177,7 @@ const Dashboard = () => {
                 <div className="d-flex align-items-center justify-content-between">
                   <div className="d-flex align-items-center">
                     <Link to="#" className="avatar avatar-lg">
-                      <img src={product5} alt="img" />
+                    <span className="avatar-initial bg-primary text-white">SG</span>
                     </Link>
                     <div className="ms-2">
                       <h6 className="fw-bold mb-1">
@@ -1047,20 +1206,20 @@ const Dashboard = () => {
                   <span className="title-icon bg-soft-danger fs-16 me-2">
                     <i className="ti ti-alert-triangle" />
                   </span>
-                  <h5 className="card-title mb-0">Low Stock Products</h5>
+                  <h5 className="card-title mb-0">Sản phẩm tồn kho thấp</h5>
                 </div>
                 <Link
                   to={route.lowstock}
                   className="fs-13 fw-bold text-decoration-underline"
                 >
-                  View All
+                  Xem tất cả
                 </Link>
               </div>
               <div className="card-body">
                 <div className="d-flex align-items-center justify-content-between mb-4">
                   <div className="d-flex align-items-center">
                     <Link to="#" className="avatar avatar-lg">
-                      <img src={product6} alt="img" />
+                    <span className="avatar-initial bg-primary text-white">DX</span>
                     </Link>
                     <div className="ms-2">
                       <h6 className="fw-bold mb-1">
@@ -1077,7 +1236,7 @@ const Dashboard = () => {
                 <div className="d-flex align-items-center justify-content-between mb-4">
                   <div className="d-flex align-items-center">
                     <Link to="#" className="avatar avatar-lg">
-                      <img src={product7} alt="img" />
+                    <span className="avatar-initial bg-primary text-white">VR</span>
                     </Link>
                     <div className="ms-2">
                       <h6 className="fw-bold mb-1">
@@ -1094,7 +1253,7 @@ const Dashboard = () => {
                 <div className="d-flex align-items-center justify-content-between mb-4">
                   <div className="d-flex align-items-center">
                     <Link to="#" className="avatar avatar-lg">
-                      <img src={product8} alt="img" />
+                    <span className="avatar-initial bg-primary text-white">KS</span>
                     </Link>
                     <div className="ms-2">
                       <h6 className="fw-bold mb-1">
@@ -1111,7 +1270,7 @@ const Dashboard = () => {
                 <div className="d-flex align-items-center justify-content-between mb-4">
                   <div className="d-flex align-items-center">
                     <Link to="#" className="avatar avatar-lg">
-                      <img src={product9} alt="img" />
+                    <span className="avatar-initial bg-primary text-white">LT</span>
                     </Link>
                     <div className="ms-2">
                       <h6 className="fw-bold mb-1">
@@ -1128,7 +1287,7 @@ const Dashboard = () => {
                 <div className="d-flex align-items-center justify-content-between mb-0">
                   <div className="d-flex align-items-center">
                     <Link to="#" className="avatar avatar-lg">
-                      <img src={product10} alt="img" />
+                    <span className="avatar-initial bg-primary text-white">LC</span>
                     </Link>
                     <div className="ms-2">
                       <h6 className="fw-bold mb-1">
@@ -1154,7 +1313,7 @@ const Dashboard = () => {
                   <span className="title-icon bg-soft-pink fs-16 me-2">
                     <i className="ti ti-box" />
                   </span>
-                  <h5 className="card-title mb-0">Recent Sales</h5>
+                  <h5 className="card-title mb-0">Bán hàng gần đây</h5>
                 </div>
                 <div className="dropdown">
                   <Link
@@ -1164,22 +1323,22 @@ const Dashboard = () => {
                     aria-expanded="false"
                   >
                     <i className="ti ti-calendar me-1" />
-                    Weekly
+                    Tuần này
                   </Link>
                   <ul className="dropdown-menu p-3">
                     <li>
                       <Link to="#" className="dropdown-item">
-                        Today
+                        Hôm nay
                       </Link>
                     </li>
                     <li>
                       <Link to="#" className="dropdown-item">
-                        Weekly
+                        Tuần này
                       </Link>
                     </li>
                     <li>
                       <Link to="#" className="dropdown-item">
-                        Monthly
+                        Tháng này
                       </Link>
                     </li>
                   </ul>
@@ -1189,7 +1348,7 @@ const Dashboard = () => {
                 <div className="d-flex align-items-center justify-content-between mb-4">
                   <div className="d-flex align-items-center">
                     <Link to="#" className="avatar avatar-lg">
-                      <img src={product11} alt="img" />
+                    <span className="avatar-initial bg-primary text-white">AW</span>
                     </Link>
                     <div className="ms-2">
                       <h6 className="fw-bold mb-1">
@@ -1202,17 +1361,17 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="text-end">
-                    <p className="fs-13 mb-1">Today</p>
+                    <p className="fs-13 mb-1">Hôm nay</p>
                     <span className="badge bg-purple badge-xs d-inline-flex align-items-center">
                       <i className="ti ti-circle-filled fs-5 me-1" />
-                      Processing
+                      Đang xử lý
                     </span>
                   </div>
                 </div>
                 <div className="d-flex align-items-center justify-content-between mb-4">
                   <div className="d-flex align-items-center">
                     <Link to="#" className="avatar avatar-lg">
-                      <img src={product12} alt="img" />
+                    <span className="avatar-initial bg-primary text-white">GB</span>
                     </Link>
                     <div className="ms-2">
                       <h6 className="fw-bold mb-1">
@@ -1225,17 +1384,17 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="text-end">
-                    <p className="fs-13 mb-1">Today</p>
+                    <p className="fs-13 mb-1">Hôm nay</p>
                     <span className="badge badge-danger badge-xs d-inline-flex align-items-center">
                       <i className="ti ti-circle-filled fs-5 me-1" />
-                      Cancelled
+                      Đã hủy
                     </span>
                   </div>
                 </div>
                 <div className="d-flex align-items-center justify-content-between mb-4">
                   <div className="d-flex align-items-center">
                     <Link to="#" className="avatar avatar-lg">
-                      <img src={product13} alt="img" />
+                    <span className="avatar-initial bg-primary text-white">PD</span>
                     </Link>
                     <div className="ms-2">
                       <h6 className="fw-bold mb-1">
@@ -1251,14 +1410,14 @@ const Dashboard = () => {
                     <p className="fs-13 mb-1">15 Jan 2025</p>
                     <span className="badge badge-cyan badge-xs d-inline-flex align-items-center">
                       <i className="ti ti-circle-filled fs-5 me-1" />
-                      Onhold
+                      Tạm hoãn
                     </span>
                   </div>
                 </div>
                 <div className="d-flex align-items-center justify-content-between mb-4">
                   <div className="d-flex align-items-center">
                     <Link to="#" className="avatar avatar-lg">
-                      <img src={product14} alt="img" />
+                    <span className="avatar-initial bg-primary text-white">YT</span>
                     </Link>
                     <div className="ms-2">
                       <h6 className="fw-bold mb-1">
@@ -1274,14 +1433,14 @@ const Dashboard = () => {
                     <p className="fs-13 mb-1">12 Jan 2025</p>
                     <span className="badge bg-purple badge-xs d-inline-flex align-items-center">
                       <i className="ti ti-circle-filled fs-5 me-1" />
-                      Processing
+                      Đang xử lý
                     </span>
                   </div>
                 </div>
                 <div className="d-flex align-items-center justify-content-between mb-0">
                   <div className="d-flex align-items-center">
                     <Link to="#" className="avatar avatar-lg">
-                      <img src={product15} alt="img" />
+                    <span className="avatar-initial bg-primary text-white">OG</span>
                     </Link>
                     <div className="ms-2">
                       <h6 className="fw-bold mb-1">
@@ -1356,7 +1515,7 @@ const Dashboard = () => {
                         25%
                       </span>
                     </h5>
-                    <p>Revenue</p>
+                    <p>Doanh thu</p>
                   </div>
                   <div className="border p-2 br-8">
                     <h5 className="d-inline-flex align-items-center text-orange">
@@ -1366,11 +1525,11 @@ const Dashboard = () => {
                         25%
                       </span>
                     </h5>
-                    <p>Expense</p>
+                    <p>Chi phí</p>
                   </div>
                 </div>
                 <div id="sales-statistics">
-                  <ReactApexChart
+                  <Chart
                     options={options}
                     series={options.series}
                     type="bar"
@@ -1395,7 +1554,7 @@ const Dashboard = () => {
                   to={route.onlineorder}
                   className="fs-13 fw-medium text-decoration-underline"
                 >
-                  View All
+                  Xem tất cả
                 </Link>
               </div>
               <div className="card-body p-0">
@@ -1452,10 +1611,10 @@ const Dashboard = () => {
                       <table className="table table-borderless custom-table">
                         <thead className="thead-light">
                           <tr>
-                            <th>Date</th>
-                            <th>Customer</th>
-                            <th>Status</th>
-                            <th>Total</th>
+                            <th>Ngày</th>
+                            <th>Khách hàng</th>
+                            <th>Trạng thái</th>
+                            <th>Tổng</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1464,11 +1623,7 @@ const Dashboard = () => {
                             <td>
                               <div className="d-flex align-items-center file-name-icon">
                                 <Link to="#" className="avatar avatar-md">
-                                  <img
-                                    src={customer16}
-                                    className="img-fluid"
-                                    alt="img"
-                                  />
+                                <span className="avatar-initial bg-primary text-white">AW</span>
                                 </Link>
                                 <div className="ms-2">
                                   <h6 className="fw-medium">
@@ -1483,7 +1638,7 @@ const Dashboard = () => {
                             <td>
                               <span className="badge badge-success badge-xs d-inline-flex align-items-center">
                                 <i className="ti ti-circle-filled fs-5 me-1" />
-                                Completed
+                                Hoàn thành
                               </span>
                             </td>
                             <td className="fs-16 fw-bold text-gray-9">
@@ -1495,11 +1650,7 @@ const Dashboard = () => {
                             <td>
                               <div className="d-flex align-items-center file-name-icon">
                                 <Link to="#" className="avatar avatar-md">
-                                  <img
-                                    src={customer17}
-                                    className="img-fluid"
-                                    alt="img"
-                                  />
+                                <span className="avatar-initial bg-primary text-white">TS</span>
                                 </Link>
                                 <div className="ms-2">
                                   <h6 className="fw-medium">
@@ -1514,7 +1665,7 @@ const Dashboard = () => {
                             <td>
                               <span className="badge badge-success badge-xs d-inline-flex align-items-center">
                                 <i className="ti ti-circle-filled fs-5 me-1" />
-                                Completed
+                                Hoàn thành
                               </span>
                             </td>
                             <td className="fs-16 fw-bold text-gray-9">
@@ -1526,11 +1677,7 @@ const Dashboard = () => {
                             <td>
                               <div className="d-flex align-items-center file-name-icon">
                                 <Link to="#" className="avatar avatar-md">
-                                  <img
-                                    src={customer18}
-                                    className="img-fluid"
-                                    alt="img"
-                                  />
+                                <span className="avatar-initial bg-primary text-white">BR</span>
                                 </Link>
                                 <div className="ms-2">
                                   <h6 className="fw-medium">
@@ -1545,7 +1692,7 @@ const Dashboard = () => {
                             <td>
                               <span className="badge badge-pink badge-xs d-inline-flex align-items-center">
                                 <i className="ti ti-circle-filled fs-5 me-1" />
-                                Draft
+                                Nháp
                               </span>
                             </td>
                             <td className="fs-16 fw-bold text-gray-9">
@@ -1557,11 +1704,7 @@ const Dashboard = () => {
                             <td>
                               <div className="d-flex align-items-center file-name-icon">
                                 <Link to="#" className="avatar avatar-md">
-                                  <img
-                                    src={customer15}
-                                    className="img-fluid"
-                                    alt="img"
-                                  />
+                                <span className="avatar-initial bg-primary text-white">RM</span>
                                 </Link>
                                 <div className="ms-2">
                                   <h6 className="fw-medium">
@@ -1576,7 +1719,7 @@ const Dashboard = () => {
                             <td>
                               <span className="badge badge-success badge-xs d-inline-flex align-items-center">
                                 <i className="ti ti-circle-filled fs-5 me-1" />
-                                Completed
+                                Hoàn thành
                               </span>
                             </td>
                             <td className="fs-16 fw-bold text-gray-9">
@@ -1588,11 +1731,7 @@ const Dashboard = () => {
                             <td>
                               <div className="d-flex align-items-center file-name-icon">
                                 <Link to="#" className="avatar avatar-md">
-                                  <img
-                                    src={customer13}
-                                    className="img-fluid"
-                                    alt="img"
-                                  />
+                                <span className="avatar-initial bg-primary text-white">DA</span>
                                 </Link>
                                 <div className="ms-2">
                                   <h6 className="fw-medium">
@@ -1607,7 +1746,7 @@ const Dashboard = () => {
                             <td>
                               <span className="badge badge-success badge-xs d-inline-flex align-items-center">
                                 <i className="ti ti-circle-filled fs-5 me-1" />
-                                Completed
+                                Hoàn thành
                               </span>
                             </td>
                             <td className="fs-16 fw-bold text-gray-9">
@@ -1640,7 +1779,7 @@ const Dashboard = () => {
                             <td>
                               <span className="badge badge-success badge-xs d-inline-flex align-items-center">
                                 <i className="ti ti-circle-filled fs-5 me-1" />
-                                Completed
+                                Hoàn thành
                               </span>
                             </td>
                             <td className="text-gray-9">$1000</td>
@@ -1655,7 +1794,7 @@ const Dashboard = () => {
                             <td>
                               <span className="badge badge-success badge-xs d-inline-flex align-items-center">
                                 <i className="ti ti-circle-filled fs-5 me-1" />
-                                Completed
+                                Hoàn thành
                               </span>
                             </td>
                             <td className="text-gray-9">$1500</td>
@@ -1685,7 +1824,7 @@ const Dashboard = () => {
                             <td>
                               <span className="badge badge-success badge-xs d-inline-flex align-items-center">
                                 <i className="ti ti-circle-filled fs-5 me-1" />
-                                Completed
+                                Hoàn thành
                               </span>
                             </td>
                             <td className="text-gray-9">$1200</td>
@@ -1700,7 +1839,7 @@ const Dashboard = () => {
                             <td>
                               <span className="badge badge-success badge-xs d-inline-flex align-items-center">
                                 <i className="ti ti-circle-filled fs-5 me-1" />
-                                Completed
+                                Hoàn thành
                               </span>
                             </td>
                             <td className="text-gray-9">$1300</td>
@@ -1715,7 +1854,7 @@ const Dashboard = () => {
                             <td>
                               <span className="badge badge-success badge-xs d-inline-flex align-items-center">
                                 <i className="ti ti-circle-filled fs-5 me-1" />
-                                Completed
+                                Hoàn thành
                               </span>
                             </td>
                             <td className="text-gray-9">$1600</td>
@@ -1730,7 +1869,7 @@ const Dashboard = () => {
                             <td>
                               <span className="badge badge-success badge-xs d-inline-flex align-items-center">
                                 <i className="ti ti-circle-filled fs-5 me-1" />
-                                Completed
+                                Hoàn thành
                               </span>
                             </td>
                             <td className="text-gray-9">$1100</td>
@@ -1756,11 +1895,7 @@ const Dashboard = () => {
                             <td>
                               <div className="d-flex align-items-center file-name-icon">
                                 <Link to="#" className="avatar avatar-md">
-                                  <img
-                                    src={customer16}
-                                    className="img-fluid"
-                                    alt="img"
-                                  />
+                                <span className="avatar-initial bg-primary text-white">AW</span>
                                 </Link>
                                 <div className="ms-2">
                                   <h6 className="fw-medium">
@@ -1785,11 +1920,7 @@ const Dashboard = () => {
                             <td>
                               <div className="d-flex align-items-center file-name-icon">
                                 <Link to="#" className="avatar avatar-md">
-                                  <img
-                                    src={customer17}
-                                    className="img-fluid"
-                                    alt="img"
-                                  />
+                                <span className="avatar-initial bg-primary text-white">TS</span>
                                 </Link>
                                 <div className="ms-2">
                                   <h6 className="fw-medium">
@@ -1814,11 +1945,7 @@ const Dashboard = () => {
                             <td>
                               <div className="d-flex align-items-center file-name-icon">
                                 <Link to="#" className="avatar avatar-md">
-                                  <img
-                                    src={customer18}
-                                    className="img-fluid"
-                                    alt="img"
-                                  />
+                                <span className="avatar-initial bg-primary text-white">BR</span>
                                 </Link>
                                 <div className="ms-2">
                                   <h6 className="fw-medium">
@@ -1843,11 +1970,7 @@ const Dashboard = () => {
                             <td>
                               <div className="d-flex align-items-center file-name-icon">
                                 <Link to="#" className="avatar avatar-md">
-                                  <img
-                                    src={customer15}
-                                    className="img-fluid"
-                                    alt="img"
-                                  />
+                                <span className="avatar-initial bg-primary text-white">RM</span>
                                 </Link>
                                 <div className="ms-2">
                                   <h6 className="fw-medium">
@@ -1872,11 +1995,7 @@ const Dashboard = () => {
                             <td>
                               <div className="d-flex align-items-center file-name-icon">
                                 <Link to="#" className="avatar avatar-md">
-                                  <img
-                                    src={customer13}
-                                    className="img-fluid"
-                                    alt="img"
-                                  />
+                                <span className="avatar-initial bg-primary text-white">DA</span>
                                 </Link>
                                 <div className="ms-2">
                                   <h6 className="fw-medium">
@@ -2012,11 +2131,7 @@ const Dashboard = () => {
                             <td>
                               <div className="d-flex align-items-center file-name-icon">
                                 <Link to="#" className="avatar avatar-md">
-                                  <img
-                                    src={customer16}
-                                    className="img-fluid"
-                                    alt="img"
-                                  />
+                                <span className="avatar-initial bg-primary text-white">AW</span>
                                 </Link>
                                 <div className="ms-2">
                                   <h6 className="fw-medium">
@@ -2041,11 +2156,7 @@ const Dashboard = () => {
                             <td>
                               <div className="d-flex align-items-center file-name-icon">
                                 <Link to="#" className="avatar avatar-md">
-                                  <img
-                                    src={customer17}
-                                    className="img-fluid"
-                                    alt="img"
-                                  />
+                                <span className="avatar-initial bg-primary text-white">TS</span>
                                 </Link>
                                 <div className="ms-2">
                                   <h6 className="fw-medium">
@@ -2070,11 +2181,7 @@ const Dashboard = () => {
                             <td>
                               <div className="d-flex align-items-center file-name-icon">
                                 <Link to="#" className="avatar avatar-md">
-                                  <img
-                                    src={customer18}
-                                    className="img-fluid"
-                                    alt="img"
-                                  />
+                                <span className="avatar-initial bg-primary text-white">BR</span>
                                 </Link>
                                 <div className="ms-2">
                                   <h6 className="fw-medium">
@@ -2099,11 +2206,7 @@ const Dashboard = () => {
                             <td>
                               <div className="d-flex align-items-center file-name-icon">
                                 <Link to="#" className="avatar avatar-md">
-                                  <img
-                                    src={customer15}
-                                    className="img-fluid"
-                                    alt="img"
-                                  />
+                                <span className="avatar-initial bg-primary text-white">RM</span>
                                 </Link>
                                 <div className="ms-2">
                                   <h6 className="fw-medium">
@@ -2128,11 +2231,7 @@ const Dashboard = () => {
                             <td>
                               <div className="d-flex align-items-center file-name-icon">
                                 <Link to="#" className="avatar avatar-md">
-                                  <img
-                                    src={customer13}
-                                    className="img-fluid"
-                                    alt="img"
-                                  />
+                                <span className="avatar-initial bg-primary text-white">DA</span>
                                 </Link>
                                 <div className="ms-2">
                                   <h6 className="fw-medium">
@@ -2172,126 +2271,69 @@ const Dashboard = () => {
                   <span className="title-icon bg-soft-orange fs-16 me-2">
                     <i className="ti ti-users" />
                   </span>
-                  <h5 className="card-title mb-0">Top Customers</h5>
+                  <h5 className="card-title mb-0">Khách hàng hàng đầu</h5>
                 </div>
                 <Link
-                  to={route.customer}
+                  to={route.customers}
                   className="fs-13 fw-medium text-decoration-underline"
                 >
-                  View All
+                  Xem tất cả
                 </Link>
               </div>
               <div className="card-body">
-                <div className="d-flex align-items-center justify-content-between border-bottom mb-3 pb-3 flex-wrap gap-2">
-                  <div className="d-flex align-items-center">
-                    <Link to="#" className="avatar avatar-lg flex-shrink-0">
-                      <img src={customer11} alt="img" />
-                    </Link>
-                    <div className="ms-2">
-                      <h6 className="fs-14 fw-bold mb-1">
-                        <Link to="#">Carlos Curran</Link>
-                      </h6>
-                      <div className="d-flex align-items-center item-list">
-                        <p className="d-inline-flex align-items-center">
-                          <i className="ti ti-map-pin me-1" />
-                          USA
-                        </p>
-                        <p>24 Orders</p>
+                {loading ? (
+                  <div className="text-center py-4">
+                    <span className="spinner-border spinner-border-sm" />
+                  </div>
+                ) : dashboardData.customers.length === 0 ? (
+                  <div className="text-center py-4 text-gray-9">
+                    Không tìm thấy khách hàng
+                  </div>
+                ) : (
+                  dashboardData.customers.slice(0, 5).map((customer, index) => {
+                    const customerName = customer.name || customer.fullName || customer.customerName || 'Không xác định';
+                    const customerAddress = customer.address || customer.location || 'Không có';
+                    const customerPhone = customer.phone || customer.phoneNumber || '';
+
+                    // Calculate total orders for this customer from purchase orders
+                    const customerOrders = dashboardData.purchaseOrders.filter(
+                      order => order.customerId === customer.id || order.customer?.id === customer.id
+                    );
+                    const totalSpent = customerOrders.reduce((sum, order) => {
+                      return sum + (order.totalAmount || order.total || order.amount || 0);
+                    }, 0);
+
+                    return (
+                      <div
+                        key={customer.id || index}
+                        className={`d-flex align-items-center justify-content-between ${index < 4 ? 'border-bottom mb-3 pb-3' : ''} flex-wrap gap-2`}
+                      >
+                        <div className="d-flex align-items-center">
+                          <Link to={route.customers} className="avatar avatar-lg flex-shrink-0">
+                            <span className="avatar-initial bg-primary text-white">
+                              {customerName.charAt(0).toUpperCase()}
+                            </span>
+                          </Link>
+                          <div className="ms-2">
+                            <h6 className="fs-14 fw-bold mb-1">
+                              <Link to={route.customers}>{customerName}</Link>
+                            </h6>
+                            <div className="d-flex align-items-center item-list">
+                              <p className="d-inline-flex align-items-center">
+                                <i className="ti ti-phone me-1" />
+                                {customerPhone || 'Không có'}
+                              </p>
+                              <p>{customerOrders.length} Đơn hàng</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-end">
+                          <h5>{formatCurrency(totalSpent)}</h5>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className="text-end">
-                    <h5>$8,9645</h5>
-                  </div>
-                </div>
-                <div className="d-flex align-items-center justify-content-between border-bottom mb-3 pb-3 flex-wrap gap-2">
-                  <div className="d-flex align-items-center">
-                    <Link to="#" className="avatar avatar-lg flex-shrink-0">
-                      <img src={customer12} alt="img" />
-                    </Link>
-                    <div className="ms-2">
-                      <h6 className="fs-14 fw-bold mb-1">
-                        <Link to="#">Stan Gaunter</Link>
-                      </h6>
-                      <div className="d-flex align-items-center item-list">
-                        <p className="d-inline-flex align-items-center">
-                          <i className="ti ti-map-pin me-1" />
-                          UAE
-                        </p>
-                        <p>22 Orders</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-end">
-                    <h5>$16,985</h5>
-                  </div>
-                </div>
-                <div className="d-flex align-items-center justify-content-between border-bottom mb-3 pb-3 flex-wrap gap-2">
-                  <div className="d-flex align-items-center">
-                    <Link to="#" className="avatar avatar-lg flex-shrink-0">
-                      <img src={customer13} alt="img" />
-                    </Link>
-                    <div className="ms-2">
-                      <h6 className="fs-14 fw-bold mb-1">
-                        <Link to="#">Richard Wilson</Link>
-                      </h6>
-                      <div className="d-flex align-items-center item-list">
-                        <p className="d-inline-flex align-items-center">
-                          <i className="ti ti-map-pin me-1" />
-                          Germany
-                        </p>
-                        <p>14 Orders</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-end">
-                    <h5>$5,366</h5>
-                  </div>
-                </div>
-                <div className="d-flex align-items-center justify-content-between border-bottom mb-3 pb-3 flex-wrap gap-2">
-                  <div className="d-flex align-items-center">
-                    <Link to="#" className="avatar avatar-lg flex-shrink-0">
-                      <img src={customer14} alt="img" />
-                    </Link>
-                    <div className="ms-2">
-                      <h6 className="fs-14 fw-bold mb-1">
-                        <Link to="#">Mary Bronson</Link>
-                      </h6>
-                      <div className="d-flex align-items-center item-list">
-                        <p className="d-inline-flex align-items-center">
-                          <i className="ti ti-map-pin me-1" />
-                          Belgium
-                        </p>
-                        <p>08 Orders</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-end">
-                    <h5>$4,569</h5>
-                  </div>
-                </div>
-                <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                  <div className="d-flex align-items-center">
-                    <Link to="#" className="avatar avatar-lg flex-shrink-0">
-                      <img src={customer15} alt="img" />
-                    </Link>
-                    <div className="ms-2">
-                      <h6 className="fs-14 fw-bold mb-1">
-                        <Link to="#">Annie Tremblay</Link>
-                      </h6>
-                      <div className="d-flex align-items-center item-list">
-                        <p className="d-inline-flex align-items-center">
-                          <i className="ti ti-map-pin me-1" />
-                          Greenland
-                        </p>
-                        <p>14 Orders</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-end">
-                    <h5>$3,5698</h5>
-                  </div>
-                </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>
@@ -2304,7 +2346,7 @@ const Dashboard = () => {
                   <span className="title-icon bg-soft-orange fs-16 me-2">
                     <i className="ti ti-users" />
                   </span>
-                  <h5 className="card-title mb-0">Top Categories</h5>
+                  <h5 className="card-title mb-0">Danh mục hàng đầu</h5>
                 </div>
                 <div className="dropdown">
                   <Link
@@ -2314,22 +2356,22 @@ const Dashboard = () => {
                     aria-expanded="false"
                   >
                     <i className="ti ti-calendar me-1" />
-                    Weekly
+                    Tuần này
                   </Link>
                   <ul className="dropdown-menu p-3">
                     <li>
                       <Link to="#" className="dropdown-item">
-                        Today
+                        Hôm nay
                       </Link>
                     </li>
                     <li>
                       <Link to="#" className="dropdown-item">
-                        Weekly
+                        Tuần này
                       </Link>
                     </li>
                     <li>
                       <Link to="#" className="dropdown-item">
-                        Monthly
+                        Tháng này
                       </Link>
                     </li>
                   </ul>
@@ -2349,50 +2391,57 @@ const Dashboard = () => {
                     />
                   </div>
                   <div>
-                    <div className="category-item category-primary">
-                      <p className="fs-13 mb-1">Electronics</p>
-                      <h2 className="d-flex align-items-center">
-                        698
-                        <span className="fs-13 fw-normal text-default ms-1">
-                          Sales
-                        </span>
-                      </h2>
-                    </div>
-                    <div className="category-item category-orange">
-                      <p className="fs-13 mb-1">Sports</p>
-                      <h2 className="d-flex align-items-center">
-                        545
-                        <span className="fs-13 fw-normal text-default ms-1">
-                          Sales
-                        </span>
-                      </h2>
-                    </div>
-                    <div className="category-item category-secondary">
-                      <p className="fs-13 mb-1">Lifestyles</p>
-                      <h2 className="d-flex align-items-center">
-                        456
-                        <span className="fs-13 fw-normal text-default ms-1">
-                          Sales
-                        </span>
-                      </h2>
-                    </div>
+                    {loading ? (
+                      <div className="text-center py-4">
+                        <span className="spinner-border spinner-border-sm" />
+                      </div>
+                    ) : topCategories.length === 0 ? (
+                      <div className="text-center py-4 text-gray-9">Không tìm thấy danh mục</div>
+                    ) : (
+                      topCategories.slice(0, 3).map((category, index) => {
+                        const colors = ['category-primary', 'category-orange', 'category-secondary'];
+                        return (
+                          <div key={category.id || index} className={`category-item ${colors[index] || 'category-primary'}`}>
+                            <p className="fs-13 mb-1">{category.name || category.categoryName || 'Không tên'}</p>
+                            <h2 className="d-flex align-items-center">
+                              {category.productCount || 0}
+                              <span className="fs-13 fw-normal text-default ms-1">
+                                Sản phẩm
+                              </span>
+                            </h2>
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
-                <h6 className="mb-2">Category Statistics</h6>
+                <h6 className="mb-2">Thống kê danh mục</h6>
                 <div className="border br-8">
                   <div className="d-flex align-items-center justify-content-between border-bottom p-2">
                     <p className="d-inline-flex align-items-center mb-0">
                       <i className="ti ti-square-rounded-filled text-indigo fs-8 me-2" />
-                      Total Number Of Categories
+                      Tổng số danh mục
                     </p>
-                    <h5>698</h5>
+                    <h5>
+                      {loading ? (
+                        <span className="spinner-border spinner-border-sm" />
+                      ) : (
+                        stats.totalCategories
+                      )}
+                    </h5>
                   </div>
                   <div className="d-flex align-items-center justify-content-between p-2">
                     <p className="d-inline-flex align-items-center mb-0">
                       <i className="ti ti-square-rounded-filled text-orange fs-8 me-2" />
-                      Total Number Of Products
+                      Tổng số sản phẩm
                     </p>
-                    <h5>7899</h5>
+                    <h5>
+                      {loading ? (
+                        <span className="spinner-border spinner-border-sm" />
+                      ) : (
+                        stats.totalProducts
+                      )}
+                    </h5>
                   </div>
                 </div>
               </div>
@@ -2407,7 +2456,7 @@ const Dashboard = () => {
                   <span className="title-icon bg-soft-indigo fs-16 me-2">
                     <i className="ti ti-package" />
                   </span>
-                  <h5 className="card-title mb-0">Order Statistics</h5>
+                  <h5 className="card-title mb-0">Thống kê đơn hàng</h5>
                 </div>
                 <div className="dropdown">
                   <Link
@@ -2417,22 +2466,22 @@ const Dashboard = () => {
                     aria-expanded="false"
                   >
                     <i className="ti ti-calendar me-1" />
-                    Weekly
+                    Tuần này
                   </Link>
                   <ul className="dropdown-menu p-3">
                     <li>
                       <Link to="#" className="dropdown-item">
-                        Today
+                        Hôm nay
                       </Link>
                     </li>
                     <li>
                       <Link to="#" className="dropdown-item">
-                        Weekly
+                        Tuần này
                       </Link>
                     </li>
                     <li>
                       <Link to="#" className="dropdown-item">
-                        Monthly
+                        Tháng này
                       </Link>
                     </li>
                   </ul>
@@ -2440,7 +2489,7 @@ const Dashboard = () => {
               </div>
               <div className="card-body pb-0">
                 <div id="heat_chart">
-                  <ApexCharts
+                  <Chart
                     options={heat_chart}
                     series={heat_chart.series}
                     type="heatmap"

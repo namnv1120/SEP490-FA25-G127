@@ -2029,3 +2029,12 @@ div.p-datepicker table td.p-datepicker-today > span.p-highlight {
 .table-top-head {
   margin: 0 !important;
 }
+
+.p-dropdown-panel {
+  z-index: 9999 !important;
+}
+
+.page-wrapper,
+.content {
+  overflow: visible !important;
+}
