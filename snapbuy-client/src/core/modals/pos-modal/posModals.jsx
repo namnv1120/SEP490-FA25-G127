@@ -1229,6 +1229,55 @@ const PosModals = () => {
         </div>
       </div>
       {/* /Payment Cash  */}
+      {/* Modal chọn phương thức thanh toán */}
+      <div
+        className="modal fade"
+        id="select-payment-method"
+        tabIndex="-1"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">Chọn phương thức thanh toán</h5>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+              />
+            </div>
+            <div className="modal-body">
+              <div className="row g-3">
+                <div className="col-6">
+                  <Link
+                    to="#"
+                    className="payment-item"
+                    data-bs-toggle="modal"
+                    data-bs-target="#payment-cash"
+                    data-bs-dismiss="modal"
+                  >
+                    <i className="ti ti-cash-banknote fs-18" />
+                    <span>Tiền mặt</span>
+                  </Link>
+                </div>
+                <div className="col-6">
+                  <Link
+                    to="#"
+                    className="payment-item"
+                    data-bs-toggle="modal"
+                    data-bs-target="#scan-payment"
+                    data-bs-dismiss="modal"
+                  >
+                    <i className="ti ti-scan fs-18" />
+                    <span>Quét mã</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* /Modal chọn phương thức thanh toán */}
       {/* Calculator */}
       <div
         className="modal fade pos-modal"

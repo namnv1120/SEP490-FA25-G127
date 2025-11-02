@@ -5,10 +5,11 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import PosModals from "../../core/modals/pos-modal/posModals";
 import CounterTwo from "../../components/counter/counterTwo";
+import { category1 } from "../../utils/imagepath";
 import ProductService from "../../services/ProductService";
 import { getAllCategories } from "../../services/categoryService";
 import { getCustomerByPhone } from "../../services/customerService";
-import { category1 } from "../../utils/imagepath";
+import orderService from "../../services/orderService";
 
 const Pos = () => {
   const [activeTab, setActiveTab] = useState("all");
@@ -24,14 +25,14 @@ const Pos = () => {
   const [selectedDiscount] = useState(10);
   const [editingProduct, setEditingProduct] = useState(null);
   const location = useLocation();
+  const [orderCreated, setOrderCreated] = useState(false);
 
-  // --- 1) Khi fetch categories: ánh xạ (normalize) các trường từ backend
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const data = await getAllCategories();
         const mapped = (data || []).map((c, index) => ({
-          categoryId: c.category_id ?? c.categoryId ?? c.id ?? `cat-${index}`, // an toàn nếu tên trường khác nhau
+          categoryId: c.category_id ?? c.categoryId ?? c.id ?? `cat-${index}`,
           categoryName:
             c.category_name ?? c.categoryName ?? c.name ?? "No name",
           description: c.description ?? c.desc ?? "",
@@ -47,17 +48,13 @@ const Pos = () => {
     fetchCategories();
   }, []);
 
-  // --- 2) Khi chọn activeTab: nếu là id của parent => hiển thị sản phẩm của tất cả child categories
   useEffect(() => {
     if (activeTab === "all") {
       setFilteredProducts(products);
     } else {
-      // tìm các danh mục con thuộc parent activeTab (nếu activeTab là parent id)
       const childIds = categories
         .filter((c) => c.parentCategoryId === activeTab)
         .map((c) => c.categoryId);
-
-      // nếu không có child nào, thử coi activeTab có phải là chính category của product (fallback)
       if (childIds.length === 0) {
         setFilteredProducts(products.filter((p) => p.categoryId === activeTab));
       } else {
@@ -195,6 +192,51 @@ const Pos = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const handleCreateOrder = async () => {
+    if (selectedProducts.length === 0) {
+      alert("Vui lòng chọn sản phẩm trước khi tạo đơn!");
+      return;
+    }
+    if (!selectedCustomer) {
+      alert("Vui lòng chọn khách hàng!");
+      return;
+    }
+
+    try {
+      const orderData = {
+        customerId: selectedCustomer.customerId,
+        items: selectedProducts.map((p) => ({
+          productId: p.productId,
+          quantity: p.quantity,
+          price: p.unitPrice,
+        })),
+        subTotal,
+        discountAmount: discountAmount || 0,
+        total,
+        notes: orderNotes || "",
+        createdBy: localStorage.getItem("username") || "POS User",
+      };
+
+      const createdOrder = await orderService.createOrder(orderData);
+
+      console.log("Đơn hàng tạo thành công:", createdOrder);
+      alert("✅ Tạo đơn hàng thành công!");
+      setOrderCreated(true);
+      setCurrentOrderId(createdOrder.orderId);
+    } catch (error) {
+      console.error("❌ Lỗi khi tạo đơn hàng:", error);
+      if (error.response) {
+        alert(
+          `Tạo đơn thất bại: ${
+            error.response.data.message || "Lỗi không xác định"
+          }`
+        );
+      } else {
+        alert("Không thể kết nối đến máy chủ, vui lòng thử lại.");
+      }
+    }
+  };
 
   const settings = {
     dots: false,
@@ -544,45 +586,58 @@ const Pos = () => {
                 </div>
 
                 {/* Payment Methods */}
-                <div className="block-section payment-method">
-                  <h4>Phương thức thanh toán</h4>
-                  <div className="row align-items-center justify-content-center methods g-3">
-                    <div className="col-sm-6 col-md-4">
-                      <Link
-                        to="#"
-                        className="payment-item"
-                        data-bs-toggle="modal"
-                        data-bs-target="#payment-cash"
-                      >
-                        <i className="ti ti-cash-banknote fs-18" />
-                        <span>Tiền mặt</span>
-                      </Link>
-                    </div>
-                    <div className="col-sm-6 col-md-4">
-                      <Link
-                        to="#"
-                        className="payment-item"
-                        data-bs-toggle="modal"
-                        data-bs-target="#scan-payment"
-                      >
-                        <i className="ti ti-scan fs-18" />
-                        <span>Quét mã</span>
-                      </Link>
+                {orderCreated && (
+                  <div className="block-section payment-method">
+                    <h4>Phương thức thanh toán</h4>
+                    <div className="row align-items-center justify-content-center methods g-3">
+                      <div className="col-sm-6 col-md-4">
+                        <Link
+                          to="#"
+                          className="payment-item"
+                          data-bs-toggle="modal"
+                          data-bs-target="#payment-cash"
+                        >
+                          <i className="ti ti-cash-banknote fs-18" />
+                          <span>Tiền mặt</span>
+                        </Link>
+                      </div>
+                      <div className="col-sm-6 col-md-4">
+                        <Link
+                          to="#"
+                          className="payment-item"
+                          data-bs-toggle="modal"
+                          data-bs-target="#scan-payment"
+                        >
+                          <i className="ti ti-scan fs-18" />
+                          <span>Quét mã</span>
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Buttons */}
                 <div className="btn-row d-sm-flex align-items-center justify-content-between">
-                  <Link
-                    to="#"
-                    className="btn btn-success d-flex align-items-center justify-content-center flex-fill"
-                    data-bs-toggle="modal"
-                    data-bs-target="#payment-completed"
-                  >
-                    <i className="ti ti-cash-banknote me-1" />
-                    Thanh toán
-                  </Link>
+                  {!orderCreated ? (
+                    <Link
+                      to="#"
+                      className="btn btn-primary d-flex align-items-center justify-content-center flex-fill"
+                      onClick={handleCreateOrder}
+                    >
+                      <i className="ti ti-file-plus me-1" />
+                      Tạo đơn
+                    </Link>
+                  ) : (
+                    <Link
+                      to="#"
+                      className="btn btn-success d-flex align-items-center justify-content-center flex-fill"
+                      data-bs-toggle="modal"
+                      data-bs-target="#select-payment-method"
+                    >
+                      <i className="ti ti-cash-banknote me-1" />
+                      Thanh toán
+                    </Link>
+                  )}
                 </div>
               </aside>
             </div>
