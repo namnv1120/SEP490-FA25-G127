@@ -1,6 +1,7 @@
 package com.g127.snapbuy.dto.response;
 
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,4 +28,8 @@ public class OrderResponse {
     private String notes;
     private List<OrderDetailResponse> orderDetails;
     private PaymentResponse payment;
+    //Gia goc
+    private BigDecimal subtotal;
+    private Integer pointsRedeemed;
+    private Integer pointsEarned;
 }

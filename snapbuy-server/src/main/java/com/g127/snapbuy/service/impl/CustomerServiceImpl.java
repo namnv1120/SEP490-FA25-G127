@@ -12,6 +12,8 @@ import com.g127.snapbuy.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CustomerServiceImpl implements CustomerService {
 
+    private static final BigDecimal EARN_DIVISOR = BigDecimal.valueOf(500);
     private final CustomerRepository customerRepository;
     private final CustomerMapper customerMapper;
 
@@ -29,6 +32,7 @@ public class CustomerServiceImpl implements CustomerService {
         Customer customer = customerMapper.toEntity(request);
         customer.setCreatedDate(LocalDateTime.now());
         customer.setUpdatedDate(LocalDateTime.now());
+        customer.setPoints(0);
         String code = "CUST-" + System.currentTimeMillis();
         customer.setCustomerCode(code);
         return customerMapper.toResponse(customerRepository.save(customer));
@@ -77,5 +81,41 @@ public class CustomerServiceImpl implements CustomerService {
     public CustomerResponse getCustomerByPhone(String phone) {
         Customer customer = customerRepository.getCustomerByPhone(phone);
         return customerMapper.toResponse(customer);
+    }
+
+    // ================= User Points Management =================
+
+    @Override
+    public int normalizeRedeem(int requestedUsePoints, int currentPoints, BigDecimal payableBeforeRedeem) {
+        int req = Math.max(0, requestedUsePoints);
+        int capByMoney = payableBeforeRedeem.setScale(0, RoundingMode.FLOOR).intValue();
+        return Math.min(req, Math.min(currentPoints, capByMoney));
+    }
+
+    @Override
+    public int earnFromPayable(BigDecimal payableAfterRedeem) {
+        if (payableAfterRedeem == null || payableAfterRedeem.signum() <= 0) return 0;
+        return payableAfterRedeem.divide(EARN_DIVISOR, 0, RoundingMode.FLOOR).intValue();
+    }
+
+    @Override
+    public int getPoints(UUID customerId) {
+        Customer c = customerRepository.findById(customerId)
+                .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
+        return c.getPoints() == null ? 0 : c.getPoints();
+    }
+
+    @Override
+    public int adjustPoints(UUID customerId, int delta) {
+        Customer c = customerRepository.findById(customerId)
+                .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
+        int cur = c.getPoints() == null ? 0 : c.getPoints();
+        long next = (long) cur + delta;
+        if (next < 0) next = 0;
+        if (next > Integer.MAX_VALUE) next = Integer.MAX_VALUE;
+        c.setPoints((int) next);
+        c.setUpdatedDate(LocalDateTime.now());
+        customerRepository.save(c);
+        return c.getPoints();
     }
 }

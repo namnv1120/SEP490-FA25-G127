@@ -1,7 +1,8 @@
 package com.g127.snapbuy.service.impl;
 
-import com.g127.snapbuy.dto.request.*;
-import com.g127.snapbuy.dto.response.*;
+import com.g127.snapbuy.dto.request.OrderCreateRequest;
+import com.g127.snapbuy.dto.request.OrderDetailRequest;
+import com.g127.snapbuy.dto.response.OrderResponse;
 import com.g127.snapbuy.entity.*;
 import com.g127.snapbuy.mapper.OrderMapper;
 import com.g127.snapbuy.repository.*;
@@ -9,6 +10,8 @@ import com.g127.snapbuy.service.MoMoService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -33,26 +36,47 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
     private final OrderMapper orderMapper;
     private final MoMoService moMoService;
 
+    private UUID resolveCurrentAccountId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getName() == null) {
+            throw new IllegalStateException("Không xác định được tài khoản đăng nhập");
+        }
+        String username = auth.getName();
+        return accountRepository.findByUsername(username)
+                .map(Account::getAccountId)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản: " + username));
+    }
+
+    private Customer getGuestCustomer() {
+        UUID guestId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        return customerRepository.findById(guestId)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy khách lẻ mặc định"));
+    }
+
+    private Customer resolveCustomerStrict(String phone) {
+        if (phone == null || phone.isBlank()) {
+            return getGuestCustomer();
+        }
+        Customer found = customerRepository.getCustomerByPhone(phone.trim());
+        if (found == null) {
+            throw new NoSuchElementException("Không tìm thấy khách với số điện thoại: " + phone.trim());
+        }
+        return found;
+    }
+
     @Override
     @Transactional
     public OrderResponse createOrder(OrderCreateRequest req) {
-        if (req.getAccountId() == null)
-            throw new IllegalArgumentException("Thiếu accountId");
         if (req.getItems() == null || req.getItems().isEmpty())
             throw new IllegalArgumentException("Đơn hàng phải có ít nhất 1 sản phẩm");
 
-        Account creator = accountRepository.findById(req.getAccountId())
+        UUID currentAccountId = resolveCurrentAccountId();
+        Account creator = accountRepository.findById(currentAccountId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
 
-        Customer customer;
-        if (req.getCustomerId() == null || req.getCustomerId().toString().isEmpty()) {
-            UUID defaultCustomerId = UUID.fromString("00000000-0000-0000-0000-000000000001");
-            customer = customerRepository.findById(defaultCustomerId)
-                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy khách vãng lai mặc định"));
-        } else {
-            customer = customerRepository.findById(req.getCustomerId())
-                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy khách hàng"));
-        }
+        Customer customer = resolveCustomerStrict(req.getPhone());
+        boolean isGuest = customer.getCustomerId().toString()
+                .equals("00000000-0000-0000-0000-000000000001");
 
         String orderNumber = generateOrderNumber();
         Order order = new Order();
@@ -129,9 +153,32 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         BigDecimal grandTotal = afterDiscount.add(taxAmount);
         if (grandTotal.compareTo(BigDecimal.ZERO) < 0) grandTotal = BigDecimal.ZERO;
 
+        int pointsRedeemed = 0;
+        int pointsEarned = 0;
+
+        if (!isGuest) {
+            int currentPoints = customer.getPoints() == null ? 0 : customer.getPoints();
+            int requestedUse = Optional.ofNullable(req.getUsePoints()).orElse(0);
+
+            int capByMoney = grandTotal.setScale(0, RoundingMode.FLOOR).intValue();
+            pointsRedeemed = Math.min(Math.max(0, requestedUse), Math.min(currentPoints, capByMoney));
+        }
+
+        BigDecimal payable = grandTotal.subtract(BigDecimal.valueOf(pointsRedeemed));
+        if (payable.signum() < 0) payable = BigDecimal.ZERO;
+
+        if (!isGuest) {
+            pointsEarned = payable.divide(BigDecimal.valueOf(500), 0, RoundingMode.FLOOR).intValue();
+            long tmpPts = (long) (customer.getPoints() == null ? 0 : customer.getPoints())
+                    - pointsRedeemed + pointsEarned;
+            int newPoints = (int) Math.max(0, Math.min(tmpPts, Integer.MAX_VALUE));
+            customer.setPoints(newPoints);
+            customerRepository.save(customer);
+        }
+
         order.setDiscountAmount(billDiscountAmount);
         order.setTaxAmount(taxAmount);
-        order.setTotalAmount(grandTotal);
+        order.setTotalAmount(payable);
         orderRepository.save(order);
         orderDetailRepository.saveAll(orderDetails);
 
@@ -139,7 +186,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         payment.setOrder(order);
         String method = Optional.ofNullable(req.getPaymentMethod()).orElse("Tiền mặt");
         payment.setPaymentMethod(method);
-        payment.setAmount(grandTotal);
+        payment.setAmount(payable);
         payment.setPaymentStatus("Chưa thanh toán");
         payment.setPaymentDate(LocalDateTime.now());
         paymentRepository.save(payment);
@@ -161,7 +208,23 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         }
 
         orderRepository.save(order);
-        return orderMapper.toResponse(order, orderDetails, payment);
+
+        BigDecimal subtotal = BigDecimal.ZERO;
+        for (var i : req.getItems()) {
+            BigDecimal up = i.getUnitPrice();
+            if (up == null || up.compareTo(BigDecimal.ZERO) <= 0) {
+                ProductPrice price = productPriceRepository.findCurrentPriceByProductId(i.getProductId())
+                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy giá đang hiệu lực"));
+                up = price.getUnitPrice();
+            }
+            subtotal = subtotal.add(up.multiply(BigDecimal.valueOf(i.getQuantity())));
+        }
+
+        OrderResponse resp = orderMapper.toResponse(order, orderDetails, payment);
+        resp.setSubtotal(subtotal);
+        resp.setPointsRedeemed(pointsRedeemed);
+        resp.setPointsEarned(pointsEarned);
+        return resp;
     }
 
     @Override
@@ -170,7 +233,25 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
         Payment payment = paymentRepository.findByOrder(order);
-        return orderMapper.toResponse(order, details, payment);
+
+        OrderResponse resp = orderMapper.toResponse(order, details, payment);
+        BigDecimal subtotal = details.stream()
+                .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        resp.setSubtotal(subtotal);
+
+        try {
+            var f1 = order.getClass().getDeclaredField("pointsRedeemed");
+            var f2 = order.getClass().getDeclaredField("pointsEarned");
+            f1.setAccessible(true);
+            f2.setAccessible(true);
+            Object pr = f1.get(order);
+            Object pe = f2.get(order);
+            resp.setPointsRedeemed(pr == null ? null : (Integer) pr);
+            resp.setPointsEarned(pe == null ? null : (Integer) pe);
+        } catch (Exception ignored) {
+        }
+        return resp;
     }
 
     @Override
@@ -179,7 +260,23 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                 .map(order -> {
                     List<OrderDetail> details = orderDetailRepository.findByOrder(order);
                     Payment payment = paymentRepository.findByOrder(order);
-                    return orderMapper.toResponse(order, details, payment);
+                    OrderResponse resp = orderMapper.toResponse(order, details, payment);
+                    BigDecimal subtotal = details.stream()
+                            .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    resp.setSubtotal(subtotal);
+                    try {
+                        var f1 = order.getClass().getDeclaredField("pointsRedeemed");
+                        var f2 = order.getClass().getDeclaredField("pointsEarned");
+                        f1.setAccessible(true);
+                        f2.setAccessible(true);
+                        Object pr = f1.get(order);
+                        Object pe = f2.get(order);
+                        resp.setPointsRedeemed(pr == null ? null : (Integer) pr);
+                        resp.setPointsEarned(pe == null ? null : (Integer) pe);
+                    } catch (Exception ignored) {
+                    }
+                    return resp;
                 })
                 .toList();
     }
@@ -203,11 +300,26 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
             order.setOrderStatus("Đã hủy");
             order.setPaymentStatus("Chưa thanh toán");
             payment.setPaymentStatus("Chưa thanh toán");
+
         } else if ("Đã thanh toán".equalsIgnoreCase(order.getPaymentStatus())) {
             for (OrderDetail d : details) {
                 addInventoryBack(d.getProduct(), d.getQuantity(), order.getAccount(),
                         "Trả hàng từ đơn " + order.getOrderNumber());
             }
+
+            Customer c = order.getCustomer();
+            boolean isGuest = c == null || c.getCustomerId().toString()
+                    .equals("00000000-0000-0000-0000-000000000001");
+            if (!isGuest) {
+                int cur = c.getPoints() == null ? 0 : c.getPoints();
+                int earned = order.getTotalAmount() == null ? 0
+                        : order.getTotalAmount().divide(BigDecimal.valueOf(500), 0, RoundingMode.FLOOR).intValue();
+                long next = (long) cur - Math.max(0, earned);
+                if (next < 0) next = 0;
+                c.setPoints((int) next);
+                customerRepository.save(c);
+            }
+
             order.setOrderStatus("Đã hủy");
             order.setPaymentStatus("Đã hoàn tiền");
             payment.setPaymentStatus("Đã hoàn tiền");
@@ -217,7 +329,12 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         orderRepository.save(order);
         paymentRepository.save(payment);
 
-        return orderMapper.toResponse(order, details, payment);
+        OrderResponse resp = orderMapper.toResponse(order, details, payment);
+        BigDecimal subtotal = details.stream()
+                .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        resp.setSubtotal(subtotal);
+        return resp;
     }
 
     @Override
@@ -229,11 +346,28 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         order.setUpdatedDate(LocalDateTime.now());
         orderRepository.save(order);
 
-        return orderMapper.toResponse(
+        OrderResponse resp = orderMapper.toResponse(
                 order,
                 orderDetailRepository.findByOrder(order),
                 paymentRepository.findByOrder(order)
         );
+        List<OrderDetail> details = orderDetailRepository.findByOrder(order);
+        BigDecimal subtotal = details.stream()
+                .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        resp.setSubtotal(subtotal);
+        try {
+            var f1 = order.getClass().getDeclaredField("pointsRedeemed");
+            var f2 = order.getClass().getDeclaredField("pointsEarned");
+            f1.setAccessible(true);
+            f2.setAccessible(true);
+            Object pr = f1.get(order);
+            Object pe = f2.get(order);
+            resp.setPointsRedeemed(pr == null ? null : (Integer) pr);
+            resp.setPointsEarned(pe == null ? null : (Integer) pe);
+        } catch (Exception ignored) {
+        }
+        return resp;
     }
 
     @Override
@@ -242,11 +376,35 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         finalizePayment(id);
 
         Order order = orderRepository.findById(id).orElseThrow();
-        return orderMapper.toResponse(
-                order,
-                orderDetailRepository.findByOrder(order),
-                paymentRepository.findByOrder(order)
-        );
+        List<OrderDetail> details = orderDetailRepository.findByOrder(order);
+        Payment payment = paymentRepository.findByOrder(order);
+        OrderResponse resp = orderMapper.toResponse(order, details, payment);
+        BigDecimal subtotal = details.stream()
+                .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        resp.setSubtotal(subtotal);
+        try {
+            var f1 = order.getClass().getDeclaredField("pointsRedeemed");
+            var f2 = order.getClass().getDeclaredField("pointsEarned");
+            f1.setAccessible(true);
+            f2.setAccessible(true);
+            Object pr = f1.get(order);
+            Object pe = f2.get(order);
+            resp.setPointsRedeemed(pr == null ? null : (Integer) pr);
+            resp.setPointsEarned(pe == null ? null : (Integer) pe);
+        } catch (Exception ignored) {
+        }
+        return resp;
+    }
+
+    @Override
+    @Transactional
+    public void finalizePaymentByReference(String transactionReference) {
+        Payment payment = paymentRepository.findByTransactionReference(transactionReference)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Không tìm thấy thanh toán với reference: " + transactionReference));
+
+        finalizePayment(payment.getOrder().getOrderId());
     }
 
     @Override
@@ -295,16 +453,6 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                 order.getOrderNumber(), details.size());
     }
 
-    @Override
-    @Transactional
-    public void finalizePaymentByReference(String transactionReference) {
-        Payment payment = paymentRepository.findByTransactionReference(transactionReference)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "Không tìm thấy thanh toán với reference: " + transactionReference));
-
-        finalizePayment(payment.getOrder().getOrderId());
-    }
-
     private String generateOrderNumber() {
         long count = orderRepository.count() + 1;
         return String.format("ORD-%05d", count);
@@ -323,16 +471,22 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         inventoryRepository.save(inv);
     }
 
-    private void recordSaleTransaction(Product product, int quantity, BigDecimal unitPrice,
-                                       Account account, String orderNumber, String customerCode) {
+    private void recordSaleTransaction(
+            Product product,
+            int quantity,
+            BigDecimal unitPrice,
+            Account account,
+            String orderNumber,
+            String customerCode
+    ) {
         InventoryTransaction trx = new InventoryTransaction();
-        trx.setTransactionId(UUID.randomUUID());
         trx.setProduct(product);
         trx.setAccount(account);
         trx.setTransactionType("Bán ra");
         trx.setQuantity(quantity);
         trx.setUnitPrice(unitPrice);
         trx.setReferenceType("Đơn hàng");
+        trx.setReferenceId(null);
         trx.setNotes("Bán cho khách " + customerCode + " - Đơn " + orderNumber);
         trx.setTransactionDate(LocalDateTime.now());
         inventoryTransactionRepository.save(trx);
@@ -348,14 +502,15 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         inventoryRepository.save(inv);
 
         InventoryTransaction trx = new InventoryTransaction();
-        trx.setTransactionId(UUID.randomUUID());
         trx.setProduct(product);
         trx.setAccount(account);
         trx.setTransactionType("Trả hàng");
         trx.setQuantity(quantity);
         trx.setReferenceType("Đơn hàng");
+        trx.setReferenceId(null);
         trx.setNotes(notes);
         trx.setTransactionDate(LocalDateTime.now());
         inventoryTransactionRepository.save(trx);
     }
+
 }
