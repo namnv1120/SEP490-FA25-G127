@@ -24,4 +24,6 @@ public class OrderCreateRequest {
     private BigDecimal taxAmount;
 
     private String paymentMethod;
+
+    private Integer usePoints;
 }

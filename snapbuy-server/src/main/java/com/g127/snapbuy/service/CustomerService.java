@@ -4,6 +4,7 @@ import com.g127.snapbuy.dto.request.CustomerCreateRequest;
 import com.g127.snapbuy.dto.request.CustomerUpdateRequest;
 import com.g127.snapbuy.dto.response.CustomerResponse;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,4 +22,13 @@ public interface CustomerService {
     List<CustomerResponse> searchCustomer(String keyword);
 
     CustomerResponse getCustomerByPhone(String phone);
+
+    int normalizeRedeem(int requestedUsePoints, int currentPoints, BigDecimal payableBeforeRedeem);
+
+    // Tính điểm được cộng theo quy tắc hiện tại: floor(payableAfterRedeem / 500)
+    int earnFromPayable(BigDecimal payableAfterRedeem);
+
+    int getPoints(UUID customerId);
+
+    int adjustPoints(UUID customerId, int delta);
 }

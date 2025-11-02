@@ -16,7 +16,7 @@ import java.util.UUID;
 public class InventoryTransaction {
 
     @Id
-    @Column(name = "transaction_id")
+    @Column(name = "transaction_id", updatable = false, nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID transactionId;
 
