@@ -42,7 +42,6 @@ const EditSupplier = ({ supplierId, onSuccess, onClose }) => {
           modal.show();
         }
       } catch (error) {
-        console.error("❌ Lỗi khi tải dữ liệu nhà cung cấp", error);
         message.error("Không thể tải dữ liệu nhà cung cấp");
         if (onClose) onClose();
       } finally {
@@ -119,7 +118,6 @@ const EditSupplier = ({ supplierId, onSuccess, onClose }) => {
       if (onSuccess) onSuccess();
       if (onClose) onClose();
     } catch (error) {
-      console.error("Lỗi khi cập nhật:", error);
       const errorMessage =
         error.response?.data?.message || "Lỗi khi cập nhật nhà cung cấp";
       message.error(errorMessage);

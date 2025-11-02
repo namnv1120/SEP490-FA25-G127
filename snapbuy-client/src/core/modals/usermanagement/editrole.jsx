@@ -37,7 +37,6 @@ const EditRole = ({ id = "edit-role", role, roleId, onUpdated, onClose }) => {
       onUpdated && onUpdated();
       onClose && onClose();
     } catch (error) {
-      console.error("Update failed:", error);
       alert("Failed to update role. Please try again!");
     } finally {
       setLoading(false);

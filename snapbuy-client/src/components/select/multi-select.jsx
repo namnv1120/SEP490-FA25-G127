@@ -7,7 +7,6 @@ const MultiSelectProps = ({
   placeholder = "Select",
   onChange,
 }) => {
-  console.log("values", value);
 
   return (
     <MultiSelect

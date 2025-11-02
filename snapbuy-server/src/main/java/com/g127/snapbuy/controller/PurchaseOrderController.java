@@ -4,6 +4,7 @@ import com.g127.snapbuy.dto.ApiResponse;
 import com.g127.snapbuy.dto.request.PurchaseOrderApproveRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderCreateRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderReceiveRequest;
+import com.g127.snapbuy.dto.request.PurchaseOrderUpdateRequest;
 import com.g127.snapbuy.dto.response.PurchaseOrderResponse;
 import com.g127.snapbuy.service.PurchaseOrderService;
 import jakarta.validation.Valid;
@@ -94,6 +95,25 @@ public class PurchaseOrderController {
         service.deletePurchaseOrder(id);
         ApiResponse<String> response = new ApiResponse<>();
         response.setResult("Xoá phiếu thành công");
+        return response;
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
+    public ApiResponse<PurchaseOrderResponse> getById(@PathVariable UUID id) {
+        ApiResponse<PurchaseOrderResponse> response = new ApiResponse<>();
+        response.setResult(service.getPurchaseOrderById(id));
+        return response;
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
+    public ApiResponse<PurchaseOrderResponse> update(@PathVariable UUID id,
+                                                     @Valid @RequestBody PurchaseOrderUpdateRequest req,
+                                                     @AuthenticationPrincipal User principal) {
+        ApiResponse<PurchaseOrderResponse> response = new ApiResponse<>();
+        response.setResult(service.update(id, req, principal.getUsername()));
+        response.setMessage("Cập nhật phiếu nhập hàng thành công!");
         return response;
     }
 

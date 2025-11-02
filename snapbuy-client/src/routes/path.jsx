@@ -10,9 +10,6 @@ const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
 const ProductList = lazy(() =>
   import("../feature-module/inventory/ProductList")
 );
-const ProductDetail = lazy(() =>
-  import("../feature-module/inventory/ProductDetail")
-);
 const AddProduct = lazy(() => import("../feature-module/inventory/AddProduct"));
 const EditProduct = lazy(() => import("../feature-module/inventory/EditProduct"));
 const ProductPriceList = lazy(() => import("../feature-module/inventory/ProductPriceList"));
@@ -46,9 +43,6 @@ const PosOrder = lazy(
 const Customers = lazy(() => import("../feature-module/people/Customer"));
 const PurchaseOrder = lazy(() =>
   import("../feature-module/purchases/PurchaseOrder")
-);
-const PurchaseOrderDetail = lazy(() =>
-  import("../feature-module/purchases/PurchaseOrderDetail")
 );
 const AddPurchaseOrder = lazy(() =>
   import("../feature-module/purchases/AddPurchaseOrder")
@@ -104,14 +98,14 @@ export const authRoutes = [
     route: Route,
   },
   {
-    id: 8,
+    id: 7,
     path: routes.products,
     name: "products",
     element: <ProductList />,
     route: Route,
   },
   {
-    id: 7,
+    id: 8,
     path: routes.suppliers,
     name: "suppliers",
     element: <Suppliers />,
@@ -119,83 +113,69 @@ export const authRoutes = [
   },
   {
     id: 9,
-    path: routes.productdetail,
-    name: "product-details",
-    element: <ProductDetail />,
-    route: Route,
-  },
-  {
-    id: 10,
     path: routes.addproduct,
     name: "add-product",
     element: <AddProduct />,
     route: Route,
   },
   {
-    id: 11,
+    id: 10,
     path: routes.editproduct,
     name: "edit-product",
     element: <EditProduct />,
     route: Route,
   },
   {
-    id: 12,
+    id: 11,
     path: routes.categories,
     name: "categories",
     element: <CategoryList />,
     route: Route,
   },
   {
-    id: 13,
+    id: 12,
     path: routes.subcategories,
     name: "sub-categories",
     element: <SubCategories />,
     route: Route,
   },
   {
-    id: 14,
+    id: 13,
     path: routes.inventories,
     name: "inventories",
     element: <InventoryList />,
     route: Route,
   },
   {
-    id: 15,
+    id: 14,
     path: routes.productprices,
     name: "product-prices",
     element: <ProductPriceList />,
     route: Route,
   },
   {
-    id: 16,
+    id: 15,
     path: routes.editproductprice,
     name: "edit-product-price",
     element: <EditProductPrice />,
     route: Route,
   },
   {
-    id: 17,
+    id: 16,
     path: routes.purchaseorders,
     name: "purchaseorders",
     element: <PurchaseOrder />,
     route: Route,
   },
   {
-    id: 18,
-    path: routes.purchaseorderdetail,
-    name: "purchaseorderdetail",
-    element: <PurchaseOrderDetail />,
-    route: Route,
-  },
-  {
-    id: 19,
+    id: 17,
     path: routes.addpurchaseorder,
     name: "add-purchaseorder",
     element: <AddPurchaseOrder />,
     route: Route,
   },
   {
-    id: 20,
+    id: 18,
     path: routes.editpurchaseorder,
     name: "edit-purchaseorder",
     element: <EditPurchaseOrder />,

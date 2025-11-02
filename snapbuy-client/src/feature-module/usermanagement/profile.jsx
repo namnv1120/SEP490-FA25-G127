@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import CommonFooter from "../../components/layouts/footer";
 import { user49 } from "../../utils/imagepath";
-import { getMyInfo, updateAccount } from "../../services/accountService";
+import { getMyInfo, updateAccount } from "../../services/AccountService";
 
 const Profile = () => {
   const [isPasswordVisible, setPasswordVisible] = useState(false);
@@ -32,7 +32,7 @@ const Profile = () => {
         });
         if (userData.image) setAvatar(userData.image);
       })
-      .catch((err) => console.error("Error fetching user info:", err.message));
+      .catch(() => {});
   }, []);
 
   const handleChange = (e) => {
@@ -189,9 +189,8 @@ const Profile = () => {
                       onChange={handleChange}
                     />
                     <span
-                      className={`ti toggle-password text-gray-9 ${
-                        isPasswordVisible ? "ti-eye" : "ti-eye-off"
-                      }`}
+                      className={`ti toggle-password text-gray-9 ${isPasswordVisible ? "ti-eye" : "ti-eye-off"
+                        }`}
                       onClick={togglePasswordVisibility}
                     />
                   </div>

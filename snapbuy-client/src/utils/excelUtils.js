@@ -2,7 +2,6 @@ import * as XLSX from "xlsx";
 
 export const exportToExcel = (data, filename = "export", sheetName = "Sheet1") => {
   if (!Array.isArray(data) || data.length === 0) {
-    console.warn("⚠️ Không có dữ liệu để xuất ra Excel.");
     return;
   }
 

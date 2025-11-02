@@ -35,6 +35,26 @@ public interface PurchaseOrderMapper {
                                      Supplier supplier,
                                      Account account);
 
+    @Mapping(target = "details", source = "detailResponses")
+    @Mapping(target = "supplierCode", expression = "java(supplier != null ? supplier.getSupplierCode() : null)")
+    @Mapping(target = "supplierName", expression = "java(supplier != null ? supplier.getSupplierName() : null)")
+    @Mapping(target = "fullName", expression = "java(account != null ? account.getFullName() : null)")
+    @Mapping(target = "username", expression = "java(account != null ? account.getUsername() : null)")
+    @Mapping(target = "purchaseOrderId", source = "po.id")
+    @Mapping(target = "purchaseOrderNumber", source = "po.number")
+    @Mapping(target = "supplierId", source = "po.supplierId")
+    @Mapping(target = "accountId", source = "po.accountId")
+    @Mapping(target = "status", source = "po.status")
+    @Mapping(target = "totalAmount", expression = "java(toDouble(po.getTotalAmount()))")
+    @Mapping(target = "taxAmount", expression = "java(toDouble(po.getTaxAmount()))")
+    @Mapping(target = "notes", source = "po.notes")
+    @Mapping(target = "orderDate", source = "po.orderDate")
+    @Mapping(target = "receivedDate", source = "po.receivedDate")
+    PurchaseOrderResponse toResponseWithDetails(PurchaseOrder po,
+                                               List<PurchaseOrderDetailResponse> detailResponses,
+                                               Supplier supplier,
+                                               Account account);
+
     default Double toDouble(BigDecimal v) {
         return Optional.ofNullable(v).map(BigDecimal::doubleValue).orElse(0.0d);
     }
@@ -47,9 +67,13 @@ public interface PurchaseOrderMapper {
             int receivedQty = java.util.Optional.ofNullable(x.getReceivedQuantity()).orElse(0);
             double unitD = unit.doubleValue();
             double totalByReceived = unit.multiply(BigDecimal.valueOf(receivedQty)).doubleValue();
+            
+            
             return new PurchaseOrderDetailResponse(
                     x.getId(),
                     x.getProductId(),
+                    null, // productName - will be set in service
+                    null, // productCode - will be set in service
                     plannedQty,
                     unitD,
                     receivedQty,

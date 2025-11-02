@@ -96,7 +96,6 @@ const AddCategory = ({ onSuccess }) => {
 
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error("Lỗi khi thêm danh mục:", error);
       const errorMessage =
         error.response?.data?.message || "Không thể thêm danh mục.";
       message.error(errorMessage);
@@ -118,7 +117,7 @@ const AddCategory = ({ onSuccess }) => {
                 type="button"
                 className="close"
                 data-bs-dismiss="modal"
-                aria-label="Close"
+                aria-label="Đóng"
               >
                 <span aria-hidden="true">×</span>
               </button>

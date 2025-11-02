@@ -9,6 +9,7 @@ import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
 import { getAllProducts, deleteProduct, importProducts } from "../../services/ProductService";
 import ImportProductModal from "./ImportProduct";
+import ProductDetailModal from "./ProductDetailModal";
 import { message } from "antd";
 import { Modal } from "bootstrap";
 import { exportToExcel } from "../../utils/excelUtils";
@@ -24,6 +25,8 @@ const ProductList = () => {
   const [error, setError] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState(null);
 
   const route = all_routes;
 
@@ -37,30 +40,22 @@ const ProductList = () => {
       setError(null);
       const data = await getAllProducts();
 
-      console.log("📦 Raw API data:", data);
-
-      // Map API data to match table structure
       const mappedProducts = data.map((product, index) => {
         const imageUrl = product.image || product.imageUrl || "";
         const fullImageUrl = getImageUrl(imageUrl) || stockImg1;
 
-        console.log(`🖼️ Product ${product.productCode}:`, {
-          rawImageUrl: imageUrl,
-          fullImageUrl: fullImageUrl
-        });
-
         return {
           productId: product.productId || index + 1,
-          productCode: product.code || product.productCode || "N/A",
-          productName: product.name || product.productName || "N/A",
-          productImage: fullImageUrl, 
-          category: product.category?.name || product.categoryName || "N/A",
-          description: product.description || "N/A",
-          supplier: product.supplier?.name || product.supplierName || "N/A",
-          dimensions: product.dimensions || "N/A",
-          imageUrl: imageUrl, 
+          productCode: product.code || product.productCode || "Không có",
+          productName: product.name || product.productName || "Không có",
+          productImage: fullImageUrl,
+          category: product.category?.name || product.categoryName || "Không có",
+          description: product.description || "Không có",
+          supplier: product.supplier?.name || product.supplierName || "Không có",
+          dimensions: product.dimensions || "Không có",
+          imageUrl: imageUrl,
           unitprice: `${product.unitPrice?.toLocaleString() || "0.00"} đ`,
-          unit: product.unit || "N/A",
+          unit: product.unit || "Không có",
           qty: product.quantityInStock?.toString() || product.qty?.toString() || "0",
         };
       });
@@ -97,12 +92,10 @@ const ProductList = () => {
 
   const handleImport = async (data) => {
     try {
-      console.log("📦 Đang nhập sản phẩm", data);
       await importProducts(data);
       await fetchProducts();
       return Promise.resolve();
     } catch (error) {
-      console.error("❌ Lỗi khi nhập sản phẩm:", error);
       return Promise.reject(error);
     }
   };
@@ -123,8 +116,6 @@ const ProductList = () => {
       if (modalElement) {
         const modal = new Modal(modalElement);
         modal.show();
-      } else {
-        console.error("❌ Không tìm thấy phần tử xoá");
       }
     }, 0);
   };
@@ -145,7 +136,7 @@ const ProductList = () => {
 
       message.success("Sản phẩm đã được xoá thành công!");
     } catch (error) {
-      console.error("Lỗi khi xoá sản phẩm", error);
+      console.error("❌ Lỗi khi xoá sản phẩm:", error);
       message.error("Lỗi khi xoá sản phẩm. Vui lòng thử lại.");
     }
   };
@@ -196,9 +187,17 @@ const ProductList = () => {
 
             />
           </Link>
-          <Link to={route.productdetail.replace(":id", data.productId)}>
+          <button
+            type="button"
+            className="btn btn-link p-0 text-primary text-decoration-none"
+            onClick={() => {
+              setSelectedProductId(data.productId);
+              setDetailModalOpen(true);
+            }}
+            style={{ cursor: "pointer" }}
+          >
             {data.productName}
-          </Link>
+          </button>
         </div>
       ),
     },
@@ -266,7 +265,7 @@ const ProductList = () => {
               onRefresh={handleRefresh}
             />
             <div className="page-btn">
-              <Link to={route.addpurchaseorder} className="btn btn-primary">
+              <Link to={route.addproduct} className="btn btn-primary">
                 <i className="ti ti-circle-plus me-1"></i>
                 Thêm sản phẩm mới
               </Link>
@@ -293,7 +292,7 @@ const ProductList = () => {
           {loading && (
             <div className="text-center my-5">
               <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
+                <span className="visually-hidden">Đang tải...</span>
               </div>
             </div>
           )}
@@ -406,6 +405,14 @@ const ProductList = () => {
         visible={showImportModal}
         onClose={() => setShowImportModal(false)}
         onImport={handleImport}
+      />
+      <ProductDetailModal
+        isOpen={detailModalOpen}
+        onClose={() => {
+          setDetailModalOpen(false);
+          setSelectedProductId(null);
+        }}
+        productId={selectedProductId}
       />
     </>
   );

@@ -25,9 +25,9 @@ export const OnlyAllowNumbers = (event) => {
 export const capitalizeFirstLetterOfEachWord = (text) =>
   text
     ? text
-        .split(" ")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(" ")
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ")
     : "";
 
 export function sanitizeStringWithUnderscores(input) {
@@ -122,10 +122,8 @@ export function getWorkspaceNameFromCurrentUrl() {
     const parts = hostname.split(".");
     if (parts.length === 2 && parts[1] === "localhost") return parts[0];
     if (parts.length >= 3) return parts[0];
-    console.warn("Unexpected hostname format:", hostname);
     return null;
   } catch (err) {
-    console.error("Failed to extract workspace name:", err);
     return null;
   }
 }

@@ -96,7 +96,6 @@ DECLARE @salesId UNIQUEIDENTIFIER = (SELECT account_id FROM accounts WHERE usern
 DECLARE @roleSales UNIQUEIDENTIFIER = (SELECT role_id FROM roles WHERE role_name = N'Nhân viên bán hàng');
 INSERT INTO account_roles (account_id, role_id) VALUES (@salesId, @roleSales);
 
-
 INSERT INTO customers (customer_code, full_name, phone, gender)
 VALUES
     ('CUST001', N'Nguyễn Văn A', '0905123456', N'Male'),

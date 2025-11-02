@@ -30,7 +30,7 @@ const EditCategory = ({ categoryId, onSuccess, onClose }) => {
           modal.show();
         }
       } catch (error) {
-        console.error("Lỗi tải danh mục:", error);
+        console.error("Không thể tải dữ liệu danh mục", error);
         message.error("Không thể tải dữ liệu danh mục");
         if (onClose) onClose(); // ✅ Đóng nếu lỗi
       } finally {
@@ -75,7 +75,7 @@ const EditCategory = ({ categoryId, onSuccess, onClose }) => {
       };
 
       await updateCategory(categoryId, updateData);
-      message.success("Cập nhật category thành công!");
+      message.success("Cập nhật danh mục thành công!");
 
       const modalElement = document.getElementById("edit-main-category");
       const modal = Modal.getInstance(modalElement);
@@ -83,7 +83,6 @@ const EditCategory = ({ categoryId, onSuccess, onClose }) => {
         modal.hide();
       }
 
-      // ✅ Cleanup backdrop
       setTimeout(() => {
         document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
         document.body.classList.remove("modal-open");
@@ -94,9 +93,8 @@ const EditCategory = ({ categoryId, onSuccess, onClose }) => {
       if (onSuccess) onSuccess();
       if (onClose) onClose();
     } catch (error) {
-      console.error("Lỗi cập nhật danh mục", error);
       const errorMessage =
-        error.response?.data?.message || "Không thể cập nhật danh mục";
+        error.response?.data?.message || "Không thể cập nhật danh mục. Vui lòng thử lại.";
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -135,7 +133,7 @@ const EditCategory = ({ categoryId, onSuccess, onClose }) => {
                 type="button"
                 className="close"
                 onClick={handleModalClose}
-                aria-label="Close"
+                aria-label="Đóng"
               >
                 <span aria-hidden="true">×</span>
               </button>
@@ -145,7 +143,7 @@ const EditCategory = ({ categoryId, onSuccess, onClose }) => {
               {loading ? (
                 <div className="text-center py-4">
                   <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Loading...</span>
+                    <span className="visually-hidden">Đang tải...</span>
                   </div>
                 </div>
               ) : (
@@ -203,7 +201,7 @@ const EditCategory = ({ categoryId, onSuccess, onClose }) => {
                       className="btn btn-submit"
                       disabled={loading}
                     >
-                      {loading ? "Đang lưu..." : "Lưu thay đổi"}
+                      {loading ? "Đang lưu..." : "Cập nhật"}
                     </button>
                   </div>
                 </form>

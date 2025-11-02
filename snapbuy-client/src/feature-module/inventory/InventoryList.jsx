@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
@@ -45,8 +46,8 @@ const InventoryList = () => {
       // 🔹 Chuẩn hóa dữ liệu để tránh lỗi undefined
       const mapped = data.map((item, index) => ({
         inventoryId: item.inventoryId || item.id || index + 1,
-        productId: item.productId || item.product?.productId || "N/A",
-        productName: item.productName || item.product?.productName || "Không rõ",
+        productId: item.productId || item.product?.productId || "Không có",
+        productName: item.productName || item.product?.productName || "Không có",
         quantityInStock: item.quantityInStock ?? item.quantity ?? 0,
         minimumStock: item.minimumStock ?? 0,
         maximumStock: item.maximumStock ?? 0,
@@ -56,10 +57,9 @@ const InventoryList = () => {
 
       setInventoryList(mapped);
       setTotalRecords(mapped.length);
-    } catch (err) {
-      console.error("❌ Lỗi khi lấy danh sách tồn kho:", err);
-      setError("Không thể tải dữ liệu tồn kho.");
-      message.error("Không thể tải dữ liệu tồn kho.");
+    } catch (error) {
+      setError("Không thể tải dữ liệu tồn kho. Vui lòng thử lại.");
+      message.error("Không thể tải dữ liệu tồn kho. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }

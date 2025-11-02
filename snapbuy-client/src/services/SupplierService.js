@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-catch */
 import axios from "axios";
 
 const REST_API_BASE_URL = "http://localhost:8080/api/suppliers";
@@ -6,7 +7,7 @@ const REST_API_BASE_URL = "http://localhost:8080/api/suppliers";
 const getAuthHeaders = () => {
   const token = localStorage.getItem("authToken");
   const tokenType = localStorage.getItem("authTokenType") || "Bearer";
-  
+
   return {
     headers: {
       Authorization: `${tokenType} ${token}`,
@@ -20,7 +21,6 @@ export const getAllSuppliers = async () => {
     const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
     return response.data?.result || response.data || [];
   } catch (error) {
-    console.error("❌ Failed to fetch suppliers:", error);
     throw error;
   }
 };
@@ -33,7 +33,6 @@ export const getSupplierById = async (supplierId) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error(`❌ Failed to fetch supplier ${supplierId}:`, error);
     throw error;
   }
 };
@@ -47,7 +46,6 @@ export const createSupplier = async (supplierData) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Failed to add supplier:", error);
     throw error;
   }
 };
@@ -61,7 +59,6 @@ export const updateSupplier = async (supplierId, supplierData) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error(`❌ Failed to update supplier ${supplierId}:`, error);
     throw error;
   }
 };
@@ -74,7 +71,6 @@ export const deleteSupplier = async (supplierId) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error(`❌ Failed to delete supplier ${supplierId}:`, error);
     throw error;
   }
 };

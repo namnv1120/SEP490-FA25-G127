@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import CommonFooter from "../../components/footer/commonFooter";
@@ -15,6 +16,7 @@ import { message, Spin, Button } from "antd";
 import { all_routes } from "../../routes/all_routes";
 import DeleteModal from "../../components/delete-modal";
 import { Modal } from "bootstrap";
+import PurchaseOrderDetailModal from "./PurchaseOrderDetailModal";
 
 
 const PurchaseOrder = () => {
@@ -26,6 +28,8 @@ const PurchaseOrder = () => {
   const [rows, setRows] = useState(10);
   const [searchQuery, setSearchQuery] = useState(undefined);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
   // Thêm vào đầu component PurchaseOrder
   const getAccountRole = () => {
@@ -98,7 +102,6 @@ const PurchaseOrder = () => {
       setListData(formatted);
       setTotalRecords(formatted.length);
     } catch (error) {
-      console.error("❌ Lỗi khi tải đơn hàng:", error);
       message.error("Không thể tải danh sách đơn đặt hàng!");
     } finally {
       setLoading(false);
@@ -204,7 +207,6 @@ const PurchaseOrder = () => {
           }
           successCount++;
         } catch (err) {
-          console.error(`Lỗi khi xử lý đơn hàng ${id}:`, err);
           errorCount++;
         }
       }
@@ -239,7 +241,7 @@ const PurchaseOrder = () => {
         const modal = new Modal(modalElement);
         modal.show();
       } else {
-        console.error("❌ Không tìm thấy modal xoá");
+        console.error("Không tìm thấy phần tử modal xoá!");
       }
     }, 0);
   };
@@ -260,7 +262,6 @@ const PurchaseOrder = () => {
 
       message.success("Đã xoá đơn đặt hàng thành công!");
     } catch (error) {
-      console.error("❌ Lỗi khi xoá đơn hàng:", error);
       message.error("Không thể xoá đơn đặt hàng!");
     }
   };
@@ -301,7 +302,24 @@ const PurchaseOrder = () => {
       key: "select",
     },
 
-    { header: "Mã tạo đơn", field: "purchaseOrderNumber", key: "purchaseOrderNumber" },
+    {
+      header: "Mã tạo đơn",
+      field: "purchaseOrderNumber",
+      key: "purchaseOrderNumber",
+      body: (row) => (
+        <button
+          type="button"
+          className="btn btn-link p-0 text-primary text-decoration-none"
+          onClick={() => {
+            setSelectedOrderId(row.purchaseOrderId);
+            setDetailModalOpen(true);
+          }}
+          style={{ cursor: "pointer" }}
+        >
+          {row.purchaseOrderNumber}
+        </button>
+      ),
+    },
     { header: "Nhà cung cấp", field: "supplierName", key: "supplierName" },
     { header: "Người tạo đơn", field: "fullName", key: "fullName" },
     {
@@ -437,6 +455,16 @@ const PurchaseOrder = () => {
           itemName={selectedItem?.purchaseOrderNumber}
           onDelete={handleDeleteConfirm}
           onCancel={handleDeleteCancel}
+        />
+
+        {/* Modal chi tiết đơn hàng */}
+        <PurchaseOrderDetailModal
+          isOpen={detailModalOpen}
+          onClose={() => {
+            setDetailModalOpen(false);
+            setSelectedOrderId(null);
+          }}
+          purchaseOrderId={selectedOrderId}
         />
 
         <CommonFooter />

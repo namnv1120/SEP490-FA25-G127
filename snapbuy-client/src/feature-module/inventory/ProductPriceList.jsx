@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import ProductDetailModal from "./ProductDetailModal";
 import { all_routes } from "../../routes/all_routes";
 import CommonFooter from "../../components/footer/commonFooter";
 import PrimeDataTable from "../../components/data-table";
@@ -17,6 +18,8 @@ const ProductPriceList = () => {
   const [productPrices, setProductPrices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState(null);
 
   const route = all_routes;
 
@@ -34,18 +37,18 @@ const ProductPriceList = () => {
       const mappedPrices = data.map((price) => ({
         priceId: price.priceId,
         productId: price.productId,
-        productName: price.productName || "N/A",
+        productName: price.productName || "Không có",
         unitPrice: `${price.unitPrice?.toLocaleString() || "0.00"} đ`,
         costPrice: `${price.costPrice?.toLocaleString() || "0.00"} đ`,
         validFrom: price.validFrom
           ? new Date(price.validFrom).toLocaleDateString("vi-VN")
-          : "N/A",
+          : "Không có",
         validTo: price.validTo
           ? new Date(price.validTo).toLocaleDateString("vi-VN")
-          : "N/A",
+          : "Không có",
         createdDate: price.createdDate
           ? new Date(price.createdDate).toLocaleString("vi-VN")
-          : "N/A",
+          : "Không có",
         status: getStatus(price.validFrom, price.validTo),
         // Raw values for filtering/sorting
         rawUnitPrice: price.unitPrice,
@@ -97,13 +100,13 @@ const ProductPriceList = () => {
     }
 
     const exportData = productPrices.map((p) => ({
-      "Product Name": p.productName,
-      "Unit Price": p.unitPrice,
-      "Cost Price": p.costPrice,
-      "Valid From": p.validFrom,
-      "Valid To": p.validTo,
-      "Status": p.status,
-      "Created Date": p.createdDate,
+      "Tên sản phẩm": p.productName,
+      "Giá bán": p.unitPrice,
+      "Giá nhập": p.costPrice,
+      "Hiệu lực từ": p.validFrom,
+      "Hiệu lực đến": p.validTo,
+      "Trạng thái": p.status,
+      "Ngày tạo": p.createdDate,
     }));
 
     exportToExcel(exportData, "Danh_sach_gia_san_pham");
@@ -141,9 +144,17 @@ const ProductPriceList = () => {
       key: "productName",
       sortable: true,
       body: (data) => (
-        <Link to={route.productdetail.replace(":id", data.productId)}>
+        <button
+          type="button"
+          className="btn btn-link p-0 text-primary text-decoration-none"
+          onClick={() => {
+            setSelectedProductId(data.productId);
+            setDetailModalOpen(true);
+          }}
+          style={{ cursor: "pointer" }}
+        >
           {data.productName}
-        </Link>
+        </button>
       ),
     },
     {
@@ -171,7 +182,7 @@ const ProductPriceList = () => {
     //   sortable: true,
     // },
     {
-      header: "Status",
+      header: "Trạng thái",
       field: "status",
       key: "status",
       sortable: true,
@@ -229,7 +240,7 @@ const ProductPriceList = () => {
           {loading && (
             <div className="text-center my-5">
               <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
+              <span className="visually-hidden">Đang tải...</span>
               </div>
             </div>
           )}
@@ -327,6 +338,14 @@ const ProductPriceList = () => {
         </div>
         <CommonFooter />
       </div>
+      <ProductDetailModal
+        isOpen={detailModalOpen}
+        onClose={() => {
+          setDetailModalOpen(false);
+          setSelectedProductId(null);
+        }}
+        productId={selectedProductId}
+      />
     </>
   );
 };

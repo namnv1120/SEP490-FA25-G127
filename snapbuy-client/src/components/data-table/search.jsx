@@ -22,7 +22,7 @@ const SearchFromApi = ({ callback }) => {
                 className="form-control form-control-sm d-table-search"
                 aria-controls="DataTables_Table_0"
                 onChange={handleChange}
-                placeholder="Search"
+                placeholder="Tìm kiếm"
               />
             </label>
           </div>

@@ -16,7 +16,6 @@ export const getAllAccounts = async () => {
     });
     return response.data.result || response.data;
   } catch (error) {
-    console.error('Failed to fetch accounts:', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Failed to fetch accounts!');
   }
 };
@@ -28,7 +27,6 @@ export const createAccount = async (userData) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Failed to create account:', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Failed to create account!');
   }
 };
@@ -40,7 +38,6 @@ export const getAccountById = async (id) => {
     });
     return response.data.result || response.data;
   } catch (error) {
-    console.error('Failed to fetch account:', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Failed to fetch account!');
   }
 };
@@ -52,7 +49,6 @@ export const getMyInfo = async () => {
     });
     return response.data.result || response.data;
   } catch (error) {
-    console.error('Failed to fetch current user info:', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Failed to fetch current user info!');
   }
 };
@@ -64,7 +60,6 @@ export const updateAccount = async (id, updatedData) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Failed to update account:', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Failed to update account!');
   }
 };
@@ -76,7 +71,6 @@ export const deleteAccount = async (id) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Failed to delete account:', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Failed to delete account!');
   }
 };

@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-catch */
 import axios from "axios";
 
 const REST_API_BASE_URL = "http://localhost:8080/api/customers";
@@ -24,7 +25,6 @@ export const getAllCustomers = async () => {
       []
     );
   } catch (error) {
-    console.error(" Lỗi khi lấy danh sách khách hàng:", error);
     throw error;
   }
 };
@@ -37,7 +37,6 @@ export const getCustomerById = async (id) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error(" Lỗi khi lấy khách hàng theo ID:", error);
     throw error;
   }
 };
@@ -51,7 +50,6 @@ export const getCustomerByPhone = async (phone) => {
     return response.data?.result || response.data || null;
   } catch (error) {
     if (error.response?.status === 404) return null;
-    console.error(" Lỗi khi tìm khách hàng theo số điện thoại:", error);
     throw error;
   }
 };
@@ -65,7 +63,6 @@ export const createCustomer = async (customerData) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error(" Lỗi khi tạo khách hàng:", error);
     throw error;
   }
 };
@@ -79,7 +76,6 @@ export const updateCustomer = async (id, customerData) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error(" Lỗi khi cập nhật khách hàng:", error);
     throw error;
   }
 };
@@ -92,7 +88,6 @@ export const deleteCustomer = async (id) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error(" Lỗi khi xóa khách hàng:", error);
     throw error;
   }
 };

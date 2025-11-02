@@ -39,8 +39,8 @@ const CategoryList = () => {
 
       const mapped = parentCategories.map((cat) => ({
         categoryId: cat.categoryId,
-        categoryName: cat.name || cat.categoryName || "N/A",
-        description: cat.description || "N/A",
+        categoryName: cat.name || cat.categoryName || "Không có",
+        description: cat.description || "Không có",
         createddate: cat.createdDate
           ? new Date(cat.createdDate).toLocaleDateString("vi-VN", {
             year: "numeric",
@@ -49,7 +49,7 @@ const CategoryList = () => {
             hour: "2-digit",
             minute: "2-digit",
           })
-          : "N/A",
+          : "Không có",
         updateddate: cat.updatedDate
           ? new Date(cat.updatedDate).toLocaleDateString("vi-VN", {
             year: "numeric",
@@ -58,7 +58,7 @@ const CategoryList = () => {
             hour: "2-digit",
             minute: "2-digit",
           })
-          : "N/A",
+          : "Không có",
         status: cat.active === 1 || cat.active === true ? "Hoạt động" : "Không hoạt động",
 
       }));
@@ -90,7 +90,7 @@ const CategoryList = () => {
         const modal = new Modal(modalElement);
         modal.show();
       } else {
-        console.error("❌ Không tìm thấy phần tử modal xoá");
+        console.error("❌ Không tìm thấy phần tử modal xoá.");
       }
     }, 0);
   };
@@ -239,7 +239,7 @@ const CategoryList = () => {
           {loading && (
             <div className="text-center my-5">
               <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
+              <span className="visually-hidden">Đang tải...</span>
               </div>
             </div>
           )}

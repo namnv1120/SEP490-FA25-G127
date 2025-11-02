@@ -26,7 +26,6 @@ const RolesPermissions = () => {
       const data = Array.isArray(response) ? response : response.data || response.result || [];
       setRoles(data);
     } catch (error) {
-      console.error("Lỗi khi tải danh sách vai trò", error.message);
     } finally {
       setLoading(false);
     }
@@ -42,7 +41,6 @@ const RolesPermissions = () => {
       await deleteRole(selectedRole.id || selectedRole.roleId);
       fetchRoles();
     } catch (error) {
-      console.error("Lỗi khi xoá vai trò", error.message);
     }
   };
 
@@ -51,7 +49,6 @@ const RolesPermissions = () => {
       await createRole(roleData);
       fetchRoles();
     } catch (error) {
-      console.error("Lỗi khi thêm vai trò", error.message);
     }
   };
 
@@ -60,7 +57,6 @@ const RolesPermissions = () => {
       await updateRole(roleId, updatedData);
       fetchRoles();
     } catch (error) {
-      console.error("Lỗi khi cập nhật vai trò", error.message);
     }
   };
 

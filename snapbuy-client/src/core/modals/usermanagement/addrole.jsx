@@ -33,7 +33,6 @@ const AddRole = ({ id = "add-role", onCreated }) => {
       // Reload list after adding
       onCreated && onCreated();
     } catch (error) {
-      console.error("Error creating role:", error);
       alert("Failed to create role. Please try again!");
     } finally {
       setLoading(false);

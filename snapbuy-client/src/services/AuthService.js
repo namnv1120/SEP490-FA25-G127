@@ -14,26 +14,19 @@ export const login = async (username, password) => {
     if (token) {
       localStorage.setItem('authToken', token);
       localStorage.setItem('authTokenType', tokenType || 'Bearer');
-      
       try {
         const decoded = jwtDecode(token);
-
-        if (decoded.roles && decoded.roles.length > 0) {
-          const role = decoded.roles[0].authority;
-          const cleanRole = role.replace('ROLE_', '');
-          localStorage.setItem('role', cleanRole);
-        } else {
-          console.warn("⚠️ No roles found in JWT");
-        }
-      } catch (decodeError) {
-        console.error("❌ Error decoding JWT:", decodeError);
+        const role = decoded.roles[0].authority;
+        const cleanRole = role.replace('ROLE_', '');
+        localStorage.setItem('role', cleanRole);
+      } catch (error) {
+        console.error('Lỗi khi giải mã token:', error);
       }
       return response.data.result;
     } else {
       throw new Error('Login failed: No token received.');
     }
   } catch (error) {
-    console.error('Login failed:', error.response ? error.response.data : error.message);
     throw new Error(error.response ? error.response.data.message : error.message);
   }
 };

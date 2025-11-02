@@ -37,7 +37,6 @@ const Customers = () => {
       setListData(data);
       setTotalRecords(data.length || 0);
     } catch (error) {
-      console.error("Lỗi khi tải danh sách khách hàng:", error);
     } finally {
       setLoading(false);
     }
@@ -66,7 +65,6 @@ const Customers = () => {
         modal.show();
       }
     } catch (error) {
-      console.error("Lỗi khi tải dữ liệu khách hàng:", error);
       message.error("Không thể tải dữ liệu khách hàng");
     } finally {
       setModalLoading(false);
@@ -133,7 +131,6 @@ const Customers = () => {
       handleModalClose();
       fetchCustomers();
     } catch (error) {
-      console.error("Lỗi cập nhật khách hàng:", error);
       const errorMessage =
         error.response?.data?.message || "Không thể cập nhật khách hàng";
       message.error(errorMessage);

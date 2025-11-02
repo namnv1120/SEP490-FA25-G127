@@ -28,7 +28,6 @@ const Pos = () => {
         const data = await getAllCategories();
         setCategories(data || []);
       } catch (err) {
-        console.error("Lỗi khi lấy danh mục:", err);
       }
     };
     fetchCategories();
@@ -38,24 +37,21 @@ const Pos = () => {
     const fetchProducts = async () => {
       try {
         const data = await getAllProducts();
-        console.log("Dữ liệu gốc từ API:", data);
 
         const mapped = data.map((p, index) => ({
           productId: p.productId || index + 1,
-          productCode: p.productCode || p.code || "N/A",
-          productName: p.productName || p.name || "N/A",
+          productCode: p.productCode || p.code || "Không có",
+          productName: p.productName || p.name || "Không có",
           imageUrl: p.imageUrl || p.image || "/no-image.png",
           categoryId: p.categoryId || p.category?.id || null,
-          categoryName: p.categoryName || p.category?.name || "N/A",
+          categoryName: p.categoryName || p.category?.name || "Không có",
           unitPrice: p.unitPrice ?? p.unit_price ?? 0,
           unitsInStock: p.unitsInStock ?? p.quantity ?? 0,
-          supplierName: p.supplierName || p.supplier?.name || "",
+          supplierName: p.supplierName || p.supplier?.name || "Không có",
         }));
 
-        console.log("Dữ liệu sau khi mapped:", mapped);
         setProducts(mapped);
       } catch (err) {
-        console.error("Lỗi khi lấy sản phẩm:", err);
       }
     };
     fetchProducts();
@@ -98,7 +94,6 @@ const Pos = () => {
       const updated = prev.map((p) =>
         p.productId === productId ? { ...p, quantity: value } : p
       );
-      console.log("Cập nhật số lượng:", updated);
       return updated;
     });
   };

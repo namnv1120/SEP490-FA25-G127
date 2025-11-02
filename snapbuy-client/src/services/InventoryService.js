@@ -19,7 +19,8 @@ export const getAllInventories = async () => {
     const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
     return response.data?.result || response.data || [];
   } catch (error) {
-    console.error("❌ Failed to fetch inventories:", error);
+    
+    console.error("Lỗi khi lấy danh sách kho", error);
     throw error;
   }
 };
@@ -33,7 +34,7 @@ export const updateInventory = async (inventoryId, inventoryData) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Failed to update inventory:", error);
+    console.error("Lỗi khi cập nhật kho", error);
     throw error;
   }
 };

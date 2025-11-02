@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-catch */
 import axios from "axios";
 
 const REST_API_BASE_URL = "http://localhost:8080/api/products";
@@ -19,7 +20,6 @@ export const getAllProducts = async () => {
     const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
     return response.data?.result || response.data || [];
   } catch (error) {
-    console.error("❌ Lỗi khi lấy danh sách sản phẩm:", error);
     throw error;
   }
 };
@@ -30,7 +30,6 @@ export const getProductById = async (id) => {
 
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Lỗi khi lấy sản phẩm theo ID:", error);
     throw error;
   }
 };
@@ -53,7 +52,6 @@ export const createProduct = async (formData) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Lỗi khi tạo sản phẩm:", error);
     throw error;
   }
 };
@@ -68,7 +66,6 @@ export const updateProduct = async (id, productData) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Lỗi khi cập nhật sản phẩm:", error);
     throw error;
   }
 };
@@ -81,7 +78,6 @@ export const deleteProduct = async (id) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Lỗi khi xóa sản phẩm:", error);
     throw error;
   }
 }
@@ -95,7 +91,6 @@ export const importProducts = async (products) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Lỗi khi nhập sản phẩm:", error);
     throw error;
   }
 };
@@ -108,7 +103,6 @@ export const getProductsBySupplierId = async (supplierId) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Lỗi khi lấy sản phẩm theo nhà cung cấp:", error);
     throw error;
   }
 };

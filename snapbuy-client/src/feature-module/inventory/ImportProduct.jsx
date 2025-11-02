@@ -2,54 +2,53 @@ import ImportExcelModal from "../../components/ImportExcelModal";
 
 const ImportProduct = ({ visible, onClose, onImport }) => {
   const columns = [
-    { 
-      title: "Mã sản phẩm", 
-      dataIndex: "productCode", 
-      key: "productCode", 
+    {
+      title: "Mã sản phẩm",
+      dataIndex: "productCode",
+      key: "productCode",
       width: 120,
       fixed: 'left'
     },
-    { 
-      title: "Tên sản phẩm", 
-      dataIndex: "productName", 
-      key: "productName", 
-      width: 200 
+    {
+      title: "Tên sản phẩm",
+      dataIndex: "productName",
+      key: "productName",
+      width: 200
     },
-    { 
-      title: "Danh mục", 
-      dataIndex: "categoryName", 
-      key: "categoryName", 
-      width: 150 
+    {
+      title: "Danh mục",
+      dataIndex: "categoryName",
+      key: "categoryName",
+      width: 150
     },
-    { 
-      title: "Nhà cung cấp", 
-      dataIndex: "supplierName", 
-      key: "supplierName", 
-      width: 200 
+    {
+      title: "Nhà cung cấp",
+      dataIndex: "supplierName",
+      key: "supplierName",
+      width: 200
     },
-    { 
-      title: "Đơn vị", 
-      dataIndex: "unit", 
-      key: "unit", 
-      width: 100 
+    {
+      title: "Đơn vị",
+      dataIndex: "unit",
+      key: "unit",
+      width: 100
     },
-    { 
-      title: "Kích thước", 
-      dataIndex: "dimensions", 
-      key: "dimensions", 
-      width: 150 
+    {
+      title: "Kích thước",
+      dataIndex: "dimensions",
+      key: "dimensions",
+      width: 150
     },
-    { 
-      title: "Mô tả", 
-      dataIndex: "description", 
-      key: "description", 
-      width: 250 
+    {
+      title: "Mô tả",
+      dataIndex: "description",
+      key: "description",
+      width: 250
     },
   ];
 
   const mapExcelRow = (row, index) => {
-    console.log("🔄 Mapping row:", row); // Debug log
-    
+
     return {
       key: index,
       productCode: row["Mã sản phẩm"] || "",

@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import TableTopHead from "../../../components/table-top-head";
 import CommonSelect from "../../../components/select/common-select";
 import {
   barcodeImg3,
-  logo,
   posProduct16,
   scanImg,
 } from "../../../utils/imagepath";
@@ -77,7 +75,6 @@ const PosModals = () => {
         city: "",
       });
     } catch (error) {
-      console.error("Lỗi khi tạo khách hàng:", error);
       alert("Không thể tạo khách hàng. Vui lòng thử lại!");
     } finally {
       setLoading(false);

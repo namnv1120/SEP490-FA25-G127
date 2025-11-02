@@ -33,7 +33,7 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
           modal.show();
         }
       } catch (error) {
-        console.error("Lỗi khi tải danh mục con", error);
+        console.error("Không thể tải dữ liệu danh mục con", error);
         message.error("Không thể tải dữ liệu danh mục con");
         if (onClose) onClose(); // ✅ Đóng nếu lỗi
       } finally {
@@ -144,7 +144,7 @@ const EditSubCategory = ({ categoryId, parentCategories, onSuccess, onClose }) =
                 type="button"
                 className="close"
                 onClick={handleModalClose}
-                aria-label="Close"
+                aria-label="Đóng"
               >
                 <span aria-hidden="true">×</span>
               </button>

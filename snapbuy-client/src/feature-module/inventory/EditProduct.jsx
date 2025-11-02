@@ -36,7 +36,7 @@ const EditProduct = () => {
           }));
         setCategories(mainCats);
       } catch (err) {
-        console.error("❌ Lỗi tải danh mục:", err);
+        console.error("❌ Lỗi lấy danh mục:", err);
       }
     };
 
@@ -57,7 +57,7 @@ const EditProduct = () => {
 
         setSubCategories(subs);
       } catch (err) {
-        console.error("❌ Lỗi tải danh mục con:", err);
+        console.error("❌ Lỗi lấy danh mục con:", err);
       }
     };
 
@@ -88,7 +88,7 @@ const EditProduct = () => {
         }
 
       } catch (error) {
-        console.error("❌ Lỗi khi tải sản phẩm:", error);
+        console.error("❌ Lỗi lấy thông tin sản phẩm:", error);
       }
     };
 
@@ -117,8 +117,8 @@ const EditProduct = () => {
       message.success("Cập nhật sản phẩm thành công!");
       navigate(route.products);
     } catch (error) {
-      console.error("❌ Lỗi khi cập nhật sản phẩm:", error);
-      message.success("Cập nhật thất bại!");
+      console.error("Cập nhật thất bại:", error);
+      message.error("Cập nhật thất bại! Vui lòng thử lại.");
     }
   };
 

@@ -34,7 +34,6 @@ const AddPurchaseOrder = () => {
         }));
         setSuppliers(options);
       } catch (err) {
-        console.error("❌ Lỗi tải nhà cung cấp:", err);
         message.error("Không thể tải danh sách nhà cung cấp.");
       }
     };
@@ -57,7 +56,6 @@ const AddPurchaseOrder = () => {
         }));
         setProducts(options);
       } catch (err) {
-        console.error("❌ Lỗi tải sản phẩm:", err);
         message.error("Không thể tải sản phẩm của nhà cung cấp này.");
       }
     };

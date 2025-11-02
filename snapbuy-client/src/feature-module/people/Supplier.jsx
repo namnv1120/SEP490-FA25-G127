@@ -36,7 +36,6 @@ const Suppliers = () => {
       setListData(data);
       setTotalRecords(data.length);
     } catch (err) {
-      console.error("Lỗi khi tải danh sách nhà cung cấp:", err);
       setError("Lỗi khi tải danh sách nhà cung cấp. Vui lòng thử lại.");
     } finally {
       setLoading(false);
@@ -108,7 +107,6 @@ const Suppliers = () => {
       await fetchSuppliers();
       message.success("Xoá nhà cung cấp thành công!");
     } catch (err) {
-      console.error("❌ Lỗi khi xoá nhà cung cấp:", err);
       message.error("Lỗi khi xoá nhà cung cấp. Vui lòng thử lại.");
     } finally {
       setSelectedSupplier(null);

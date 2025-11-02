@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { message } from "antd";
@@ -52,7 +53,7 @@ const AddProduct = () => {
           }));
         setCategories(mainCats);
       } catch (error) {
-        console.error("❌ Lỗi tải danh mục:", error);
+        console.error("❌ Lỗi lấy danh mục:", error);
       }
     };
     fetchCategories();
@@ -70,7 +71,7 @@ const AddProduct = () => {
           }));
         setSubCategories(subs);
       } catch (error) {
-        console.error("❌ Lỗi tải danh mục con:", error);
+        console.error("❌ Lỗi lấy danh mục con:", error);
       }
     };
 
@@ -91,7 +92,7 @@ const AddProduct = () => {
         }));
         setSuppliers(options);
       } catch (error) {
-        console.error("❌ Lỗi tải nhà cung cấp:", error);
+        console.error("❌ Lỗi lấy nhà cung cấp:", error);
       }
     };
     fetchSuppliers();

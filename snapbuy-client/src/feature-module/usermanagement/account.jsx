@@ -21,9 +21,9 @@ const Accounts = () => {
     setLoading(true);
     try {
       const accountsData = await getAllAccounts();
-      setDataSource(accountsData);
+      setDataSource(Array.isArray(accountsData) ? accountsData : []);
     } catch (error) {
-      console.error("Lỗi khi tải danh sách tài khoản:", error);
+      setDataSource([]);
     } finally {
       setLoading(false);
     }
@@ -168,7 +168,7 @@ const Accounts = () => {
 
             <div className="card-body">
               {loading ? (
-                <div className="text-center p-4">Loading accounts...</div>
+                <div className="text-center p-4">Đang tải tài khoản...</div>
               ) : (
                 <div className="table-responsive">
                   <Table columns={columns} dataSource={dataSource} />

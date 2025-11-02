@@ -17,7 +17,7 @@ export const getAllPermissions = async (activeFilter) => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching permissions:", error);
+    console.error("Failed to fetch permissions:", error);
     throw error;
   }
 };
@@ -28,7 +28,7 @@ export const getPermissionById = async (id) => {
     const response = await axios.get(`${REST_API_BASE_URL}/${id}`, { headers });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching permission with ID ${id}:`, error);
+    console.error("Failed to fetch permission:", error);
     throw error;
   }
 };
@@ -41,7 +41,7 @@ export const createPermission = async (permissionData) => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error creating permission:", error);
+    console.error("Failed to create permission:", error);
     throw error;
   }
 };
@@ -54,7 +54,7 @@ export const updatePermission = async (id, updateData) => {
     });
     return response.data;
   } catch (error) {
-    console.error(`Error updating permission with ID ${id}:`, error);
+    console.error("Failed to update permission:", error);
     throw error;
   }
 };
@@ -64,7 +64,7 @@ export const deletePermission = async (id) => {
     const headers = getAuthHeader();
     await axios.delete(`${REST_API_BASE_URL}/${id}`, { headers });
   } catch (error) {
-    console.error(`Error deleting permission with ID ${id}:`, error);
+    console.error("Failed to delete permission:", error);
     throw error;
   }
 };

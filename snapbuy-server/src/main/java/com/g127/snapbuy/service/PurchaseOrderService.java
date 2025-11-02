@@ -3,6 +3,7 @@ package com.g127.snapbuy.service;
 import com.g127.snapbuy.dto.request.PurchaseOrderApproveRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderCreateRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderReceiveRequest;
+import com.g127.snapbuy.dto.request.PurchaseOrderUpdateRequest;
 import com.g127.snapbuy.dto.response.PurchaseOrderResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,4 +26,8 @@ public interface PurchaseOrderService {
     Page<PurchaseOrderResponse> search(String status, UUID supplierId, LocalDateTime from, LocalDateTime to, Pageable pageable);
 
     void deletePurchaseOrder(UUID poId);
+
+    PurchaseOrderResponse getPurchaseOrderById(UUID poId);
+
+    PurchaseOrderResponse update(UUID poId, PurchaseOrderUpdateRequest req, String usernameOrEmail);
 }

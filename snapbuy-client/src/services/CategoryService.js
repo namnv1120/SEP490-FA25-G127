@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-catch */
 import axios from "axios";
 
 const REST_API_BASE_URL = "http://localhost:8080/api/categories";
@@ -6,7 +7,7 @@ const REST_API_BASE_URL = "http://localhost:8080/api/categories";
 const getAuthHeaders = () => {
   const token = localStorage.getItem("authToken");
   const tokenType = localStorage.getItem("authTokenType") || "Bearer";
-  
+
   return {
     headers: {
       Authorization: `${tokenType} ${token}`,
@@ -20,7 +21,7 @@ export const getAllCategories = async () => {
     const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
     return response.data?.result || response.data || [];
   } catch (error) {
-    console.error("❌ Failed to fetch categories:", error);
+    console.error("Lỗi khi lấy danh mục:", error);
     throw error;
   }
 };
@@ -33,7 +34,7 @@ export const getCategoryById = async (categoryId) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error(`❌ Failed to fetch category ${categoryId}:`, error);
+    console.error("Lỗi khi lấy danh mục:", error);
     throw error;
   }
 };
@@ -47,7 +48,7 @@ export const createCategory = async (categoryData) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Failed to create category:", error);
+    console.error("Lỗi khi tạo danh mục:", error);
     throw error;
   }
 };
@@ -61,7 +62,7 @@ export const updateCategory = async (categoryId, categoryData) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error(`❌ Failed to update category ${categoryId}:`, error);
+    console.error("Lỗi khi cập nhật danh mục:", error);
     throw error;
   }
 };
@@ -74,7 +75,6 @@ export const deleteCategory = async (categoryId) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error(`❌ Failed to delete category ${categoryId}:`, error);
     throw error;
   }
 };
@@ -87,7 +87,6 @@ export const getSubCategories = async (parentCategoryId) => {
     );
     return response.data?.result || response.data || [];
   } catch (error) {
-    console.error(`❌ Failed to fetch subcategories for ${parentCategoryId}:`, error);
     throw error;
   }
 };
@@ -101,7 +100,6 @@ export const toggleCategoryStatus = async (categoryId) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error(`❌ Failed to toggle status for category ${categoryId}:`, error);
     throw error;
   }
 };

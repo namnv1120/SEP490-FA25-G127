@@ -18,7 +18,6 @@ export const getAllRoles = async (active) => {
     });
     return response.data.result || response.data;
   } catch (error) {
-    console.error('Lỗi khi lấy danh sách vai trò: ', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách vai trò!');
   }
 };
@@ -30,7 +29,6 @@ export const getRoleById = async (roleId) => {
     });
     return response.data.result || response.data;
   } catch (error) {
-    console.error('Lỗi khi lấy danh sách vai trò: ', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách vai trò!');
   }
 };
@@ -42,7 +40,6 @@ export const createRole = async (roleData) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi tạo vai trò:', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Lỗi khi tạo vai trò!');
   }
 };
@@ -54,7 +51,6 @@ export const updateRole = async (roleId, updatedData) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi cập nhật vai trò:', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật vai trò!');
   }
 };
@@ -66,7 +62,6 @@ export const deleteRole = async (roleId) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi xóa vai trò:', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Lỗi khi xóa vai trò!');
   }
 };
@@ -78,7 +73,6 @@ export const listPermissions = async (roleId) => {
     });
     return response.data.result || response.data;
   } catch (error) {
-    console.error('Lỗi khi lấy danh sách quyền:', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách quyền!');
   }
 };
@@ -92,7 +86,6 @@ export const addPermission = async (roleId, permissionId) => {
     );
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi thêm quyền:', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Lỗi khi thêm quyền!');
   }
 };
@@ -105,7 +98,6 @@ export const removePermission = async (roleId, permissionId) => {
     );
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi xóa quyền:', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Lỗi khi xóa quyền!');
   }
 };
@@ -119,7 +111,6 @@ export const setPermissions = async (roleId, permissionsData) => {
     );
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi cập nhật quyền:', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật quyền!');
   }
 };
