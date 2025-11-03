@@ -4,7 +4,6 @@ import {
   getAllProducts,
   deleteProduct,
 } from "../../services/ProductService"; // 👈 import service
-import Brand from "../../core/modals/inventory/brand";
 import { all_routes } from "../../routes/all_routes";
 import PrimeDataTable from "../../components/data-table";
 import DeleteModal from "../../components/delete-modal";
@@ -169,7 +168,6 @@ const ProductList = () => {
             </div>
           </div>
 
-          <Brand />
         </div>
       </div>
 

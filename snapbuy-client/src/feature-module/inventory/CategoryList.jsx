@@ -1,29 +1,123 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useSelector } from "react-redux";
 import EditCategoryList from "../../core/modals/inventory/editcategorylist";
 import CommonFooter from "../../components/footer/commonFooter";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
+import { 
+  getAllCategories, 
+  createCategory, 
+  deleteCategory 
+} from "../../services/CategoryService"; // 👈 Import service
 
-// Interfaces removed as they are TypeScript specific
+const CategoryList = () => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [rows, setRows] = useState(10);
+  const [searchQuery, setSearchQuery] = useState(undefined);
+  const [categories, setCategories] = useState([]); // 👈 State cho categories từ API
+  const [loading, setLoading] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
 
-const CategoryList = () => { // Removed : React.FC
-  const [currentPage, setCurrentPage] = useState(1); // Removed <number>
-  const [totalRecords, _setTotalRecords] = useState(5); // Removed <any>, assuming 5 is a placeholder
-  const [rows, setRows] = useState(10); // Removed <number>
-  const [_searchQuery, setSearchQuery] = useState(undefined); // Removed <string | undefined>
+  // ✅ Form state cho Add Category
+  const [categoryForm, setCategoryForm] = useState({
+    categoryName: "",
+    categorySlug: "",
+    status: true,
+  });
 
-  const handleSearch = (value) => { // Removed : any
-    setSearchQuery(value);
+  // ✅ Fetch categories từ API
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      const response = await getAllCategories();
+      setCategories(response.categories || response);
+      setTotalRecords(response.total || response.length || 0);
+    } catch (error) {
+      console.error("❌ Error fetching categories:", error);
+      alert("⚠️ Không thể tải danh sách categories!");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Data fetched from Redux store
-  const dataSource = useSelector(
-    (state) => state.rootReducer.categotylist_data // Removed : RootState and CategoryItem[] types
-  );
+  // ✅ Load categories khi component mount
+  useEffect(() => {
+    fetchCategories();
+  }, [currentPage, rows, searchQuery]);
+
+  // ✅ Handle form input change
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setCategoryForm(prev => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value
+    }));
+  };
+
+  // ✅ Handle Add Category Submit
+  const handleAddCategory = async (e) => {
+    e.preventDefault();
+    
+    if (!categoryForm.categoryName || !categoryForm.categorySlug) {
+      alert("⚠️ Vui lòng điền đầy đủ thông tin!");
+      return;
+    }
+
+    try {
+      await createCategory({
+        categoryName: categoryForm.categoryName,
+        categorySlug: categoryForm.categorySlug,
+        status: categoryForm.status ? "Active" : "Inactive",
+      });
+
+      alert("✅ Thêm category thành công!");
+      
+      // Reset form
+      setCategoryForm({
+        categoryName: "",
+        categorySlug: "",
+        status: true,
+      });
+
+      // Đóng modal
+      const modalElement = document.getElementById("add-category");
+      const modal = window.bootstrap.Modal.getInstance(modalElement);
+      if (modal) modal.hide();
+
+      // Reload data
+      fetchCategories();
+    } catch (error) {
+      console.error("❌ Error adding category:", error);
+      alert("❌ Không thể thêm category!");
+    }
+  };
+
+  // ✅ Handle Delete
+  const handleDeleteClick = (id) => {
+    setSelectedId(id);
+  };
+
+  const handleDeleteSuccess = async () => {
+    if (selectedId) {
+      try {
+        await deleteCategory(selectedId);
+        alert("✅ Xóa category thành công!");
+        fetchCategories();
+      } catch (error) {
+        console.error("❌ Error deleting category:", error);
+        alert("❌ Không thể xóa category!");
+      } finally {
+        setSelectedId(null);
+      }
+    }
+  };
+
+  const handleSearch = (value) => {
+    setSearchQuery(value);
+  };
 
   const columns = [
     {
@@ -44,31 +138,32 @@ const CategoryList = () => { // Removed : React.FC
     },
     {
       header: "Category",
-      field: "category",
-      key: "category",
+      field: "categoryName",
+      key: "categoryName",
       sortable: true,
     },
     {
       header: "Category Slug",
-      field: "categoryslug",
-      key: "categoryslug",
+      field: "categorySlug",
+      key: "categorySlug",
       sortable: true,
     },
     {
       header: "Created On",
-      field: "createdon",
-      key: "createdon",
+      field: "createdAt",
+      key: "createdAt",
       sortable: true,
+      body: (data) => new Date(data.createdAt).toLocaleDateString(),
     },
     {
       header: "Status",
       field: "status",
       key: "status",
       sortable: true,
-      body: (data) => ( // Removed : CategoryItem
-        // Consider dynamic class based on status if needed:
-        // className={`badge ${data.status === 'Active' ? 'bg-success' : 'bg-danger'} fw-medium fs-10`}
-        <span className="badge bg-success fw-medium fs-10">{data.status}</span>
+      body: (data) => (
+        <span className={`badge ${data.status === 'Active' ? 'bg-success' : 'bg-danger'} fw-medium fs-10`}>
+          {data.status}
+        </span>
       ),
     },
     {
@@ -76,40 +171,28 @@ const CategoryList = () => { // Removed : React.FC
       field: "actions",
       key: "actions",
       sortable: false,
-      body: (rowData) => ( // Changed _row to rowData, removed : any
+      body: (rowData) => (
         <div className="edit-delete-action d-flex align-items-center">
           <Link
             className="me-2 p-2 d-flex align-items-center border rounded"
             to="#"
             data-bs-toggle="modal"
-            data-bs-target="#edit-customer" // Target for Edit modal
-            // onClick={() => handleEditClick(rowData)} // Optional: Pass data on click
+            data-bs-target="#edit-customer"
           >
             <i className="feather icon-edit"></i>
           </Link>
-          <Link
-            className="p-2 d-flex align-items-center border rounded"
-            to="#"
+          <button
+            className="p-2 d-flex align-items-center border rounded bg-transparent"
             data-bs-toggle="modal"
-            data-bs-target="#delete-modal" // Target for Delete modal
-             // onClick={() => handleDeleteClick(rowData.id)} // Optional: Pass ID on click
+            data-bs-target="#delete-modal"
+            onClick={() => handleDeleteClick(rowData.id)}
           >
             <i className="feather icon-trash-2"></i>
-          </Link>
+          </button>
         </div>
       ),
     },
   ];
-
-   // Optional: Add handlers if needed
-  // const handleEditClick = (categoryData) => {
-  //   console.log("Editing:", categoryData);
-  //   // You might want to set state here to pass data to the EditCategoryList modal
-  // };
-  // const handleDeleteClick = (categoryId) => {
-  //   console.log("Deleting ID:", categoryId);
-  //   // You might want to set state here to pass the ID to the DeleteModal
-  // };
 
   return (
     <div>
@@ -128,14 +211,14 @@ const CategoryList = () => { // Removed : React.FC
                 to="#"
                 className="btn btn-primary"
                 data-bs-toggle="modal"
-                data-bs-target="#add-category" // Target for Add modal
+                data-bs-target="#add-category"
               >
                 <i className="ti ti-circle-plus me-1"></i>
                 Add Category
               </Link>
             </div>
           </div>
-          {/* /product list */}
+
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
               <SearchFromApi
@@ -144,7 +227,6 @@ const CategoryList = () => { // Removed : React.FC
                 setRows={setRows}
               />
               <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                 {/* Filters remain the same */}
                 <div className="dropdown me-2">
                   <Link
                     to="#"
@@ -153,7 +235,7 @@ const CategoryList = () => { // Removed : React.FC
                   >
                     Status
                   </Link>
-                  <ul className="dropdown-menu  dropdown-menu-end p-3">
+                  <ul className="dropdown-menu dropdown-menu-end p-3">
                     <li>
                       <Link to="#" className="dropdown-item rounded-1">
                         Active
@@ -174,7 +256,7 @@ const CategoryList = () => { // Removed : React.FC
                   >
                     Sort By : Last 7 Days
                   </Link>
-                  <ul className="dropdown-menu  dropdown-menu-end p-3">
+                  <ul className="dropdown-menu dropdown-menu-end p-3">
                     <li>
                       <Link to="#" className="dropdown-item rounded-1">
                         Recently Added
@@ -187,7 +269,7 @@ const CategoryList = () => { // Removed : React.FC
                     </li>
                     <li>
                       <Link to="#" className="dropdown-item rounded-1">
-                        Descending {/* Corrected typo */}
+                        Descending
                       </Link>
                     </li>
                     <li>
@@ -205,30 +287,33 @@ const CategoryList = () => { // Removed : React.FC
               </div>
             </div>
             <div className="card-body">
-              <div className="table-responsive category-table">
-                <PrimeDataTable
-                  column={columns}
-                  data={dataSource || []} // Ensure dataSource is an array
-                  rows={rows}
-                  setRows={setRows}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  // Assuming totalRecords might come from Redux state or be dataSource.length
-                  totalRecords={dataSource ? dataSource.length : 0} // Use dataSource length or placeholder
-                />
-              </div>
+              {loading ? (
+                <div className="text-center py-5">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="table-responsive category-table">
+                  <PrimeDataTable
+                    column={columns}
+                    data={categories}
+                    rows={rows}
+                    setRows={setRows}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    totalRecords={totalRecords}
+                  />
+                </div>
+              )}
             </div>
           </div>
-          {/* /product list */}
         </div>
         <CommonFooter />
       </div>
 
-      {/* Add Category Modal (Assuming separate component or static HTML) */}
-      {/* Ensure this modal has id="add-category" */}
+      {/* ✅ Add Category Modal với form handling */}
       <div className="modal fade" id="add-category">
-         {/* ... content of Add Category Modal ... */}
-         {/* Example structure - Replace with your actual Add Category Modal */}
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
             <div className="page-wrapper-new p-0">
@@ -237,35 +322,75 @@ const CategoryList = () => { // Removed : React.FC
                   <div className="page-title">
                     <h4>Add Category</h4>
                   </div>
-                  <button type="button" className="close bg-danger text-white fs-16" data-bs-dismiss="modal" aria-label="Close">
+                  <button 
+                    type="button" 
+                    className="close bg-danger text-white fs-16" 
+                    data-bs-dismiss="modal" 
+                    aria-label="Close"
+                  >
                     <span aria-hidden="true">×</span>
                   </button>
                 </div>
                 <div className="modal-body">
-                  <form> {/* Add form submission logic here */}
+                  <form onSubmit={handleAddCategory}>
                     <div className="mb-3">
-                      <label className="form-label">Category<span className="text-danger ms-1">*</span></label>
-                      <input type="text" className="form-control" required />
+                      <label className="form-label">
+                        Category<span className="text-danger ms-1">*</span>
+                      </label>
+                      <input 
+                        type="text" 
+                        className="form-control"
+                        name="categoryName"
+                        value={categoryForm.categoryName}
+                        onChange={handleInputChange}
+                        placeholder="Enter category name"
+                        required 
+                      />
                     </div>
                     <div className="mb-3">
-                      <label className="form-label">Category Slug<span className="text-danger ms-1">*</span></label>
-                      <input type="text" className="form-control" required />
+                      <label className="form-label">
+                        Category Slug<span className="text-danger ms-1">*</span>
+                      </label>
+                      <input 
+                        type="text" 
+                        className="form-control"
+                        name="categorySlug"
+                        value={categoryForm.categorySlug}
+                        onChange={handleInputChange}
+                        placeholder="e.g., electronics"
+                        required 
+                      />
                     </div>
                     <div className="mb-0">
                       <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                        <span className="status-label">Status<span className="text-danger ms-1">*</span></span>
-                        <input type="checkbox" id="add-cat-status" className="check" defaultChecked />
+                        <span className="status-label">
+                          Status<span className="text-danger ms-1">*</span>
+                        </span>
+                        <input 
+                          type="checkbox" 
+                          id="add-cat-status" 
+                          className="check"
+                          name="status"
+                          checked={categoryForm.status}
+                          onChange={handleInputChange}
+                        />
                         <label htmlFor="add-cat-status" className="checktoggle" />
                       </div>
                     </div>
-                     {/* Footer moved inside form */}
                     <div className="modal-footer">
-                        <button type="button" className="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3 shadow-none" data-bs-dismiss="modal">
-                            Cancel
-                        </button>
-                        <button type="submit" className="btn btn-primary fs-13 fw-medium p-2 px-3"> {/* Use button type submit */}
-                            Add Category
-                        </button>
+                      <button 
+                        type="button" 
+                        className="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3 shadow-none" 
+                        data-bs-dismiss="modal"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        type="submit" 
+                        className="btn btn-primary fs-13 fw-medium p-2 px-3"
+                      >
+                        Add Category
+                      </button>
                     </div>
                   </form>
                 </div>
@@ -274,13 +399,12 @@ const CategoryList = () => { // Removed : React.FC
           </div>
         </div>
       </div>
-      {/* /Add Category */}
 
-      {/* Edit Category Modal Component */}
-      <EditCategoryList /> {/* Ensure this component uses id="edit-customer" or update target */}
-
-      {/* Delete Modal Component */}
-      <DeleteModal />
+      <EditCategoryList />
+      <DeleteModal 
+        categoryId={selectedId}
+        onDeleteSuccess={handleDeleteSuccess}
+      />
     </div>
   );
 };

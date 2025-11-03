@@ -30,6 +30,12 @@ const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
 const ProductList = lazy(() =>
   import("../feature-module/inventory/ProductList")
 );
+const AddProduct = lazy(() => import("../feature-module/inventory/AddProduct")); // 👈 Thêm lazy load
+const CategoryList = lazy(() => import("../feature-module/inventory/CategoryList"));
+
+
+const SalesList = lazy(() => import("../feature-module/sales/saleslist"));
+const SalesReturn = lazy(() => import("../feature-module/sales/salesreturn"));
 const Accounts = lazy(() => import("../feature-module/usermanagement/account"));
 const RolesPermissions = lazy(() =>
   import("../feature-module/usermanagement/Rolespermissions")
@@ -105,6 +111,35 @@ export const authRoutes = [
     element: <ProductList />,
     route: Route,
   },
+    {
+    id: 233,
+    path: routes.addproduct,
+    name: "add-product",
+    element: <AddProduct />,
+    route: Route,
+  },
+    {
+  id: 234,
+  path: routes.categorylist,
+  name: "category-list",
+  element: <CategoryList />,
+  route: Route,
+  },
+     {
+    id: 235,
+    path: routes.saleslist,
+    name: "sales-list",
+    element: <SalesList />,
+    route: Route,
+  },
+  {
+    id: 236,
+    path: routes.salesreturn,
+    name: "sales-return",
+    element: <SalesReturn />,
+    route: Route,
+  },
+    
 ];
 
 export const posPages = [
