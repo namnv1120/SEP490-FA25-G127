@@ -4,14 +4,13 @@ import DeleteModal from "../../components/delete-modal";
 import TableTopHead from "../../components/table-top-head";
 import CommonFooter from "../../components/footer/commonFooter";
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import { getAllSuppliers, deleteSupplier } from "../../services/SupplierService";
 import { message } from "antd";
 import { Modal } from "bootstrap";
 import { exportToExcel } from "../../utils/excelUtils";
 
-import AddSupplier from "./AddSupplier";
-import EditSupplier from "./EditSupplier";
+import AddSupplier from "../../core/modals/people/AddSupplierModal";
+import EditSupplier from "../../core/modals/people/EditSupplierModal";
 
 const Suppliers = () => {
   const [listData, setListData] = useState([]);
@@ -23,6 +22,8 @@ const Suppliers = () => {
   const [error, setError] = useState(null);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [editSupplierId, setEditSupplierId] = useState(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   useEffect(() => {
     fetchSuppliers();
@@ -73,6 +74,7 @@ const Suppliers = () => {
 
   const handleEditClick = (supplier) => {
     setEditSupplierId(supplier.supplierId);
+    setEditModalOpen(true);
   };
 
   const handleDeleteClick = (supplier) => {
@@ -139,15 +141,7 @@ const Suppliers = () => {
       header: "Nhà cung cấp",
       field: "supplierName",
       key: "supplierName",
-      body: (data) => (
-        <div className="d-flex align-items-center">
-          <div className="ms-2">
-            <p className="text-gray-9 mb-0">
-              <Link to="#">{data.supplierName}</Link>
-            </p>
-          </div>
-        </div>
-      ),
+
     },
     { header: "Email", field: "email", key: "email" },
     { header: "Số điện thoại", field: "phone", key: "phone" },
@@ -194,15 +188,14 @@ const Suppliers = () => {
               onRefresh={handleRefresh}
             />
             <div className="page-btn">
-              <Link
-                to="#"
+              <button
+                type="button"
                 className="btn btn-primary"
-                data-bs-toggle="modal"
-                data-bs-target="#add-supplier"
+                onClick={() => setAddModalOpen(true)}
               >
                 <i className="ti ti-circle-plus me-1" />
                 Thêm nhà cung cấp
-              </Link>
+              </button>
             </div>
           </div>
 
@@ -249,16 +242,25 @@ const Suppliers = () => {
         <CommonFooter />
       </div>
 
-      <AddSupplier onSuccess={fetchSuppliers} />
+      <AddSupplier
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onSuccess={fetchSuppliers}
+      />
 
       {editSupplierId && (
         <EditSupplier
+          isOpen={editModalOpen}
           supplierId={editSupplierId}
           onSuccess={() => {
             fetchSuppliers();
             setEditSupplierId(null);
+            setEditModalOpen(false);
           }}
-          onClose={() => setEditSupplierId(null)}
+          onClose={() => {
+            setEditSupplierId(null);
+            setEditModalOpen(false);
+          }}
         />
       )}
       <DeleteModal

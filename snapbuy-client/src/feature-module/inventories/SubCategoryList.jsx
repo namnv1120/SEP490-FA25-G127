@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import CommonFooter from "../../components/footer/commonFooter";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
@@ -9,65 +8,80 @@ import { getAllCategories, deleteCategory } from "../../services/CategoryService
 import { message } from "antd";
 import { Modal } from "bootstrap";
 
-import AddCategory from "../inventory/AddCategory";
-import EditCategory from "../inventory/EditCategory";
+// ✅ Import 2 component mới
+import AddSubCategory from "../../core/modals/inventories/AddSubCategoryModal";
+import EditSubCategory from "../../core/modals/inventories/EditSubCategoryModal";
 
-const CategoryList = () => {
+const SubCategoryList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
   const [searchQuery, setSearchQuery] = useState(undefined);
-  const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
+  const [parentCategories, setParentCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [editCategoryId, setEditCategoryId] = useState(null);
+  const [selectedSubCategory, setSelectedSubCategory] = useState(null);
+  const [editSubCategoryId, setEditSubCategoryId] = useState(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
+  // Fetch categories
   useEffect(() => {
-    fetchCategories();
+    fetchSubCategories();
   }, []);
 
-  const fetchCategories = async () => {
+  const fetchSubCategories = async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await getAllCategories();
-
-      const parentCategories = data.filter(
+      const parents = data.filter(
         (cat) => !cat.parentCategoryId || cat.parentCategoryId === null
       );
 
-      const mapped = parentCategories.map((cat) => ({
-        categoryId: cat.categoryId,
-        categoryName: cat.name || cat.categoryName || "Không có",
-        description: cat.description || "Không có",
-        createddate: cat.createdDate
-          ? new Date(cat.createdDate).toLocaleDateString("vi-VN", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-          : "Không có",
-        updateddate: cat.updatedDate
-          ? new Date(cat.updatedDate).toLocaleDateString("vi-VN", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-          : "Không có",
-        status: cat.active === 1 || cat.active === true ? "Hoạt động" : "Không hoạt động",
+      const subs = data.filter(
+        (cat) => cat.parentCategoryId && cat.parentCategoryId !== null
+      );
 
-      }));
+      setParentCategories(parents);
 
-      setCategories(mapped);
+      const mapped = subs.map((cat) => {
+        const parent = parents.find((p) => p.categoryId === cat.parentCategoryId);
+
+        return {
+          categoryId: cat.categoryId,
+          categoryName: cat.name || cat.categoryName || "Không có",
+          parentCategoryName: parent ? (parent.name || parent.categoryName) : "Không có",
+          parentCategoryId: cat.parentCategoryId,
+          description: cat.description || "Không có",
+          createddate: cat.createdDate
+            ? new Date(cat.createdDate).toLocaleDateString("vi-VN", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+            : "Không có",
+          updateddate: cat.updatedDate
+            ? new Date(cat.updatedDate).toLocaleDateString("vi-VN", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+            : "Không có",
+          status: cat.active === 1 || cat.active === true ? "Hoạt động" : "Không hoạt động",
+        };
+      });
+
+      setSubCategories(mapped);
       setTotalRecords(mapped.length);
     } catch (err) {
-      console.error("❌ Lỗi khi tải danh sách danh mục:", err);
-      setError("Không thể tải danh sách danh mục. Vui lòng thử lại.");
+      console.error("❌ Lỗi khi tải danh sách danh mục con:", err);
+      setError("Lỗi khi tải danh sách danh mục con. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -77,20 +91,18 @@ const CategoryList = () => {
     setSearchQuery(value);
   };
 
-  const handleEditClick = (category) => {
-    setEditCategoryId(category.categoryId);
+  const handleEditClick = (subCategory) => {
+    setEditSubCategoryId(subCategory.categoryId);
+    setEditModalOpen(true);
   };
 
-  // Xử lý khi click delete
-  const handleDeleteClick = (category) => {
-    setSelectedCategory(category);
+  const handleDeleteClick = (subCategory) => {
+    setSelectedSubCategory(subCategory);
     setTimeout(() => {
       const modalElement = document.getElementById("delete-modal");
       if (modalElement) {
         const modal = new Modal(modalElement);
         modal.show();
-      } else {
-        console.error("❌ Không tìm thấy phần tử modal xoá.");
       }
     }, 0);
   };
@@ -111,20 +123,20 @@ const CategoryList = () => {
         document.body.classList.remove("modal-open");
         document.body.style.removeProperty("overflow");
         document.body.style.removeProperty("padding-right");
-      }, 0);
+      }, 300);
 
-      await fetchCategories();
-      message.success("Danh muc đã được xoá thành công!");
+      await fetchSubCategories();
+      message.success("Xoá danh mục con thành công!");
     } catch (err) {
-      console.error("❌ Lỗi khi xoá danh sách danh mục:", err);
-      message.error("Lỗi khi xoá danh mục. Vui lòng thử lại.");
+      console.error("❌ Lỗi khi xoá danh mục con:", err);
+      message.error("Không thể xoá danh mục con. Vui lòng thử lại.");
     } finally {
-      setSelectedCategory(null);
+      setSelectedSubCategory(null);
     }
   };
 
   const handleDeleteCancel = () => {
-    setSelectedCategory(null);
+    setSelectedSubCategory(null);
   };
 
   const columns = [
@@ -145,9 +157,15 @@ const CategoryList = () => {
       key: "checked",
     },
     {
-      header: "Tên danh mục",
+      header: "Tên danh mục con",
       field: "categoryName",
       key: "categoryName",
+      sortable: true,
+    },
+    {
+      header: "Tên danh mục cha",
+      field: "parentCategoryName",
+      key: "parentCategoryName",
       sortable: true,
     },
     {
@@ -163,7 +181,7 @@ const CategoryList = () => {
       sortable: true,
     },
     {
-      header: "Ngày chỉnh sửa",
+      header: "Ngày cập nhật",
       field: "updateddate",
       key: "updateddate",
       sortable: true,
@@ -206,27 +224,26 @@ const CategoryList = () => {
   ];
 
   return (
-    <>
+    <div>
       <div className="page-wrapper">
         <div className="content">
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4 className="fw-bold">Danh mục</h4>
-                <h6>Quản lý danh mục</h6>
+                <h4 className="fw-bold">Danh mục con</h4>
+                <h6>Quản lý danh sách danh mục con</h6>
               </div>
             </div>
             <TableTopHead />
             <div className="page-btn">
-              <Link
-                to="#"
+              <button
+                type="button"
                 className="btn btn-primary"
-                data-bs-toggle="modal"
-                data-bs-target="#add-main-category"
+                onClick={() => setAddModalOpen(true)}
               >
                 <i className="ti ti-circle-plus me-1"></i>
-                Thêm danh mục
-              </Link>
+                Thêm danh mục con
+              </button>
             </div>
           </div>
 
@@ -239,7 +256,7 @@ const CategoryList = () => {
           {loading && (
             <div className="text-center my-5">
               <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Đang tải...</span>
+                <span className="visually-hidden">Đang tải...</span>
               </div>
             </div>
           )}
@@ -257,7 +274,7 @@ const CategoryList = () => {
                 <div className="table-responsive category-table">
                   <PrimeDataTable
                     column={columns}
-                    data={categories}
+                    data={subCategories}
                     rows={rows}
                     setRows={setRows}
                     currentPage={currentPage}
@@ -269,31 +286,45 @@ const CategoryList = () => {
               </div>
             </div>
           )}
-
         </div>
         <CommonFooter />
       </div>
 
-      <AddCategory onSuccess={fetchCategories} />
-      {editCategoryId && (
-        <EditCategory
-          categoryId={editCategoryId}
+      {/* ✅ Add Sub Category Component */}
+      <AddSubCategory
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        parentCategories={parentCategories}
+        onSuccess={fetchSubCategories}
+      />
+
+      {/* ✅ Edit Sub Category Component */}
+      {editSubCategoryId && (
+        <EditSubCategory
+          isOpen={editModalOpen}
+          categoryId={editSubCategoryId}
+          parentCategories={parentCategories}
           onSuccess={() => {
-            fetchCategories();
-            setEditCategoryId(null);
+            fetchSubCategories();
+            setEditSubCategoryId(null);
+            setEditModalOpen(false);
           }}
-          onClose={() => setEditCategoryId(null)}
+          onClose={() => {
+            setEditSubCategoryId(null);
+            setEditModalOpen(false);
+          }}
         />
       )}
 
+      {/* ✅ Delete Modal */}
       <DeleteModal
-        itemId={selectedCategory?.categoryId}
-        itemName={selectedCategory?.categoryName}
+        itemId={selectedSubCategory?.categoryId}
+        itemName={selectedSubCategory?.categoryName}
         onDelete={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
       />
-    </>
+    </div>
   );
 };
 
-export default CategoryList;
+export default SubCategoryList;

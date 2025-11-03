@@ -1,10 +1,8 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:8080/api/accounts';
+const REST_API_BASE_URL = 'http://localhost:8080/api/accounts';
 
-/** 
- * Lấy header xác thực từ localStorage 
- */
+
 const getAuthHeader = () => {
   const token = localStorage.getItem('authToken');
   const tokenType = localStorage.getItem('authTokenType') || 'Bearer';

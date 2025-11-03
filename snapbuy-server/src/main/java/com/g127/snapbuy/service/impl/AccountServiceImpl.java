@@ -234,7 +234,7 @@ public class AccountServiceImpl implements AccountService {
                 throw new IllegalStateException("Bạn không thể tự vô hiệu hóa chính mình");
             }
             staff.setActive(req.getActive());
-        }
+
 
         return accountMapper.toResponse(accountRepository.save(staff));
     }

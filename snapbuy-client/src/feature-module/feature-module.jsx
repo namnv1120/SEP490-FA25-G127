@@ -4,9 +4,8 @@ import Header from "../components/layouts/header";
 import Sidebar from "../components/sidebar/sidebar";
 import ThemeSettings from "../components/layouts/themeSettings";
 import { authRoutes, posPage, unAuthRoutes } from "../routes/path";
-import { useEffect, useState } from "react";
 import HorizontalSidebar from "../components/layouts/horizontalSidebar";
-import PosHeader from "./pos/posHeader";
+import PosHeader from "./pos/PosHeader";
 import PageTitle from "../components/PageTitle";
 
 const FeatureModule = () => {

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { Modal } from "bootstrap";
-import { message } from "antd";
+import { Modal, message, Spin } from "antd";
 import PrimeDataTable from "../../components/data-table";
 import SearchFromApi from "../../components/data-table/search";
 import TableTopHead from "../../components/table-top-head";
@@ -22,6 +21,7 @@ const Customers = () => {
 
   // 🟢 State cho modal edit
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -49,6 +49,7 @@ const Customers = () => {
   // 🟢 Khi nhấn nút edit
   const handleEditClick = async (customer) => {
     setSelectedCustomerId(customer.customerId);
+    setEditModalOpen(true);
 
     try {
       setModalLoading(true);
@@ -58,14 +59,10 @@ const Customers = () => {
         phone: customerData.phone || "",
         gender: customerData.gender || "",
       });
-
-      const modalElement = document.getElementById("edit-customer-modal");
-      if (modalElement) {
-        const modal = new Modal(modalElement);
-        modal.show();
-      }
     } catch (error) {
       message.error("Không thể tải dữ liệu khách hàng");
+      setEditModalOpen(false);
+      setSelectedCustomerId(null);
     } finally {
       setModalLoading(false);
     }
@@ -73,18 +70,7 @@ const Customers = () => {
 
   // 🟢 Đóng modal
   const handleModalClose = () => {
-    const modalElement = document.getElementById("edit-customer-modal");
-    const modal = Modal.getInstance(modalElement);
-    if (modal) modal.hide();
-
-    // Cleanup backdrop
-    setTimeout(() => {
-      document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
-      document.body.classList.remove("modal-open");
-      document.body.style.removeProperty("overflow");
-      document.body.style.removeProperty("padding-right");
-    }, 0);
-
+    setEditModalOpen(false);
     setSelectedCustomerId(null);
   };
 
@@ -239,98 +225,91 @@ const Customers = () => {
       <CommonFooter />
       <DeleteModal />
 
-      {/* 🟢 Modal chỉnh sửa khách hàng (giống EditCategory) */}
-      <div className="modal fade" id="edit-customer-modal" tabIndex="-1">
-        <div className="modal-dialog modal-dialog-centered modal-md">
-          <div className="modal-content">
-            <div className="modal-header border-0 custom-modal-header">
-              <div className="page-title">
-                <h4>Chỉnh sửa khách hàng</h4>
-              </div>
+      {/* 🟢 Modal chỉnh sửa khách hàng với Ant Design */}
+      <Modal
+        open={editModalOpen}
+        onCancel={handleModalClose}
+        onOk={handleSubmit}
+        footer={null}
+        width={600}
+        closable={true}
+        title={
+          <div>
+            <h4 className="mb-0">Chỉnh sửa khách hàng</h4>
+          </div>
+        }
+      >
+        {modalLoading && !formData.fullName ? (
+          <div className="d-flex justify-content-center p-4">
+            <Spin size="large" />
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label className="form-label">
+                Họ và tên<span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                name="fullName"
+                className="form-control"
+                value={formData.fullName}
+                onChange={handleInputChange}
+                required
+                disabled={modalLoading}
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="form-label">
+                Số điện thoại<span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                name="phone"
+                className="form-control"
+                value={formData.phone}
+                onChange={handleInputChange}
+                required
+                disabled={modalLoading}
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="form-label">Giới tính</label>
+              <select
+                name="gender"
+                className="form-control"
+                value={formData.gender}
+                onChange={handleInputChange}
+                disabled={modalLoading}
+              >
+                <option value="Male">Nam</option>
+                <option value="Female">Nữ</option>
+                <option value="Other">Khác</option>
+              </select>
+            </div>
+
+            <div className="modal-footer-btn mt-4 d-flex justify-content-end">
               <button
                 type="button"
-                className="close"
+                className="btn btn-cancel me-2"
                 onClick={handleModalClose}
-                aria-label="Close"
+                disabled={modalLoading}
               >
-                <span aria-hidden="true">×</span>
+                Huỷ
+              </button>
+              <button
+                type="submit"
+                className="btn btn-submit"
+                disabled={modalLoading}
+              >
+                {modalLoading ? "Đang lưu..." : "Lưu thay đổi"}
               </button>
             </div>
-
-            <div className="modal-body custom-modal-body">
-              {modalLoading ? (
-                <div className="text-center py-4">
-                  <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit}>
-                  <div className="mb-3">
-                    <label className="form-label">
-                      Họ và tên<span className="text-danger">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="fullName"
-                      className="form-control"
-                      value={formData.fullName}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label">
-                      Số điện thoại<span className="text-danger">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="phone"
-                      className="form-control"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label">Giới tính</label>
-                    <select
-                      name="gender"
-                      className="form-control"
-                      value={formData.gender}
-                      onChange={handleInputChange}
-                    >
-                      <option value="Male">Nam</option>
-                      <option value="Female">Nữ</option>
-                      <option value="Other">Khác</option>
-                    </select>
-                  </div>
-
-                  <div className="modal-footer-btn mt-4 d-flex justify-content-end">
-                    <button
-                      type="button"
-                      className="btn btn-cancel me-2"
-                      onClick={handleModalClose}
-                      disabled={modalLoading}
-                    >
-                      Huỷ
-                    </button>
-                    <button
-                      type="submit"
-                      className="btn btn-submit"
-                      disabled={modalLoading}
-                    >
-                      {modalLoading ? "Đang lưu..." : "Lưu thay đổi"}
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+          </form>
+        )}
+      </Modal>
     </div>
   );
 };

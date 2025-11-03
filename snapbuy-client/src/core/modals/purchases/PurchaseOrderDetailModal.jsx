@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Modal, Spin, message } from "antd";
-import { getPurchaseOrderById } from "../../services/PurchaseOrderService";
+import { getPurchaseOrderById } from "../../../services/PurchaseOrderService";
 
 const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
   const [loading, setLoading] = useState(false);
@@ -86,6 +86,7 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
       onCancel={onClose}
       footer={null}
       width={900}
+      centered={true}
       closable={true}
       title={
         <div>

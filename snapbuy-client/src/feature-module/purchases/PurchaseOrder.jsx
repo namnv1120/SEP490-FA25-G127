@@ -12,11 +12,11 @@ import {
   cancelPurchaseOrder,
   receivePurchaseOrder,
 } from "../../services/PurchaseOrderService";
-import { message, Spin, Button } from "antd";
+import { message, Spin } from "antd";
 import { all_routes } from "../../routes/all_routes";
 import DeleteModal from "../../components/delete-modal";
 import { Modal } from "bootstrap";
-import PurchaseOrderDetailModal from "./PurchaseOrderDetailModal";
+import PurchaseOrderDetailModal from "../../core/modals/purchases/PurchaseOrderDetailModal";
 
 
 const PurchaseOrder = () => {

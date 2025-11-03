@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Modal, Spin, message } from "antd";
-import { getProductById } from "../../services/ProductService";
-import { getImageUrl } from "../../utils/imageUtils";
-import { barcodeImg1, printer, product69 } from "../../utils/imagepath";
+import { getProductById } from "../../../services/ProductService";
+import { getImageUrl } from "../../../utils/imageUtils";
+import { barcodeImg1, printer, product69 } from "../../../utils/imagepath";
 
 const ProductDetailModal = ({ isOpen, onClose, productId }) => {
   const [loading, setLoading] = useState(false);
@@ -60,6 +60,7 @@ const ProductDetailModal = ({ isOpen, onClose, productId }) => {
       onCancel={onClose}
       footer={null}
       width={1000}
+      centered={true}
       closable={true}
       title={
         <div>
@@ -188,4 +189,5 @@ const ProductDetailModal = ({ isOpen, onClose, productId }) => {
 };
 
 export default ProductDetailModal;
+
 

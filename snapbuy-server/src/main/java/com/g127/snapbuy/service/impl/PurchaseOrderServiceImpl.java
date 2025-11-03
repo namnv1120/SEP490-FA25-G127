@@ -43,14 +43,13 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     public PurchaseOrderResponse create(PurchaseOrderCreateRequest req, String usernameOrEmail) {
         UUID currentAccountId = resolveAccountId(usernameOrEmail);
 
-        supplierRepo.findById(req.supplierId())
-                .orElseThrow(() -> new NoSuchElementException("Nhà cung cấp không tồn tại: " + req.supplierId()));
+        supplierRepo.findById(req.getSupplierId())
+                .orElseThrow(() -> new NoSuchElementException("Nhà cung cấp không tồn tại: " + req.getSupplierId()));
 
-        for (var i : req.items()) {
-            productRepo.findById(i.productId())
-                    .orElseThrow(() -> new NoSuchElementException("Sản phẩm không tồn tại: " + i.productId()));
-            if (i.quantity() <= 0) throw new IllegalArgumentException("Số lượng phải > 0");
-            if (i.unitPrice() <= 0) throw new IllegalArgumentException("Đơn giá phải > 0");
+        for (var i : req.getItems()) {
+            productRepo.findById(i.getProductId())
+                    .orElseThrow(() -> new NoSuchElementException("Sản phẩm không tồn tại: " + i.getProductId()));
+            if (i.getQuantity() <= 0) throw new IllegalArgumentException("Số lượng phải > 0");
         }
 
         String number = generateUniqueNumber();
@@ -85,7 +84,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 .map(i -> unitPriceByProduct.get(i.getProductId()).multiply(BigDecimal.valueOf(i.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal taxRatePct = Optional.ofNullable(req.taxAmount()).orElse(BigDecimal.ZERO);
+        BigDecimal taxRatePct = Optional.ofNullable(req.getTaxAmount()).orElse(BigDecimal.ZERO);
         BigDecimal plannedTax = plannedSubtotal.multiply(taxRatePct)
                 .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
         BigDecimal plannedTotal = plannedSubtotal.add(plannedTax);

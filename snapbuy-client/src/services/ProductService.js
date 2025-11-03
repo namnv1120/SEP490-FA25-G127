@@ -1,4 +1,3 @@
-/* eslint-disable no-useless-catch */
 import axios from "axios";
 
 const REST_API_BASE_URL = "http://localhost:8080/api/products";
@@ -17,7 +16,7 @@ const getAuthHeaders = () => {
 };
 
 // Lấy toàn bộ sản phẩm
-const getAllProducts = async () => {
+export const getAllProducts = async () => {
   try {
     const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
     return response.data?.result || response.data || [];
@@ -28,7 +27,7 @@ const getAllProducts = async () => {
 };
 
 // Lấy sản phẩm theo ID
-const getProductById = async (id) => {
+export const getProductById = async (id) => {
   try {
     const response = await axios.get(`${REST_API_BASE_URL}/${id}`, getAuthHeaders());
     return response.data?.result || response.data;
@@ -39,7 +38,7 @@ const getProductById = async (id) => {
 };
 
 // Thêm sản phẩm
-const createProduct = async (productData) => {
+export const createProduct = async (formData) => {
   try {
     const token = localStorage.getItem("authToken");
     const tokenType = localStorage.getItem("authTokenType") || "Bearer";
@@ -62,7 +61,7 @@ const createProduct = async (productData) => {
 };
 
 // Cập nhật sản phẩm
-const updateProduct = async (id, productData) => {
+export const updateProduct = async (id, productData) => {
   try {
     const response = await axios.put(
       `${REST_API_BASE_URL}/${id}`,
@@ -77,7 +76,7 @@ const updateProduct = async (id, productData) => {
 };
 
 // Xóa sản phẩm
-const deleteProduct = async (id) => {
+export const deleteProduct = async (id) => {
   try {
     const response = await axios.delete(
       `${REST_API_BASE_URL}/${id}`,
@@ -91,7 +90,7 @@ const deleteProduct = async (id) => {
 };
 
 // Import danh sách sản phẩm
-const importProducts = async (products) => {
+export const importProducts = async (products) => {
   try {
     const response = await axios.post(
       `${REST_API_BASE_URL}/import`,
@@ -105,13 +104,15 @@ const importProducts = async (products) => {
   }
 };
 
-const ProductService = {
-  getAllProducts,
-  getProductById,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-  importProducts,
+export const getProductsBySupplierId = async (supplierId) => {
+  try {
+    const response = await axios.get(
+      `${REST_API_BASE_URL}/supplier/${supplierId}`,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi tải danh sách sản phẩm theo nha cung cap:", error);
+    throw error;
+  }
 };
-
-export default ProductService;

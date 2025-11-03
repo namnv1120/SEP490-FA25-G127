@@ -3,45 +3,32 @@ import { lazy } from "react";
 import { all_routes } from "./all_routes";
 import FormHorizontal from "../feature-module/uiinterface/forms/formelements/layouts/form-horizontal";
 
-import Pos from "../feature-module/pos/pos";
-const Suppliers = lazy(() => import("../feature-module/people/Supplier"));
-
+const Pos = lazy(() => import("../feature-module/pos/Pos"));
+const Login = lazy(() => import("../feature-module/pages/authentication/login"));
+const Forgotpassword = lazy(() => import("../feature-module/pages/authentication/ForgotPassword"));
+const Suppliers = lazy(() => import("../feature-module/people/SupplierList"));
 const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
 const ProductList = lazy(() =>
-  import("../feature-module/inventory/ProductList")
+  import("../feature-module/inventories/ProductList")
 );
-const AddProduct = lazy(() => import("../feature-module/inventory/AddProduct"));
-const EditProduct = lazy(() => import("../feature-module/inventory/EditProduct"));
-const ProductPriceList = lazy(() => import("../feature-module/inventory/ProductPriceList"));
-const EditProductPrice = lazy(() => import("../feature-module/inventory/EditProductPrice"));
-const InventoryList = lazy(() => import("../feature-module/inventory/InventoryList"));
+const AddProduct = lazy(() => import("../feature-module/inventories/AddProduct"));
+const EditProduct = lazy(() => import("../feature-module/inventories/EditProduct"));
+const ProductPriceList = lazy(() => import("../feature-module/inventories/ProductPriceList"));
+const EditProductPrice = lazy(() => import("../feature-module/inventories/EditProductPrice"));
+const InventoryList = lazy(() => import("../feature-module/inventories/InventoryList"));
 
-const CategoryList = lazy(() => import("../feature-module/inventory/CategoryList"));
-const SubCategories = lazy(() => import("../feature-module/inventory/SubCategoryList"));
+const CategoryList = lazy(() => import("../feature-module/inventories/CategoryList"));
+const SubCategories = lazy(() => import("../feature-module/inventories/SubCategoryList"));
 
-const Accounts = lazy(() => import("../feature-module/usermanagement/account"));
-const RolesPermissions = lazy(() =>
-  import("../feature-module/usermanagement/rolespermissions")
-);
-const Permissions = lazy(() =>
-  import("../feature-module/usermanagement/permissions")
+const AccountList = lazy(() => import("../feature-module/usermanagement/AccountList"));
+const RoleList = lazy(() =>
+  import("../feature-module/usermanagement/RoleList")
 );
 const Profile = lazy(() => import("../feature-module/usermanagement/Profile"));
-const Login = lazy(() =>
-  import("../feature-module/pages/authentication/Login")
-);
-const Forgotpassword = lazy(() =>
-  import("../feature-module/pages/authentication/ForgotPassword")
-);
-const PosSettings = lazy(() =>
-  import("../feature-module/settings/websitesettings/possettings")
-);
-const PosOrder = lazy(() =>
-  import("../feature-module/sales/pos-order/posOrder")
-);
+const PosSettings = lazy(() => import("../feature-module/settings/websitesettings/possettings"));
+const PosOrder = lazy(() => import("../feature-module/sales/pos-order/posOrder"));
 
-<<<<<<< HEAD
-const Customers = lazy(() => import("../feature-module/people/Customer"));
+const Customers = lazy(() => import("../feature-module/people/CustomerList"));
 const PurchaseOrder = lazy(() =>
   import("../feature-module/purchases/PurchaseOrder")
 );
@@ -52,9 +39,6 @@ const EditPurchaseOrder = lazy(() =>
   import("../feature-module/purchases/EditPurchaseOrder")
 );
 
-=======
-const Customers = lazy(() => import("../feature-module/people/customers"));
->>>>>>> thuyduong
 
 const routes = all_routes;
 
@@ -66,16 +50,6 @@ export const authRoutes = [
     element: <Dashboard />,
     route: Route,
   },
-<<<<<<< HEAD
-=======
-  {
-    id: 76,
-    path: routes.possettings,
-    name: "possettings",
-    element: <PosSettings />,
-    route: Route,
-  },
->>>>>>> thuyduong
   {
     id: 2,
     path: routes.customers,
@@ -94,41 +68,18 @@ export const authRoutes = [
     id: 4,
     path: routes.accounts,
     name: "accounts",
-    element: <Accounts />,
+    element: <AccountList />,
     route: Route,
   },
   {
     id: 5,
     path: routes.rolespermission,
     name: "rolespermission",
-    element: <RolesPermissions />,
+    element: <RoleList />,
     route: Route,
   },
+
   {
-<<<<<<< HEAD
-=======
-    id: 106,
-    path: routes.permissions,
-    name: "permissions",
-    element: <Permissions />,
-    route: Route,
-  },
-  // {
-  //   id: 107,
-  //   path: routes.deleteaccount,
-  //   name: "deleteaccount",
-  //   element: <DeleteAccount />,
-  //   route: Route,
-  // },
-  {
-    id: 121,
-    path: routes.posorder,
-    name: "pos-orders",
-    element: <PosOrder />,
-    route: Route,
-  },
-  {
->>>>>>> thuyduong
     id: 6,
     path: routes.formhorizontal,
     name: "formhorizontal",
@@ -240,6 +191,7 @@ export const authRoutes = [
     element: <PosOrder />,
     route: Route,
   },
+
 ];
 
 export const posPage = [
@@ -261,7 +213,7 @@ export const unAuthRoutes = [
     route: Route,
   },
   {
-    id: 3,
+    id: 2,
     path: routes.forgotpassword,
     name: "forgotpassword",
     element: <Forgotpassword />,

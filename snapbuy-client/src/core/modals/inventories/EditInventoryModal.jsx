@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Modal, InputNumber, Form, message } from "antd";
-import { updateInventory } from "../../services/InventoryService";
+import { updateInventory } from "../../../services/InventoryService";
 
 const EditInventory = ({ visible, onClose, inventory, onUpdated }) => {
   const [form] = Form.useForm();

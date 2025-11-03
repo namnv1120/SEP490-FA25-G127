@@ -1,24 +1,11 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Tooltip } from "antd";
-import { Settings, User } from "react-feather";
-import { all_routes } from "../../routes/all_routes";
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Tooltip } from 'antd';
+import { Settings, User } from 'react-feather';
+import { all_routes } from '../../routes/all_routes';
 
 const PosHeader = () => {
-  const [currentTime, setCurrentTime] = useState("");
-
-  useEffect(() => {
-    const updateClock = () => {
-      const now = new Date();
-      const timeString = now.toLocaleTimeString("en-GB", { hour12: false });
-      setCurrentTime(timeString);
-    };
-
-    updateClock();
-    const timer = setInterval(updateClock, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
+  const [isFullscreen] = useState(false);
 
   return (
     <>
@@ -26,29 +13,19 @@ const PosHeader = () => {
       <div className="header pos-header">
         {/* Logo */}
         <div className="header-left active">
-          <Link to={all_routes.dashboard} className="logo logo-normal">
+          <Link to={all_routes.newdashboard} className="logo logo-normal">
             <img src="src/assets/img/logo.png" alt="Img" />
           </Link>
-          <Link to={all_routes.dashboard} className="logo logo-white">
+          <Link to={all_routes.newdashboard} className="logo logo-white">
             <img src="src/assets/img/logo-white.png" alt="Img" />
           </Link>
-          <Link to={all_routes.dashboard} className="logo-small">
+          <Link to={all_routes.newdashboard} className="logo-small">
             <img src="src/assets/img/logo-small.png" alt="Img" />
           </Link>
         </div>
-        {/* /Logo */}
-
-        <Link id="mobile_btn" className="mobile_btn d-none" to="#sidebar">
-          <span className="bar-icon">
-            <span />
-            <span />
-            <span />
-          </span>
-        </Link>
-
         {/* Header Menu */}
         <ul className="nav user-menu">
-          {/* Time */}
+          {/* Search */}
           <li className="nav-item time-nav">
             <span className="bg-teal text-white d-inline-flex align-items-center">
               <img
@@ -56,78 +33,20 @@ const PosHeader = () => {
                 alt="img"
                 className="me-2"
               />
-              {currentTime || "00:00:00"}
+              {new Date().toLocaleTimeString()}
             </span>
           </li>
-
-          {/* Dashboard */}
+          {/* /Search */}
           <li className="nav-item pos-nav">
             <Link
-              to="/dashboard"
+              to={all_routes.dashboard}
               className="btn btn-purple btn-md d-inline-flex align-items-center"
             >
               <i className="ti ti-world me-1" />
               Dashboard
             </Link>
           </li>
-
-          {/* Select Store */}
-          <li className="nav-item dropdown has-arrow main-drop select-store-dropdown">
-            <Link
-              to="#"
-              className="dropdown-toggle nav-link select-store"
-              data-bs-toggle="dropdown"
-            >
-              <span className="user-info">
-                <span className="user-letter">
-                  <img
-                    src="src/assets/img/store/store-01.png"
-                    alt="Store Logo"
-                    className="img-fluid"
-                  />
-                </span>
-                <span className="user-detail">
-                  <span className="user-name">Freshmart</span>
-                </span>
-              </span>
-            </Link>
-            <div className="dropdown-menu dropdown-menu-right">
-              <Link to="#" className="dropdown-item">
-                <img
-                  src="src/assets/img/store/store-01.png"
-                  alt="Store Logo"
-                  className="img-fluid"
-                />
-                Freshmart
-              </Link>
-              <Link to="#" className="dropdown-item">
-                <img
-                  src="src/assets/img/store/store-02.png"
-                  alt="Store Logo"
-                  className="img-fluid"
-                />
-                Grocery Apex
-              </Link>
-              <Link to="#" className="dropdown-item">
-                <img
-                  src="src/assets/img/store/store-03.png"
-                  alt="Store Logo"
-                  className="img-fluid"
-                />
-                Grocery Bevy
-              </Link>
-              <Link to="#" className="dropdown-item">
-                <img
-                  src="src/assets/img/store/store-04.png"
-                  alt="Store Logo"
-                  className="img-fluid"
-                />
-                Grocery Eden
-              </Link>
-            </div>
-          </li>
-
-          {/* Calculator */}
+          
           <li className="nav-item nav-item-box">
             <Link
               to="#"
@@ -138,9 +57,23 @@ const PosHeader = () => {
               <i className="ti ti-calculator" />
             </Link>
           </li>
-
-          {/* Cash Register */}
           <li className="nav-item nav-item-box">
+            <Tooltip title="Maximize" placement="right">
+              <Link
+                to="#"
+                id="btnFullscreen"
+                className={isFullscreen ? "Exit Fullscreen" : "Go Fullscreen"}
+              >
+                <i className="ti ti-maximize" />
+              </Link>
+            </Tooltip>
+          </li>
+          <li
+            className="nav-item nav-item-box"
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
+            data-bs-title="Cash Register"
+          >
             <Tooltip title="Cash Register" placement="right">
               <Link
                 to="#"
@@ -151,19 +84,41 @@ const PosHeader = () => {
               </Link>
             </Tooltip>
           </li>
-
-          {/* Today’s Sale */}
-          <li className="nav-item nav-item-box">
+          <li
+            className="nav-item nav-item-box"
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
+            data-bs-title="Print Last Reciept"
+          >
+            <Tooltip title="Print Last Reciept" placement="right">
+              <Link to="#">
+                <i className="ti ti-printer" />
+              </Link>
+            </Tooltip>
+          </li>
+          <li
+            className="nav-item nav-item-box"
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
+            data-bs-title="Today's Sale"
+          >
             <Tooltip title="Today's Sale" placement="right">
-              <Link to="#" data-bs-toggle="modal" data-bs-target="#today-sale">
+              <Link
+                to="#"
+                data-bs-toggle="modal"
+                data-bs-target="#today-sale"
+              >
                 <i className="ti ti-progress" />
               </Link>
             </Tooltip>
           </li>
-
-          {/* Today’s Profit */}
-          <li className="nav-item nav-item-box">
-            <Tooltip title="Today’s Profit" placement="right">
+          <li
+            className="nav-item nav-item-box"
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
+            data-bs-title="Today's Profit"
+          >
+            <Tooltip title="Today's Profit" placement="right">
               <Link
                 to="#"
                 data-bs-toggle="modal"
@@ -173,19 +128,24 @@ const PosHeader = () => {
               </Link>
             </Tooltip>
           </li>
-
-          {/* POS Settings */}
-          <li className="nav-item nav-item-box">
+          <li
+            className="nav-item nav-item-box"
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
+            data-bs-title="POS Settings"
+          >
             <Tooltip title="POS Settings" placement="bottom">
               <Link to={all_routes.possettings}>
                 <i className="ti ti-settings" />
               </Link>
             </Tooltip>
           </li>
-
-          {/* Profile Menu */}
           <li className="nav-item dropdown has-arrow main-drop profile-nav">
-            <Link to="#" className="nav-link userset" data-bs-toggle="dropdown">
+            <Link
+              to="#"
+              className="nav-link userset"
+              data-bs-toggle="dropdown"
+            >
               <span className="user-info p-0">
                 <span className="user-letter">
                   <img
@@ -204,16 +164,19 @@ const PosHeader = () => {
                     <span className="status online" />
                   </span>
                   <div className="profilesets">
-                    <h6>John Smilga</h6>
-                    <h5>Super Admin</h5>
+                    <h6>User Name</h6>
+                    <h5>Role</h5>
                   </div>
                 </div>
                 <hr className="m-0" />
                 <Link className="dropdown-item" to={all_routes.profile}>
                   <User className="me-2" />
-                  Thông tin cá nhân
+                  
                 </Link>
-                <Link className="dropdown-item" to={all_routes.generalsettings}>
+                <Link
+                  className="dropdown-item"
+                  to={all_routes.generalsettings}
+                >
                   <Settings className="me-2" />
                   Cài đặt
                 </Link>
@@ -234,7 +197,6 @@ const PosHeader = () => {
           </li>
         </ul>
         {/* /Header Menu */}
-
         {/* Mobile Menu */}
         <div className="dropdown mobile-user-menu">
           <Link
@@ -247,13 +209,13 @@ const PosHeader = () => {
           </Link>
           <div className="dropdown-menu dropdown-menu-right">
             <Link className="dropdown-item" to={all_routes.profile}>
-              Thông tin cá nhân
+              My Profile
             </Link>
             <Link className="dropdown-item" to={all_routes.generalsettings}>
-              Cài đặt
+              Settings
             </Link>
             <Link className="dropdown-item" to={all_routes.signin}>
-              Đăng xuất
+              Logout
             </Link>
           </div>
         </div>
@@ -265,3 +227,4 @@ const PosHeader = () => {
 };
 
 export default PosHeader;
+

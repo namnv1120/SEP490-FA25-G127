@@ -14,7 +14,7 @@ import {
   updateRole,
 } from "../../services/RoleService";
 
-const RolesPermissions = () => {
+const RoleList = () => {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
@@ -205,4 +205,4 @@ const RolesPermissions = () => {
   );
 };
 
-export default RolesPermissions;
+export default RoleList;

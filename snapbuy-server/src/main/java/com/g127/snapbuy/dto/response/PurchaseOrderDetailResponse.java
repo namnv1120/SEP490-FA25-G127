@@ -12,6 +12,8 @@ import java.util.UUID;
 public class PurchaseOrderDetailResponse {
     private UUID purchaseOrderDetailId;
     private UUID productId;
+    private String productName;
+    private String productCode;
     private int quantity;
     private double unitPrice;
     private int receivedQuantity;

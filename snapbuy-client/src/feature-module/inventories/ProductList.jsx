@@ -9,7 +9,7 @@ import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
 import { getAllProducts, deleteProduct, importProducts } from "../../services/ProductService";
 import ImportProductModal from "./ImportProduct";
-import ProductDetailModal from "./ProductDetailModal";
+import ProductDetailModal from "../../core/modals/inventories/ProductDetailModal";
 import { message } from "antd";
 import { Modal } from "bootstrap";
 import { exportToExcel } from "../../utils/excelUtils";

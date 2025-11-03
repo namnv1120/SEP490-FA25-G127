@@ -7,7 +7,7 @@ import CommonDatePicker from "../../components/date-picker/common-date-picker";
 import SearchFromApi from "../../components/data-table/search";
 import { getAllInventories } from "../../services/InventoryService";
 import { message } from "antd";
-import EditInventory from "../inventory/EditInventory";
+import EditInventory from "../../core/modals/inventories/EditInventoryModal";
 
 
 const InventoryList = () => {

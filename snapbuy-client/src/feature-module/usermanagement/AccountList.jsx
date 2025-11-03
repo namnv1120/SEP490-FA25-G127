@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
 import AddAccount from "../../core/modals/usermanagement/addaccount";
 import EditAccount from "../../core/modals/usermanagement/editaccount";
 import TableTopHead from "../../components/table-top-head";
 import Table from "../../core/pagination/datatable";
 import { getAllAccounts } from "../../services/AccountService";
+import { message } from "antd";
 
-const Accounts = () => {
+  const AccountList = () => {
   const [dataSource, setDataSource] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState(null);
@@ -21,9 +21,10 @@ const Accounts = () => {
     setLoading(true);
     try {
       const accountsData = await getAllAccounts();
-      setDataSource(Array.isArray(accountsData) ? accountsData : []);
+      setDataSource(accountsData);
     } catch (error) {
-      setDataSource([]);
+      console.error("Lỗi khi lấy danh sách tài khoản:", error);
+      message.error("Lỗi khi lấy danh sách tài khoản:");
     } finally {
       setLoading(false);
     }
@@ -189,4 +190,4 @@ const Accounts = () => {
   );
 };
 
-export default Accounts;
+export default AccountList;

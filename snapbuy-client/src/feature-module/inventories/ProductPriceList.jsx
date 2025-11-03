@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import ProductDetailModal from "./ProductDetailModal";
+import ProductDetailModal from "../../core/modals/inventories/ProductDetailModal";
 import { all_routes } from "../../routes/all_routes";
 import CommonFooter from "../../components/footer/commonFooter";
 import PrimeDataTable from "../../components/data-table";
