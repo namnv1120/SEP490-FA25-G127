@@ -4,6 +4,7 @@ import com.g127.snapbuy.dto.ApiResponse;
 import com.g127.snapbuy.dto.request.PaymentRequest;
 import com.g127.snapbuy.dto.response.PaymentResponse;
 import com.g127.snapbuy.service.PaymentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +21,7 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping
-    public ApiResponse<PaymentResponse> createPayment(@RequestBody PaymentRequest request) {
+    public ApiResponse<PaymentResponse> createPayment(@RequestBody @Valid PaymentRequest request) {
         ApiResponse<PaymentResponse> response = new ApiResponse<>();
         response.setResult(paymentService.createPayment(request));
         response.setMessage("Tạo thanh toán thành công.");

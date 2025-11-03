@@ -41,7 +41,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/logout")
-    public ApiResponse<Void> logout(@RequestBody LogoutRequest req) {
+    public ApiResponse<Void> logout(@RequestBody @Valid LogoutRequest req) {
         authenticationService.logout(req);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setResult(null);

@@ -7,6 +7,7 @@ import com.g127.snapbuy.entity.*;
 import com.g127.snapbuy.mapper.OrderMapper;
 import com.g127.snapbuy.repository.*;
 import com.g127.snapbuy.service.MoMoService;
+import com.g127.snapbuy.service.PromotionService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
     private final ProductPriceRepository productPriceRepository;
     private final OrderMapper orderMapper;
     private final MoMoService moMoService;
+    private final PromotionService promotionService;
 
     private UUID resolveCurrentAccountId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -118,6 +120,11 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
             }
 
             BigDecimal discountPercent = item.getDiscount() != null ? item.getDiscount() : BigDecimal.ZERO;
+            // Tự động áp dụng khuyến mãi tốt nhất cho sản phẩm này
+            BigDecimal promoPercent = promotionService.computeBestDiscountPercent(product.getProductId(), unitPrice, LocalDateTime.now());
+            if (promoPercent != null && promoPercent.compareTo(discountPercent) > 0) {
+                discountPercent = promoPercent;
+            }
             if (discountPercent.compareTo(BigDecimal.ZERO) < 0 || discountPercent.compareTo(BigDecimal.valueOf(100)) > 0)
                 throw new IllegalArgumentException("Giảm giá phải trong khoảng 0–100%");
 

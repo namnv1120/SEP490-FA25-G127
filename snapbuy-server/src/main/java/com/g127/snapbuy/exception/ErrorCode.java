@@ -22,6 +22,8 @@ public enum ErrorCode {
     INVALID_STOCK_OPERATION(2009, "Thao tác tồn kho không hợp lệ — số lượng không được âm"),
     ORDER_NOT_FOUND(2010, "Không tìm thấy đơn hàng"),
     PURCHASE_ORDER_NOT_FOUND(2011, "Không tìm thấy phiếu tạo đơn"),
+    PROMOTION_NOT_FOUND(2012, "Không tìm thấy khuyến mãi"),
+    INVALID_DATE_RANGE(2013, "Khoảng thời gian không hợp lệ"),
 
     AUTH_INVALID(3001, "Tên đăng nhập hoặc mật khẩu không đúng"),
     TOKEN_INVALID(3002, "Token không hợp lệ"),
