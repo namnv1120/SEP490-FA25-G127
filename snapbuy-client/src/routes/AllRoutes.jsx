@@ -1,4 +1,4 @@
-export const all_routes = {
+export const allRoutes = {
   dashboard: "/dashboard",
 
   products: "/products",

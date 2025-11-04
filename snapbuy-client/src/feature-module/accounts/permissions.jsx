@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+
 import TableTopHead from "../../components/table-top-head";
 import SearchFromApi from "../../components/data-table/search";
 import PrimeDataTable from "../../components/data-table";

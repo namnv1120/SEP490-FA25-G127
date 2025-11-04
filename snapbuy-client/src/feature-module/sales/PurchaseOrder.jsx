@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import CommonFooter from "../../components/footer/commonFooter";
+import CommonFooter from "../../components/footer/CommonFooter";
 import TableTopHead from "../../components/table-top-head";
 import PrimeDataTable from "../../components/data-table";
 import SearchFromApi from "../../components/data-table/search";
@@ -13,14 +13,14 @@ import {
   receivePurchaseOrder,
 } from "../../services/PurchaseOrderService";
 import { message, Spin } from "antd";
-import { all_routes } from "../../routes/all_routes";
+import { allRoutes } from "../../routes/AllRoutes";
 import DeleteModal from "../../components/delete-modal";
 import { Modal } from "bootstrap";
-import PurchaseOrderDetailModal from "../../core/modals/purchases/PurchaseOrderDetailModal";
+import PurchaseOrderDetailModal from "../../core/modals/sales/PurchaseOrderDetailModal";
 
 
 const PurchaseOrder = () => {
-  const route = all_routes;
+  const route = allRoutes;
   const [listData, setListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);

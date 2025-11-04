@@ -2,7 +2,7 @@ import PrimeDataTable from "../../components/data-table";
 import SearchFromApi from "../../components/data-table/search";
 import DeleteModal from "../../components/delete-modal";
 import TableTopHead from "../../components/table-top-head";
-import CommonFooter from "../../components/footer/commonFooter";
+import CommonFooter from "../../components/footer/CommonFooter";
 import { useState, useEffect } from "react";
 import { getAllSuppliers, deleteSupplier } from "../../services/SupplierService";
 import { message } from "antd";

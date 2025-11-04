@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import CommonFooter from "../../components/footer/commonFooter";
+import CommonFooter from "../../components/footer/CommonFooter";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
@@ -9,8 +9,8 @@ import { getAllCategories, deleteCategory } from "../../services/CategoryService
 import { message } from "antd";
 import { Modal } from "bootstrap";
 
-import AddCategory from "../../core/modals/inventory/AddCategoryModal";
-import EditCategory from "../../core/modals/inventory/EditCategoryModal";
+import AddCategory from "../../core/modals/inventories/AddCategoryModal";
+import EditCategory from "../../core/modals/inventories/EditCategoryModal";
 
 const CategoryList = () => {
   const [currentPage, setCurrentPage] = useState(1);

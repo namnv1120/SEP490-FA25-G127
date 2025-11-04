@@ -1,10 +1,10 @@
 import { Route } from "react-router-dom";
 import { lazy } from "react";
-import { all_routes } from "./all_routes";
+import { allRoutes } from "./AllRoutes";
 import FormHorizontal from "../feature-module/uiinterface/forms/formelements/layouts/form-horizontal";
 
 const Pos = lazy(() => import("../feature-module/pos/Pos"));
-const Login = lazy(() => import("../feature-module/pages/authentication/login"));
+const Login = lazy(() => import("../feature-module/pages/authentication/Login"));
 const Forgotpassword = lazy(() => import("../feature-module/pages/authentication/ForgotPassword"));
 const Suppliers = lazy(() => import("../feature-module/people/SupplierList"));
 const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
@@ -20,27 +20,26 @@ const InventoryList = lazy(() => import("../feature-module/inventories/Inventory
 const CategoryList = lazy(() => import("../feature-module/inventories/CategoryList"));
 const SubCategories = lazy(() => import("../feature-module/inventories/SubCategoryList"));
 
-const AccountList = lazy(() => import("../feature-module/usermanagement/AccountList"));
+const AccountList = lazy(() => import("../feature-module/accounts/AccountList"));
 const RoleList = lazy(() =>
-  import("../feature-module/usermanagement/RoleList")
+  import("../feature-module/accounts/RoleList")
 );
-const Profile = lazy(() => import("../feature-module/usermanagement/Profile"));
-const PosSettings = lazy(() => import("../feature-module/settings/websitesettings/possettings"));
-const PosOrder = lazy(() => import("../feature-module/sales/pos-order/posOrder"));
+const Profile = lazy(() => import("../feature-module/accounts/Profile"));
+const PosSettings = lazy(() => import("../feature-module/settings/websitesettings/PosSettings"));
 
 const Customers = lazy(() => import("../feature-module/people/CustomerList"));
 const PurchaseOrder = lazy(() =>
-  import("../feature-module/purchases/PurchaseOrder")
+  import("../feature-module/sales/PurchaseOrder")
 );
 const AddPurchaseOrder = lazy(() =>
-  import("../feature-module/purchases/AddPurchaseOrder")
+  import("../feature-module/sales/AddPurchaseOrder")
 );
 const EditPurchaseOrder = lazy(() =>
-  import("../feature-module/purchases/EditPurchaseOrder")
+  import("../feature-module/sales/EditPurchaseOrder")
 );
 
 
-const routes = all_routes;
+const routes = allRoutes;
 
 export const authRoutes = [
   {
@@ -182,13 +181,6 @@ export const authRoutes = [
     path: routes.permissions,
     name: "permissions",
     element: <Permissions />,
-    route: Route,
-  },
-  {
-    id: 121,
-    path: routes.posorder,
-    name: "pos-orders",
-    element: <PosOrder />,
     route: Route,
   },
 

@@ -8,7 +8,8 @@ import {
   Button,
   Form
 } from "react-bootstrap";
-import { all_routes } from "../../routes/all_routes";
+import { allRoutes } from "../../routes/AllRoutes";
+import { getMyInfo } from "../../services/AccountService";
 import {
   avatar_02,
   avatar_03,
@@ -22,11 +23,16 @@ import {
 } from "../../utils/imagepath";
 
 const Header = () => {
-  const route = all_routes;
+  const route = allRoutes;
   const [toggle, SetToggle] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const navigate = useNavigate();
+  const [userInfo, setUserInfo] = useState({
+    fullName: 'John Smilga',
+    role: 'Admin',
+    avatarUrl: null
+  });
 
   const { expandMenus } = useSelector(
     (state) => state.themeSetting.expandMenus
@@ -104,6 +110,32 @@ const Header = () => {
     document.querySelector(".sidebar-overlay")?.classList.remove("opened");
     document.querySelector("html")?.classList.remove("menu-opened");
   }, [location.pathname]);
+
+  // Fetch user info on mount
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const data = await getMyInfo();
+        const userData = data.result || data;
+
+        // Roles là List<String>, lấy role đầu tiên và bỏ prefix ROLE_ nếu có
+        let roleName = 'Admin';
+        if (userData.roles && Array.isArray(userData.roles) && userData.roles.length > 0) {
+          roleName = userData.roles[0].replace('ROLE_', '');
+        }
+
+        setUserInfo({
+          fullName: userData.fullName || 'John Smilga',
+          role: roleName,
+          avatarUrl: userData.avatarUrl || null
+        });
+      } catch (error) {
+        console.error('Lỗi khi lấy thông tin user:', error);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
 
   const pathname = location.pathname;
 
@@ -366,7 +398,14 @@ const Header = () => {
             title={
               <span className="user-info p-0">
                 <span className="user-letter">
-                  <img src={avator1} alt="Img" className="img-fluid" />
+                  <img
+                    src={userInfo.avatarUrl || avator1}
+                    alt="Img"
+                    className="img-fluid"
+                    onError={(e) => {
+                      e.target.src = avator1;
+                    }}
+                  />
                 </span>
               </span>
             }
@@ -375,11 +414,17 @@ const Header = () => {
           >
             <div className="profileset d-flex align-items-center">
               <span className="user-img me-2">
-                <img src={avator1} alt="Img" />
+                <img
+                  src={userInfo.avatarUrl || avator1}
+                  alt="Img"
+                  onError={(e) => {
+                    e.target.src = avator1;
+                  }}
+                />
               </span>
-              <div>
-                <h6 className="fw-medium">John Smilga</h6>
-                <p>Admin</p>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <h6 className="fw-medium" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{userInfo.fullName}</h6>
+                <p style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{userInfo.role}</p>
               </div>
             </div>
             <NavDropdown.Item as={Link} to={route.profile}>

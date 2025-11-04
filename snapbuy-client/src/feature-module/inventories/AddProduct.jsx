@@ -2,17 +2,17 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { message } from "antd";
-import { all_routes } from "../../routes/all_routes";
+import { allRoutes } from "../../routes/AllRoutes";
 import { createProduct } from "../../services/ProductService";
 import { getAllCategories } from "../../services/CategoryService";
 import { getAllSuppliers } from "../../services/SupplierService";
 import CommonSelect from "../../components/select/common-select";
 import DeleteModal from "../../components/delete-modal";
 import RefreshIcon from "../../components/tooltip-content/refresh";
-import CollapesIcon from "../../components/tooltip-content/collapes";
+import CollapesIcon from "../../components/tooltip-content/Collapse";
 
 const AddProduct = () => {
-  const route = all_routes;
+  const route = allRoutes;
   const navigate = useNavigate();
 
   const [product, setProduct] = useState({

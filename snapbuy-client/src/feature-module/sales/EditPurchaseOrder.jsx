@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { message, Spin } from "antd";
-import { all_routes } from "../../routes/all_routes";
+import { allRoutes } from "../../routes/AllRoutes";
 import CommonSelect from "../../components/select/common-select";
 import { getAllSuppliers } from "../../services/SupplierService";
 import { getProductsBySupplierId } from "../../services/ProductService";
@@ -10,12 +10,12 @@ import {
   updatePurchaseOrder,
 } from "../../services/PurchaseOrderService";
 import RefreshIcon from "../../components/tooltip-content/refresh";
-import CollapesIcon from "../../components/tooltip-content/collapes";
+import CollapesIcon from "../../components/tooltip-content/Collapse";
 
 const EditPurchaseOrder = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const route = all_routes;
+  const route = allRoutes;
 
   const [loading, setLoading] = useState(true);
   const [suppliers, setSuppliers] = useState([]);

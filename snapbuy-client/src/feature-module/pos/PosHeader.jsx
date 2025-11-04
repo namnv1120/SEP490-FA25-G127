@@ -1,11 +1,96 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Tooltip } from 'antd';
 import { Settings, User } from 'react-feather';
-import { all_routes } from '../../routes/all_routes';
+import { allRoutes } from '../../routes/AllRoutes';
+import { getMyInfo } from '../../services/AccountService';
 
 const PosHeader = () => {
   const [isFullscreen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [dropdownVisible, setDropdownVisible] = useState(false);
+  const navigate = useNavigate();
+  const [userInfo, setUserInfo] = useState({
+    fullName: 'User Name',
+    role: 'Role',
+    avatarUrl: null
+  });
+
+  // Update time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Format time as 24h
+  const formatTime24h = (date) => {
+    return date.toLocaleTimeString('en-US', { 
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('authTokenType');
+    localStorage.removeItem('role');
+    localStorage.removeItem('roleName');
+    localStorage.removeItem('fullName');
+    localStorage.removeItem('accountId');
+    localStorage.removeItem('username');
+    setDropdownVisible(false);
+    navigate(allRoutes.login);
+  };
+
+  // Fetch user info on mount
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const data = await getMyInfo();
+        const userData = data.result || data;
+        
+        // Roles là List<String>, lấy role đầu tiên và bỏ prefix ROLE_ nếu có
+        let roleName = 'Role';
+        if (userData.roles && Array.isArray(userData.roles) && userData.roles.length > 0) {
+          roleName = userData.roles[0].replace('ROLE_', '');
+        }
+        
+        setUserInfo({
+          fullName: userData.fullName || 'User Name',
+          role: roleName,
+          avatarUrl: userData.avatarUrl || null
+        });
+      } catch (error) {
+        console.error('Lỗi khi lấy thông tin user:', error);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const dropdown = document.querySelector('.profile-nav');
+      if (dropdown && !dropdown.contains(event.target)) {
+        setDropdownVisible(false);
+      }
+    };
+
+    if (dropdownVisible) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownVisible]);
 
   return (
     <>
@@ -13,13 +98,13 @@ const PosHeader = () => {
       <div className="header pos-header">
         {/* Logo */}
         <div className="header-left active">
-          <Link to={all_routes.newdashboard} className="logo logo-normal">
+          <Link to={allRoutes.dashboard} className="logo logo-normal">
             <img src="src/assets/img/logo.png" alt="Img" />
           </Link>
-          <Link to={all_routes.newdashboard} className="logo logo-white">
+          <Link to={allRoutes.dashboard} className="logo logo-white">
             <img src="src/assets/img/logo-white.png" alt="Img" />
           </Link>
-          <Link to={all_routes.newdashboard} className="logo-small">
+          <Link to={allRoutes.dashboard} className="logo-small">
             <img src="src/assets/img/logo-small.png" alt="Img" />
           </Link>
         </div>
@@ -33,13 +118,13 @@ const PosHeader = () => {
                 alt="img"
                 className="me-2"
               />
-              {new Date().toLocaleTimeString()}
+              {formatTime24h(currentTime)}
             </span>
           </li>
           {/* /Search */}
           <li className="nav-item pos-nav">
             <Link
-              to={all_routes.dashboard}
+              to={allRoutes.dashboard}
               className="btn btn-purple btn-md d-inline-flex align-items-center"
             >
               <i className="ti ti-world me-1" />
@@ -135,65 +220,107 @@ const PosHeader = () => {
             data-bs-title="POS Settings"
           >
             <Tooltip title="POS Settings" placement="bottom">
-              <Link to={all_routes.possettings}>
+              <Link to={allRoutes.possettings}>
                 <i className="ti ti-settings" />
               </Link>
             </Tooltip>
           </li>
-          <li className="nav-item dropdown has-arrow main-drop profile-nav">
+          <li className="nav-item dropdown has-arrow main-drop profile-nav" style={{ position: 'relative', marginBottom: 0, paddingBottom: 0 }}>
             <Link
               to="#"
               className="nav-link userset"
-              data-bs-toggle="dropdown"
+              onClick={(e) => {
+                e.preventDefault();
+                setDropdownVisible(!dropdownVisible);
+              }}
             >
               <span className="user-info p-0">
                 <span className="user-letter">
                   <img
-                    src="src/assets/img/profiles/avator1.jpg"
+                    src={userInfo.avatarUrl || "src/assets/img/profiles/avator1.jpg"}
                     alt="Img"
                     className="img-fluid"
+                    onError={(e) => {
+                      e.target.src = "src/assets/img/profiles/avator1.jpg";
+                    }}
                   />
                 </span>
               </span>
             </Link>
-            <div className="dropdown-menu menu-drop-user">
-              <div className="profilename">
-                <div className="profileset">
-                  <span className="user-img">
-                    <img src="src/assets/img/profiles/avator1.jpg" alt="Img" />
-                    <span className="status online" />
-                  </span>
-                  <div className="profilesets">
-                    <h6>User Name</h6>
-                    <h5>Role</h5>
-                  </div>
+            {dropdownVisible && (
+              <div 
+                className="dropdown-menu menu-drop-user show pos-user-dropdown" 
+                style={{ 
+                  position: 'absolute',
+                  right: 0,
+                  top: '100%',
+                  left: 'auto',
+                  margin: '0 !important',
+                  marginTop: '0 !important',
+                  marginBottom: '0 !important',
+                  paddingTop: '8px',
+                  paddingBottom: '8px',
+                  zIndex: 1050,
+                  minWidth: '240px',
+                  display: 'block',
+                  transform: 'translate(0, 0) !important',
+                  transition: 'none !important'
+                }}
+              >
+                <div className="profilename">
+                    <div className="profileset">
+                      <span className="user-img">
+                        <img 
+                          src={userInfo.avatarUrl || "src/assets/img/profiles/avator1.jpg"} 
+                          alt="Img" 
+                          onError={(e) => {
+                            e.target.src = "src/assets/img/profiles/avator1.jpg";
+                          }}
+                        />
+                        <span className="status online" />
+                      </span>
+                      <div className="profilesets" style={{ minWidth: 0, flex: 1 }}>
+                        <h6 style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{userInfo.fullName}</h6>
+                        <h5 style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{userInfo.role}</h5>
+                      </div>
+                    </div>
+                  <hr className="m-0" />
+                  <Link 
+                    className="dropdown-item d-flex align-items-center" 
+                    to={allRoutes.profile}
+                    onClick={() => setDropdownVisible(false)}
+                  >
+                    <User className="me-2" size={16} />
+                    Thông tin cá nhân
+                  </Link>
+                  <Link
+                    className="dropdown-item d-flex align-items-center"
+                    to={allRoutes.generalsettings}
+                    onClick={() => setDropdownVisible(false)}
+                  >
+                    <Settings className="me-2" size={16} />
+                    Cài đặt
+                  </Link>
+                  <hr className="m-0" />
+                  <Link
+                    className="dropdown-item logout pb-0 d-flex align-items-center"
+                    to="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleLogout();
+                    }}
+                  >
+                    <img
+                      src="src/assets/img/icons/log-out.svg"
+                      className="me-2"
+                      alt="img"
+                      style={{ width: '16px', height: '16px' }}
+                    />
+                    Đăng xuất
+                  </Link>
                 </div>
-                <hr className="m-0" />
-                <Link className="dropdown-item" to={all_routes.profile}>
-                  <User className="me-2" />
-                  
-                </Link>
-                <Link
-                  className="dropdown-item"
-                  to={all_routes.generalsettings}
-                >
-                  <Settings className="me-2" />
-                  Cài đặt
-                </Link>
-                <hr className="m-0" />
-                <Link
-                  className="dropdown-item logout pb-0"
-                  to={all_routes.signin}
-                >
-                  <img
-                    src="src/assets/img/icons/log-out.svg"
-                    className="me-2"
-                    alt="img"
-                  />
-                  Đăng xuất
-                </Link>
               </div>
-            </div>
+            )}
           </li>
         </ul>
         {/* /Header Menu */}
@@ -208,13 +335,13 @@ const PosHeader = () => {
             <i className="fa fa-ellipsis-v" />
           </Link>
           <div className="dropdown-menu dropdown-menu-right">
-            <Link className="dropdown-item" to={all_routes.profile}>
+            <Link className="dropdown-item" to={allRoutes.profile}>
               My Profile
             </Link>
-            <Link className="dropdown-item" to={all_routes.generalsettings}>
+            <Link className="dropdown-item" to={allRoutes.generalsettings}>
               Settings
             </Link>
-            <Link className="dropdown-item" to={all_routes.signin}>
+            <Link className="dropdown-item" to={allRoutes.signin}>
               Logout
             </Link>
           </div>

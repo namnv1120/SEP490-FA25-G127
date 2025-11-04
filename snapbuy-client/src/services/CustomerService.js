@@ -16,12 +16,10 @@ const getAuthHeaders = () => {
   };
 };
 
-const extractData = (data) => data?.result || data || [];
-
 export const getAllCustomers = async () => {
   try {
     const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
-    return extractData(response.data);
+    return response.data?.result || response.data;
   } catch (error) {
     console.error("Lỗi khi lấy danh sách khách hàng:", error);
     throw error;
@@ -38,19 +36,18 @@ export const getCustomerById = async (id) => {
   }
 };
 
-export const getCustomerByPhone = async (phone) => {
+export const searchCustomers = async (keyword) => {
   try {
     const response = await axios.get(
-      `${REST_API_BASE_URL}/phone/${phone}`,
-      getAuthHeaders()
+      `${REST_API_BASE_URL}/search`,
+      {
+        ...getAuthHeaders(),
+        params: { keyword }
+      }
     );
-
-    if (response.data && response.data.result) {
-      return [response.data.result];
-    }
-    return [];
-  } catch (err) {
-    console.error("Lỗi khi tìm khách hàng theo số điện thoại:", err);
+    return response.data?.result || response.data || [];
+  } catch (error) {
+    console.error("Lỗi khi tìm kiếm khách hàng:", error);
     return [];
   }
 };

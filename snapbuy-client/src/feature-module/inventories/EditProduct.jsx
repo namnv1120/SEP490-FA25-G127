@@ -1,18 +1,18 @@
 import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { all_routes } from "../../routes/all_routes";
+import { allRoutes } from "../../routes/AllRoutes";
 import DeleteModal from "../../components/delete-modal";
-import CommonFooter from "../../components/footer/commonFooter";
+import CommonFooter from "../../components/footer/CommonFooter";
 import CommonSelect from "../../components/select/common-select";
 import RefreshIcon from "../../components/tooltip-content/refresh";
-import CollapesIcon from "../../components/tooltip-content/collapes";
+import CollapesIcon from "../../components/tooltip-content/Collapse";
 import { getProductById, updateProduct } from "../../services/ProductService";
 import { getAllCategories } from "../../services/CategoryService";
 import { message } from "antd";
 
 
 const EditProduct = () => {
-  const route = all_routes;
+  const route = allRoutes;
   const { id } = useParams();
   const navigate = useNavigate();
 

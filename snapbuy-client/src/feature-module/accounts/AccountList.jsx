@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import AddAccount from "../../core/modals/usermanagement/addaccount";
-import EditAccount from "../../core/modals/usermanagement/editaccount";
+import AddAccount from "../../core/modals/accounts/AddAccount";
+import EditAccount from "../../core/modals/accounts/EditAccount";
 import TableTopHead from "../../components/table-top-head";
 import Table from "../../core/pagination/datatable";
 import { getAllAccounts } from "../../services/AccountService";

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
-import CommonFooter from "../../components/footer/commonFooter";
+import CommonFooter from "../../components/footer/CommonFooter";
 import CommonDatePicker from "../../components/date-picker/common-date-picker";
 import SearchFromApi from "../../components/data-table/search";
 import { getAllInventories } from "../../services/InventoryService";

@@ -18,7 +18,7 @@ import {
   setRtl,
   setTopBarColor,
 } from "../../core/redux/themeSettingSlice";
-import { all_routes } from "../../routes/all_routes";
+import { allRoutes } from "../../routes/AllRoutes";
 
 const ThemeSettings = () => {
 
@@ -287,7 +287,7 @@ const ThemeSettings = () => {
                       </div>
                     </div>
                     <div className="col-4">
-                      <Link to={all_routes.RTL} onClick={() => dispatch(setRtl('layout-mode-rtl'))} className="theme-layout mb-3">
+                      <Link to={allRoutes.RTL} onClick={() => dispatch(setRtl('layout-mode-rtl'))} className="theme-layout mb-3">
                         <span className="d-block mb-2 layout-img">
                           <img src="src/assets/img/theme/rtl.svg" alt="img" />
                         </span>

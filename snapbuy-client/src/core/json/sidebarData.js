@@ -1,6 +1,6 @@
-import { all_routes } from "../../routes/all_routes";
+import { allRoutes } from "../../routes/AllRoutes";
 
-const route = all_routes;
+const route = allRoutes;
 
 export const SidebarData = [
 
@@ -648,10 +648,10 @@ export const SidebarData = [
         showSubRoute: false,
         submenu: true,
         submenuItems: [
-          { label: "All Blog", link: all_routes.allBlogs },
-          { label: "Blog Tags", link: all_routes.blogTag },
-          { label: "Categories", link:all_routes.blogCategories },
-          { label: "Blog Comments", link: all_routes.blogComments },
+          { label: "All Blog", link: route.allBlogs },
+          { label: "Blog Tags", link: route.blogTag },
+          { label: "Categories", link: route.blogCategories },
+          { label: "Blog Comments", link: route.blogComments },
         ],
       },
       {
@@ -660,22 +660,22 @@ export const SidebarData = [
         showSubRoute: false,
         submenu: true,
         submenuItems: [
-          { label: "Countries", link: all_routes.countries },
-          { label: "States", link: all_routes.states },
-          { label: "Cities", link: all_routes.cities },
+          { label: "Countries", link: route.countries },
+          { label: "States", link: route.states },
+          { label: "Cities", link: route.cities },
         ],
       },
       {
         label: "Testimonials",
         icon: 'star',
-        link: all_routes.testimonial,
+        link: route.testimonial,
         showSubRoute: false,
         submenu: false,
       },
       {
         label: "FAQ",
         icon: 'help-circle',
-        link: all_routes.faq,
+        link: route.faq,
         showSubRoute: false,
         submenu: false,
       },

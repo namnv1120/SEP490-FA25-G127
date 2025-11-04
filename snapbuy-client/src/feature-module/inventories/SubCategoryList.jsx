@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import CommonFooter from "../../components/footer/commonFooter";
+import CommonFooter from "../../components/footer/CommonFooter";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
@@ -8,7 +8,6 @@ import { getAllCategories, deleteCategory } from "../../services/CategoryService
 import { message } from "antd";
 import { Modal } from "bootstrap";
 
-// ✅ Import 2 component mới
 import AddSubCategory from "../../core/modals/inventories/AddSubCategoryModal";
 import EditSubCategory from "../../core/modals/inventories/EditSubCategoryModal";
 
