@@ -14,7 +14,6 @@ import com.g127.snapbuy.repository.*;
 import com.g127.snapbuy.service.PurchaseOrderService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -192,7 +191,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         detailRepo.saveAll(details);
         detailRepo.flush();
 
-        // 2) Cập nhật tồn kho
         LocalDateTime now = LocalDateTime.now();
         var account = accountRepo.findById(receiverId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản: " + receiverId));
@@ -365,7 +363,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         
         List<PurchaseOrderDetail> details = detailRepo.findByPurchaseOrderId(poId);
         
-        // Load products để có productName và productCode trong response
         Set<UUID> productIds = details.stream()
                 .map(PurchaseOrderDetail::getProductId)
                 .filter(Objects::nonNull)
@@ -374,7 +371,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 productRepo.findAllById(productIds).stream()
                         .collect(Collectors.toMap(Product::getProductId, p -> p));
         
-        // Map details với product info
         List<PurchaseOrderDetailResponse> detailResponses = details.stream().map(detail -> {
             Product product = productMap.get(detail.getProductId());
             return mapDetailResponse(detail, product);
@@ -389,12 +385,11 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     @Override
     @Transactional
     public PurchaseOrderResponse update(UUID poId, PurchaseOrderUpdateRequest req, String usernameOrEmail) {
-        resolveAccountId(usernameOrEmail); // Xác thực tài khoản
+        resolveAccountId(usernameOrEmail);
 
         PurchaseOrder po = purchaseOrderRepo.findById(poId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu nhập hàng với ID: " + poId));
 
-        // Chỉ cho phép update nếu đơn ở trạng thái "Chờ duyệt" hoặc "Đã duyệt"
         String status = po.getStatus();
         if ("Đã nhận hàng".equals(status)) {
             throw new IllegalStateException("Không thể chỉnh sửa đơn hàng đã hoàn tất. Trạng thái hiện tại: " + status);
@@ -403,43 +398,39 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             throw new IllegalStateException("Không thể chỉnh sửa đơn hàng đã bị hủy. Trạng thái hiện tại: " + status);
         }
 
-        // Validate products
-        for (var i : req.items()) {
-            productRepo.findById(i.productId())
-                    .orElseThrow(() -> new NoSuchElementException("Sản phẩm không tồn tại: " + i.productId()));
-            if (i.quantity() <= 0) throw new IllegalArgumentException("Số lượng phải > 0");
-            if (i.unitPrice() <= 0) throw new IllegalArgumentException("Đơn giá phải > 0");
+        for (var i : req.getItems()) {
+            productRepo.findById(i.getProductId())
+                    .orElseThrow(() -> new NoSuchElementException("Sản phẩm không tồn tại: " + i.getProductId()));
+            if (i.getQuantity() <= 0) throw new IllegalArgumentException("Số lượng phải > 0");
+            if (i.getUnitPrice() == null || i.getUnitPrice().compareTo(BigDecimal.ZERO) <= 0)
+                throw new IllegalArgumentException("Đơn giá phải > 0");
         }
 
-        // Tính toán tổng tiền mới
-        BigDecimal newSubtotal = req.items().stream()
-                .map(i -> BigDecimal.valueOf(i.unitPrice()).multiply(BigDecimal.valueOf(i.quantity())))
+        BigDecimal newSubtotal = req.getItems().stream()
+                .map(i -> i.getUnitPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal taxRatePct = Optional.ofNullable(req.taxAmount()).orElse(BigDecimal.ZERO);
+        BigDecimal taxRatePct = Optional.ofNullable(req.getTaxAmount()).orElse(BigDecimal.ZERO);
         BigDecimal newTax = newSubtotal.multiply(taxRatePct)
                 .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
         BigDecimal newTotal = newSubtotal.add(newTax);
 
-        // Cập nhật tổng tiền và thuế
         po.setTotalAmount(newTotal);
         po.setTaxAmount(newTax);
-        po.setNotes(cleanNotes(req.notes()));
+        po.setNotes(cleanNotes(req.getNotes()));
         purchaseOrderRepo.save(po);
         purchaseOrderRepo.flush();
 
-        // Xóa các detail cũ
         detailRepo.deleteAllByPurchaseOrderId(poId);
         detailRepo.flush();
 
-        // Tạo các detail mới
-        List<PurchaseOrderDetail> newDetails = req.items().stream().map(i ->
+        List<PurchaseOrderDetail> newDetails = req.getItems().stream().map(i ->
                 PurchaseOrderDetail.builder()
                         .purchaseOrderId(poId)
-                        .productId(i.productId())
-                        .quantity(i.quantity())
-                        .unitPrice(BigDecimal.valueOf(i.unitPrice()))
-                        .receivedQuantity(0) // Reset về 0 khi update
+                        .productId(i.getProductId())
+                        .quantity(i.getQuantity())
+                        .unitPrice(i.getUnitPrice())
+                        .receivedQuantity(0)
                         .build()
         ).toList();
 

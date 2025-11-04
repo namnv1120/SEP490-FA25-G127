@@ -15,5 +15,6 @@ public interface OrderService {
     OrderResponse cancelOrder(UUID id);
     void finalizePayment(UUID orderId);
     void finalizePaymentByReference(String transactionReference);
+    void cancelOrderByReference(String transactionReference);
 }
 

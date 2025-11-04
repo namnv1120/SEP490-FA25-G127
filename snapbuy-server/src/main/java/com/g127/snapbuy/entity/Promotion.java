@@ -1,5 +1,7 @@
 package com.g127.snapbuy.entity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -64,9 +66,34 @@ public class Promotion {
     }
 
     public enum DiscountType {
-        PERCENT, // Giảm theo phần trăm
-        FIXED    // Giảm trực tiếp số tiền
+        PERCENT("Giảm theo phần trăm"),
+        FIXED("Giảm trực tiếp số tiền");
+
+        private final String label;
+
+        DiscountType(String label) {
+            this.label = label;
+        }
+
+        @JsonValue
+        public String getLabel() {
+            return label;
+        }
+
+        @JsonCreator
+        public static DiscountType fromValue(String value) {
+            if (value == null) return null;
+            String normalized = value.trim();
+            for (DiscountType t : values()) {
+                if (t.label.equalsIgnoreCase(normalized) || t.name().equalsIgnoreCase(normalized)) {
+                    return t;
+                }
+            }
+            throw new IllegalArgumentException("Loại giảm giá không hợp lệ: " + value);
+        }
     }
 }
+
+
 
 

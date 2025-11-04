@@ -416,6 +416,30 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
 
     @Override
     @Transactional
+    public void cancelOrderByReference(String transactionReference) {
+        Payment payment = paymentRepository.findByTransactionReference(transactionReference)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Không tìm thấy thanh toán với reference: " + transactionReference));
+
+        Order order = payment.getOrder();
+        List<OrderDetail> details = orderDetailRepository.findByOrder(order);
+
+        for (OrderDetail d : details) {
+            addInventoryBack(d.getProduct(), d.getQuantity(), order.getAccount(),
+                    "Hủy đơn " + order.getOrderNumber() + " do thanh toán MoMo thất bại");
+        }
+
+        order.setOrderStatus("Đã hủy");
+        order.setPaymentStatus("Thất bại");
+        order.setUpdatedDate(LocalDateTime.now());
+        payment.setPaymentStatus("Thất bại");
+
+        orderRepository.save(order);
+        paymentRepository.save(payment);
+    }
+
+    @Override
+    @Transactional
     public void finalizePayment(UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
