@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { Modal, message, Spin } from "antd";
 import TableTopHead from "../../../components/table-top-head";
 import CommonSelect from "../../../components/select/common-select";
+import { getAllOrders, getOrderById } from "../../../services/OrderService";
+import { getCustomerById } from "../../../services/CustomerService";
+import { logoPng, barcodeImg3 } from "../../../utils/imagepath";
 
-const PosModals = () => {
+const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onClosePaymentMethodModal, onPaymentCompleted, onSelectPaymentMethod, showCashPaymentModal, showMomoModal, onCashPaymentConfirm, onMomoModalClose, onCompleteOrder, onCashPaymentCompleted, onHandleOrderPayment, onSelectOrder }) => {
   const [selectedTaxType, setSelectedTaxType] = useState(null);
   const [selectedDiscountType, setSelectedDiscountType] = useState(null);
   const [selectedWeightUnit, setSelectedWeightUnit] = useState(null);
@@ -13,8 +17,17 @@ const PosModals = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const [selectedPaymentType, setSelectedPaymentType] = useState(null);
   const [input, setInput] = useState("");
-  const [recentTransactions, setRecentTransactions] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersSearchQuery, setOrdersSearchQuery] = useState("");
+  const [cashReceived, setCashReceived] = useState("");
+  const [momoPayUrl, setMomoPayUrl] = useState(null);
+  const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
+  const [orderDetailLoading, setOrderDetailLoading] = useState(false);
+  const [showOrderDetailModal, setShowOrderDetailModal] = useState(false);
+  const [orderToPrint, setOrderToPrint] = useState(null);
+  const [printReceiptLoading, setPrintReceiptLoading] = useState(false);
+  const [showPrintReceiptModal, setShowPrintReceiptModal] = useState(false);
 
   const handleButtonClick = (value) => {
     setInput((prev) => prev + value);
@@ -90,169 +103,762 @@ const PosModals = () => {
     ],
   };
 
-  // Load transactions and orders from API
-  // useEffect(() => {
-  //   // Fetch recent transactions
-  //   // Fetch orders
-  // }, []);
+  // Extract MoMo payUrl from created order
+  useEffect(() => {
+    if (createdOrder && showMomoModal) {
+      let foundPayUrl = null;
+      
+      // OrderResponse has payment (singular) field
+      if (createdOrder.payment) {
+        // Check if payment has payUrl directly
+        if (createdOrder.payment.payUrl) {
+          foundPayUrl = createdOrder.payment.payUrl;
+        }
+        // Check if payment notes contain PAYURL
+        else if (createdOrder.payment.notes && createdOrder.payment.notes.startsWith("PAYURL:")) {
+          foundPayUrl = createdOrder.payment.notes.substring("PAYURL:".length);
+        }
+      }
+      // Fallback: check if payUrl is directly in order response
+      if (!foundPayUrl && createdOrder.payUrl) {
+        foundPayUrl = createdOrder.payUrl;
+      }
+      
+      setMomoPayUrl(foundPayUrl);
+    } else if (!showMomoModal) {
+      setMomoPayUrl(null);
+    }
+  }, [createdOrder, showMomoModal]);
+
+  // Handle payment method selection - will be passed from Pos.jsx
+  const handleSelectPaymentMethod = (method) => {
+    // This will be overridden by prop from Pos.jsx
+  };
+
+  // Calculate change amount
+  const calculateChange = () => {
+    if (!cashReceived) return 0;
+    const received = parseFloat(cashReceived) || 0;
+    const total = parseFloat(createdOrder?.totalAmount || totalAmount || 0);
+    return received - total;
+  };
+
+  // Handle cash payment confirmation
+  const handleCashPaymentConfirm = async () => {
+    const change = calculateChange();
+    if (change < 0) {
+      message.warning("Số tiền khách đưa không đủ!");
+      return;
+    }
+    
+    // Call API to complete order (finalize payment and update statuses)
+    if (createdOrder && createdOrder.orderId) {
+      try {
+        message.loading("Đang xử lý thanh toán...", 0);
+        
+        // Use onCashPaymentCompleted if available, otherwise use onCompleteOrder
+        const completionHandler = onCashPaymentCompleted || onCompleteOrder;
+        if (completionHandler) {
+          await completionHandler(createdOrder.orderId);
+        }
+        
+        message.destroy();
+        message.success("Thanh toán tiền mặt thành công!");
+        
+        // Close modal and reset
+        setCashReceived("");
+        if (onCashPaymentConfirm) {
+          onCashPaymentConfirm();
+        }
+      } catch (error) {
+        message.destroy();
+        const errorMessage = error.response?.data?.message || 
+                            error.message || 
+                            "Thanh toán thất bại. Vui lòng thử lại!";
+        message.error(errorMessage);
+      }
+    } else {
+      message.error("Không tìm thấy đơn hàng. Vui lòng thử lại!");
+    }
+  };
+
+  // Reset cash received when modal closes
+  useEffect(() => {
+    if (!showCashPaymentModal) {
+      setCashReceived("");
+    }
+  }, [showCashPaymentModal]);
+
+  // Fetch orders when modal opens
+  useEffect(() => {
+    const fetchOrders = async () => {
+      // Check if orders modal is visible
+      const ordersModal = document.getElementById('orders');
+      if (ordersModal && ordersModal.classList.contains('show')) {
+        try {
+          setOrdersLoading(true);
+          const data = await getAllOrders();
+          setOrders(data || []);
+        } catch (error) {
+          message.error("Không thể tải danh sách đơn hàng");
+          setOrders([]);
+        } finally {
+          setOrdersLoading(false);
+        }
+      }
+    };
+
+    // Listen for modal show event
+    const ordersModal = document.getElementById('orders');
+    if (ordersModal) {
+      ordersModal.addEventListener('shown.bs.modal', fetchOrders);
+      return () => {
+        ordersModal.removeEventListener('shown.bs.modal', fetchOrders);
+      };
+    }
+  }, []);
+
+  // Helper function to get order status
+  const getOrderStatus = (order) => {
+    // Map API status to Vietnamese status
+    const status = order.orderStatus || order.status || "";
+    
+    if (status === "Hoàn tất" || status === "Completed" || status === "COMPLETED") {
+      return "Hoàn tất";
+    }
+    if (status === "Đã hủy" || status === "Cancelled" || status === "CANCELLED") {
+      return "Đã hủy";
+    }
+    // Default to "Chờ xác nhận"
+    return "Chờ xác nhận";
+  };
+
+  // Filter orders by status and search query, then sort by date (newest first)
+  const getOrdersByStatus = (status) => {
+    return orders
+      .filter(order => {
+        const orderStatus = getOrderStatus(order);
+        return orderStatus === status;
+      })
+      .filter(order => {
+        // Apply search filter
+        if (!ordersSearchQuery) return true;
+        const query = ordersSearchQuery.toLowerCase();
+        const customerName = (order.customer?.fullName || order.customer?.customerName || "").toLowerCase();
+        const orderNumber = (order.orderNumber || order.orderId || "").toString().toLowerCase();
+        const phone = (order.customer?.phone || "").toLowerCase();
+        return customerName.includes(query) || orderNumber.includes(query) || phone.includes(query);
+      })
+      .sort((a, b) => {
+        // Sort by date, newest first
+        const dateA = new Date(a.orderDate || a.createdAt || a.createdDate || 0);
+        const dateB = new Date(b.orderDate || b.createdAt || b.createdDate || 0);
+        return dateB - dateA; // Descending order (newest first)
+      });
+  };
+
+  // Handle view order details
+  const handleViewOrderDetail = async (orderId) => {
+    try {
+      setOrderDetailLoading(true);
+      
+      // Fetch order detail and show modal on top of orders modal
+      const orderDetail = await getOrderById(orderId);
+      
+      // Fetch customer if we have customerId but no customer object
+      if (orderDetail.customerId && !orderDetail.customer) {
+        try {
+          const customerData = await getCustomerById(orderDetail.customerId);
+          orderDetail.customer = customerData;
+        } catch (error) {
+          // If customer fetch fails, continue without customer data
+          console.warn("Không thể tải thông tin khách hàng:", error);
+        }
+      }
+      
+      setSelectedOrderDetail(orderDetail);
+      setShowOrderDetailModal(true);
+      
+      setOrderDetailLoading(false);
+    } catch (error) {
+      setOrderDetailLoading(false);
+      message.error("Không thể tải chi tiết đơn hàng");
+    }
+  };
+
+  // Handle print order - show receipt modal first
+  const handlePrintOrder = async (order) => {
+    try {
+      setPrintReceiptLoading(true);
+      
+      // Fetch full order details if needed
+      let orderData = order;
+      if (!order.orderDetails) {
+        try {
+          orderData = await getOrderById(order.orderId);
+        } catch (error) {
+          message.error("Không thể tải chi tiết đơn hàng để in");
+          setPrintReceiptLoading(false);
+          return;
+        }
+      }
+      
+      // Fetch customer if we have customerId but no customer object
+      if (orderData.customerId && !orderData.customer) {
+        try {
+          const customerData = await getCustomerById(orderData.customerId);
+          orderData.customer = customerData;
+        } catch (error) {
+          // If customer fetch fails, continue without customer data
+          console.warn("Không thể tải thông tin khách hàng:", error);
+        }
+      }
+      
+      setOrderToPrint(orderData);
+      setPrintReceiptLoading(false);
+      
+      // Show Ant Design Modal (similar to Order Detail Modal)
+      setShowPrintReceiptModal(true);
+    } catch (error) {
+      setPrintReceiptLoading(false);
+      message.error("Không thể mở hóa đơn in");
+    }
+  };
+
+  // Helper function to close all modals and clean up
+  const closeAllModals = () => {
+    // Close all Bootstrap modals
+    if (window.bootstrap && window.bootstrap.Modal) {
+      const allModals = document.querySelectorAll('.modal.show');
+      allModals.forEach(modal => {
+        const bsModal = window.bootstrap.Modal.getInstance(modal);
+        if (bsModal) {
+          bsModal.hide();
+        }
+      });
+    }
+    
+    // Remove all backdrops (both Bootstrap and custom)
+    const backdrops = document.querySelectorAll('.modal-backdrop, .modal-backdrop-custom');
+    backdrops.forEach(backdrop => backdrop.remove());
+    
+    // Remove modal-open class from body
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    
+    // Close all Ant Design modals by resetting states
+    setShowOrderDetailModal(false);
+    setSelectedOrderDetail(null);
+  };
+
+  // Handle select order from order list - load order into POS
+  const handleSelectOrder = async (order) => {
+    try {
+      // Fetch full order details if needed
+      let orderData = order;
+      if (!order.orderDetails || !order.customer) {
+        try {
+          orderData = await getOrderById(order.orderId);
+        } catch (error) {
+          message.error("Không thể tải thông tin đơn hàng");
+          return;
+        }
+      }
+      
+      // Close orders modal first
+      const ordersModal = document.getElementById('orders');
+      if (ordersModal && ordersModal.classList.contains('show')) {
+        if (window.bootstrap && window.bootstrap.Modal) {
+          const ordersBsModal = window.bootstrap.Modal.getInstance(ordersModal);
+          if (ordersBsModal) {
+            ordersBsModal.hide();
+            
+            // Clean up backdrops and body styles
+            setTimeout(() => {
+              const backdrops = document.querySelectorAll('.modal-backdrop');
+              backdrops.forEach(backdrop => backdrop.remove());
+              document.body.classList.remove('modal-open');
+              document.body.style.overflow = '';
+              document.body.style.paddingRight = '';
+              
+              // Load order into POS
+              if (onSelectOrder) {
+                onSelectOrder(orderData);
+              } else {
+                message.warning("Chức năng chọn đơn chưa được tích hợp");
+              }
+            }, 200);
+            return;
+          }
+        }
+      }
+      
+      // If orders modal is not open, just load order
+      if (onSelectOrder) {
+        await onSelectOrder(orderData);
+      } else {
+        message.warning("Chức năng chọn đơn chưa được tích hợp");
+      }
+    } catch (error) {
+      message.error("Không thể chọn đơn hàng này");
+    }
+  };
+
+  // Handle payment for order from order list
+  const handleOrderPayment = async (order) => {
+    try {
+      // Fetch full order details if needed
+      let orderData = order;
+      if (!order.orderDetails || !order.customer) {
+        try {
+          orderData = await getOrderById(order.orderId);
+        } catch (error) {
+          message.error("Không thể tải thông tin đơn hàng");
+          return;
+        }
+      }
+      
+      // Close orders modal first, then show payment modal
+      const ordersModal = document.getElementById('orders');
+      if (ordersModal && ordersModal.classList.contains('show')) {
+        if (window.bootstrap && window.bootstrap.Modal) {
+          const ordersBsModal = window.bootstrap.Modal.getInstance(ordersModal);
+          if (ordersBsModal) {
+            // Hide the modal
+            ordersBsModal.hide();
+            
+            // Clean up backdrops and body styles immediately
+            setTimeout(() => {
+              const backdrops = document.querySelectorAll('.modal-backdrop');
+              backdrops.forEach(backdrop => backdrop.remove());
+              document.body.classList.remove('modal-open');
+              document.body.style.overflow = '';
+              document.body.style.paddingRight = '';
+              
+              // Show payment modal after cleanup
+              if (onHandleOrderPayment) {
+                onHandleOrderPayment(orderData);
+              } else {
+                message.warning("Chức năng thanh toán chưa được tích hợp");
+              }
+            }, 200);
+            return;
+          }
+        }
+      }
+      
+      // If orders modal is not open, just show payment modal
+      if (onHandleOrderPayment) {
+        await onHandleOrderPayment(orderData);
+      } else {
+        message.warning("Chức năng thanh toán chưa được tích hợp");
+      }
+    } catch (error) {
+      message.error("Không thể xử lý thanh toán cho đơn hàng này");
+    }
+  };
+
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  // Get payment method display text
+  const getPaymentMethodText = (order) => {
+    if (!order.payment || !order.payment.paymentMethod) {
+      return "Chưa chọn";
+    }
+    const method = order.payment.paymentMethod;
+    if (method === "Tiền mặt" || method === "CASH" || method === "Cash") {
+      return "Tiền mặt";
+    } else if (method === "MOMO" || method === "Ví điện tử" || method === "MoMo") {
+      return "MoMo";
+    }
+    return method;
+  };
+
+  // Get customer name from order
+  const getCustomerName = (order) => {
+    // Try multiple sources for customer name
+    if (order.customerName) {
+      return order.customerName;
+    }
+    if (order.customer) {
+      if (order.customer.fullName) {
+        return order.customer.fullName;
+      }
+      if (order.customer.customerName) {
+        return order.customer.customerName;
+      }
+      if (order.customer.name) {
+        return order.customer.name;
+      }
+    }
+    return "Khách lẻ";
+  };
+
+  // Get customer phone from order (sync, assumes customer is already fetched)
+  const getCustomerPhone = (order) => {
+    if (order.customer) {
+      if (order.customer.phone) {
+        return order.customer.phone;
+      }
+      if (order.customer.phoneNumber) {
+        return order.customer.phoneNumber;
+      }
+      if (order.customer.phoneNo) {
+        return order.customer.phoneNo;
+      }
+    }
+    return "-";
+  };
 
   return (
     <>
-      {/* Payment Completed */}
-      <div
-        className="modal fade modal-default"
-        id="payment-completed"
-        aria-labelledby="payment-completed"
+      {/* Payment Method Selection Modal */}
+      <Modal
+        title="Chọn phương thức thanh toán"
+        open={showPaymentMethodModal}
+        onCancel={onClosePaymentMethodModal}
+        footer={null}
+        centered
+        width={500}
+        zIndex={10020}
+        mask={true}
+        maskClosable={true}
+        getContainer={false}
       >
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-body p-0">
-              <div className="success-wrap text-center">
-                <form>
-                  <div className="icon-success bg-success text-white mb-2">
-                    <i className="ti ti-check" />
-                  </div>
-                  <h3 className="mb-2">Payment Completed</h3>
-                  <p className="mb-3">
-                    Do you want to Print Receipt for the Completed Order
-                  </p>
-                  <div className="d-flex align-items-center justify-content-center gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      className="btn btn-md btn-secondary"
-                      data-bs-toggle="modal"
-                      data-bs-target="#print-receipt"
-                    >
-                      Print Receipt
-                      <i className="feather-arrow-right-circle icon-me-5" />
-                    </button>
-                    <button
-                      type="button"
-                      data-bs-dismiss="modal"
-                      className="btn btn-md btn-primary"
-                    >
-                      Next Order
-                    </button>
-                  </div>
-                </form>
+        <div className="row g-3">
+          <div className="col-12">
+            <div className="text-center mb-4">
+              <h5>Tổng tiền: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(createdOrder?.totalAmount || totalAmount || 0)}</h5>
+            </div>
+          </div>
+          <div className="col-6">
+            <button
+              className="btn btn-success w-100 py-3"
+              onClick={async () => {
+                if (onSelectPaymentMethod) {
+                  try {
+                    await onSelectPaymentMethod("cash");
+                  } catch (error) {
+                  }
+                }
+              }}
+              style={{ fontSize: '16px' }}
+            >
+              <i className="ti ti-cash-banknote fs-24 d-block mb-2" />
+              Tiền mặt
+            </button>
+          </div>
+          <div className="col-6">
+            <button
+              className="btn btn-primary w-100 py-3"
+              onClick={async () => {
+                if (onSelectPaymentMethod) {
+                  try {
+                    await onSelectPaymentMethod("momo");
+                  } catch (error) {
+                  }
+                }
+              }}
+              style={{ fontSize: '16px' }}
+            >
+              <i className="ti ti-scan fs-24 d-block mb-2" />
+              MoMo
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Cash Payment Modal */}
+      <Modal
+        title="Thanh toán tiền mặt"
+        open={showCashPaymentModal}
+        onCancel={() => {
+          // Just close the modal when cancel is clicked
+          setCashReceived("");
+          if (onCashPaymentConfirm) {
+            onCashPaymentConfirm();
+          }
+        }}
+        footer={null}
+        centered
+        width={500}
+        zIndex={10021}
+        mask={true}
+        maskClosable={true}
+        getContainer={false}
+      >
+        <div className="row g-3">
+          <div className="col-12">
+            <div className="mb-3">
+              <label className="form-label fw-bold">Tổng tiền đơn hàng</label>
+              <input
+                type="text"
+                className="form-control"
+                value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(createdOrder?.totalAmount || totalAmount || 0)}
+                readOnly
+                style={{ fontSize: '18px', fontWeight: 'bold', textAlign: 'center' }}
+              />
+            </div>
+          </div>
+          <div className="col-12">
+            <div className="mb-3">
+              <label className="form-label fw-bold">
+                Tiền khách đưa <span className="text-danger">*</span>
+              </label>
+              <div className="input-icon-start position-relative">
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="Nhập số tiền khách đưa"
+                  value={cashReceived}
+                  onChange={(e) => setCashReceived(e.target.value)}
+                  style={{ fontSize: '16px', paddingLeft: '40px' }}
+                  autoFocus
+                />
+                <span className="input-icon-addon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }}>
+                  <i className="ti ti-currency-dollar text-gray-9" />
+                </span>
               </div>
             </div>
           </div>
+          <div className="col-12">
+            <div className="mb-3">
+              <label className="form-label fw-bold">
+                {calculateChange() >= 0 ? "Tiền thừa" : "Tiền thiếu"}
+              </label>
+              <input
+                type="text"
+                className={`form-control ${calculateChange() >= 0 ? 'text-success' : 'text-danger'}`}
+                value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Math.abs(calculateChange()))}
+                readOnly
+                style={{ 
+                  fontSize: '20px', 
+                  fontWeight: 'bold', 
+                  textAlign: 'center',
+                  backgroundColor: calculateChange() >= 0 ? '#d4edda' : '#f8d7da'
+                }}
+              />
+            </div>
+          </div>
+          <div className="row g-3 mt-3">
+            <div className="col-12">
+              <button
+                className="btn btn-success w-100"
+                onClick={handleCashPaymentConfirm}
+                style={{ fontSize: '16px', padding: '10px' }}
+              >
+                Xác nhận thanh toán
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-      {/* /Payment Completed */}
+      </Modal>
 
-      {/* Print Receipt */}
-      <div
-        className="modal fade modal-default"
-        id="print-receipt"
-        aria-labelledby="print-receipt"
+      {/* MoMo Payment Modal */}
+      <Modal
+        title="Thanh toán qua MoMo"
+        open={showMomoModal}
+        onCancel={() => {
+          // Just close the modal when cancel is clicked
+          if (onMomoModalClose) {
+            onMomoModalClose();
+          }
+        }}
+        footer={null}
+        centered
+        width={400}
+        zIndex={10021}
+        mask={true}
+        maskClosable={true}
+        getContainer={false}
       >
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-body">
-              <div className="icon-head text-center">
-                <Link to="#">
-                  <div className="logo-placeholder">Logo</div>
-                </Link>
+        <div className="text-center">
+          <div className="mb-3">
+            <h5 className="mb-2">Số tiền cần thanh toán</h5>
+            <h3 className="text-primary">
+              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(createdOrder?.totalAmount || totalAmount || 0)}
+            </h3>
+          </div>
+          {momoPayUrl ? (
+            <>
+              <div className="mb-3 p-3 bg-light rounded d-flex justify-content-center">
+                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(momoPayUrl)}`} alt="MoMo QR Code" />
               </div>
-              <div className="text-center info text-center">
-                <h6>Company Name</h6>
-                <p className="mb-0">Phone Number: -</p>
-                <p className="mb-0">
-                  Email: <Link to="mailto:">-</Link>
-                </p>
-              </div>
-              <div className="tax-invoice">
-                <h6 className="text-center">Tax Invoice</h6>
-                <div className="row">
+              <p className="text-muted mb-3">
+                Quét mã QR bằng ứng dụng MoMo để thanh toán
+              </p>
+              <button
+                className="btn btn-primary"
+                onClick={() => window.open(momoPayUrl, '_blank')}
+              >
+                <i className="ti ti-external-link me-2" />
+                Mở MoMo App
+              </button>
+            </>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-danger">Chưa có QR code thanh toán. Vui lòng thử lại.</p>
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* Print Receipt Modal */}
+      <Modal
+        title="Hóa đơn bán hàng"
+        open={showPrintReceiptModal}
+        onCancel={() => {
+          setShowPrintReceiptModal(false);
+          setOrderToPrint(null);
+        }}
+        footer={null}
+        centered
+        width={400}
+        zIndex={10001}
+        mask={true}
+        maskClosable={true}
+      >
+        {printReceiptLoading ? (
+          <div className="text-center py-4">
+            <Spin size="large" />
+          </div>
+        ) : orderToPrint ? (
+          <div>
+            <div className="icon-head text-center mb-3">
+              <Link to="#">
+                <img src={logoPng} width={130} height={40} alt="Receipt Logo" />
+              </Link>
+            </div>
+            <div className="tax-invoice mb-3">
+              <h6 className="text-center">Hóa đơn</h6>
+              <div className="row">
                   <div className="col-sm-12 col-md-6">
                     <div className="invoice-user-name">
-                      <span>Name: </span>-
+                      <span>Mã đơn: </span>#{orderToPrint.orderNumber || orderToPrint.orderId || "-"}
                     </div>
                     <div className="invoice-user-name">
-                      <span>Invoice No: </span>-
+                      <span>Tên khách hàng: </span>{getCustomerName(orderToPrint)}
                     </div>
                   </div>
-                  <div className="col-sm-12 col-md-6">
-                    <div className="invoice-user-name">
-                      <span>Customer Id: </span>-
-                    </div>
-                    <div className="invoice-user-name">
-                      <span>Date: </span>{new Date().toLocaleDateString()}
-                    </div>
+                <div className="col-sm-12 col-md-6">
+                  <div className="invoice-user-name">
+                    <span>Ngày: </span>{formatDate(orderToPrint.orderDate || orderToPrint.createdAt || orderToPrint.createdDate)}
+                  </div>
+                  <div className="invoice-user-name">
+                    <span>SĐT: </span>{getCustomerPhone(orderToPrint)}
                   </div>
                 </div>
               </div>
-              <table className="table-borderless w-100 table-fit">
-                <thead>
-                  <tr>
-                    <th># Item</th>
-                    <th>Price</th>
-                    <th>Qty</th>
-                    <th className="text-end">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
+            </div>
+            <table className="table-borderless w-100 table-fit mb-3">
+              <thead>
+                <tr>
+                  <th style={{ width: '45%' }}># Sản phẩm</th>
+                  <th style={{ width: '20%', textAlign: 'right', paddingRight: '15px' }}>Đơn giá</th>
+                  <th style={{ width: '10%', textAlign: 'center', paddingLeft: '15px', paddingRight: '15px' }}>SL</th>
+                  <th style={{ width: '25%' }} className="text-end">Thành tiền</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orderToPrint.orderDetails && orderToPrint.orderDetails.length > 0 ? (
+                  <>
+                    {orderToPrint.orderDetails.map((item, index) => {
+                      const unitPrice = item.unitPrice || 0;
+                      const quantity = item.quantity || 0;
+                      const discount = item.discount || 0;
+                      const total = (unitPrice * quantity) - discount;
+                      
+                      return (
+                        <tr key={item.orderDetailId || index}>
+                          <td style={{ width: '45%' }}>{item.productName || "N/A"}</td>
+                          <td style={{ width: '20%', textAlign: 'right', paddingRight: '15px' }}>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(unitPrice)}</td>
+                          <td style={{ width: '10%', textAlign: 'center', paddingLeft: '15px', paddingRight: '15px' }}>{quantity}</td>
+                          <td style={{ width: '25%' }} className="text-end">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}</td>
+                        </tr>
+                      );
+                    })}
+                    <tr>
+                      <td colSpan={4}>
+                        <table className="table-borderless w-100 table-fit">
+                          <tbody>
+                            <tr>
+                              <td className="fw-bold">Tạm tính:</td>
+                              <td className="text-end">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(orderToPrint.subtotal || orderToPrint.totalAmount || 0)}</td>
+                            </tr>
+                            {orderToPrint.discountAmount && orderToPrint.discountAmount > 0 && (
+                              <tr>
+                                <td className="fw-bold">Giảm giá:</td>
+                                <td className="text-end">-{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(orderToPrint.discountAmount)}</td>
+                              </tr>
+                            )}
+                            {orderToPrint.taxAmount && orderToPrint.taxAmount > 0 && (
+                              <tr>
+                                <td className="fw-bold">Thuế:</td>
+                                <td className="text-end">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(orderToPrint.taxAmount)}</td>
+                              </tr>
+                            )}
+                            <tr>
+                              <td className="fw-bold">Tổng cộng:</td>
+                              <td className="text-end fw-bold">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(orderToPrint.totalAmount || 0)}</td>
+                            </tr>
+                            <tr>
+                              <td className="fw-bold">Trạng thái thanh toán:</td>
+                              <td className="text-end">{orderToPrint.paymentStatus || orderToPrint.orderStatus || "Chưa thanh toán"}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                  </>
+                ) : (
                   <tr>
                     <td colSpan={4} className="text-center py-3">
-                      No items
+                      Không có sản phẩm
                     </td>
                   </tr>
-                  <tr>
-                    <td colSpan={4}>
-                      <table className="table-borderless w-100 table-fit">
-                        <tbody>
-                          <tr>
-                            <td className="fw-bold">Sub Total :</td>
-                            <td className="text-end">$0.00</td>
-                          </tr>
-                          <tr>
-                            <td className="fw-bold">Discount :</td>
-                            <td className="text-end">-$0.00</td>
-                          </tr>
-                          <tr>
-                            <td className="fw-bold">Shipping :</td>
-                            <td className="text-end">0.00</td>
-                          </tr>
-                          <tr>
-                            <td className="fw-bold">Tax :</td>
-                            <td className="text-end">$0.00</td>
-                          </tr>
-                          <tr>
-                            <td className="fw-bold">Total Bill :</td>
-                            <td className="text-end">$0.00</td>
-                          </tr>
-                          <tr>
-                            <td className="fw-bold">Due :</td>
-                            <td className="text-end">$0.00</td>
-                          </tr>
-                          <tr>
-                            <td className="fw-bold">Total Payable :</td>
-                            <td className="text-end">$0.00</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              <div className="text-center invoice-bar">
-                <div className="border-bottom border-dashed">
-                  <p>Thank you for your business!</p>
-                </div>
-                <div className="barcode-placeholder py-2">Barcode</div>
-                <p className="text-dark fw-bold">Sale #</p>
-                <p>Thank You For Shopping With Us. Please Come Again</p>
-                <Link to="#" className="btn btn-md btn-primary">
-                  Print Receipt
-                </Link>
+                )}
+              </tbody>
+            </table>
+            <div className="text-center invoice-bar">
+              <div className="border-bottom border-dashed mb-3">
+                <p>
+                  Cảm ơn quý khách đã mua hàng!
+                </p>
               </div>
+              <button 
+                className="btn btn-md btn-primary"
+                onClick={() => {
+                  window.print();
+                }}
+              >
+                <i className="ti ti-printer me-2" />
+                In hóa đơn
+              </button>
             </div>
           </div>
-        </div>
-      </div>
-      {/* /Print Receipt */}
+        ) : (
+          <div className="text-center py-4">
+            <p>Không có dữ liệu hóa đơn</p>
+          </div>
+        )}
+      </Modal>
+      {/* /Print Receipt Modal */}
 
       {/* Products */}
       <div
@@ -642,53 +1248,10 @@ const PosModals = () => {
       </div>
       {/* /Delete Product */}
 
-      {/* Reset */}
-      <div
-        className="modal fade modal-default"
-        id="reset"
-        aria-labelledby="payment-completed"
-      >
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-body p-0">
-              <div className="success-wrap text-center">
-                <form>
-                  <div className="icon-success bg-purple-transparent text-purple mb-2">
-                    <i className="ti ti-transition-top" />
-                  </div>
-                  <h3 className="mb-2">Confirm Your Action</h3>
-                  <p className="fs-16 mb-3">
-                    The current order will be cleared. But not deleted if
-                    it&apos;s persistent. Would you like to proceed ?
-                  </p>
-                  <div className="d-flex align-items-center justify-content-center gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      className="btn btn-md btn-secondary"
-                      data-bs-dismiss="modal"
-                    >
-                      No, Cancel
-                    </button>
-                    <button
-                      type="button"
-                      data-bs-dismiss="modal"
-                      className="btn btn-md btn-primary"
-                    >
-                      Yes, Proceed
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* /Reset */}
-
-      {/* Recent Transactions */}
+      {/* Orders */}
       <div
         className="modal fade pos-modal"
-        id="recents"
+        id="orders"
         tabIndex={-1}
         aria-hidden="true"
       >
@@ -698,185 +1261,7 @@ const PosModals = () => {
         >
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title">Recent Transactions</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="tabs-sets">
-                <ul className="nav nav-tabs" id="myTab" role="tablist">
-                  <li className="nav-item" role="presentation">
-                    <button
-                      className="nav-link active"
-                      id="purchase-tab"
-                      data-bs-toggle="tab"
-                      data-bs-target="#purchase"
-                      type="button"
-                      role="tab"
-                    >
-                      Purchase
-                    </button>
-                  </li>
-                  <li className="nav-item" role="presentation">
-                    <button
-                      className="nav-link"
-                      id="payment-tab"
-                      data-bs-toggle="tab"
-                      data-bs-target="#payment"
-                      type="button"
-                      role="tab"
-                    >
-                      Payment
-                    </button>
-                  </li>
-                  <li className="nav-item" role="presentation">
-                    <button
-                      className="nav-link"
-                      id="return-tab"
-                      data-bs-toggle="tab"
-                      data-bs-target="#return"
-                      type="button"
-                      role="tab"
-                    >
-                      Return
-                    </button>
-                  </li>
-                </ul>
-                <div className="tab-content">
-                  <div
-                    className="tab-pane fade show active"
-                    id="purchase"
-                    role="tabpanel"
-                  >
-                    <div className="card table-list-card mb-0">
-                      <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-                        <div className="search-set">
-                          <div className="search-input">
-                            <Link to="#" className="btn btn-searchset">
-                              <i className="ti ti-search fs-14 feather-search" />
-                            </Link>
-                            <div className="dataTables_filter">
-                              <label>
-                                <input
-                                  type="search"
-                                  className="form-control form-control-sm"
-                                  placeholder="Search"
-                                />
-                              </label>
-                            </div>
-                          </div>
-                        </div>
-                        <TableTopHead />
-                      </div>
-                      <div className="card-body">
-                        <div className="custom-datatable-filter table-responsive">
-                          <table className="table datatable">
-                            <thead>
-                              <tr>
-                                <th className="no-sort">
-                                  <label className="checkboxs">
-                                    <input
-                                      type="checkbox"
-                                      className="select-all"
-                                    />
-                                    <span className="checkmarks" />
-                                  </label>
-                                </th>
-                                <th>Customer</th>
-                                <th>Reference</th>
-                                <th>Date</th>
-                                <th>Amount</th>
-                                <th className="no-sort">Action</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {recentTransactions.length === 0 ? (
-                                <tr>
-                                  <td colSpan={6} className="text-center py-4">
-                                    No transactions found
-                                  </td>
-                                </tr>
-                              ) : (
-                                recentTransactions.map((transaction) => (
-                                  <tr key={transaction.id}>
-                                    <td>
-                                      <label className="checkboxs">
-                                        <input type="checkbox" />
-                                        <span className="checkmarks" />
-                                      </label>
-                                    </td>
-                                    <td>{transaction.customerName}</td>
-                                    <td>{transaction.reference}</td>
-                                    <td>{transaction.date}</td>
-                                    <td>${transaction.amount}</td>
-                                    <td className="action-table-data">
-                                      <div className="edit-delete-action">
-                                        <Link className="me-2 edit-icon p-2" to="#">
-                                          <i className="feather icon-eye" />
-                                        </Link>
-                                        <Link className="me-2 p-2" to="#">
-                                          <i className="feather icon-edit"></i>
-                                        </Link>
-                                        <Link className="p-2" to="#">
-                                          <i className="feather icon-trash-2"></i>
-                                        </Link>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                ))
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="tab-pane fade" id="payment" role="tabpanel">
-                    <div className="card table-list-card mb-0">
-                      <div className="card-body">
-                        <div className="text-center py-4">
-                          <p>No payment data available</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="tab-pane fade" id="return" role="tabpanel">
-                    <div className="card table-list-card mb-0">
-                      <div className="card-body">
-                        <div className="text-center py-4">
-                          <p>No return data available</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* /Recent Transactions */}
-
-      {/* Orders */}
-      <div
-        className="modal fade pos-modal"
-        id="orders"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-md modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Orders</h5>
+              <h5 className="modal-title">Danh sách đơn hàng</h5>
               <button
                 type="button"
                 className="close"
@@ -892,102 +1277,121 @@ const PosModals = () => {
                   <li className="nav-item" role="presentation">
                     <button
                       className="nav-link active"
-                      id="onhold-tab"
+                      id="pending-tab"
                       data-bs-toggle="tab"
-                      data-bs-target="#onhold"
+                      data-bs-target="#pending"
                       type="button"
                       role="tab"
                     >
-                      Onhold
+                      Chờ xác nhận
                     </button>
                   </li>
                   <li className="nav-item" role="presentation">
                     <button
                       className="nav-link"
-                      id="unpaid-tab"
+                      id="completed-tab"
                       data-bs-toggle="tab"
-                      data-bs-target="#unpaid"
+                      data-bs-target="#completed"
                       type="button"
                       role="tab"
                     >
-                      Unpaid
+                      Hoàn tất
                     </button>
                   </li>
                   <li className="nav-item" role="presentation">
                     <button
                       className="nav-link"
-                      id="paid-tab"
+                      id="cancelled-tab"
                       data-bs-toggle="tab"
-                      data-bs-target="#paid"
+                      data-bs-target="#cancelled"
                       type="button"
                       role="tab"
                     >
-                      Paid
+                      Đã hủy
                     </button>
                   </li>
                 </ul>
                 <div className="tab-content">
+                  {/* Chờ xác nhận */}
                   <div
                     className="tab-pane fade show active"
-                    id="onhold"
+                    id="pending"
                     role="tabpanel"
                   >
                     <div className="input-icon-start pos-search position-relative mb-3">
-                      <span className="input-icon-addon">
-                        <i className="ti ti-search" />
-                      </span>
                       <input
                         type="text"
                         className="form-control"
-                        placeholder="Search Order"
+                        placeholder="Tìm kiếm đơn hàng..."
+                        value={ordersSearchQuery}
+                        onChange={(e) => setOrdersSearchQuery(e.target.value)}
+                        style={{ paddingLeft: '40px' }}
                       />
+                      <span className="input-icon-addon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }}>
+                        <i className="ti ti-search" />
+                      </span>
                     </div>
-                    <div className="order-body">
-                      {orders.filter(o => o.status === 'onhold').length === 0 ? (
+                    <div className="order-body" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                      {ordersLoading ? (
                         <div className="text-center py-4">
-                          <p>No onhold orders</p>
+                          <Spin size="large" />
+                        </div>
+                      ) : getOrdersByStatus("Chờ xác nhận").length === 0 ? (
+                        <div className="text-center py-4">
+                          <p>Không có đơn hàng chờ xác nhận</p>
                         </div>
                       ) : (
-                        orders.filter(o => o.status === 'onhold').map((order) => (
-                          <div key={order.id} className="card bg-light mb-3">
+                        getOrdersByStatus("Chờ xác nhận").map((order) => (
+                          <div key={order.orderId} className="card bg-light mb-3">
                             <div className="card-body">
-                              <span className="badge bg-dark fs-12 mb-2">
-                                Order ID : #{order.id}
+                              <span className="badge bg-warning fs-12 mb-2">
+                                Mã đơn: #{order.orderNumber || order.orderId}
                               </span>
                               <div className="row g-3">
                                 <div className="col-md-6">
                                   <p className="fs-15 mb-1">
-                                    <span className="fs-14 fw-bold text-gray-9">Cashier :</span> {order.cashier}
+                                    <span className="fs-14 fw-bold text-gray-9">Khách hàng:</span> {getCustomerName(order)}
                                   </p>
                                   <p className="fs-15">
-                                    <span className="fs-14 fw-bold text-gray-9">Total :</span> ${order.total}
+                                    <span className="fs-14 fw-bold text-gray-9">Tổng tiền:</span> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount || 0)}
                                   </p>
                                 </div>
                                 <div className="col-md-6">
                                   <p className="fs-15 mb-1">
-                                    <span className="fs-14 fw-bold text-gray-9">Customer :</span> {order.customer}
+                                    <span className="fs-14 fw-bold text-gray-9">Phương thức thanh toán:</span> {getPaymentMethodText(order)}
                                   </p>
                                   <p className="fs-15">
-                                    <span className="fs-14 fw-bold text-gray-9">Date :</span> {order.date}
+                                    <span className="fs-14 fw-bold text-gray-9">Ngày:</span> {formatDate(order.orderDate || order.createdAt || order.createdDate)}
                                   </p>
                                 </div>
                               </div>
                               <div className="d-flex align-items-center justify-content-center flex-wrap gap-2 mt-3">
-                                <Link to="#" className="btn btn-md btn-orange">
-                                  Open Order
-                                </Link>
-                                <Link
-                                  to="#"
-                                  className="btn btn-md btn-teal"
-                                  data-bs-dismiss="modal"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#products"
+                                {getOrderStatus(order) === "Hoàn tất" && (
+                                  <button
+                                    className="btn btn-sm btn-primary"
+                                    onClick={() => handlePrintOrder(order)}
+                                  >
+                                    <i className="ti ti-printer me-1" />
+                                    In đơn
+                                  </button>
+                                )}
+                                {getOrderStatus(order) === "Chờ xác nhận" && (
+                                  <button
+                                    className="btn btn-sm btn-success"
+                                    onClick={() => handleSelectOrder(order)}
+                                  >
+                                    <i className="ti ti-shopping-cart me-1" />
+                                    Chọn đơn
+                                  </button>
+                                )}
+                                <button
+                                  className="btn btn-sm btn-info"
+                                  onClick={() => handleViewOrderDetail(order.orderId)}
+                                  disabled={orderDetailLoading}
                                 >
-                                  View Products
-                                </Link>
-                                <Link to="#" className="btn btn-md btn-indigo">
-                                  Print
-                                </Link>
+                                  <i className="ti ti-eye me-1" />
+                                  Chi tiết đơn
+                                </button>
                               </div>
                             </div>
                           </div>
@@ -995,38 +1399,172 @@ const PosModals = () => {
                       )}
                     </div>
                   </div>
-                  <div className="tab-pane fade" id="unpaid" role="tabpanel">
+                  
+                  {/* Hoàn tất */}
+                  <div className="tab-pane fade" id="completed" role="tabpanel">
                     <div className="input-icon-start pos-search position-relative mb-3">
-                      <span className="input-icon-addon">
-                        <i className="ti ti-search" />
-                      </span>
                       <input
                         type="text"
                         className="form-control"
-                        placeholder="Search Order"
+                        placeholder="Tìm kiếm đơn hàng..."
+                        value={ordersSearchQuery}
+                        onChange={(e) => setOrdersSearchQuery(e.target.value)}
+                        style={{ paddingLeft: '40px' }}
                       />
+                      <span className="input-icon-addon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }}>
+                        <i className="ti ti-search" />
+                      </span>
                     </div>
-                    <div className="order-body">
-                      <div className="text-center py-4">
-                        <p>No unpaid orders</p>
-                      </div>
+                    <div className="order-body" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                      {ordersLoading ? (
+                        <div className="text-center py-4">
+                          <Spin size="large" />
+                        </div>
+                      ) : getOrdersByStatus("Hoàn tất").length === 0 ? (
+                        <div className="text-center py-4">
+                          <p>Không có đơn hàng hoàn tất</p>
+                        </div>
+                      ) : (
+                        getOrdersByStatus("Hoàn tất").map((order) => (
+                          <div key={order.orderId} className="card bg-light mb-3">
+                            <div className="card-body">
+                              <span className="badge bg-success fs-12 mb-2">
+                                Mã đơn: #{order.orderNumber || order.orderId}
+                              </span>
+                              <div className="row g-3">
+                                <div className="col-md-6">
+                                  <p className="fs-15 mb-1">
+                                    <span className="fs-14 fw-bold text-gray-9">Khách hàng:</span> {getCustomerName(order)}
+                                  </p>
+                                  <p className="fs-15">
+                                    <span className="fs-14 fw-bold text-gray-9">Tổng tiền:</span> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount || 0)}
+                                  </p>
+                                </div>
+                                <div className="col-md-6">
+                                  <p className="fs-15 mb-1">
+                                    <span className="fs-14 fw-bold text-gray-9">Phương thức thanh toán:</span> {getPaymentMethodText(order)}
+                                  </p>
+                                  <p className="fs-15">
+                                    <span className="fs-14 fw-bold text-gray-9">Ngày:</span> {formatDate(order.orderDate || order.createdAt || order.createdDate)}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="d-flex align-items-center justify-content-center flex-wrap gap-2 mt-3">
+                                {getOrderStatus(order) === "Hoàn tất" && (
+                                  <button
+                                    className="btn btn-sm btn-primary"
+                                    onClick={() => handlePrintOrder(order)}
+                                  >
+                                    <i className="ti ti-printer me-1" />
+                                    In đơn
+                                  </button>
+                                )}
+                                {getOrderStatus(order) === "Chờ xác nhận" && (
+                                  <button
+                                    className="btn btn-sm btn-success"
+                                    onClick={() => handleSelectOrder(order)}
+                                  >
+                                    <i className="ti ti-shopping-cart me-1" />
+                                    Chọn đơn
+                                  </button>
+                                )}
+                                <button
+                                  className="btn btn-sm btn-info"
+                                  onClick={() => handleViewOrderDetail(order.orderId)}
+                                  disabled={orderDetailLoading}
+                                >
+                                  <i className="ti ti-eye me-1" />
+                                  Chi tiết đơn
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
-                  <div className="tab-pane fade" id="paid" role="tabpanel">
+                  
+                  {/* Đã hủy */}
+                  <div className="tab-pane fade" id="cancelled" role="tabpanel">
                     <div className="input-icon-start pos-search position-relative mb-3">
-                      <span className="input-icon-addon">
-                        <i className="ti ti-search" />
-                      </span>
                       <input
                         type="text"
                         className="form-control"
-                        placeholder="Search Order"
+                        placeholder="Tìm kiếm đơn hàng..."
+                        value={ordersSearchQuery}
+                        onChange={(e) => setOrdersSearchQuery(e.target.value)}
+                        style={{ paddingLeft: '40px' }}
                       />
+                      <span className="input-icon-addon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }}>
+                        <i className="ti ti-search" />
+                      </span>
                     </div>
-                    <div className="order-body">
-                      <div className="text-center py-4">
-                        <p>No paid orders</p>
-                      </div>
+                    <div className="order-body" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                      {ordersLoading ? (
+                        <div className="text-center py-4">
+                          <Spin size="large" />
+                        </div>
+                      ) : getOrdersByStatus("Đã hủy").length === 0 ? (
+                        <div className="text-center py-4">
+                          <p>Không có đơn hàng đã hủy</p>
+                        </div>
+                      ) : (
+                        getOrdersByStatus("Đã hủy").map((order) => (
+                          <div key={order.orderId} className="card bg-light mb-3">
+                            <div className="card-body">
+                              <span className="badge bg-danger fs-12 mb-2">
+                                Mã đơn: #{order.orderNumber || order.orderId}
+                              </span>
+                              <div className="row g-3">
+                                <div className="col-md-6">
+                                  <p className="fs-15 mb-1">
+                                    <span className="fs-14 fw-bold text-gray-9">Khách hàng:</span> {getCustomerName(order)}
+                                  </p>
+                                  <p className="fs-15">
+                                    <span className="fs-14 fw-bold text-gray-9">Tổng tiền:</span> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount || 0)}
+                                  </p>
+                                </div>
+                                <div className="col-md-6">
+                                  <p className="fs-15 mb-1">
+                                    <span className="fs-14 fw-bold text-gray-9">Phương thức thanh toán:</span> {getPaymentMethodText(order)}
+                                  </p>
+                                  <p className="fs-15">
+                                    <span className="fs-14 fw-bold text-gray-9">Ngày:</span> {formatDate(order.orderDate || order.createdAt || order.createdDate)}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="d-flex align-items-center justify-content-center flex-wrap gap-2 mt-3">
+                                {getOrderStatus(order) === "Hoàn tất" && (
+                                  <button
+                                    className="btn btn-sm btn-primary"
+                                    onClick={() => handlePrintOrder(order)}
+                                  >
+                                    <i className="ti ti-printer me-1" />
+                                    In đơn
+                                  </button>
+                                )}
+                                {getOrderStatus(order) === "Chờ xác nhận" && (
+                                  <button
+                                    className="btn btn-sm btn-success"
+                                    onClick={() => handleSelectOrder(order)}
+                                  >
+                                    <i className="ti ti-shopping-cart me-1" />
+                                    Chọn đơn
+                                  </button>
+                                )}
+                                <button
+                                  className="btn btn-sm btn-info"
+                                  onClick={() => handleViewOrderDetail(order.orderId)}
+                                  disabled={orderDetailLoading}
+                                >
+                                  <i className="ti ti-eye me-1" />
+                                  Chi tiết đơn
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1753,6 +2291,111 @@ const PosModals = () => {
         </div>
       </div>
       {/* /Today's Profit */}
+
+      {/* Order Detail Modal */}
+      <Modal
+        title="Chi tiết đơn hàng"
+        open={showOrderDetailModal}
+        onCancel={() => {
+          setShowOrderDetailModal(false);
+          setSelectedOrderDetail(null);
+        }}
+        footer={null}
+        centered
+        width={800}
+        zIndex={10000}
+        mask={true}
+        maskClosable={true}
+      >
+        {orderDetailLoading ? (
+          <div className="text-center py-4">
+            <Spin size="large" />
+          </div>
+        ) : selectedOrderDetail ? (
+          <div>
+            <div className="row mb-3">
+              <div className="col-md-6">
+                <p className="mb-2">
+                  <span className="fw-bold">Mã đơn:</span> #{selectedOrderDetail.orderNumber || selectedOrderDetail.orderId}
+                </p>
+                <p className="mb-2">
+                  <span className="fw-bold">Khách hàng:</span> {selectedOrderDetail.customerName || selectedOrderDetail.customer?.fullName || selectedOrderDetail.customer?.customerName || "Khách lẻ"}
+                </p>
+              </div>
+              <div className="col-md-6">
+                <p className="mb-2">
+                  <span className="fw-bold">Trạng thái:</span> {selectedOrderDetail.orderStatus || getOrderStatus(selectedOrderDetail)}
+                </p>
+                <p className="mb-2">
+                  <span className="fw-bold">Ngày đặt:</span> {formatDate(selectedOrderDetail.orderDate || selectedOrderDetail.createdAt || selectedOrderDetail.createdDate)}
+                </p>
+                <p className="mb-2">
+                  <span className="fw-bold">Trạng thái thanh toán:</span> {selectedOrderDetail.paymentStatus || "-"}
+                </p>
+              </div>
+            </div>
+            
+            {selectedOrderDetail.discountAmount && selectedOrderDetail.discountAmount > 0 && (
+              <div className="row mb-3">
+                <div className="col-md-6">
+                  <p className="mb-2">
+                    <span className="fw-bold">Giảm giá đơn:</span> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedOrderDetail.discountAmount)}
+                  </p>
+                </div>
+                <div className="col-md-6">
+                  <p className="mb-2">
+                    <span className="fw-bold">Thuế:</span> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedOrderDetail.taxAmount || 0)}
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            <div className="table-responsive mb-3">
+              <table className="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Sản phẩm</th>
+                    <th>Số lượng</th>
+                    <th>Đơn giá</th>
+                    <th>Giảm giá</th>
+                    <th className="text-end">Thành tiền</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedOrderDetail.orderDetails && selectedOrderDetail.orderDetails.length > 0 ? (
+                    selectedOrderDetail.orderDetails.map((item, index) => (
+                      <tr key={item.orderDetailId || index}>
+                        <td>{item.productName || "N/A"}</td>
+                        <td>{item.quantity || 0}</td>
+                        <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.unitPrice || 0)}</td>
+                        <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.discount || 0)}</td>
+                        <td className="text-end">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.totalPrice || ((item.quantity || 0) * (item.unitPrice || 0) - (item.discount || 0)))}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="text-center">Không có sản phẩm</td>
+                    </tr>
+                  )}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colSpan={4} className="fw-bold text-end">Tổng tiền:</td>
+                    <td className="text-end fw-bold">
+                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedOrderDetail.totalAmount || 0)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-4">
+            <p>Không có dữ liệu</p>
+          </div>
+        )}
+      </Modal>
+      {/* /Order Detail Modal */}
     </>
   );
 };

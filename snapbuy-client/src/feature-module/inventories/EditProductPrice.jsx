@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { all_routes } from "../../routes/all_routes";
-import CommonFooter from "../../components/footer/commonFooter";
+import { allRoutes } from "../../routes/AllRoutes";
+import CommonFooter from "../../components/footer/CommonFooter";
 import { message } from "antd";
 import { getProductPriceById, updateProductPrice } from "../../services/ProductPriceService";
 import { getAllProducts } from "../../services/ProductService";
@@ -9,7 +9,7 @@ import { getAllProducts } from "../../services/ProductService";
 const EditProductPrice = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const route = all_routes;
+  const route = allRoutes;
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);

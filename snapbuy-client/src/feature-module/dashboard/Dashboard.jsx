@@ -15,7 +15,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { all_routes } from "../../routes/all_routes";
+import { allRoutes } from "../../routes/AllRoutes";
 import CommonDateRangePicker from "../../components/data-range-picker/common-date-range-picker";
 import { getAllPurchaseOrders } from "../../services/PurchaseOrderService";
 import { getAllProducts } from "../../services/ProductService";
@@ -35,7 +35,7 @@ ChartJS.register(
   Legend
 );
 const Dashboard = () => {
-  const route = all_routes;
+  const route = allRoutes;
 
   // State for dashboard data
   const [loading, setLoading] = useState(true);

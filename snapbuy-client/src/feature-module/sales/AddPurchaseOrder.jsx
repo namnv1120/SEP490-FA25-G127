@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { message } from "antd";
-import { all_routes } from "../../routes/all_routes";
+import { allRoutes } from "../../routes/AllRoutes";
 import CommonSelect from "../../components/select/common-select";
 import { getAllSuppliers } from "../../services/SupplierService";
 import { getProductsBySupplierId } from "../../services/ProductService";
 import { createPurchaseOrder } from "../../services/PurchaseOrderService";
 import RefreshIcon from "../../components/tooltip-content/refresh";
-import CollapesIcon from "../../components/tooltip-content/collapes";
+import CollapesIcon from "../../components/tooltip-content/Collapse";
 
 const AddPurchaseOrder = () => {
   const navigate = useNavigate();
-  const route = all_routes;
+  const route = allRoutes;
 
   const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);

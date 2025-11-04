@@ -4,7 +4,7 @@ import PrimeDataTable from "../../components/data-table";
 import SearchFromApi from "../../components/data-table/search";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
-import CommonFooter from "../../components/footer/commonFooter";
+import CommonFooter from "../../components/footer/CommonFooter";
 import {
   getAllCustomers,
   getCustomerById,

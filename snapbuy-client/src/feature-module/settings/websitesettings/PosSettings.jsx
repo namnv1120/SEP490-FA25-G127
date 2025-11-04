@@ -1,8 +1,8 @@
 import { useState } from "react";
 import SettingsSideBar from "../settingssidebar";
 import RefreshIcon from "../../../components/tooltip-content/refresh";
-import CollapesIcon from "../../../components/tooltip-content/collapes";
-import CommonFooter from "../../../components/footer/commonFooter";
+import CollapesIcon from "../../../components/tooltip-content/Collapse";
+import CommonFooter from "../../../components/footer/CommonFooter";
 import CommonSelect from "../../../components/select/common-select";
 
 const PosSettings = () => {

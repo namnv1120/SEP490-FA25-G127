@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { SidebarData } from "../../core/json/siderbar_data";
+import { SidebarData } from "../../core/json/sidebarData";
 // import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
-import { all_routes } from "../../routes/all_routes";
+import { allRoutes } from "../../routes/AllRoutes";
 import { customer15, logoSmall, logoWhite } from "../../utils/imagepath";
 
 const Sidebar = () => {
-  const route = all_routes;
+  const route = allRoutes;
   const Location = useLocation();
   // const { t } = useTranslation();
 

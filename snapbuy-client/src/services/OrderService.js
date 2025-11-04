@@ -21,7 +21,6 @@ export const getAllOrders = async () => {
     const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
     return response.data?.result || response.data || [];
   } catch (error) {
-    console.error("Lỗi khi lấy danh sách đơn hàng:", error);
     throw error;
   }
 };
@@ -31,17 +30,24 @@ export const getOrderById = async (id) => {
     const response = await axios.get(`${REST_API_BASE_URL}/${id}`, getAuthHeaders());
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("Lỗi khi lấy đơn hàng:", error);
     throw error;
   }
 };
 
 export const createOrder = async (orderData) => {
   try {
-    const response = await axios.post(REST_API_BASE_URL, orderData, getAuthHeaders());    
+    const response = await axios.post(REST_API_BASE_URL, orderData, getAuthHeaders());
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("Lỗi khi tạo đơn hàng:", error);
+    throw error;
+  }
+};
+
+export const completeOrder = async (orderId) => {
+  try {
+    const response = await axios.post(`${REST_API_BASE_URL}/${orderId}/complete`, {}, getAuthHeaders());
+    return response.data?.result || response.data;
+  } catch (error) {
     throw error;
   }
 };

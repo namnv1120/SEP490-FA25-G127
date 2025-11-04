@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import AddRole from "../../core/modals/usermanagement/addrole";
-import EditRole from "../../core/modals/usermanagement/editrole";
+import AddRole from "../../core/modals/accounts/AddRole";
+import EditRole from "../../core/modals/accounts/EditRole";
 import DeleteModal from "../../components/delete-modal";
-import { all_routes } from "../../routes/all_routes";
+import { allRoutes } from "../../routes/AllRoutes";
 import TableTopHead from "../../components/table-top-head";
 import Table from "../../core/pagination/datatable";
 
@@ -98,7 +98,7 @@ const RoleList = () => {
         <div className="action-table-data">
           <div className="edit-delete-action">
             <Link
-              to={all_routes.permissions}
+              to={allRoutes.permissions}
               className="me-2 d-flex align-items-center p-2 border rounded"
             >
               <i className="ti ti-shield"></i>

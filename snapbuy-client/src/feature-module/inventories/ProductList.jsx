@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { all_routes } from "../../routes/all_routes";
-import CommonFooter from "../../components/footer/commonFooter";
+import { allRoutes } from "../../routes/AllRoutes";
+import CommonFooter from "../../components/footer/CommonFooter";
 import PrimeDataTable from "../../components/data-table";
 import { stockImg1 } from "../../utils/imagepath";
 import TableTopHead from "../../components/table-top-head";
@@ -28,7 +28,7 @@ const ProductList = () => {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
 
-  const route = all_routes;
+  const route = allRoutes;
 
   useEffect(() => {
     fetchProducts();

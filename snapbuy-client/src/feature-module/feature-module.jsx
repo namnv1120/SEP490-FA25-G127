@@ -1,7 +1,7 @@
 import { useSelector } from "react-redux";
 import { Outlet, useLocation, matchPath } from "react-router";
-import Header from "../components/layouts/header";
-import Sidebar from "../components/sidebar/sidebar";
+import Header from "../components/layouts/Header";
+import Sidebar from "../components/sidebar/Sidebar";
 import ThemeSettings from "../components/layouts/themeSettings";
 import { authRoutes, posPage, unAuthRoutes } from "../routes/path";
 import HorizontalSidebar from "../components/layouts/horizontalSidebar";

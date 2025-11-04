@@ -1,10 +1,10 @@
 import { Lock, Mail } from "react-feather";
 import { Link } from "react-router-dom";
 import Select from "react-select";
-import { all_routes } from "../../../../../routes/all_routes";
+import { allRoutes } from "../../../../../routes/AllRoutes";
 
 const FormHorizontal = () => {
-  const route = all_routes;
+  const route = allRoutes;
   const bloodgroup = [
     { value: "Select", label: "Select" },
     { value: "A+", label: "A+" },

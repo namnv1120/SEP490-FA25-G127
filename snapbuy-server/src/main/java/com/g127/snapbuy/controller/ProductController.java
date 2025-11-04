@@ -41,7 +41,6 @@ public class ProductController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<List<ProductResponse>> getAllProducts() {
         ApiResponse<List<ProductResponse>> response = new ApiResponse<>();
         response.setResult(productService.getAllProducts());

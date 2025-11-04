@@ -2038,3 +2038,32 @@ div.p-datepicker table td.p-datepicker-today > span.p-highlight {
 .content {
   overflow: visible !important;
 }
+
+// Override dropdown menu position for POS header
+.pos-user-dropdown {
+  margin-top: 0 !important;
+  transform: translate(0, 0) !important;
+  transition: none !important;
+}
+
+// Profile dropdown width for long names
+.profile-nav .dropdown-menu {
+  min-width: 240px !important;
+  
+  .profileset {
+    .profilesets,
+    > div {
+      min-width: 0;
+      flex: 1;
+      
+      h6,
+      h5,
+      p {
+        white-space: nowrap !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin: 0 !important;
+      }
+    }
+  }
+}

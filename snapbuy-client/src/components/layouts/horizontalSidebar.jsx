@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { SidebarData1 } from "../../core/json/sidebar_dataone";
+import { SidebarData1 } from "../../core/json/sidebarDataOne";
 
 const HorizontalSidebar = () => {
   const [opendSubMenu, setOpendSubMenu] = useState([null, null]);
