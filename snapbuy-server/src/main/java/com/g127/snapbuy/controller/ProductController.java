@@ -31,10 +31,10 @@ public class ProductController {
     }
 
 
-    @PutMapping("{id}")
+    @PutMapping(value = "{id}", consumes = {"multipart/form-data"})
     public ApiResponse<ProductResponse> updateProduct(
             @PathVariable("id") UUID id,
-            @RequestBody @Valid ProductUpdateRequest request) {
+            @ModelAttribute @Valid ProductUpdateRequest request) {
         ApiResponse<ProductResponse> response = new ApiResponse<>();
         response.setResult(productService.updateProduct(id, request));
         return response;

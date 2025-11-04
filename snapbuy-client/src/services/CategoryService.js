@@ -102,8 +102,4 @@ export const toggleCategoryStatus = async (categoryId) => {
   } catch (error) {
     throw error;
   }
-<<<<<<< HEAD
 };
-=======
-};
->>>>>>> dat

@@ -123,10 +123,6 @@ const AddProduct = () => {
       newErrors.category = "Vui lòng chọn danh mục chính.";
     }
 
-    if (!selectedSubCategory) {
-      newErrors.subCategory = "Vui lòng chọn danh mục con.";
-    }
-
     if (!selectedSupplier) {
       newErrors.supplier = "Vui lòng chọn nhà cung cấp.";
     }
@@ -335,7 +331,7 @@ const AddProduct = () => {
                       <div className="col-sm-6">
                         <div className="mb-3">
                           <label className="form-label">
-                            Danh mục con <span className="text-danger">*</span>
+                            Danh mục con
                           </label>
                           <CommonSelect
                             className={`w-100 ${errors.subCategory ? "is-invalid" : ""
@@ -484,37 +480,43 @@ const AddProduct = () => {
                   className="accordion-collapse collapse show"
                 >
                   <div className="accordion-body border-top">
-                    <div className="image-upload">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files[0];
-                          if (file) {
-                            setImageFile(file);
-                            setIsImageVisible(true);
-                            setProduct({ ...product, imageUrl: URL.createObjectURL(file) });
-                          }
-                        }}
-                      />
-
-                      <div className="image-uploads">
-                        <i className="feather icon-plus-circle plus-down-add me-0" />
-                        <h4>Thêm ảnh</h4>
+                    <div className="text-editor add-list add">
+                      <div className="col-lg-12">
+                        <div className="add-choosen">
+                          <div className="mb-3">
+                            <div className="image-upload">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files[0];
+                                  if (file) {
+                                    setImageFile(file);
+                                    setIsImageVisible(true);
+                                    setProduct({ ...product, imageUrl: URL.createObjectURL(file) });
+                                  }
+                                }}
+                              />
+                              <div className="image-uploads">
+                                <i className="feather icon-plus-circle plus-down-add me-0" />
+                                <h4>Add Image</h4>
+                              </div>
+                            </div>
+                          </div>
+                          {isImageVisible && product.imageUrl && (
+                            <div className="phone-img">
+                              <img src={product.imageUrl} alt="product" />
+                              <Link to="#">
+                                <i
+                                  className="feather icon-x x-square-add remove-product"
+                                  onClick={handleRemoveProduct}
+                                />
+                              </Link>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    {isImageVisible && product.imageUrl && (
-                      <div className="phone-img mt-3">
-                        <img src={product.imageUrl} alt="product" />
-                        <Link to="#">
-                          <i
-                            className="feather icon-x x-square-add remove-product"
-                            onClick={handleRemoveProduct}
-                          />
-                        </Link>
-                      </div>
-                    )}
-
                   </div>
                 </div>
               </div>

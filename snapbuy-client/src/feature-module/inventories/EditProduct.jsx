@@ -8,6 +8,8 @@ import RefreshIcon from "../../components/tooltip-content/refresh";
 import CollapesIcon from "../../components/tooltip-content/Collapse";
 import { getProductById, updateProduct } from "../../services/ProductService";
 import { getAllCategories } from "../../services/CategoryService";
+import { getAllSuppliers } from "../../services/SupplierService";
+import { getImageUrl } from "../../utils/imageUtils";
 import { message } from "antd";
 
 
@@ -19,9 +21,13 @@ const EditProduct = () => {
   const [product, setProduct] = useState(null);
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
 
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [isImageVisible, setIsImageVisible] = useState(true);
 
   useEffect(() => {
@@ -41,6 +47,22 @@ const EditProduct = () => {
     };
 
     fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      try {
+        const data = await getAllSuppliers();
+        const options = data.map((s) => ({
+          value: s.supplierId,
+          label: s.supplierName,
+        }));
+        setSuppliers(options);
+      } catch (error) {
+        console.error("❌ Lỗi lấy nhà cung cấp:", error);
+      }
+    };
+    fetchSuppliers();
   }, []);
 
   // 🔹 Khi chọn category -> lọc subcategory tương ứng
@@ -87,6 +109,20 @@ const EditProduct = () => {
           });
         }
 
+        if (data.supplierId) {
+          setSelectedSupplier({
+            value: data.supplierId,
+            label: data.supplierName,
+          });
+        }
+
+        // Set ảnh preview nếu có
+        if (data.imageUrl) {
+          const fullImageUrl = getImageUrl(data.imageUrl);
+          setImagePreview(fullImageUrl);
+          setIsImageVisible(true);
+        }
+
       } catch (error) {
         console.error("❌ Lỗi lấy thông tin sản phẩm:", error);
       }
@@ -97,32 +133,73 @@ const EditProduct = () => {
 
   const handleSaveProduct = async () => {
     try {
-      // gom dữ liệu form
-      const updatedProduct = {
-        productCode: product?.productCode || "",
-        productName: product?.productName || "",
-        categoryId: selectedSubCategory
-          ? selectedSubCategory.value
-          : selectedCategory?.value,
-        unit: product?.unit || "",
-        supplierName: product?.supplierName || "",
-        dimensions: product?.dimensions || "",
-        description: product?.description || "",
-        imageUrl: product?.imageUrl || "",
-      };
+      // Validate required fields
+      if (!selectedCategory && !selectedSubCategory) {
+        message.error("Vui lòng chọn danh mục!");
+        return;
+      }
 
+      if (!selectedSupplier?.value) {
+        message.error("Vui lòng chọn nhà cung cấp!");
+        return;
+      }
 
-      await updateProduct(id, updatedProduct);
+      if (!product?.productCode?.trim()) {
+        message.error("Vui lòng nhập mã sản phẩm!");
+        return;
+      }
+
+      if (!product?.productName?.trim()) {
+        message.error("Vui lòng nhập tên sản phẩm!");
+        return;
+      }
+
+      // Tạo FormData để gửi dữ liệu (giống AddProduct)
+      const formData = new FormData();
+      formData.append("productCode", product.productCode.trim());
+      formData.append("productName", product.productName.trim());
+      formData.append(
+        "categoryId",
+        selectedSubCategory ? selectedSubCategory.value : selectedCategory.value
+      );
+      formData.append("supplierId", selectedSupplier.value);
+
+      if (product.unit?.trim()) {
+        formData.append("unit", product.unit.trim());
+      }
+      if (product.dimensions?.trim()) {
+        formData.append("dimensions", product.dimensions.trim());
+      }
+      if (product.description?.trim()) {
+        formData.append("description", product.description.trim());
+      }
+
+      // Thêm ảnh nếu có file mới
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+
+      console.log("📤 Gửi dữ liệu (FormData)");
+
+      await updateProduct(id, formData);
 
       message.success("Cập nhật sản phẩm thành công!");
       navigate(route.products);
     } catch (error) {
       console.error("Cập nhật thất bại:", error);
-      message.error("Cập nhật thất bại! Vui lòng thử lại.");
+      const errorMessage = error.response?.data?.message || "Cập nhật thất bại! Vui lòng thử lại.";
+      message.error(errorMessage);
     }
   };
 
-  const handleRemoveProduct = () => setIsImageVisible(false);
+  const handleRemoveProduct = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setIsImageVisible(false);
+    if (product) {
+      setProduct({ ...product, imageUrl: null });
+    }
+  };
 
   return (
     <>
@@ -266,11 +343,12 @@ const EditProduct = () => {
                                 Nhà cung cấp
                                 <span className="text-danger ms-1">*</span>
                               </label>
-                              <input
-                                type="text"
-                                value={product?.supplierName || ""}
-                                onChange={(e) => setProduct({ ...product, supplierName: e.target.value })}
-                                className="form-control"
+                              <CommonSelect
+                                className="w-100"
+                                options={suppliers}
+                                value={selectedSupplier}
+                                onChange={setSelectedSupplier}
+                                placeholder="Chọn nhà cung cấp"
                               />
                             </div>
                           </div>
@@ -335,16 +413,28 @@ const EditProduct = () => {
                             <div className="add-choosen">
                               <div className="mb-3">
                                 <div className="image-upload">
-                                  <input type="file" />
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files[0];
+                                      if (file) {
+                                        setImageFile(file);
+                                        setIsImageVisible(true);
+                                        const previewUrl = URL.createObjectURL(file);
+                                        setImagePreview(previewUrl);
+                                      }
+                                    }}
+                                  />
                                   <div className="image-uploads">
                                     <i className="feather icon-plus-circle plus-down-add me-0" />
                                     <h4>Add Image</h4>
                                   </div>
                                 </div>
                               </div>
-                              {isImageVisible && (
+                              {isImageVisible && imagePreview && (
                                 <div className="phone-img">
-                                  <img src="" alt="product" />
+                                  <img src={imagePreview} alt="product" />
                                   <Link to="#">
                                     <i
                                       className="feather icon-x x-square-add remove-product"

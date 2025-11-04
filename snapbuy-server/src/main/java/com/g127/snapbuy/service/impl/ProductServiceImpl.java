@@ -126,6 +126,30 @@ public class ProductServiceImpl implements ProductService {
             product.setSupplier(supplier);
         }
 
+        // Xử lý upload ảnh mới nếu có
+        if (request.getImage() != null && !request.getImage().isEmpty()) {
+            try {
+                String fileName = System.currentTimeMillis() + "_" + request.getImage().getOriginalFilename();
+
+                Path uploadPath = Paths.get(uploadDir, "products").toAbsolutePath();
+
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+
+                Path filePath = uploadPath.resolve(fileName);
+                request.getImage().transferTo(filePath.toFile());
+
+                product.setImageUrl("/uploads/products/" + fileName);
+
+                log.info("✅ Updated image: {}", product.getImageUrl());
+
+            } catch (Exception e) {
+                log.error("❌ Lỗi khi lưu ảnh sản phẩm", e);
+                throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
+            }
+        }
+
         product.setUpdatedDate(LocalDateTime.now());
 
         return productMapper.toResponse(productRepository.save(product));

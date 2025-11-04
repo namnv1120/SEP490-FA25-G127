@@ -49,7 +49,7 @@ export const createProduct = async (formData) => {
       {
         headers: {
           Authorization: `${tokenType} ${token}`,
-          "Content-Type": "multipart/form-data",
+          // Không set Content-Type - axios sẽ tự động set với boundary cho FormData
         },
       }
     );
@@ -61,16 +61,27 @@ export const createProduct = async (formData) => {
 };
 
 // Cập nhật sản phẩm
-export const updateProduct = async (id, productData) => {
+export const updateProduct = async (id, formData) => {
   try {
+    const token = localStorage.getItem("authToken");
+    const tokenType = localStorage.getItem("authTokenType") || "Bearer";
+
     const response = await axios.put(
       `${REST_API_BASE_URL}/${id}`,
-      productData,
-      getAuthHeaders()
+      formData,
+      {
+        headers: {
+          Authorization: `${tokenType} ${token}`,
+          // Không set Content-Type - axios sẽ tự động set với boundary cho FormData
+        },
+      }
     );
     return response.data?.result || response.data;
   } catch (error) {
     console.error("❌ Lỗi khi cập nhật sản phẩm:", error);
+    if (error.response?.data?.message) {
+      console.error("📝 Thông báo lỗi từ server:", error.response.data.message);
+    }
     throw error;
   }
 };

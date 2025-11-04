@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -49,7 +50,7 @@ public class MoMoController {
     }
 
     @GetMapping("/return")
-    public ResponseEntity<Void> handleMomoReturn(
+    public ResponseEntity<String> handleMomoReturn(
             @RequestParam(required = false) String requestId,
             @RequestParam int resultCode,
             @RequestParam(required = false) String message
@@ -67,44 +68,47 @@ public class MoMoController {
                 }
             }
         }
+        String status = (resultCode == 0) ? "success" : "failed";
+        String html = "<!DOCTYPE html>\n" +
+                "<html lang=\"vi\"><head><meta charset=\"utf-8\"/>" +
+                "<title>Đóng cửa sổ thanh toán</title>" +
+                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/></head>" +
+                "<body style=\"font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;\">" +
+                "<div style=\"text-align:center\">" +
+                "<h2>Thanh toán MoMo: " + (resultCode == 0 ? "Thành công" : "Thất bại") + "</h2>" +
+                "<p>Cửa sổ sẽ tự đóng...</p>" +
+                "<button onclick=\"window.close()\" style=\"padding:8px 16px;margin-top:12px\">Đóng</button>" +
+                "</div>" +
+                "<script>\n" +
+                "(function(){\n" +
+                "  try {\n" +
+                "    if (window.opener) {\n" +
+                "      window.opener.postMessage({ source: 'momo', status: '" + status + "', requestId: '" + (requestId == null ? "" : requestId) + "' }, '*');\n" +
+                "      try { window.opener.focus(); } catch(e){}\n" +
+                "    }\n" +
+                "  } catch(e) {}\n" +
+                "  function tryClose(){\n" +
+                "    try { window.close(); } catch(e){}\n" +
+                "    try { window.top.close(); } catch(e){}\n" +
+                "    try { window.open('', '_self'); window.close(); } catch(e){}\n" +
+                "  }\n" +
+                "  tryClose();\n" +
+                "  var attempts = 20;\n" +
+                "  var timer = setInterval(function(){\n" +
+                "    attempts--; tryClose(); if (attempts <= 0) clearInterval(timer);\n" +
+                "  }, 200);\n" +
+                "})();\n" +
+                "</script></body></html>";
 
-        String target = (resultCode == 0)
-                ? "http://localhost:5173/pos?payment=success"
-                : "http://localhost:5173/pos?payment=failed";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(java.net.URI.create(target));
-        return new ResponseEntity<>(headers, HttpStatus.FOUND);
+        return ResponseEntity.ok().contentType(MediaType.TEXT_HTML).body(html);
     }
-
-//    @GetMapping("/return")
-//    public ApiResponse<String> handleMomoReturn(@RequestParam Map<String, String> params) {
-//        ApiResponse<String> response = new ApiResponse<>();
-//        try {
-//            log.info("MoMo Return: {}", params);
-//            String resultCode = params.get("resultCode");
-//            String requestId = params.get("requestId");
-//
-//            if ("0".equals(resultCode)) {
-//                orderService.finalizePaymentByReference(requestId);
-//                response.setResult("Thanh toán thành công.");
-//            } else {
-//                response.setResult("Thanh toán thất bại, vui lòng thử lại.");
-//            }
-//        } catch (Exception e) {
-//            log.error("Lỗi khi xử lý return MoMo: {}", e.getMessage(), e);
-//            response.setResult("Đã xảy ra lỗi khi xử lý thanh toán.");
-//        }
-//        return response;
-//    }
-    
 
     @RestController
     @RequestMapping("/payments/momo")
     public class PaymentController {
 
         @GetMapping("/return")
-        public ResponseEntity<Void> momoReturn(
+        public ResponseEntity<String> momoReturn(
                 @RequestParam(required = false) String orderId,
                 @RequestParam(required = false) String requestId,
                 @RequestParam int resultCode,
@@ -123,14 +127,39 @@ public class MoMoController {
                     }
                 }
             }
+            String status = (resultCode == 0) ? "success" : "failed";
+            String html = "<!DOCTYPE html>\n" +
+                    "<html lang=\"vi\"><head><meta charset=\"utf-8\"/>" +
+                    "<title>Đóng cửa sổ thanh toán</title>" +
+                    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/></head>" +
+                    "<body style=\"font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;\">" +
+                    "<div style=\"text-align:center\">" +
+                    "<h2>Thanh toán MoMo: " + (resultCode == 0 ? "Thành công" : "Thất bại") + "</h2>" +
+                    "<p>Cửa sổ sẽ tự đóng...</p>" +
+                    "<button onclick=\"window.close()\" style=\"padding:8px 16px;margin-top:12px\">Đóng</button>" +
+                    "</div>" +
+                    "<script>\n" +
+                    "(function(){\n" +
+                    "  try {\n" +
+                    "    if (window.opener) {\n" +
+                    "      window.opener.postMessage({ source: 'momo', status: '" + status + "', requestId: '" + (requestId == null ? "" : requestId) + "' }, '*');\n" +
+                    "      try { window.opener.focus(); } catch(e){}\n" +
+                    "    }\n" +
+                    "  } catch(e) {}\n" +
+                    "  function tryClose(){\n" +
+                    "    try { window.close(); } catch(e){}\n" +
+                    "    try { window.top.close(); } catch(e){}\n" +
+                    "    try { window.open('', '_self'); window.close(); } catch(e){}\n" +
+                    "  }\n" +
+                    "  tryClose();\n" +
+                    "  var attempts = 20;\n" +
+                    "  var timer = setInterval(function(){\n" +
+                    "    attempts--; tryClose(); if (attempts <= 0) clearInterval(timer);\n" +
+                    "  }, 200);\n" +
+                    "})();\n" +
+                    "</script></body></html>";
 
-            String target = (resultCode == 0)
-                    ? "http://localhost:5173/pos?payment=success"
-                    : "http://localhost:5173/pos?payment=failed";
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setLocation(java.net.URI.create(target));
-            return new ResponseEntity<>(headers, HttpStatus.FOUND);
+            return ResponseEntity.ok().contentType(MediaType.TEXT_HTML).body(html);
         }
 
         @PostMapping("/ipn")
@@ -141,7 +170,5 @@ public class MoMoController {
             return "IGNORED";
         }
     }
-
-
 
 }
