@@ -1,57 +1,118 @@
-// src/services/ProductService.js
-import api from "./api"; // 👈 Import từ file api.js
+import axios from "axios";
 
-// ✅ Lấy tất cả sản phẩm
+const REST_API_BASE_URL = "http://localhost:8080/api/products";
+
+// Hàm lấy header kèm token
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("authToken");
+  const tokenType = localStorage.getItem("authTokenType") || "Bearer";
+
+  return {
+    headers: {
+      Authorization: `${tokenType} ${token}`,
+      "Content-Type": "application/json",
+    },
+  };
+};
+
+// Lấy toàn bộ sản phẩm
 export const getAllProducts = async () => {
   try {
-    const response = await api.get('/products');
-    return response.data;
+    const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
+    return response.data?.result || response.data || [];
   } catch (error) {
-    console.error("Error fetching products:", error);
+    console.error("❌ Lỗi khi tải danh sách sản phẩm:", error);
     throw error;
   }
 };
 
-// ✅ Tạo sản phẩm mới
-export const createProduct = async (productData) => {
-  try {
-    const response = await api.post('/products', productData);
-    return response.data;
-  } catch (error) {
-    console.error("Error creating product:", error);
-    throw error;
-  }
-};
-
-// ✅ Xóa sản phẩm
-export const deleteProduct = async (id) => {
-  try {
-    const response = await api.delete(`/products/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error("Error deleting product:", error);
-    throw error;
-  }
-};
-
-// ✅ Cập nhật sản phẩm
-export const updateProduct = async (id, productData) => {
-  try {
-    const response = await api.put(`/products/${id}`, productData);
-    return response.data;
-  } catch (error) {
-    console.error("Error updating product:", error);
-    throw error;
-  }
-};
-
-// ✅ Lấy chi tiết sản phẩm
+// Lấy sản phẩm theo ID
 export const getProductById = async (id) => {
   try {
-    const response = await api.get(`/products/${id}`);
-    return response.data;
+    const response = await axios.get(`${REST_API_BASE_URL}/${id}`, getAuthHeaders());
+    return response.data?.result || response.data;
   } catch (error) {
-    console.error("Error fetching product:", error);
+    console.error("❌ Lỗi khi tải sản phẩm theo ID:", error);
+    throw error;
+  }
+};
+
+// Thêm sản phẩm
+export const createProduct = async (formData) => {
+  try {
+    const token = localStorage.getItem("authToken");
+    const tokenType = localStorage.getItem("authTokenType") || "Bearer";
+
+    const response = await axios.post(
+      REST_API_BASE_URL,
+      formData,
+      {
+        headers: {
+          Authorization: `${tokenType} ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi thêm sản phẩm:", error);
+    throw error;
+  }
+};
+
+// Cập nhật sản phẩm
+export const updateProduct = async (id, productData) => {
+  try {
+    const response = await axios.put(
+      `${REST_API_BASE_URL}/${id}`,
+      productData,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi cập nhật sản phẩm:", error);
+    throw error;
+  }
+};
+
+// Xóa sản phẩm
+export const deleteProduct = async (id) => {
+  try {
+    const response = await axios.delete(
+      `${REST_API_BASE_URL}/${id}`,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi xóa sản phẩm:", error);
+    throw error;
+  }
+};
+
+// Import danh sách sản phẩm
+export const importProducts = async (products) => {
+  try {
+    const response = await axios.post(
+      `${REST_API_BASE_URL}/import`,
+      products,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi import sản phẩm:", error);
+    throw error;
+  }
+};
+
+export const getProductsBySupplierId = async (supplierId) => {
+  try {
+    const response = await axios.get(
+      `${REST_API_BASE_URL}/supplier/${supplierId}`,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi tải danh sách sản phẩm theo nha cung cap:", error);
     throw error;
   }
 };

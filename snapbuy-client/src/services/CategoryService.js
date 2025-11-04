@@ -1,45 +1,105 @@
-import api from "./api"; // 👈 Import từ file api.js cùng thư mục
+/* eslint-disable no-useless-catch */
+import axios from "axios";
 
-// ✅ Lấy tất cả categories
+const REST_API_BASE_URL = "http://localhost:8080/api/categories";
+
+// Helper function để lấy headers với token
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("authToken");
+  const tokenType = localStorage.getItem("authTokenType") || "Bearer";
+
+  return {
+    headers: {
+      Authorization: `${tokenType} ${token}`,
+      "Content-Type": "application/json",
+    },
+  };
+};
+
 export const getAllCategories = async () => {
   try {
-    const response = await api.get('/categories');
-    return response.data;
+    const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
+    return response.data?.result || response.data || [];
   } catch (error) {
-    console.error("Error fetching categories:", error);
+    console.error("Lỗi khi lấy danh mục:", error);
     throw error;
   }
 };
 
-// ✅ Tạo category mới
+export const getCategoryById = async (categoryId) => {
+  try {
+    const response = await axios.get(
+      `${REST_API_BASE_URL}/${categoryId}`,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy danh mục:", error);
+    throw error;
+  }
+};
+
 export const createCategory = async (categoryData) => {
   try {
-    const response = await api.post('/categories', categoryData);
-    return response.data;
+    const response = await axios.post(
+      REST_API_BASE_URL,
+      categoryData,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
   } catch (error) {
-    console.error("Error creating category:", error);
+    console.error("Lỗi khi tạo danh mục:", error);
     throw error;
   }
 };
 
-// ✅ Xóa category
-export const deleteCategory = async (id) => {
+export const updateCategory = async (categoryId, categoryData) => {
   try {
-    const response = await api.delete(`/categories/${id}`);
-    return response.data;
+    const response = await axios.put(
+      `${REST_API_BASE_URL}/${categoryId}`,
+      categoryData,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
   } catch (error) {
-    console.error("Error deleting category:", error);
+    console.error("Lỗi khi cập nhật danh mục:", error);
     throw error;
   }
 };
 
-// ✅ Cập nhật category
-export const updateCategory = async (id, categoryData) => {
+export const deleteCategory = async (categoryId) => {
   try {
-    const response = await api.put(`/categories/${id}`, categoryData);
-    return response.data;
+    const response = await axios.delete(
+      `${REST_API_BASE_URL}/${categoryId}`,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
   } catch (error) {
-    console.error("Error updating category:", error);
+    throw error;
+  }
+};
+
+export const getSubCategories = async (parentCategoryId) => {
+  try {
+    const response = await axios.get(
+      `${REST_API_BASE_URL}/${parentCategoryId}/subcategories`,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data || [];
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const toggleCategoryStatus = async (categoryId) => {
+  try {
+    const response = await axios.patch(
+      `${REST_API_BASE_URL}/${categoryId}/toggle-status`,
+      {},
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
     throw error;
   }
 };

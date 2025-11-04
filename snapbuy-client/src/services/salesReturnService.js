@@ -1,24 +1,45 @@
-import api from "./api";
+import axios from "axios";
+
+const REST_API_BASE_URL = "http://localhost:8080/api/sales-returns";
+
+// Hàm lấy header kèm token
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("authToken");
+  const tokenType = localStorage.getItem("authTokenType") || "Bearer";
+
+  return {
+    headers: {
+      Authorization: `${tokenType} ${token}`,
+      "Content-Type": "application/json",
+    },
+  };
+};
 
 export const salesReturnService = {
   // Lấy tất cả sales returns
   getAll: async (params = {}) => {
     try {
-      const response = await api.get('/sales-returns', { params });
-      return response.data;
+      const response = await axios.get(REST_API_BASE_URL, {
+        ...getAuthHeaders(),
+        params,
+      });
+      return response.data?.result || response.data || [];
     } catch (error) {
-      console.error("Error fetching sales returns:", error);
+      console.error("❌ Lỗi khi tải danh sách sales returns:", error);
       throw error;
     }
   },
 
-  // Lấy chi tiết sales return
+  // Lấy chi tiết sales return theo ID
   getById: async (id) => {
     try {
-      const response = await api.get(`/sales-returns/${id}`);
-      return response.data;
+      const response = await axios.get(
+        `${REST_API_BASE_URL}/${id}`,
+        getAuthHeaders()
+      );
+      return response.data?.result || response.data;
     } catch (error) {
-      console.error("Error fetching sales return:", error);
+      console.error("❌ Lỗi khi tải sales return theo ID:", error);
       throw error;
     }
   },
@@ -26,10 +47,14 @@ export const salesReturnService = {
   // Tạo sales return mới
   create: async (salesReturnData) => {
     try {
-      const response = await api.post('/sales-returns', salesReturnData);
-      return response.data;
+      const response = await axios.post(
+        REST_API_BASE_URL,
+        salesReturnData,
+        getAuthHeaders()
+      );
+      return response.data?.result || response.data;
     } catch (error) {
-      console.error("Error creating sales return:", error);
+      console.error("❌ Lỗi khi tạo sales return:", error);
       throw error;
     }
   },
@@ -37,10 +62,14 @@ export const salesReturnService = {
   // Cập nhật sales return
   update: async (id, salesReturnData) => {
     try {
-      const response = await api.put(`/sales-returns/${id}`, salesReturnData);
-      return response.data;
+      const response = await axios.put(
+        `${REST_API_BASE_URL}/${id}`,
+        salesReturnData,
+        getAuthHeaders()
+      );
+      return response.data?.result || response.data;
     } catch (error) {
-      console.error("Error updating sales return:", error);
+      console.error("❌ Lỗi khi cập nhật sales return:", error);
       throw error;
     }
   },
@@ -48,10 +77,13 @@ export const salesReturnService = {
   // Xóa sales return
   delete: async (id) => {
     try {
-      const response = await api.delete(`/sales-returns/${id}`);
-      return response.data;
+      const response = await axios.delete(
+        `${REST_API_BASE_URL}/${id}`,
+        getAuthHeaders()
+      );
+      return response.data?.result || response.data;
     } catch (error) {
-      console.error("Error deleting sales return:", error);
+      console.error("❌ Lỗi khi xóa sales return:", error);
       throw error;
     }
   },
@@ -59,10 +91,14 @@ export const salesReturnService = {
   // Xóa nhiều sales returns
   bulkDelete: async (ids) => {
     try {
-      const response = await api.post('/sales-returns/bulk-delete', { ids });
-      return response.data;
+      const response = await axios.post(
+        `${REST_API_BASE_URL}/bulk-delete`,
+        { ids },
+        getAuthHeaders()
+      );
+      return response.data?.result || response.data;
     } catch (error) {
-      console.error("Error bulk deleting sales returns:", error);
+      console.error("❌ Lỗi khi xóa hàng loạt sales returns:", error);
       throw error;
     }
   },
@@ -70,10 +106,13 @@ export const salesReturnService = {
   // Lấy danh sách customers
   getCustomers: async () => {
     try {
-      const response = await api.get('/customers');
-      return response.data;
+      const response = await axios.get(
+        "http://localhost:8080/api/customers",
+        getAuthHeaders()
+      );
+      return response.data?.result || response.data || [];
     } catch (error) {
-      console.error("Error fetching customers:", error);
+      console.error("❌ Lỗi khi tải danh sách customers:", error);
       throw error;
     }
   },
@@ -81,10 +120,16 @@ export const salesReturnService = {
   // Tìm sản phẩm theo code
   getProductByCode: async (code) => {
     try {
-      const response = await api.get(`/products/search`, { params: { code } });
-      return response.data;
+      const response = await axios.get(
+        `http://localhost:8080/api/products/search`,
+        {
+          ...getAuthHeaders(),
+          params: { code },
+        }
+      );
+      return response.data?.result || response.data;
     } catch (error) {
-      console.error("Error fetching product:", error);
+      console.error("❌ Lỗi khi tìm sản phẩm theo code:", error);
       throw error;
     }
   },
@@ -92,23 +137,32 @@ export const salesReturnService = {
   // Export to PDF
   exportToPDF: async (filters = {}) => {
     try {
-      const response = await api.get('/sales-returns/export/pdf', {
-        params: filters,
-        responseType: 'blob'
-      });
-      
+      const token = localStorage.getItem("authToken");
+      const tokenType = localStorage.getItem("authTokenType") || "Bearer";
+
+      const response = await axios.get(
+        `${REST_API_BASE_URL}/export/pdf`,
+        {
+          params: filters,
+          responseType: "blob",
+          headers: {
+            Authorization: `${tokenType} ${token}`,
+          },
+        }
+      );
+
       // Create download link
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute('download', `sales-returns-${Date.now()}.pdf`);
+      link.setAttribute("download", `sales-returns-${Date.now()}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      
+
       return response.data;
     } catch (error) {
-      console.error("Error exporting to PDF:", error);
+      console.error("❌ Lỗi khi export PDF:", error);
       throw error;
     }
   },
@@ -116,24 +170,33 @@ export const salesReturnService = {
   // Export to Excel
   exportToExcel: async (filters = {}) => {
     try {
-      const response = await api.get('/sales-returns/export/excel', {
-        params: filters,
-        responseType: 'blob'
-      });
-      
+      const token = localStorage.getItem("authToken");
+      const tokenType = localStorage.getItem("authTokenType") || "Bearer";
+
+      const response = await axios.get(
+        `${REST_API_BASE_URL}/export/excel`,
+        {
+          params: filters,
+          responseType: "blob",
+          headers: {
+            Authorization: `${tokenType} ${token}`,
+          },
+        }
+      );
+
       // Create download link
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute('download', `sales-returns-${Date.now()}.xlsx`);
+      link.setAttribute("download", `sales-returns-${Date.now()}.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      
+
       return response.data;
     } catch (error) {
-      console.error("Error exporting to Excel:", error);
+      console.error("❌ Lỗi khi export Excel:", error);
       throw error;
     }
-  }
+  },
 };
