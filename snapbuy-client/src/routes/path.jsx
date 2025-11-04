@@ -11,11 +11,32 @@ const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
 const ProductList = lazy(() =>
   import("../feature-module/inventories/ProductList")
 );
+<<<<<<< HEAD
 const AddProduct = lazy(() => import("../feature-module/inventories/AddProduct"));
 const EditProduct = lazy(() => import("../feature-module/inventories/EditProduct"));
 const ProductPriceList = lazy(() => import("../feature-module/inventories/ProductPriceList"));
 const EditProductPrice = lazy(() => import("../feature-module/inventories/EditProductPrice"));
 const InventoryList = lazy(() => import("../feature-module/inventories/InventoryList"));
+=======
+const AddProduct = lazy(() => import("../feature-module/inventory/AddProduct")); // 👈 Thêm lazy load
+const CategoryList = lazy(() => import("../feature-module/inventory/CategoryList"));
+
+
+const SalesList = lazy(() => import("../feature-module/sales/saleslist"));
+const SalesReturn = lazy(() => import("../feature-module/sales/salesreturn"));
+const Accounts = lazy(() => import("../feature-module/usermanagement/account"));
+const RolesPermissions = lazy(() =>
+  import("../feature-module/usermanagement/Rolespermissions")
+);
+const Profile = lazy(() => import("../feature-module/usermanagement/Profile"));
+const Login = lazy(() =>
+  import("../feature-module/pages/authentication/Login")
+);
+const Forgotpassword = lazy(() =>
+  import("../feature-module/pages/authentication/ForgotPassword")
+);
+const Customers = lazy(() => import("../feature-module/people/Customer"));
+>>>>>>> dat
 
 const CategoryList = lazy(() => import("../feature-module/inventories/CategoryList"));
 const SubCategories = lazy(() => import("../feature-module/inventories/SubCategoryList"));
@@ -106,6 +127,7 @@ export const authRoutes = [
     element: <AddProduct />,
     route: Route,
   },
+<<<<<<< HEAD
   {
     id: 10,
     path: routes.editproduct,
@@ -184,6 +206,37 @@ export const authRoutes = [
     route: Route,
   },
 
+=======
+    {
+    id: 233,
+    path: routes.addproduct,
+    name: "add-product",
+    element: <AddProduct />,
+    route: Route,
+  },
+    {
+  id: 234,
+  path: routes.categorylist,
+  name: "category-list",
+  element: <CategoryList />,
+  route: Route,
+  },
+     {
+    id: 235,
+    path: routes.saleslist,
+    name: "sales-list",
+    element: <SalesList />,
+    route: Route,
+  },
+  {
+    id: 236,
+    path: routes.salesreturn,
+    name: "sales-return",
+    element: <SalesReturn />,
+    route: Route,
+  },
+    
+>>>>>>> dat
 ];
 
 export const posPage = [
