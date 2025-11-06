@@ -24,4 +24,5 @@ public class CustomerResponse {
     private String gender;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
+    private Integer points;
 }

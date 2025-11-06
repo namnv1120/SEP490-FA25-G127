@@ -34,7 +34,7 @@ public class ProductUpdateRequest {
     @Size(max = 50, message = "Kích thước không được vượt quá 50 ký tự.")
     private String dimensions;
 
-    private Boolean active;
+    private Boolean active = true;
 
     private MultipartFile image;
 }

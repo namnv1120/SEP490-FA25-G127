@@ -51,3 +51,12 @@ export const completeOrder = async (orderId) => {
     throw error;
   }
 };
+
+export const cancelOrder = async (orderId) => {
+  try {
+    const response = await axios.post(`${REST_API_BASE_URL}/${orderId}/cancel`, {}, getAuthHeaders());
+    return response.data?.result || response.data;
+  } catch (error) {
+    throw error;
+  }
+};

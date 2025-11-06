@@ -21,6 +21,7 @@ public interface CustomerMapper {
     @Mapping(target = "updatedDate", ignore = true)
     void updateFromDto(CustomerUpdateRequest request, @MappingTarget Customer customer);
 
+    @Mapping(source = "points", target = "points")
     CustomerResponse toResponse(Customer customer);
 }
 

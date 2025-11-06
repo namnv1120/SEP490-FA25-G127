@@ -34,9 +34,14 @@ const Customers = () => {
     try {
       setLoading(true);
       const data = await getAllCustomers();
+      // Debug: Log để kiểm tra points có trong data không
+      if (data && data.length > 0) {
+        console.log("Sample customer data:", data[0]);
+      }
       setListData(data);
       setTotalRecords(data.length || 0);
     } catch (error) {
+      console.error("Error fetching customers:", error);
     } finally {
       setLoading(false);
     }
@@ -154,6 +159,19 @@ const Customers = () => {
         if (gender === "male" || gender === "m") return "Nam";
         if (gender === "female" || gender === "f") return "Nữ";
         return "Khác";
+      },
+    },
+    {
+      header: "Tích điểm",
+      field: "points",
+      key: "points",
+      body: (data) => {
+        const points = data.points ?? 0;
+        return (
+          <span className="fw-bold text-primary">
+            {new Intl.NumberFormat('vi-VN').format(points)} điểm
+          </span>
+        );
       },
     },
     {

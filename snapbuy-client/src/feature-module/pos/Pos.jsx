@@ -6,7 +6,7 @@ import "slick-carousel/slick/slick-theme.css";
 import PosModals from "../../core/modals/pos/PosModals";
 import AddCustomerModal from "../../core/modals/pos/AddCustomerModal";
 import CounterTwo from "../../components/counter/CounterTwo";
-import { Spin, message } from "antd";
+import { Spin, message, Modal } from "antd";
 import { getAllCategories } from "../../services/CategoryService";
 import { getAllProducts } from "../../services/ProductService";
 import { getCustomerById, searchCustomers } from "../../services/CustomerService";
@@ -16,7 +16,7 @@ const Pos = () => {
   const [activeTab, setActiveTab] = useState("all");
   const Location = useLocation();
   const [showAlert1, setShowAlert1] = useState(true);
-  
+
   const GUEST_CUSTOMER_ID = "00000000-0000-0000-0000-000000000001";
   const [selectedCustomer, setSelectedCustomer] = useState(GUEST_CUSTOMER_ID);
   const [selectedCustomerData, setSelectedCustomerData] = useState(null);
@@ -41,6 +41,9 @@ const Pos = () => {
   const [showCashPaymentModal, setShowCashPaymentModal] = useState(false);
   const [showMomoModal, setShowMomoModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null); // "cash" or "momo"
+  const [usePoints, setUsePoints] = useState(0); // Số điểm muốn sử dụng
+  const [showOrderSuccessModal, setShowOrderSuccessModal] = useState(false);
+  const [completedOrderForPrint, setCompletedOrderForPrint] = useState(null); // Lưu order đã thanh toán để in
   const momoPollingIntervalRef = useRef(null);
 
   const settings = {
@@ -93,7 +96,7 @@ const Pos = () => {
       const data = await getAllCategories();
       // Lưu tất cả categories để dùng cho tính toán số lượng
       setAllCategories(data);
-      
+
       // Chỉ hiển thị parent categories (không có parentCategoryId)
       const parentCategories = data
         .filter(cat => cat.active && (!cat.parentCategoryId || cat.parentCategoryId === null))
@@ -127,11 +130,36 @@ const Pos = () => {
           productCode: product.productCode,
           price: product.unitPrice,
           stock: product.quantityInStock,
+          quantityInStock: product.quantityInStock, // Thêm field này để dùng cho validation
           categoryId: product.categoryId,
           categoryName: product.categoryName || "",
           image: product.imageUrl || product.image || null,
         }));
+
       setProducts(mappedProducts);
+
+      // Cập nhật số lượng tồn kho trong giỏ hàng nếu có
+      // Sử dụng functional update để tránh stale closure
+      setCartItems(prevCartItems => {
+        if (prevCartItems.length === 0) return prevCartItems;
+
+        return prevCartItems.map(cartItem => {
+          const updatedProduct = mappedProducts.find(p =>
+            String(p.productId) === String(cartItem.productId)
+          );
+          if (updatedProduct) {
+            const newStock = updatedProduct.quantityInStock || updatedProduct.stock || 0;
+            // Nếu số lượng trong giỏ hàng vượt quá tồn kho mới, điều chỉnh lại
+            const adjustedQuantity = Math.min(cartItem.quantity, newStock);
+            return {
+              ...cartItem,
+              stock: newStock,
+              quantity: adjustedQuantity
+            };
+          }
+          return cartItem;
+        });
+      });
     } catch (error) {
       message.error("Không thể tải danh sách sản phẩm");
     } finally {
@@ -161,15 +189,15 @@ const Pos = () => {
     const searchTimer = setTimeout(async () => {
       try {
         const results = await searchCustomers(customerSearchQuery);
-        
+
         // Thêm khách lẻ vào kết quả nếu query match với thông tin khách lẻ
         const queryLower = customerSearchQuery.toLowerCase();
         let finalResults = [...results];
-        
+
         if (guestCustomer) {
           const guestName = (guestCustomer.fullName || guestCustomer.customerName || "").toLowerCase();
           const guestPhone = (guestCustomer.phone || "").toLowerCase();
-          
+
           // Kiểm tra nếu query match với tên hoặc số điện thoại của khách lẻ
           if (guestName.includes(queryLower) || guestPhone.includes(queryLower)) {
             // Kiểm tra xem khách lẻ đã có trong results chưa
@@ -179,7 +207,7 @@ const Pos = () => {
             }
           }
         }
-        
+
         setCustomerSearchResults(finalResults);
         setShowCustomerDropdown(finalResults.length > 0);
       } catch (error) {
@@ -200,14 +228,15 @@ const Pos = () => {
     try {
       // Fetch đầy đủ thông tin customer để đảm bảo có phone
       const fullCustomerData = await getCustomerById(customer.customerId);
-      
+
       setSelectedCustomer(fullCustomerData.customerId);
       setSelectedCustomerData(fullCustomerData);
       setCustomerSearchQuery("");
       setCustomerSearchResults([]);
       setShowCustomerDropdown(false);
       setCustomerSearchVisible(false);
-      
+      setUsePoints(0); // Reset điểm sử dụng khi chọn khách hàng mới
+
       // Nếu chọn khách lẻ, cập nhật guestCustomer
       if (String(fullCustomerData.customerId) === GUEST_CUSTOMER_ID) {
         setGuestCustomer(fullCustomerData);
@@ -221,6 +250,7 @@ const Pos = () => {
       setCustomerSearchResults([]);
       setShowCustomerDropdown(false);
       setCustomerSearchVisible(false);
+      setUsePoints(0); // Reset điểm sử dụng
     }
   };
 
@@ -229,7 +259,7 @@ const Pos = () => {
     try {
       // Fetch đầy đủ thông tin customer vừa tạo
       const fullCustomerData = await getCustomerById(newCustomer.customerId);
-      
+
       // Set customer vừa tạo làm selected
       setSelectedCustomer(fullCustomerData.customerId);
       setSelectedCustomerData(fullCustomerData);
@@ -310,19 +340,35 @@ const Pos = () => {
       e.stopPropagation();
       e.preventDefault();
     }
-    
-    const existingItem = cartItems.find(item => 
+
+    // Validate số lượng tồn kho
+    const availableStock = product.stock || product.quantityInStock || 0;
+    if (availableStock <= 0) {
+      message.error(`Sản phẩm "${product.name || product.productName}" đã hết hàng!`);
+      return;
+    }
+
+    const existingItem = cartItems.find(item =>
       String(item.productId) === String(product.productId)
     );
-    
+
     if (existingItem) {
       // If product already in cart, increase quantity
+      const newQuantity = existingItem.quantity + 1;
+      const currentStock = existingItem.stock || availableStock;
+
+      // Validate số lượng không vượt quá tồn kho
+      if (newQuantity > currentStock) {
+        message.error(`Số lượng vượt quá tồn kho! Tồn kho hiện có: ${currentStock}`);
+        return;
+      }
+
       setCartItems(cartItems.map(item =>
         String(item.productId) === String(product.productId)
-          ? { ...item, quantity: item.quantity + 1 }
+          ? { ...item, quantity: newQuantity }
           : item
       ));
-
+      message.success("Đã cập nhật số lượng sản phẩm trong giỏ hàng");
     } else {
       // Add new product to cart
       const cartItem = {
@@ -332,7 +378,7 @@ const Pos = () => {
         code: product.code,
         price: product.price,
         quantity: 1,
-        stock: product.stock,
+        stock: availableStock,
         image: product.image,
         categoryName: product.categoryName,
       };
@@ -345,25 +391,43 @@ const Pos = () => {
   const handleUpdateQuantity = (itemId, newQuantity) => {
     if (newQuantity <= 0) {
       setCartItems(cartItems.filter(item => item.id !== itemId));
-    } else {
-      setCartItems(cartItems.map(item =>
-        item.id === itemId
-          ? { ...item, quantity: newQuantity }
-          : item
-      ));
+      return;
     }
+
+    // Find the item to validate stock
+    const item = cartItems.find(item => item.id === itemId);
+    if (!item) return;
+
+    // Validate số lượng không vượt quá tồn kho
+    const availableStock = item.stock || 0;
+    if (newQuantity > availableStock) {
+      message.error(`Số lượng vượt quá tồn kho! Tồn kho hiện có: ${availableStock}`);
+      // Reset về số lượng tối đa có thể
+      setCartItems(cartItems.map(cartItem =>
+        cartItem.id === itemId
+          ? { ...cartItem, quantity: availableStock }
+          : cartItem
+      ));
+      return;
+    }
+
+    setCartItems(cartItems.map(cartItem =>
+      cartItem.id === itemId
+        ? { ...cartItem, quantity: newQuantity }
+        : cartItem
+    ));
   };
 
   // Hàm lấy tất cả category IDs bao gồm parent và sub-categories
   const getCategoryIdsForParent = (parentCategoryId) => {
     if (!parentCategoryId || parentCategoryId === "all") return [];
-    
+
     // Convert parentCategoryId to string for comparison
     const parentIdStr = String(parentCategoryId);
-    
+
     // Lấy parent category id (convert to string)
     const categoryIds = [parentIdStr];
-    
+
     // Lấy tất cả sub-categories của parent
     const subCategories = allCategories.filter(
       cat => {
@@ -371,19 +435,19 @@ const Pos = () => {
         return catParentId === parentIdStr && cat.active;
       }
     );
-    
+
     // Thêm các sub-category IDs (convert to string)
     subCategories.forEach(subCat => {
       categoryIds.push(String(subCat.categoryId));
     });
-    
+
     return categoryIds;
   };
 
   // Filter products by category and search
   const filteredProducts = products.filter(product => {
     let matchCategory = false;
-    
+
     if (activeTab === "all") {
       matchCategory = true;
     } else {
@@ -394,8 +458,8 @@ const Pos = () => {
       // Sản phẩm khớp nếu categoryId thuộc parent hoặc sub-categories
       matchCategory = productCategoryIdStr && categoryIds.includes(productCategoryIdStr);
     }
-    
-    const matchSearch = !searchQuery || 
+
+    const matchSearch = !searchQuery ||
       product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.code?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchCategory && matchSearch;
@@ -404,16 +468,23 @@ const Pos = () => {
   const calculateTotals = () => {
     const subTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     // Calculate tax based on selected GST
-    const taxRate = selectedGST && selectedGST !== "choose" 
-      ? parseFloat(selectedGST.replace('gst', '')) / 100 
+    const taxRate = selectedGST && selectedGST !== "choose"
+      ? parseFloat(selectedGST.replace('gst', '')) / 100
       : 0;
     const tax = subTotal * taxRate;
     const shipping = selectedShipping ? parseFloat(selectedShipping) : 0;
-    const discount = selectedDiscount && selectedDiscount !== "0%" 
-      ? (subTotal * parseFloat(selectedDiscount.replace('%', '')) / 100) 
+    const discount = selectedDiscount && selectedDiscount !== "0%"
+      ? (subTotal * parseFloat(selectedDiscount.replace('%', '')) / 100)
       : 0;
-    const total = subTotal + tax + shipping - discount;
-    return { subTotal, tax, shipping, discount, total };
+    const totalBeforePoints = subTotal + tax + shipping - discount;
+
+    // Tính số điểm có thể sử dụng (không vượt quá số điểm hiện có và tổng tiền)
+    const currentPoints = selectedCustomerData?.points ?? 0;
+    const maxUsablePoints = Math.min(currentPoints, Math.floor(totalBeforePoints));
+    const actualUsePoints = Math.min(usePoints, maxUsablePoints);
+
+    const total = Math.max(0, totalBeforePoints - actualUsePoints);
+    return { subTotal, tax, shipping, discount, total, pointsUsed: actualUsePoints, totalBeforePoints };
   };
 
   const totals = calculateTotals();
@@ -424,7 +495,7 @@ const Pos = () => {
       message.warning("Vui lòng thêm sản phẩm vào giỏ hàng");
       return;
     }
-    
+
     // Validate customer
     const isGuest = String(selectedCustomer) === GUEST_CUSTOMER_ID;
     if (!isGuest && !selectedCustomerData) {
@@ -442,7 +513,7 @@ const Pos = () => {
 
   // Handle payment method selection - create order with selected payment method
   const handleSelectPaymentMethod = async (paymentMethod) => {
-    
+
     if (cartItems.length === 0) {
       message.warning("Vui lòng thêm sản phẩm vào giỏ hàng");
       return;
@@ -452,7 +523,7 @@ const Pos = () => {
       // Get customer phone number
       let customerPhone = "";
       const isGuest = String(selectedCustomer) === GUEST_CUSTOMER_ID;
-      
+
       if (isGuest) {
         customerPhone = guestCustomer?.phone || "";
       } else {
@@ -481,28 +552,30 @@ const Pos = () => {
         taxAmount: totals.tax || 0,
         paymentMethod: paymentMethod === "cash" ? null : "MOMO", // null defaults to "Tiền mặt", "MOMO" for MoMo
         notes: null,
-        usePoints: 0,
+        usePoints: totals.pointsUsed || 0,
       };
 
       message.loading("Đang tạo đơn hàng...", 0);
       const orderResult = await createOrder(orderData);
       message.destroy();
-      
+
       setCreatedOrder(orderResult);
       setSelectedPaymentMethod(paymentMethod); // Save selected payment method
-      
+
       // Close payment method selection modal
       setShowPaymentMethodModal(false);
       message.success("Đã tạo đơn hàng thành công!");
-      
-      // Show payment modal immediately based on selected method
+      // Cập nhật lại danh sách sản phẩm để refresh số lượng tồn kho
+      await fetchProducts();
+
+      // Show payment modal immediately based on selected method (không hiển thị modal thành công khi tạo đơn)
       if (paymentMethod === "cash") {
         setShowCashPaymentModal(true);
       } else if (paymentMethod === "momo") {
-        const momoPayUrl = orderResult.payment?.payUrl || 
-                          (orderResult.payment?.notes?.startsWith("PAYURL:") 
-                            ? orderResult.payment.notes.substring("PAYURL:".length)
-                            : null);
+        const momoPayUrl = orderResult.payment?.payUrl ||
+          (orderResult.payment?.notes?.startsWith("PAYURL:")
+            ? orderResult.payment.notes.substring("PAYURL:".length)
+            : null);
         if (momoPayUrl) {
           setShowMomoModal(true);
           // Start polling for MoMo payment status
@@ -513,9 +586,9 @@ const Pos = () => {
       }
     } catch (error) {
       message.destroy();
-      const errorMessage = error.response?.data?.message || 
-                          error.message || 
-                          "Tạo đơn hàng thất bại. Vui lòng thử lại!";
+      const errorMessage = error.response?.data?.message ||
+        error.message ||
+        "Tạo đơn hàng thất bại. Vui lòng thử lại!";
       message.error(errorMessage);
     }
   };
@@ -545,7 +618,7 @@ const Pos = () => {
       if (!orderData.orderDetails) {
         fullOrderData = await getOrderById(orderData.orderId);
       }
-      
+
       // Load order details into cart
       if (fullOrderData.orderDetails && fullOrderData.orderDetails.length > 0) {
         const cartItemsFromOrder = fullOrderData.orderDetails.map(detail => ({
@@ -557,10 +630,10 @@ const Pos = () => {
           quantity: detail.quantity || 0,
           discount: detail.discount || 0,
         }));
-        
+
         setCartItems(cartItemsFromOrder);
       }
-      
+
       // Set customer if available
       if (fullOrderData.customerId) {
         setSelectedCustomer(fullOrderData.customerId);
@@ -578,10 +651,10 @@ const Pos = () => {
           }
         }
       }
-      
+
       // Set this order as createdOrder
       setCreatedOrder(fullOrderData);
-      
+
       // Extract payment method from order if available
       let paymentMethod = null;
       if (fullOrderData.payment && fullOrderData.payment.paymentMethod) {
@@ -593,10 +666,10 @@ const Pos = () => {
           paymentMethod = "momo";
         }
       }
-      
+
       // Set payment method
       setSelectedPaymentMethod(paymentMethod);
-      
+
       message.success("Đã chọn đơn hàng. Vui lòng thanh toán.");
     } catch (error) {
       message.error("Không thể tải đơn hàng vào POS");
@@ -608,7 +681,7 @@ const Pos = () => {
     try {
       // Set this order as createdOrder
       setCreatedOrder(orderData);
-      
+
       // Extract payment method from order if available
       let paymentMethod = null;
       if (orderData.payment && orderData.payment.paymentMethod) {
@@ -620,7 +693,7 @@ const Pos = () => {
           paymentMethod = "momo";
         }
       }
-      
+
       // Set payment method if found, otherwise show selection modal
       if (paymentMethod) {
         setSelectedPaymentMethod(paymentMethod);
@@ -629,7 +702,7 @@ const Pos = () => {
           setShowCashPaymentModal(true);
         } else if (paymentMethod === "momo") {
           // Extract MoMo payUrl if available
-          const momoPayUrl = orderData.payment?.notes?.startsWith("PAYURL:") 
+          const momoPayUrl = orderData.payment?.notes?.startsWith("PAYURL:")
             ? orderData.payment.notes.substring("PAYURL:".length)
             : orderData.payment?.payUrl || null;
           if (momoPayUrl) {
@@ -664,43 +737,48 @@ const Pos = () => {
 
     const pollInterval = setInterval(async () => {
       pollCount++;
-      
+
       try {
         const orderData = await getOrderById(orderId);
-        
+
         if (!orderData) {
           // Order not found - continue polling
           return;
         }
-        
+
         // Check if payment completed successfully
         if (orderData.paymentStatus === "Đã thanh toán") {
           clearInterval(pollInterval);
           momoPollingIntervalRef.current = null;
-          
+
           // Close MoMo modal
           setShowMomoModal(false);
-          
-          // Complete the order and show success message
+
+          // Complete the order and show success modal
           try {
-            await completeOrder(orderId);
-            message.success("Thanh toán MoMo thành công!");
-            handlePaymentCompleted();
+            const completedOrder = await completeOrder(orderId);
+            // Lưu order đã thanh toán để hiển thị trong modal thành công
+            setCompletedOrderForPrint(completedOrder);
+            // Show success modal
+            setShowOrderSuccessModal(true);
+            // handlePaymentCompleted will be called after user closes success modal
           } catch (error) {
             message.error("Lỗi khi hoàn tất đơn hàng. Vui lòng thử lại!");
           }
           return;
         }
-        
+
         // Check if payment failed - multiple failure scenarios
-        const paymentFailed = 
+        const paymentFailed =
           orderData.paymentStatus === "Thất bại"
-        
+
         if (paymentFailed) {
           clearInterval(pollInterval);
           momoPollingIntervalRef.current = null;
           setShowMomoModal(false);
           message.error("Thanh toán MoMo thất bại. Vui lòng thử lại!");
+          // Reset về trạng thái đơn mới giống như khi thanh toán thành công
+          handlePaymentCompleted();
           return;
         }
       } catch (error) {
@@ -717,13 +795,15 @@ const Pos = () => {
           // Only log every 10th error to avoid spam
         }
       }
-      
+
       // Timeout after 5 minutes
       if (pollCount >= maxPollCount) {
         clearInterval(pollInterval);
         momoPollingIntervalRef.current = null;
         setShowMomoModal(false);
         message.error("Thanh toán MoMo quá thời gian. Vui lòng thử lại!");
+        // Reset về trạng thái đơn mới giống như khi thanh toán thành công
+        handlePaymentCompleted();
       }
     }, 3000); // Poll every 3 seconds
 
@@ -741,7 +821,11 @@ const Pos = () => {
   }, []);
 
   // Handle payment completion
-  const handlePaymentCompleted = () => {
+  const handlePaymentCompleted = async () => {
+    // Lưu customerId trước khi reset để refresh lại thông tin sau
+    const previousCustomerId = selectedCustomer;
+    const isGuest = String(previousCustomerId) === GUEST_CUSTOMER_ID;
+
     setCartItems([]);
     setSelectedCustomer(GUEST_CUSTOMER_ID);
     setSelectedCustomerData(guestCustomer);
@@ -753,7 +837,23 @@ const Pos = () => {
     setSelectedPaymentMethod(null);
     setShowPaymentMethodModal(false);
     setShowCashPaymentModal(false);
+    setUsePoints(0);
     setShowMomoModal(false);
+
+    // Cập nhật lại danh sách sản phẩm để refresh số lượng tồn kho sau khi thanh toán thành công
+    await fetchProducts();
+
+    // Refresh lại thông tin khách hàng nếu không phải khách lẻ (để cập nhật điểm mới)
+    // Điều này giúp khi người dùng chọn lại khách hàng, điểm sẽ được cập nhật
+    if (!isGuest && previousCustomerId) {
+      try {
+        // Fetch lại thông tin khách hàng để cập nhật điểm mới nhất
+        // Không set lại selectedCustomer, chỉ fetch để cache được cập nhật
+        await getCustomerById(previousCustomerId);
+      } catch (error) {
+        // Ignore error, không ảnh hưởng đến flow chính
+      }
+    }
   };
 
   // Handle back to payment method selection (after cash payment)
@@ -792,49 +892,49 @@ const Pos = () => {
                     <Spin size="large" />
                   </div>
                 ) : (
-                <Slider
-                  {...settings}
-                  className="tabs owl-carousel pos-category"
-                >
-                  <div
-                    onClick={() => setActiveTab("all")}
-                    className={`owl-item ${activeTab === "all" ? "active" : ""}`}
-                    id="all"
+                  <Slider
+                    {...settings}
+                    className="tabs owl-carousel pos-category"
                   >
-                    <Link to="#">
-                        <div className="category-placeholder">Tất cả</div>
-                    </Link>
-                    <h6>
-                      <Link to="#">Tất cả</Link>
-                    </h6>
-                    <span>{products.length} Sản phẩm</span>
-                  </div>
-                  {categories.map((category) => {
-                    // Tính số lượng sản phẩm bao gồm cả sub-categories
-                    const categoryIds = getCategoryIdsForParent(category.id);
-                    const productCount = products.filter(p => {
-                      const pCategoryIdStr = p.categoryId ? String(p.categoryId) : null;
-                      return pCategoryIdStr && categoryIds.includes(pCategoryIdStr);
-                    }).length;
-                    
-                    return (
                     <div
-                      key={category.id}
-                      onClick={() => setActiveTab(category.id)}
-                      className={`owl-item ${activeTab === category.id ? "active" : ""}`}
-                      id={category.id}
+                      onClick={() => setActiveTab("all")}
+                      className={`owl-item ${activeTab === "all" ? "active" : ""}`}
+                      id="all"
                     >
                       <Link to="#">
-                        <div className="category-placeholder">{category.name}</div>
+                        <div className="category-placeholder">Tất cả</div>
                       </Link>
                       <h6>
-                        <Link to="#">{category.name}</Link>
+                        <Link to="#">Tất cả</Link>
                       </h6>
-                        <span>{productCount} Sản phẩm</span>
+                      <span>{products.length} Sản phẩm</span>
                     </div>
-                    );
-                  })}
-                </Slider>
+                    {categories.map((category) => {
+                      // Tính số lượng sản phẩm bao gồm cả sub-categories
+                      const categoryIds = getCategoryIdsForParent(category.id);
+                      const productCount = products.filter(p => {
+                        const pCategoryIdStr = p.categoryId ? String(p.categoryId) : null;
+                        return pCategoryIdStr && categoryIds.includes(pCategoryIdStr);
+                      }).length;
+
+                      return (
+                        <div
+                          key={category.id}
+                          onClick={() => setActiveTab(category.id)}
+                          className={`owl-item ${activeTab === category.id ? "active" : ""}`}
+                          id={category.id}
+                        >
+                          <Link to="#">
+                            <div className="category-placeholder">{category.name}</div>
+                          </Link>
+                          <h6>
+                            <Link to="#">{category.name}</Link>
+                          </h6>
+                          <span>{productCount} Sản phẩm</span>
+                        </div>
+                      );
+                    })}
+                  </Slider>
                 )}
                 <div className="pos-products">
                   <div className="d-flex align-items-center justify-content-between">
@@ -863,50 +963,50 @@ const Pos = () => {
                           <Spin size="large" />
                         </div>
                       ) : (
-                      <div className="row">
-                        {filteredProducts.length === 0 ? (
-                          <div className="col-12 text-center py-4">
+                        <div className="row">
+                          {filteredProducts.length === 0 ? (
+                            <div className="col-12 text-center py-4">
                               <p>Không có sản phẩm nào</p>
-                          </div>
-                        ) : (
-                          filteredProducts.map((product) => (
-                            <div key={product.id} className="col-sm-6 col-md-6 col-lg-4 col-xl-3">
-                              <div
-                                className="product-info card"
+                            </div>
+                          ) : (
+                            filteredProducts.map((product) => (
+                              <div key={product.id} className="col-sm-6 col-md-6 col-lg-4 col-xl-3">
+                                <div
+                                  className="product-info card"
                                   onClick={(e) => handleAddToCart(product, e)}
                                   style={{ cursor: "pointer" }}
-                              >
+                                >
                                   <Link to="#" className="pro-img" onClick={(e) => e.preventDefault()}>
-                                  <div className="product-image-placeholder">
-                                    {product.image ? (
-                                      <img src={product.image} alt={product.name} />
-                                    ) : (
+                                    <div className="product-image-placeholder">
+                                      {product.image ? (
+                                        <img src={product.image} alt={product.name} />
+                                      ) : (
                                         <span>Không có hình ảnh</span>
-                                    )}
-                                  </div>
-                                  <span>
-                                    <i className="ti ti-circle-check-filled" />
-                                  </span>
-                                </Link>
-                                <h6 className="cat-name">
+                                      )}
+                                    </div>
+                                    <span>
+                                      <i className="ti ti-circle-check-filled" />
+                                    </span>
+                                  </Link>
+                                  <h6 className="cat-name">
                                     <Link to="#" onClick={(e) => e.preventDefault()}>
                                       {product.categoryName || "Danh mục"}
                                     </Link>
-                                </h6>
-                                <h6 className="product-name">
+                                  </h6>
+                                  <h6 className="product-name">
                                     <Link to="#" onClick={(e) => e.preventDefault()}>
                                       {product.name}
                                     </Link>
-                                </h6>
-                                <div className="d-flex align-items-center justify-content-between price">
+                                  </h6>
+                                  <div className="d-flex align-items-center justify-content-between price">
                                     <span>{product.stock || 0} Cái</span>
                                     <p>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price || 0)}</p>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
+                            ))
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -916,37 +1016,80 @@ const Pos = () => {
             {/* /Products */}
             {/* Order Details */}
             <div className="col-md-12 col-lg-5 col-xl-4 ps-0 theiaStickySidebar">
-              <aside className="product-order-list">
-                <div className="order-head bg-light d-flex align-items-center justify-content-between w-100">
-                  <div>
-                    <h3>Danh sách đơn hàng</h3>
-                    <span>Mã giao dịch : #{Date.now().toString().slice(-8)}</span>
+              <aside className="product-order-list" style={{ display: 'flex', flexDirection: 'column', maxHeight: 'calc(100vh - 20px)' }}>
+                {createdOrder && (
+                  <div className="order-head bg-light d-flex align-items-center justify-content-between w-100">
+                    <div>
+                      <h3>Đơn hàng</h3>
+                      <span>Mã giao dịch : #{createdOrder.orderNumber || createdOrder.orderId || '-'}</span>
+                    </div>
+                    <div>
+                      <Link
+                        className="link-danger fs-16"
+                        to="#"
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          // Reset POS về trạng thái chưa tạo đơn
+                          await handlePaymentCompleted();
+                        }}
+                      >
+                        <i className="ti ti-trash-x-filled" />
+                      </Link>
+                    </div>
                   </div>
-                  <div>
-                    <Link 
-                      className="link-danger fs-16" 
-                      to="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setCartItems([]);
-                        message.info("Đã xóa tất cả sản phẩm khỏi giỏ hàng");
-                      }}
-                    >
-                      <i className="ti ti-trash-x-filled" />
-                    </Link>
-                  </div>
-                </div>
+                )}
                 <div className="customer-info block-section">
                   <h4 className="mb-3">Thông tin khách hàng</h4>
+                  {selectedCustomerData && String(selectedCustomer) !== GUEST_CUSTOMER_ID && (
+                    <div className="mb-3">
+                      <div className="mb-2">
+                        <span className="text-muted">Điểm tích lũy: </span>
+                        <span className="fw-bold text-primary">
+                          {new Intl.NumberFormat('vi-VN').format(selectedCustomerData.points ?? 0)} điểm
+                        </span>
+                      </div>
+                      {!createdOrder && (selectedCustomerData.points ?? 0) > 0 && totals.totalBeforePoints > 0 && (
+                        <div>
+                          <label className="form-label small">Sử dụng điểm (tối đa {Math.min(selectedCustomerData.points ?? 0, Math.floor(totals.totalBeforePoints))} điểm):</label>
+                          <input
+                            type="number"
+                            className="form-control form-control-sm"
+                            min="0"
+                            max={Math.min(selectedCustomerData.points ?? 0, Math.floor(totals.totalBeforePoints))}
+                            value={usePoints}
+                            onChange={(e) => {
+                              const value = parseInt(e.target.value) || 0;
+                              const maxUsable = Math.min(selectedCustomerData.points ?? 0, Math.floor(totals.totalBeforePoints));
+                              setUsePoints(Math.max(0, Math.min(value, maxUsable)));
+                            }}
+                            placeholder="Nhập số điểm muốn sử dụng"
+                          />
+                          {usePoints > 0 && (
+                            <small className="text-muted">
+                              Sẽ giảm {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(usePoints)} từ tổng tiền
+                            </small>
+                          )}
+                        </div>
+                      )}
+                      {createdOrder && createdOrder.pointsRedeemed > 0 && (
+                        <div className="mb-2">
+                          <small className="text-muted">Điểm đã sử dụng: </small>
+                          <span className="fw-bold text-success">
+                            {new Intl.NumberFormat('vi-VN').format(createdOrder.pointsRedeemed)} điểm
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className="input-block d-flex align-items-center">
                     {!customerSearchVisible ? (
-                    <div className="flex-grow-1">
-                        <div 
+                      <div className="flex-grow-1">
+                        <div
                           className="form-control"
                           onClick={() => setCustomerSearchVisible(true)}
-                          style={{ 
-                            cursor: 'pointer', 
-                            display: 'flex', 
+                          style={{
+                            cursor: 'pointer',
+                            display: 'flex',
                             alignItems: 'center',
                             backgroundColor: '#f8f9fa'
                           }}
@@ -974,11 +1117,11 @@ const Pos = () => {
                           autoFocus
                         />
                         {showCustomerDropdown && customerSearchResults.length > 0 && (
-                          <div 
+                          <div
                             className="position-absolute w-100 bg-white border rounded shadow-lg"
-                            style={{ 
-                              zIndex: 1000, 
-                              maxHeight: '200px', 
+                            style={{
+                              zIndex: 1000,
+                              maxHeight: '200px',
                               overflowY: 'auto',
                               top: '100%',
                               marginTop: '2px'
@@ -998,7 +1141,7 @@ const Pos = () => {
                             ))}
                           </div>
                         )}
-                    </div>
+                      </div>
                     )}
                     <Link
                       to="#"
@@ -1017,26 +1160,26 @@ const Pos = () => {
                     </Link>
                   </div>
                 </div>
-                <div className="product-added block-section">
+                <div className="product-added block-section" style={{ flex: 1, overflowY: 'auto', marginBottom: '20px' }}>
                   <div className="head-text d-flex align-items-center justify-content-between">
                     <h5 className="d-flex align-items-center mb-0">
                       Sản phẩm đã thêm<span className="count">{cartItems.length}</span>
                     </h5>
                     {cartItems.length > 0 && (
-                    <Link
-                      to="#"
-                      className="d-flex align-items-center link-danger"
+                      <Link
+                        to="#"
+                        className="d-flex align-items-center link-danger"
                         onClick={(e) => {
                           e.preventDefault();
                           setCartItems([]);
                           message.info("Đã xóa tất cả sản phẩm");
                         }}
-                    >
-                      <span className="me-2">
-                        <i className="feather icon-x feather-16" />
-                      </span>
+                      >
+                        <span className="me-2">
+                          <i className="feather icon-x feather-16" />
+                        </span>
                         Xóa tất cả
-                    </Link>
+                      </Link>
                     )}
                   </div>
                   <div className="product-wrap">
@@ -1076,8 +1219,8 @@ const Pos = () => {
                             </div>
                           </div>
                           <div className="qty-item text-center" style={{ flexShrink: 0 }}>
-                            <CounterTwo 
-                              defaultValue={item.quantity} 
+                            <CounterTwo
+                              defaultValue={item.quantity}
                               onChange={(value) => handleUpdateQuantity(item.id, value)}
                             />
                           </div>
@@ -1100,76 +1243,83 @@ const Pos = () => {
                     )}
                   </div>
                 </div>
-                <div className="block-section payment-method">
-                  <h4>Phương thức thanh toán</h4>
-                  <div className="row align-items-center justify-content-center methods g-3">
-                    <div className="col-sm-6 col-md-4">
-                      <Link
-                        to="#"
-                        className="payment-item"
-                        data-bs-toggle="modal"
-                        data-bs-target="#payment-cash"
-                      >
-                        <i className="ti ti-cash-banknote fs-18" />
-                        <span>Tiền mặt</span>
-                      </Link>
-                    </div>
-                    <div className="col-sm-6 col-md-4">
-                      <Link
-                        to="#"
-                        className="payment-item"
-                        data-bs-toggle="modal"
-                        data-bs-target="#payment-card"
-                      >
-                        <i className="ti ti-credit-card fs-18" />
-                        <span>Thẻ</span>
-                      </Link>
-                    </div>
-                    <div className="col-sm-6 col-md-4">
-                      <Link
-                        to="#"
-                        className="payment-item"
-                        data-bs-toggle="modal"
-                        data-bs-target="#scan-payment"
-                      >
-                        <i className="ti ti-scan fs-18" />
-                        <span>Quét mã</span>
-                      </Link>
+
+                {/* Fixed bottom section */}
+                <div style={{ marginTop: 'auto', backgroundColor: '#fff', paddingTop: '15px', borderTop: '1px solid #e9ecef', flexShrink: 0 }}>
+                  <div className="btn-block">
+                    <div className="card bg-light mb-3">
+                      <div className="card-body">
+                        <table className="table-borderless w-100 table-fit mb-0">
+                          <tbody>
+                            <tr>
+                              <td className="fw-bold">Tạm tính:</td>
+                              <td className="text-end">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totals.subTotal || 0)}</td>
+                            </tr>
+                            <tr>
+                              <td className="fw-bold">Giảm giá:</td>
+                              <td className="text-end">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totals.discount || 0)}</td>
+                            </tr>
+                            <tr>
+                              <td className="fw-bold">Thuế:</td>
+                              <td className="text-end">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totals.tax || 0)}</td>
+                            </tr>
+                            {totals.pointsUsed > 0 && (
+                              <tr>
+                                <td className="fw-bold">Điểm đã sử dụng:</td>
+                                <td className="text-end text-success">-{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totals.pointsUsed || 0)}</td>
+                              </tr>
+                            )}
+                            {createdOrder && createdOrder.paymentStatus === "Chưa thanh toán" && (
+                              <tr>
+                                <td className="fw-bold">Còn nợ:</td>
+                                <td className="text-end fw-bold text-danger">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totals.total || 0)}</td>
+                              </tr>
+                            )}
+                            {createdOrder && createdOrder.paymentStatus === "Đã thanh toán" && (
+                              <tr>
+                                <td className="fw-bold">Còn nợ:</td>
+                                <td className="text-end fw-bold text-success">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(0)}</td>
+                              </tr>
+                            )}
+                            {!createdOrder && (
+                              <tr>
+                                <td className="fw-bold">Tổng phải trả:</td>
+                                <td className="text-end fw-bold">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totals.total || 0)}</td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="btn-block">
-                  <Link className="btn btn-secondary w-100" to="#" onClick={(e) => e.preventDefault()}>
-                    Tổng tiền: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totals.total)}
-                  </Link>
-                </div>
-                <div className="btn-row d-sm-flex align-items-center justify-content-center gap-2">
-                  <Link
-                    to="#"
-                    className="btn btn-success d-flex align-items-center justify-content-center"
-                    style={{ minWidth: '200px' }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleCreateOrder();
-                    }}
-                  >
-                    <i className="ti ti-shopping-cart me-1" />
-                    Tạo đơn
-                  </Link>
-                  {createdOrder && (
-                  <Link
-                    to="#"
-                      className="btn btn-primary d-flex align-items-center justify-content-center"
+                  <div className="btn-row d-sm-flex align-items-center justify-content-center gap-2 mb-3">
+                    <Link
+                      to="#"
+                      className="btn btn-success d-flex align-items-center justify-content-center"
                       style={{ minWidth: '200px' }}
                       onClick={(e) => {
                         e.preventDefault();
-                        handlePaymentButtonClick();
+                        handleCreateOrder();
                       }}
                     >
-                      <i className="ti ti-wallet me-1" />
-                      Thanh toán
-                  </Link>
-                  )}
+                      <i className="ti ti-shopping-cart me-1" />
+                      Tạo đơn
+                    </Link>
+                    {createdOrder && (
+                      <Link
+                        to="#"
+                        className="btn btn-primary d-flex align-items-center justify-content-center"
+                        style={{ minWidth: '200px' }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handlePaymentButtonClick();
+                        }}
+                      >
+                        <i className="ti ti-wallet me-1" />
+                        Thanh toán
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </aside>
             </div>
@@ -1177,7 +1327,7 @@ const Pos = () => {
           </div>
         </div>
       </div>
-      <PosModals 
+      <PosModals
         createdOrder={createdOrder}
         totalAmount={totals.total}
         showPaymentMethodModal={showPaymentMethodModal}
@@ -1186,6 +1336,14 @@ const Pos = () => {
         onSelectPaymentMethod={handleSelectPaymentMethod}
         showCashPaymentModal={showCashPaymentModal}
         showMomoModal={showMomoModal}
+        showOrderSuccessModal={showOrderSuccessModal}
+        onCloseOrderSuccessModal={() => {
+          setShowOrderSuccessModal(false);
+          setCompletedOrderForPrint(null);
+          // Reset POS after closing success modal
+          handlePaymentCompleted();
+        }}
+        completedOrderForPrint={completedOrderForPrint || createdOrder}
         onCashPaymentConfirm={() => {
           // Just close the modal
           setShowCashPaymentModal(false);
@@ -1196,9 +1354,12 @@ const Pos = () => {
         }}
         onCompleteOrder={async (orderId) => {
           try {
-            await completeOrder(orderId);
-            // After successful payment completion, reset cart and states
-            handlePaymentCompleted();
+            const completedOrder = await completeOrder(orderId);
+            // Lưu order đã thanh toán để hiển thị trong modal thành công
+            setCompletedOrderForPrint(completedOrder);
+            // Show success modal
+            setShowOrderSuccessModal(true);
+            // handlePaymentCompleted will be called after user closes success modal
           } catch (error) {
             // Error is already handled in PosModals.jsx
             throw error;
@@ -1207,9 +1368,12 @@ const Pos = () => {
         onCashPaymentCompleted={async (orderId) => {
           // Handle cash payment completion directly
           try {
-            await completeOrder(orderId);
-            // handlePaymentCompleted will be called after success
-            handlePaymentCompleted();
+            const completedOrder = await completeOrder(orderId);
+            // Lưu order đã thanh toán để hiển thị trong modal thành công
+            setCompletedOrderForPrint(completedOrder);
+            // Show success modal
+            setShowOrderSuccessModal(true);
+            // handlePaymentCompleted will be called after user closes success modal
           } catch (error) {
             throw error;
           }
