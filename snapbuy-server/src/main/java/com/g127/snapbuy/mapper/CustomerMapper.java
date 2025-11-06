@@ -21,6 +21,8 @@ public interface CustomerMapper {
     @Mapping(target = "updatedDate", ignore = true)
     void updateFromDto(CustomerUpdateRequest request, @MappingTarget Customer customer);
 
+    @Mapping(target = "gender", expression = "java(customer.getGender() != null ? customer.getGender().name() : null)")
+    @Mapping(target = "points", source = "points")
     CustomerResponse toResponse(Customer customer);
 }
 

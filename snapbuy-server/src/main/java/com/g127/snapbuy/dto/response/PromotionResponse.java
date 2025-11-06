@@ -25,7 +25,3 @@ public class PromotionResponse {
 
     private List<UUID> productIds;
 }
-
-
-
-
