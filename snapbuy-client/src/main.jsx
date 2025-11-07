@@ -4,6 +4,7 @@ import { Provider } from "react-redux";
 import store from "./core/redux/store.js";
 import AppRouter from "./AppRouter.jsx";
 import SplashScreen from "./components/splash-screen/SplashScreen.jsx";
+import PageLoader from "./components/loading/PageLoader.jsx";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
@@ -33,15 +34,7 @@ const App = () => {
 
   return (
     <Provider store={store}>
-      <Suspense
-        fallback={
-          <div className="d-flex justify-content-center align-items-center vh-100">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Đang tải...</span>
-            </div>
-          </div>
-        }
-      >
+      <Suspense fallback={<PageLoader />}>
         <AppRouter />
       </Suspense>
     </Provider>

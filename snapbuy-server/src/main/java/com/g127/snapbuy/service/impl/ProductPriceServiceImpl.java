@@ -60,6 +60,8 @@ public class ProductPriceServiceImpl implements ProductPriceService {
     public List<ProductPriceResponse> getAllPrices() {
         return productPriceRepository.findAll()
                 .stream()
+                .filter(price -> price.getProduct() != null && 
+                        (price.getProduct().getActive() == null || price.getProduct().getActive()))
                 .map(productPriceMapper::toResponse)
                 .toList();
     }

@@ -311,21 +311,35 @@ public class ProductServiceImpl implements ProductService {
             return List.of();
         }
 
-        return products.stream().map(product -> {
-            ProductResponse response = productMapper.toResponse(product);
+        return products.stream()
+                .filter(product -> product.getActive() == null || product.getActive())
+                .map(product -> {
+                    ProductResponse response = productMapper.toResponse(product);
 
-            productPriceRepository.findTopByProduct_ProductIdOrderByValidFromDesc(product.getProductId())
-                    .ifPresent(latestPrice -> {
-                        response.setUnitPrice(latestPrice.getUnitPrice());
-                        response.setCostPrice(latestPrice.getCostPrice());
-                    });
+                    productPriceRepository.findTopByProduct_ProductIdOrderByValidFromDesc(product.getProductId())
+                            .ifPresent(latestPrice -> {
+                                response.setUnitPrice(latestPrice.getUnitPrice());
+                                response.setCostPrice(latestPrice.getCostPrice());
+                            });
 
-            inventoryRepository.findByProduct_ProductId(product.getProductId())
-                    .ifPresent(inventory -> response.setQuantityInStock(inventory.getQuantityInStock()));
+                    inventoryRepository.findByProduct_ProductId(product.getProductId())
+                            .ifPresent(inventory -> response.setQuantityInStock(inventory.getQuantityInStock()));
 
-            return response;
-        }).toList();
+                    return response;
+                }).toList();
     }
 
+    @Override
+    public ProductResponse toggleProductStatus(UUID id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+        Boolean currentActive = product.getActive();
+        log.info("Toggling product {} status from {} to {}", id, currentActive, currentActive == null || !currentActive);
+        // Nếu active là null, mặc định là false, toggle thành true
+        product.setActive(currentActive == null || !currentActive);
+        product.setUpdatedDate(LocalDateTime.now());
+        Product savedProduct = productRepository.save(product);
+        return productMapper.toResponse(savedProduct);
+    }
 
 }

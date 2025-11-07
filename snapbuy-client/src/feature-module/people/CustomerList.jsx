@@ -34,10 +34,6 @@ const Customers = () => {
     try {
       setLoading(true);
       const data = await getAllCustomers();
-      // Debug: Log để kiểm tra points có trong data không
-      if (data && data.length > 0) {
-        console.log("Sample customer data:", data[0]);
-      }
       setListData(data);
       setTotalRecords(data.length || 0);
     } catch (error) {
@@ -220,22 +216,18 @@ const Customers = () => {
           </div>
 
           <div className="card-body p-0">
-            {loading ? (
-              <div className="text-center p-3">Đang tải dữ liệu...</div>
-            ) : (
-              <div className="table-responsive">
-                <PrimeDataTable
-                  column={columns}
-                  data={listData}
-                  rows={rows}
-                  setRows={setRows}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalRecords={totalRecords}
-                  dataKey="customerId"
-                />
-              </div>
-            )}
+            <div className="table-responsive">
+              <PrimeDataTable
+                column={columns}
+                data={listData}
+                rows={rows}
+                setRows={setRows}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                totalRecords={totalRecords}
+                dataKey="customerId"
+              />
+            </div>
           </div>
         </div>
       </div>

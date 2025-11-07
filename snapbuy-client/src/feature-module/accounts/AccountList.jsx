@@ -1,17 +1,19 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import AddAccount from "../../core/modals/accounts/AddAccount";
-import EditAccount from "../../core/modals/accounts/EditAccount";
+import AddAccount from "../../core/modals/accounts/AddAccountModal";
+import EditAccount from "../../core/modals/accounts/EditAccountModal";
 import TableTopHead from "../../components/table-top-head";
 import Table from "../../core/pagination/datatable";
-import { getAllAccounts } from "../../services/AccountService";
+import { getAllAccounts, toggleAccountStatus } from "../../services/AccountService";
 import { message } from "antd";
 
-  const AccountList = () => {
+const AccountList = () => {
   const [dataSource, setDataSource] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   useEffect(() => {
     fetchAccounts();
@@ -21,12 +23,27 @@ import { message } from "antd";
     setLoading(true);
     try {
       const accountsData = await getAllAccounts();
-      setDataSource(accountsData);
+      const mappedData = accountsData.map((account) => ({
+        ...account,
+        active: account.active === true || account.active === 1,
+      }));
+      setDataSource(mappedData);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách tài khoản:", error);
       message.error("Lỗi khi lấy danh sách tài khoản:");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleStatus = async (account) => {
+    try {
+      await toggleAccountStatus(account.id);
+      await fetchAccounts();
+      message.success("Đã cập nhật trạng thái tài khoản thành công!");
+    } catch (err) {
+      console.error("❌ Lỗi khi chuyển đổi trạng thái tài khoản:", err);
+      message.error(err.response?.data?.message || "Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại.");
     }
   };
 
@@ -60,15 +77,27 @@ import { message } from "antd";
     {
       title: "Trạng thái",
       dataIndex: "active",
-      render: (isActive) => {
+      render: (isActive, record) => {
         const active = isActive === true || isActive === 1 || isActive === "1";
         return (
-          <span
-            className={`d-inline-flex align-items-center p-1 pe-2 rounded-1 text-white fs-10 ${active ? "bg-success" : "bg-danger"}`}
-          >
-            <i className="ti ti-point-filled me-1 fs-11"></i>
-            {active ? "Hoạt động" : "Không hoạt động"}
-          </span>
+          <div className="d-flex align-items-center gap-2">
+            <span
+              className={`badge fw-medium fs-10 ${active ? "bg-success" : "bg-danger"}`}
+            >
+
+              {active ? "Hoạt động" : "Không hoạt động"}
+            </span>
+            <div className="form-check form-switch">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                role="switch"
+                checked={active}
+                onChange={() => handleToggleStatus(record)}
+                style={{ cursor: "pointer" }}
+              />
+            </div>
+          </div>
         );
       },
       sorter: (a, b) => (a.isActive === b.isActive ? 0 : a.isActive ? -1 : 1),
@@ -83,15 +112,15 @@ import { message } from "antd";
       render: (text, record) => (
         <div className="action-table-data text-center">
           <div className="edit-delete-action d-flex justify-content-center">
-            <Link className="me-2 p-2" to="#">
-              <i data-feather="eye" className="feather feather-eye action-eye"></i>
-            </Link>
             <Link
               className="me-2 p-2"
               to="#"
-              data-bs-toggle="modal"
-              data-bs-target="#edit-account"
-              onClick={() => setSelectedAccount(record)}
+              onClick={(e) => {
+                e.preventDefault();
+                setSelectedAccount(record);
+                setSelectedAccountId(record.id);
+                setEditModalOpen(true);
+              }}
             >
               <i data-feather="edit" className="feather-edit"></i>
             </Link>
@@ -124,15 +153,14 @@ import { message } from "antd";
             <TableTopHead
             />
             <div className="page-btn">
-              <Link
-                to="#"
+              <button
+                type="button"
                 className="btn btn-primary"
-                data-bs-toggle="modal"
-                data-bs-target="#add-account"
+                onClick={() => setAddModalOpen(true)}
               >
                 <i className="ti ti-circle-plus me-1"></i>
                 Thêm tài khoản
-              </Link>
+              </button>
             </div>
           </div>
 
@@ -165,25 +193,29 @@ import { message } from "antd";
             </div>
 
             <div className="card-body">
-              {loading ? (
-                <div className="text-center p-4">Đang tải tài khoản...</div>
-              ) : (
-                <div className="table-responsive">
-                  <Table columns={columns} dataSource={dataSource} />
-                </div>
-              )}
+              <div className="table-responsive">
+                <Table columns={columns} dataSource={dataSource} />
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Modal thêm và chỉnh sửa */}
-      <AddAccount id="add-account" onCreated={fetchAccounts} />
+      <AddAccount
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onSuccess={fetchAccounts}
+      />
       <EditAccount
-        id="edit-account"
-        accountId={selectedAccount?.id}
+        isOpen={editModalOpen}
+        accountId={selectedAccountId}
         onUpdated={fetchAccounts}
-        onClose={() => setSelectedAccount(null)}
+        onClose={() => {
+          setEditModalOpen(false);
+          setSelectedAccount(null);
+          setSelectedAccountId(null);
+        }}
       />
 
     </div>

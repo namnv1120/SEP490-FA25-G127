@@ -8,6 +8,7 @@ import SearchFromApi from "../../components/data-table/search";
 import { getAllInventories } from "../../services/InventoryService";
 import { message } from "antd";
 import EditInventory from "../../core/modals/inventories/EditInventoryModal";
+import ProductDetailModal from "../../core/modals/inventories/ProductDetailModal";
 
 
 const InventoryList = () => {
@@ -21,6 +22,8 @@ const InventoryList = () => {
   const [error, setError] = useState(null);
   const [selectedInventory, setSelectedInventory] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState(null);
 
   const openEditModal = (row) => {
     setSelectedInventory(row);
@@ -43,17 +46,19 @@ const InventoryList = () => {
       setError(null);
       const data = await getAllInventories();
 
-      // 🔹 Chuẩn hóa dữ liệu để tránh lỗi undefined
-      const mapped = data.map((item, index) => ({
-        inventoryId: item.inventoryId || item.id || index + 1,
-        productId: item.productId || item.product?.productId || "Không có",
-        productName: item.productName || item.product?.productName || "Không có",
-        quantityInStock: item.quantityInStock ?? item.quantity ?? 0,
-        minimumStock: item.minimumStock ?? 0,
-        maximumStock: item.maximumStock ?? 0,
-        reorderPoint: item.reorderPoint ?? 0,
-        lastUpdated: item.lastUpdated || item.updatedAt || null,
-      }));
+      // Map API data to match table structure (giống ProductPriceList)
+      const mapped = data
+        .filter((item) => item && item.inventoryId != null) // Lọc bỏ null/undefined inventoryId
+        .map((item) => ({
+          inventoryId: item.inventoryId,
+          productId: item.productId || "Không có",
+          productName: item.productName || "Không có",
+          quantityInStock: item.quantityInStock ?? 0,
+          minimumStock: item.minimumStock ?? 0,
+          maximumStock: item.maximumStock ?? 0,
+          reorderPoint: item.reorderPoint ?? 0,
+          lastUpdated: item.lastUpdated || null,
+        }));
 
       setInventoryList(mapped);
       setTotalRecords(mapped.length);
@@ -92,7 +97,25 @@ const InventoryList = () => {
       sortable: false,
       key: "checked",
     },
-    { header: "Tên sản phẩm", field: "productName" },
+    {
+      header: "Tên sản phẩm",
+      field: "productName",
+      key: "productName",
+      sortable: true,
+      body: (data) => (
+        <button
+          type="button"
+          className="btn btn-link p-0 text-primary text-decoration-none"
+          onClick={() => {
+            setSelectedProductId(data.productId);
+            setDetailModalOpen(true);
+          }}
+          style={{ cursor: "pointer" }}
+        >
+          {data.productName}
+        </button>
+      ),
+    },
     { header: "Tồn kho hiện tại", field: "quantityInStock" },
     { header: "Tồn kho tối thiểu", field: "minimumStock" },
     { header: "Tồn kho tối đa", field: "maximumStock" },
@@ -159,42 +182,30 @@ const InventoryList = () => {
           </div>
         )}
 
-        {/* 🔹 Loading */}
-        {loading && (
-          <div className="text-center my-5">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Đang tải...</span>
-            </div>
-          </div>
-        )}
-
         {/* 🔹 Danh sách tồn kho */}
-        {!loading && (
-          <div className="card table-list-card">
-            <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <SearchFromApi callback={handleSearch} rows={rows} setRows={setRows} />
-              <div className="d-flex align-items-center flex-wrap row-gap-3">
-                <CommonDatePicker value={dateFilter} onChange={setDateFilter} />
-              </div>
-            </div>
-
-            <div className="card-body">
-              <div className="table-responsive">
-                <PrimeDataTable
-                  column={columns}
-                  data={filteredList}
-                  rows={rows}
-                  setRows={setRows}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalRecords={filteredList.length}
-                  loading={loading}
-                  dataKey="inventoryId"
-                />
-              </div>
+        <div className="card table-list-card">
+          <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+            <SearchFromApi callback={handleSearch} rows={rows} setRows={setRows} />
+            <div className="d-flex align-items-center flex-wrap row-gap-3">
+              <CommonDatePicker value={dateFilter} onChange={setDateFilter} />
             </div>
           </div>
-        )}
+
+          <div className="card-body">
+            <div className="table-responsive">
+              <PrimeDataTable
+                column={columns}
+                data={filteredList}
+                rows={rows}
+                setRows={setRows}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                totalRecords={filteredList.length}
+                dataKey="inventoryId"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       <CommonFooter />
@@ -204,7 +215,14 @@ const InventoryList = () => {
         inventory={selectedInventory}
         onUpdated={fetchInventories}
       />
-
+      <ProductDetailModal
+        isOpen={detailModalOpen}
+        onClose={() => {
+          setDetailModalOpen(false);
+          setSelectedProductId(null);
+        }}
+        productId={selectedProductId}
+      />
     </div>
   );
 };

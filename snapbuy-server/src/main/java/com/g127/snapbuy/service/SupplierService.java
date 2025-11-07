@@ -17,4 +17,6 @@ public interface SupplierService {
     SupplierResponse updateSupplier(UUID id, SupplierUpdateRequest request);
 
     void deleteSupplier(UUID id);
+
+    SupplierResponse toggleSupplierStatus(UUID id);
 }

@@ -74,3 +74,17 @@ export const deleteSupplier = async (supplierId) => {
     throw error;
   }
 };
+
+export const toggleSupplierStatus = async (supplierId) => {
+  try {
+    const response = await axios.patch(
+      `${REST_API_BASE_URL}/${supplierId}/toggle-status`,
+      {},
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi chuyển đổi trạng thái nhà cung cấp:", error);
+    throw error;
+  }
+};

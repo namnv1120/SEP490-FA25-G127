@@ -10,6 +10,7 @@ import com.g127.snapbuy.mapper.CategoryMapper;
 import com.g127.snapbuy.repository.CategoryRepository;
 import com.g127.snapbuy.service.CategoryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
@@ -84,5 +86,18 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
         categoryRepository.delete(category);
+    }
+
+    @Override
+    public CategoryResponse toggleCategoryStatus(UUID id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+        Boolean currentActive = category.getActive();
+        log.info("Toggling category {} status from {} to {}", id, currentActive, currentActive == null || !currentActive);
+        // Nếu active là null, mặc định là false, toggle thành true
+        category.setActive(currentActive == null || !currentActive);
+        category.setUpdatedDate(LocalDateTime.now());
+        Category savedCategory = categoryRepository.save(category);
+        return categoryMapper.toResponse(savedCategory);
     }
 }

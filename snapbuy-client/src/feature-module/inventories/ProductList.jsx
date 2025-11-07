@@ -7,7 +7,7 @@ import { stockImg1 } from "../../utils/imagepath";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
-import { getAllProducts, deleteProduct, importProducts } from "../../services/ProductService";
+import { getAllProducts, deleteProduct, importProducts, toggleProductStatus } from "../../services/ProductService";
 import ImportProductModal from "./ImportProduct";
 import ProductDetailModal from "../../core/modals/inventories/ProductDetailModal";
 import { message } from "antd";
@@ -57,6 +57,8 @@ const ProductList = () => {
           unitprice: `${product.unitPrice?.toLocaleString() || "0.00"} đ`,
           unit: product.unit || "Không có",
           qty: product.quantityInStock?.toString() || product.qty?.toString() || "0",
+          status: product.active === 1 || product.active === true ? "Hoạt động" : "Không hoạt động",
+          active: product.active === 1 || product.active === true,
         };
       });
 
@@ -146,6 +148,17 @@ const ProductList = () => {
     setSelectedProduct(null);
   };
 
+  const handleToggleStatus = async (product) => {
+    try {
+      await toggleProductStatus(product.productId);
+      await fetchProducts();
+      message.success("Đã cập nhật trạng thái sản phẩm thành công!");
+    } catch (err) {
+      console.error("❌ Lỗi khi chuyển đổi trạng thái sản phẩm:", err);
+      message.error("Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại.");
+    }
+  };
+
   const columns = [
     {
       header: (
@@ -226,6 +239,32 @@ const ProductList = () => {
       sortable: true,
     },
     {
+      header: "Trạng thái",
+      field: "status",
+      key: "status",
+      sortable: true,
+      body: (data) => (
+        <div className="d-flex align-items-center gap-2">
+          <span
+            className={`badge fw-medium fs-10 ${data.status === "Hoạt động" ? "bg-success" : "bg-danger"
+              }`}
+          >
+            {data.status}
+          </span>
+          <div className="form-check form-switch">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              role="switch"
+              checked={data.active}
+              onChange={() => handleToggleStatus(data)}
+              style={{ cursor: "pointer" }}
+            />
+          </div>
+        </div>
+      ),
+    },
+    {
       header: "",
       field: "actions",
       key: "actions",
@@ -288,25 +327,14 @@ const ProductList = () => {
             </div>
           )}
 
-          {/* Loading State */}
-          {loading && (
-            <div className="text-center my-5">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Đang tải...</span>
-              </div>
-            </div>
-          )}
-
-
-          {!loading && (
-            <div className="card table-list-card">
-              <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-                <SearchFromApi
-                  callback={handleSearch}
-                  rows={rows}
-                  setRows={setRows}
-                />
-                {/* <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
+          <div className="card table-list-card">
+            <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+              <SearchFromApi
+                callback={handleSearch}
+                rows={rows}
+                setRows={setRows}
+              />
+              {/* <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
                   <div className="dropdown me-2">
                     <Link
                       to="#"
@@ -375,23 +403,22 @@ const ProductList = () => {
                     </ul>
                   </div>
                 </div> */}
-              </div>
-              <div className="card-body">
-                <div className="table-responsive">
-                  <PrimeDataTable
-                    column={columns}
-                    data={products}
-                    rows={rows}
-                    setRows={setRows}
-                    currentPage={currentPage}
-                    setCurrentPage={setCurrentPage}
-                    totalRecords={totalRecords}
-                    dataKey="productId"
-                  />
-                </div>
+            </div>
+            <div className="card-body">
+              <div className="table-responsive">
+                <PrimeDataTable
+                  column={columns}
+                  data={products}
+                  rows={rows}
+                  setRows={setRows}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  totalRecords={totalRecords}
+                  dataKey="productId"
+                />
               </div>
             </div>
-          )}
+          </div>
         </div>
         <CommonFooter />
       </div>

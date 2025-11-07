@@ -14,9 +14,8 @@ import {
 import CommonDatePicker from "../../components/date-picker/common-date-picker";
 import TableTopHead from "../../components/table-top-head";
 import CommonSelect from "../../components/select/common-select";
-import { salesService } from "../../services/salesService";
 
-const SalesList = () => {
+const OrderList = () => {
   // Main data state
   const [salesList, setSalesList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -748,24 +747,15 @@ const SalesList = () => {
               {/* /Filter */}
 
               <div className="table-responsive">
-                {loading ? (
-                  <div className="text-center p-5">
-                    <div className="spinner-border text-primary" role="status">
-                      <span className="visually-hidden">Loading...</span>
-                    </div>
-                    <p className="mt-2">Loading sales...</p>
-                  </div>
-                ) : (
-                  <PrimeDataTable
-                    column={columns}
-                    data={filteredData}
-                    totalRecords={totalRecords}
-                    rows={rows}
-                    setRows={setRows}
-                    currentPage={currentPage}
-                    setCurrentPage={setCurrentPage}
-                  />
-                )}
+                <PrimeDataTable
+                  column={columns}
+                  data={filteredData}
+                  totalRecords={totalRecords}
+                  rows={rows}
+                  setRows={setRows}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                />
               </div>
             </div>
           </div>
@@ -2005,4 +1995,4 @@ const SalesList = () => {
   );
 };
 
-export default SalesList;
+export default OrderList;

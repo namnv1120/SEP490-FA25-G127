@@ -15,6 +15,7 @@ import com.g127.snapbuy.repository.RoleRepository;
 import com.g127.snapbuy.service.RoleService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
@@ -81,11 +83,14 @@ public class RoleServiceImpl implements RoleService {
     }
 
     private RoleResponse toResponse(Role r) {
+        // Trả về giá trị active thực tế từ entity (có thể là true, false, hoặc null)
+        // Frontend sẽ xử lý để hiển thị đúng
+        Boolean activeValue = r.getActive();
         return RoleResponse.builder()
                 .id(r.getRoleId() != null ? r.getRoleId().toString() : null)
                 .roleName(r.getRoleName())
                 .description(r.getDescription())
-                .active(Boolean.TRUE.equals(r.getActive()))
+                .active(activeValue != null ? activeValue : false) // Nếu null thì mặc định là false
                 .createdDate(r.getCreatedDate() == null ? null :
                         r.getCreatedDate().toInstant().atOffset(ZoneOffset.UTC).toString())
                 .permissions(r.getPermissions() == null ? List.of() :
@@ -115,15 +120,9 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public List<RoleResponse> getAllRoles(Optional<Boolean> activeFilter) {
+        // Giống như Account, trả về tất cả roles (bao gồm cả inactive) để admin quản lý
+        // Không filter theo active
         List<Role> all = roleRepository.findAll();
-        if (activeFilter.isPresent()) {
-            Boolean f = activeFilter.get();
-            all = all.stream()
-                    .filter(r -> Objects.equals(Boolean.TRUE.equals(r.getActive()), f))
-                    .toList();
-        } else {
-            all = all.stream().filter(r -> Boolean.TRUE.equals(r.getActive())).toList();
-        }
         return all.stream().map(this::toResponse).toList();
     }
 
@@ -164,9 +163,10 @@ public class RoleServiceImpl implements RoleService {
             r.setDescription(req.getDescription());
         }
 
-        if (req.getActive() != null) {
-            r.setActive(req.getActive());
-        }
+        // Không cho phép cập nhật active từ request, chỉ cho phép qua toggle
+        // if (req.getActive() != null) {
+        //     r.setActive(req.getActive());
+        // }
 
         return toResponse(roleRepository.save(r));
     }
@@ -265,5 +265,25 @@ public class RoleServiceImpl implements RoleService {
         }
         r.setPermissions(newSet);
         return toResponse(roleRepository.save(r));
+    }
+
+    @Override
+    @Transactional
+    public RoleResponse toggleRoleStatus(UUID roleId) {
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò"));
+        
+        ensureNotSystemRole(role,
+                "Không thể thay đổi trạng thái vai trò 'Quản trị viên'",
+                "Chủ cửa hàng không được phép thay đổi trạng thái vai trò 'Chủ cửa hàng'");
+        
+        if (currentUserHasRole(role)) {
+            throw new IllegalStateException("Bạn không thể thay đổi trạng thái vai trò mà chính bạn đang sở hữu");
+        }
+        
+        Boolean currentActive = role.getActive();
+        role.setActive(currentActive == null || !currentActive);
+        Role savedRole = roleRepository.save(role);
+        return toResponse(savedRole);
     }
 }

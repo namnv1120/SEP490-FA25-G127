@@ -29,4 +29,6 @@ public interface RoleService {
     void removePermission(UUID roleId, UUID permissionId);
 
     RoleResponse setPermissions(UUID roleId, RolePermissionUpdateRequest req);
+
+    RoleResponse toggleRoleStatus(UUID roleId);
 }

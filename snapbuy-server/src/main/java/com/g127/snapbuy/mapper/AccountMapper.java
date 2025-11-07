@@ -17,6 +17,7 @@ public interface AccountMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "roles", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
+    @Mapping(target = "active", ignore = true)
     void updateAccount(@MappingTarget Account account, AccountUpdateRequest req);
 
     @Mapping(target = "id", expression = "java(account.getAccountId() != null ? account.getAccountId().toString() : null)")

@@ -22,6 +22,7 @@ public interface ProductMapper {
     @Mapping(target = "supplier", ignore = true)
     @Mapping(target = "createdDate", ignore = true)
     @Mapping(target = "updatedDate", ignore = true)
+    @Mapping(target = "active", ignore = true)
     void updateEntity(@MappingTarget Product product, ProductUpdateRequest request);
 
     @Mapping(source = "category.categoryId", target = "categoryId")

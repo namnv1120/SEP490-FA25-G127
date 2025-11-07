@@ -35,7 +35,7 @@ const EditProduct = () => {
       try {
         const data = await getAllCategories();
         const mainCats = data
-          .filter((c) => !c.parentCategoryId)
+          .filter((c) => !c.parentCategoryId && (c.active === true || c.active === 1))
           .map((c) => ({
             value: c.categoryId,
             label: c.categoryName,
@@ -53,10 +53,12 @@ const EditProduct = () => {
     const fetchSuppliers = async () => {
       try {
         const data = await getAllSuppliers();
-        const options = data.map((s) => ({
-          value: s.supplierId,
-          label: s.supplierName,
-        }));
+        const options = data
+          .filter((s) => s.active === true || s.active === 1)
+          .map((s) => ({
+            value: s.supplierId,
+            label: s.supplierName,
+          }));
         setSuppliers(options);
       } catch (error) {
         console.error("❌ Lỗi lấy nhà cung cấp:", error);
@@ -71,7 +73,7 @@ const EditProduct = () => {
       try {
         const data = await getAllCategories();
         const subs = data
-          .filter((c) => c.parentCategoryId && c.parentCategoryId === selectedCategory?.value)
+          .filter((c) => c.parentCategoryId && c.parentCategoryId === selectedCategory?.value && (c.active === true || c.active === 1))
           .map((c) => ({
             value: c.categoryId,
             label: c.categoryName,

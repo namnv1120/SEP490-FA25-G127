@@ -104,3 +104,17 @@ export const updateStaffByOwner = async (staffId, data) => {
 export const updateStaffRolesByOwner = async (staffId, data) => {
   return handleRequest('put', `${BASE_URL}/owner/${staffId}/roles`, data);
 };
+
+// Toggle trạng thái tài khoản
+export const toggleAccountStatus = async (accountId) => {
+  try {
+    const response = await axios.patch(
+      `${REST_API_BASE_URL}/${accountId}/toggle-status`,
+      {},
+      { headers: getAuthHeader() }
+    );
+    return response.data.result || response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Lỗi khi chuyển đổi trạng thái tài khoản!');
+  }
+};

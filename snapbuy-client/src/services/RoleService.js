@@ -11,10 +11,9 @@ const getAuthHeader = () => {
 
 export const getAllRoles = async (active) => {
   try {
-    const params = active !== undefined ? { active } : {};
+    // Giống như getAllAccounts, không cần tham số active, trả về tất cả roles
     const response = await axios.get(REST_API_BASE_URL, {
       headers: getAuthHeader(),
-      params,
     });
     return response.data.result || response.data;
   } catch (error) {
@@ -112,5 +111,19 @@ export const setPermissions = async (roleId, permissionsData) => {
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật quyền!');
+  }
+};
+
+// Toggle trạng thái vai trò
+export const toggleRoleStatus = async (roleId) => {
+  try {
+    const response = await axios.patch(
+      `${REST_API_BASE_URL}/${roleId}/toggle-status`,
+      {},
+      { headers: getAuthHeader() }
+    );
+    return response.data.result || response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Lỗi khi chuyển đổi trạng thái vai trò!');
   }
 };

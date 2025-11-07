@@ -1258,6 +1258,13 @@ button.p-paginator-next.p-paginator-element {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0px 15px;
+}
+
+.parent-class-datatable .dataTables_length {
+  float: none;
+  padding-left: 0;
+  margin-left: 0;
 }
 
 .parent-class-datatable select {

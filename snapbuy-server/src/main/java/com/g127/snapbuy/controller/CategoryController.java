@@ -55,4 +55,11 @@ public class CategoryController {
         response.setResult("Danh mục đã được xoá");
         return response;
     }
+
+    @PatchMapping("{id}/toggle-status")
+    public ApiResponse<CategoryResponse> toggleCategoryStatus(@PathVariable("id") UUID id) {
+        ApiResponse<CategoryResponse> response = new ApiResponse<>();
+        response.setResult(categoryService.toggleCategoryStatus(id));
+        return response;
+    }
 }
