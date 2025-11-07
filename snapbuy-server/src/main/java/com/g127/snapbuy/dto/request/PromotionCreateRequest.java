@@ -37,7 +37,3 @@ public class PromotionCreateRequest {
     @Size(min = 1)
     private List<UUID> productIds;
 }
-
-
-
-

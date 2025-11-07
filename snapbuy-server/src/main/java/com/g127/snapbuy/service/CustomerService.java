@@ -31,4 +31,6 @@ public interface CustomerService {
     int getPoints(UUID customerId);
 
     int adjustPoints(UUID customerId, int delta);
+
+     List<CustomerResponse> getCustomersByPoints(Integer min, Integer max, String sort);
 }

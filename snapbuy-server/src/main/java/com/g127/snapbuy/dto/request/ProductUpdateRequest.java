@@ -15,7 +15,7 @@ public class ProductUpdateRequest {
     @Size(max = 200, message = "Tên sản phẩm không được vượt quá 200 ký tự.")
     private String productName;
 
-        @Size(max = 50, message = "Mã sản phẩm không được vượt quá 50 ký tự.")
+    @Size(max = 50, message = "Mã sản phẩm không được vượt quá 50 ký tự.")
     @Pattern(regexp = "^[A-Za-z0-9_-]*$", message = "Mã sản phẩm chỉ cho phép chữ, số, gạch dưới hoặc gạch ngang.")
     private String productCode;
 

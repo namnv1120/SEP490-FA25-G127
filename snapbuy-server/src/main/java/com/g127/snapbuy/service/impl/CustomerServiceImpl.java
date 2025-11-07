@@ -10,6 +10,7 @@ import com.g127.snapbuy.mapper.CustomerMapper;
 import com.g127.snapbuy.repository.CustomerRepository;
 import com.g127.snapbuy.service.CustomerService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -117,5 +118,18 @@ public class CustomerServiceImpl implements CustomerService {
         c.setUpdatedDate(LocalDateTime.now());
         customerRepository.save(c);
         return c.getPoints();
+    }
+
+    @Override
+    public List<CustomerResponse> getCustomersByPoints(Integer min, Integer max, String sort) {
+        int from = (min == null) ? 0 : min;
+        int to = (max == null) ? Integer.MAX_VALUE : max;
+        Sort.Direction dir = ("asc".equalsIgnoreCase(sort)) ? Sort.Direction.ASC : Sort.Direction.DESC;
+
+        List<Customer> customers = customerRepository.findByPointsBetween(from, to, Sort.by(dir, "points"));
+
+        return customers.stream()
+                .map(customerMapper::toResponse)
+                .collect(Collectors.toList());
     }
 }

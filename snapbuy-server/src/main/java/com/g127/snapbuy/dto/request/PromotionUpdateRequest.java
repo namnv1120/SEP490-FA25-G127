@@ -22,7 +22,3 @@ public class PromotionUpdateRequest {
     private Boolean active;
     private List<UUID> productIds;
 }
-
-
-
-

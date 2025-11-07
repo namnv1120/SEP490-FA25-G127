@@ -70,4 +70,15 @@ public class CustomerController {
         response.setResult(customerService.getCustomerByPhone(phone));
         return response;
     }
+
+    @GetMapping("/by-points")
+    public ApiResponse<List<CustomerResponse>> getCustomersByPoints(
+            @RequestParam(value = "min", required = false) Integer min,
+            @RequestParam(value = "max", required = false) Integer max,
+            @RequestParam(value = "sort", required = false, defaultValue = "desc") String sort
+    ) {
+        ApiResponse<List<CustomerResponse>> response = new ApiResponse<>();
+        response.setResult(customerService.getCustomersByPoints(min, max, sort));
+        return response;
+    }
 }
