@@ -127,3 +127,18 @@ export const getProductsBySupplierId = async (supplierId) => {
     throw error;
   }
 };
+
+// Toggle trạng thái sản phẩm
+export const toggleProductStatus = async (productId) => {
+  try {
+    const response = await axios.patch(
+      `${REST_API_BASE_URL}/${productId}/toggle-status`,
+      {},
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi chuyển đổi trạng thái sản phẩm:", error);
+    throw error;
+  }
+};

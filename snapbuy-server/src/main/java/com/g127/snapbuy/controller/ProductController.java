@@ -80,4 +80,11 @@ public class ProductController {
         return response;
     }
 
+    @PatchMapping("{id}/toggle-status")
+    public ApiResponse<ProductResponse> toggleProductStatus(@PathVariable("id") UUID id) {
+        ApiResponse<ProductResponse> response = new ApiResponse<>();
+        response.setResult(productService.toggleProductStatus(id));
+        return response;
+    }
+
 }

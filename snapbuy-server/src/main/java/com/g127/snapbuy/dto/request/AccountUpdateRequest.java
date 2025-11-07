@@ -2,6 +2,7 @@ package com.g127.snapbuy.dto.request;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;
+import java.util.List;
 
 @Data
 public class AccountUpdateRequest {
@@ -20,4 +21,6 @@ public class AccountUpdateRequest {
     private String password;
 
     private Boolean active;
+
+    private List<String> roles;
 }

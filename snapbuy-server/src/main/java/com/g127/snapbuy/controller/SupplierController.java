@@ -56,5 +56,11 @@ public class SupplierController {
         return response;
     }
 
+    @PatchMapping("{id}/toggle-status")
+    public ApiResponse<SupplierResponse> toggleSupplierStatus(@PathVariable("id") UUID id) {
+        ApiResponse<SupplierResponse> response = new ApiResponse<>();
+        response.setResult(supplierService.toggleSupplierStatus(id));
+        return response;
+    }
 
 }

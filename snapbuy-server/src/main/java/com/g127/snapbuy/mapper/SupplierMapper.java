@@ -18,6 +18,7 @@ public interface SupplierMapper {
     @Mapping(target = "supplierId", ignore = true)
     @Mapping(target = "createdDate", ignore = true)
     @Mapping(target = "updatedDate", ignore = true)
+    @Mapping(target = "active", ignore = true)
     void updateEntity(@MappingTarget Supplier entity, SupplierUpdateRequest req);
 
     SupplierResponse toResponse(Supplier entity);

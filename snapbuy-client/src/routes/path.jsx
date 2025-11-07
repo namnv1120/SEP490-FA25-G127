@@ -16,7 +16,7 @@ const EditProduct = lazy(() => import("../feature-module/inventories/EditProduct
 const ProductPriceList = lazy(() => import("../feature-module/inventories/ProductPriceList"));
 const EditProductPrice = lazy(() => import("../feature-module/inventories/EditProductPrice"));
 const InventoryList = lazy(() => import("../feature-module/inventories/InventoryList"));
-const SalesList = lazy(() => import("../feature-module/sales/saleslist"));
+const OrderList = lazy(() => import("../feature-module/sales/OrderList"));
 const CategoryList = lazy(() => import("../feature-module/inventories/CategoryList"));
 const SubCategories = lazy(() => import("../feature-module/inventories/SubCategoryList"));
 
@@ -170,6 +170,13 @@ export const authRoutes = [
     route: Route,
   },
   {
+    id: 19,
+    path: routes.orders,
+    name: "orders",
+    element: <OrderList />,
+    route: Route,
+  },
+  {
     id: 76,
     path: routes.possettings,
     name: "possettings",
@@ -183,18 +190,11 @@ export const authRoutes = [
     element: <Permissions />,
     route: Route,
   },
-  {
-    id: 235,
-    path: routes.saleslist,
-    name: "sales-list",
-    element: <SalesList />,
-    route: Route,
-  },
 ];
 
 export const posPage = [
   {
-    id: 25,
+    id: 1,
     path: routes.pos,
     name: "pos",
     element: <Pos />,

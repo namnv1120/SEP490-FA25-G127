@@ -157,4 +157,13 @@ public class AccountController {
         response.setResult(null);
         return response;
     }
+
+    @PatchMapping("/{accountId}/toggle-status")
+    @PreAuthorize("hasRole('Quản trị viên')")
+    public ApiResponse<AccountResponse> toggleAccountStatus(@PathVariable UUID accountId) {
+        ApiResponse<AccountResponse> response = new ApiResponse<>();
+        response.setResult(accountService.toggleAccountStatus(accountId));
+        response.setMessage("Đã cập nhật trạng thái tài khoản thành công.");
+        return response;
+    }
 }

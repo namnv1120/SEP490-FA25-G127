@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import AddRole from "../../core/modals/accounts/AddRole";
-import EditRole from "../../core/modals/accounts/EditRole";
+import AddRole from "../../core/modals/accounts/AddRoleModal";
+import EditRole from "../../core/modals/accounts/EditRoleModal";
 import DeleteModal from "../../components/delete-modal";
-import { allRoutes } from "../../routes/AllRoutes";
 import TableTopHead from "../../components/table-top-head";
 import Table from "../../core/pagination/datatable";
 
@@ -11,23 +10,43 @@ import {
   getAllRoles,
   deleteRole,
   createRole,
-  updateRole,
+  toggleRoleStatus,
 } from "../../services/RoleService";
+import { message } from "antd";
 
 const RoleList = () => {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   const fetchRoles = async () => {
     try {
       setLoading(true);
+      // Giống như Account, gọi getAllRoles không cần tham số, trả về tất cả roles
       const response = await getAllRoles();
       const data = Array.isArray(response) ? response : response.data || response.result || [];
-      setRoles(data);
+      const mappedData = data.map((role) => ({
+        ...role,
+        active: role.active === true || role.active === 1,
+      }));
+      setRoles(mappedData);
     } catch (error) {
+      console.error("❌ Error fetching roles:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleStatus = async (role) => {
+    try {
+      await toggleRoleStatus(role.id);
+      await fetchRoles();
+      message.success("Đã cập nhật trạng thái vai trò thành công!");
+    } catch (err) {
+      console.error("❌ Lỗi khi chuyển đổi trạng thái vai trò:", err);
+      message.error(err.response?.data?.message || "Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại.");
     }
   };
 
@@ -52,10 +71,9 @@ const RoleList = () => {
     }
   };
 
-  const handleUpdateRole = async (roleId, updatedData) => {
+  const handleUpdateRole = async () => {
     try {
-      await updateRole(roleId, updatedData);
-      fetchRoles();
+      await fetchRoles();
     } catch (error) {
     }
   };
@@ -76,15 +94,26 @@ const RoleList = () => {
     {
       title: "Trạng thái",
       dataIndex: "active",
-      render: (isActive) => {
+      render: (isActive, record) => {
         const active = isActive === true || isActive === 1 || isActive === "1";
         return (
-          <span
-            className={`d-inline-flex align-items-center p-1 pe-2 rounded-1 text-white fs-10 ${active ? "bg-success" : "bg-danger"}`}
-          >
-            <i className="ti ti-point-filled me-1 fs-11"></i>
-            {active ? "Hoạt động" : "Không hoạt động"}
-          </span>
+          <div className="d-flex align-items-center gap-2">
+            <span
+              className={`badge fw-medium fs-10 ${active ? "bg-success" : "bg-danger"}`}
+            >
+              {active ? "Hoạt động" : "Không hoạt động"}
+            </span>
+            <div className="form-check form-switch">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                role="switch"
+                checked={active}
+                onChange={() => handleToggleStatus(record)}
+                style={{ cursor: "pointer" }}
+              />
+            </div>
+          </div>
         );
       },
       sorter: (a, b) => (a.isActive === b.isActive ? 0 : a.isActive ? -1 : 1),
@@ -94,21 +123,23 @@ const RoleList = () => {
       dataIndex: "actions",
       key: "actions",
       align: "center",
-      render: (record) => (
+      render: (_, record) => (
         <div className="action-table-data">
           <div className="edit-delete-action">
-            <Link
+            {/* <Link
               to={allRoutes.permissions}
               className="me-2 d-flex align-items-center p-2 border rounded"
             >
               <i className="ti ti-shield"></i>
-            </Link>
+            </Link> */}
             <Link
               className="me-2 p-2"
               to="#"
-              data-bs-toggle="modal"
-              data-bs-target="#edit-role"
-              onClick={() => setSelectedRole(record)}
+              onClick={(e) => {
+                e.preventDefault();
+                setSelectedRole(record);
+                setEditModalOpen(true);
+              }}
             >
               <i data-feather="edit" className="feather-edit"></i>
             </Link>
@@ -140,15 +171,14 @@ const RoleList = () => {
             </div>
             <TableTopHead />
             <div className="page-btn">
-              <Link
-                to="#"
+              <button
+                type="button"
                 className="btn btn-primary"
-                data-bs-toggle="modal"
-                data-bs-target="#add-role"
+                onClick={() => setAddModalOpen(true)}
               >
                 <i className="ti ti-circle-plus me-1"></i>
                 Thêm vai trò
-              </Link>
+              </button>
             </div>
           </div>
 
@@ -182,23 +212,26 @@ const RoleList = () => {
 
             <div className="card-body">
               <div className="table-responsive">
-                {loading ? (
-                  <div className="text-center p-4">Đang tải...</div>
-                ) : (
-                  <Table columns={columns} dataSource={roles} />
-                )}
+                <Table columns={columns} dataSource={roles} />
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <AddRole id="add-role" onCreated={handleAddRole} />
+      <AddRole
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onSuccess={handleAddRole}
+      />
       <EditRole
-        id="edit-role"
-        roleId={selectedRole?.id}
+        isOpen={editModalOpen}
+        roleId={selectedRole?.id || selectedRole?.roleId}
         onUpdated={handleUpdateRole}
-        onClose={() => setSelectedRole(null)}
+        onClose={() => {
+          setEditModalOpen(false);
+          setSelectedRole(null);
+        }}
       />
       <DeleteModal onConfirm={handleDeleteRole} />
     </div>

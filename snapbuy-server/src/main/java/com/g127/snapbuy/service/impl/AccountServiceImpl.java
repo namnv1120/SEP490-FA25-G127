@@ -16,6 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -281,6 +282,23 @@ public class AccountServiceImpl implements AccountService {
             acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
         }
 
+        // Xử lý roles nếu có
+        if (req.getRoles() != null && !req.getRoles().isEmpty()) {
+            // Chỉ cho phép chọn 1 role
+            if (req.getRoles().size() > 1) {
+                throw new IllegalArgumentException("Chỉ được chọn 1 vai trò cho tài khoản");
+            }
+            
+            String roleName = req.getRoles().get(0);
+            Role role = roleRepository.findByRoleNameIgnoreCase(roleName)
+                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò: " + roleName));
+            ensureActive(role);
+
+            // Xóa tất cả roles cũ và thêm role mới
+            acc.getRoles().clear();
+            acc.getRoles().add(role);
+        }
+
         return accountMapper.toResponse(accountRepository.save(acc));
     }
 
@@ -293,12 +311,34 @@ public class AccountServiceImpl implements AccountService {
         if (!Objects.equals(acc.getUsername(), currentUser) && !isAdmin())
             throw new IllegalStateException("Bạn chỉ có thể cập nhật tài khoản của chính mình");
 
+        // Nếu có roles trong request, chỉ admin mới được update roles
+        if (req.getRoles() != null && !req.getRoles().isEmpty() && !isAdmin()) {
+            throw new IllegalStateException("Chỉ quản trị viên mới được cập nhật vai trò");
+        }
+
         if (req.getFullName() != null) acc.setFullName(req.getFullName());
         if (req.getEmail() != null) acc.setEmail(req.getEmail());
         if (req.getPhone() != null) acc.setPhone(req.getPhone());
         if (req.getAvatarUrl() != null) acc.setAvatarUrl(req.getAvatarUrl());
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
             acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+        }
+
+        // Xử lý roles nếu có (chỉ admin mới được update roles)
+        if (req.getRoles() != null && !req.getRoles().isEmpty() && isAdmin()) {
+            // Chỉ cho phép chọn 1 role
+            if (req.getRoles().size() > 1) {
+                throw new IllegalArgumentException("Chỉ được chọn 1 vai trò cho tài khoản");
+            }
+            
+            String roleName = req.getRoles().get(0);
+            Role role = roleRepository.findByRoleNameIgnoreCase(roleName)
+                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò: " + roleName));
+            ensureActive(role);
+
+            // Xóa tất cả roles cũ và thêm role mới
+            acc.getRoles().clear();
+            acc.getRoles().add(role);
         }
 
         return accountMapper.toResponse(accountRepository.save(acc));
@@ -320,5 +360,23 @@ public class AccountServiceImpl implements AccountService {
         if (hasProtectedRole) throw new IllegalStateException("Không thể xóa tài khoản có vai trò được bảo vệ");
 
         accountRepository.delete(acc);
+    }
+
+    @Override
+    public AccountResponse toggleAccountStatus(UUID accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
+        
+        String currentUser = getCurrentUsername();
+        if (account.getUsername().equalsIgnoreCase(currentUser)) {
+            throw new IllegalStateException("Bạn không thể tự vô hiệu hóa tài khoản của chính mình");
+        }
+        
+        Boolean currentActive = account.getActive();
+        account.setActive(currentActive == null || !currentActive);
+        account.setUpdatedDate(LocalDateTime.now());
+        Account savedAccount = accountRepository.save(account);
+        log.info("Toggling account {} status from {} to {}", accountId, currentActive, savedAccount.getActive());
+        return accountMapper.toResponse(savedAccount);
     }
 }

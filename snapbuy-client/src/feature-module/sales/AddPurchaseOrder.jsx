@@ -28,10 +28,12 @@ const AddPurchaseOrder = () => {
     const fetchSuppliers = async () => {
       try {
         const data = await getAllSuppliers();
-        const options = data.map((s) => ({
-          value: s.supplierId,
-          label: s.supplierName,
-        }));
+        const options = data
+          .filter((s) => s.active === true || s.active === 1)
+          .map((s) => ({
+            value: s.supplierId,
+            label: s.supplierName,
+          }));
         setSuppliers(options);
       } catch (err) {
         message.error("Không thể tải danh sách nhà cung cấp.");
@@ -49,11 +51,13 @@ const AddPurchaseOrder = () => {
     const fetchProducts = async () => {
       try {
         const data = await getProductsBySupplierId(selectedSupplier.value);
-        const options = data.map((p) => ({
-          value: p.productId,
-          label: p.productName,
-          unitPrice: p.unitPrice || 0,
-        }));
+        const options = data
+          .filter((p) => p.active === true || p.active === 1)
+          .map((p) => ({
+            value: p.productId,
+            label: p.productName,
+            unitPrice: p.unitPrice || 0,
+          }));
         setProducts(options);
       } catch (err) {
         message.error("Không thể tải sản phẩm của nhà cung cấp này.");

@@ -4,7 +4,7 @@ import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
-import { getAllCategories, deleteCategory } from "../../services/CategoryService";
+import { getAllCategories, deleteCategory, toggleCategoryStatus } from "../../services/CategoryService";
 import { message } from "antd";
 import { Modal } from "bootstrap";
 
@@ -73,6 +73,7 @@ const SubCategoryList = () => {
             })
             : "Không có",
           status: cat.active === 1 || cat.active === true ? "Hoạt động" : "Không hoạt động",
+          active: cat.active === 1 || cat.active === true,
         };
       });
 
@@ -138,6 +139,17 @@ const SubCategoryList = () => {
     setSelectedSubCategory(null);
   };
 
+  const handleToggleStatus = async (subCategory) => {
+    try {
+      await toggleCategoryStatus(subCategory.categoryId);
+      await fetchSubCategories();
+      message.success("Đã cập nhật trạng thái danh mục con thành công!");
+    } catch (err) {
+      console.error("❌ Lỗi khi chuyển đổi trạng thái danh mục con:", err);
+      message.error("Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại.");
+    }
+  };
+
   const columns = [
     {
       header: (
@@ -191,12 +203,24 @@ const SubCategoryList = () => {
       key: "status",
       sortable: true,
       body: (data) => (
-        <span
-          className={`badge fw-medium fs-10 ${data.status === "Hoạt động" ? "bg-success" : "bg-danger"
-            }`}
-        >
-          {data.status}
-        </span>
+        <div className="d-flex align-items-center gap-2">
+          <span
+            className={`badge fw-medium fs-10 ${data.status === "Hoạt động" ? "bg-success" : "bg-danger"
+              }`}
+          >
+            {data.status}
+          </span>
+          <div className="form-check form-switch">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              role="switch"
+              checked={data.active}
+              onChange={() => handleToggleStatus(data)}
+              style={{ cursor: "pointer" }}
+            />
+          </div>
+        </div>
       ),
     },
     {
@@ -252,16 +276,7 @@ const SubCategoryList = () => {
             </div>
           )}
 
-          {loading && (
-            <div className="text-center my-5">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Đang tải...</span>
-              </div>
-            </div>
-          )}
-
-          {!loading && (
-            <div className="card table-list-card">
+          <div className="card table-list-card">
               <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
                 <SearchFromApi
                   callback={handleSearch}
@@ -284,7 +299,6 @@ const SubCategoryList = () => {
                 </div>
               </div>
             </div>
-          )}
         </div>
         <CommonFooter />
       </div>

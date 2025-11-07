@@ -29,4 +29,5 @@ public interface AccountService {
 
     AccountResponse adminUpdateAccount(UUID accountId, AccountUpdateRequest req);
 
+    AccountResponse toggleAccountStatus(UUID accountId);
 }

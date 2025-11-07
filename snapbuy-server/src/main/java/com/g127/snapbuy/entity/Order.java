@@ -51,6 +51,12 @@ public class Order {
     @Column(name = "tax_amount", precision = 18, scale = 2)
     private BigDecimal taxAmount;
 
+    @Column(name = "points_redeemed")
+    private Integer pointsRedeemed;
+
+    @Column(name = "points_earned")
+    private Integer pointsEarned;
+
     @Column(name = "notes", length = 500)
     private String notes;
 

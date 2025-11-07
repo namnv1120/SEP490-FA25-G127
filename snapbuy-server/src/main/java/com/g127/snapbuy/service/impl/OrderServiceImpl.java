@@ -160,6 +160,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         BigDecimal grandTotal = afterDiscount.add(taxAmount);
         if (grandTotal.compareTo(BigDecimal.ZERO) < 0) grandTotal = BigDecimal.ZERO;
 
+        // Tính toán điểm: Trừ điểm đã sử dụng ngay khi tạo đơn, cộng điểm tích lũy khi thanh toán
         int pointsRedeemed = 0;
         int pointsEarned = 0;
 
@@ -176,13 +177,22 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
 
         if (!isGuest) {
             pointsEarned = payable.divide(BigDecimal.valueOf(500), 0, RoundingMode.FLOOR).intValue();
-            long tmpPts = (long) (customer.getPoints() == null ? 0 : customer.getPoints())
-                    - pointsRedeemed + pointsEarned;
-            int newPoints = (int) Math.max(0, Math.min(tmpPts, Integer.MAX_VALUE));
-            customer.setPoints(newPoints);
-            customerRepository.save(customer);
+            
+            // Trừ điểm đã sử dụng ngay khi tạo đơn
+            if (pointsRedeemed > 0) {
+                int currentPoints = customer.getPoints() == null ? 0 : customer.getPoints();
+                int newPoints = Math.max(0, currentPoints - pointsRedeemed);
+                customer.setPoints(newPoints);
+                customerRepository.save(customer);
+                log.info("Tạo đơn {}: Đã trừ {} điểm từ tài khoản khách hàng (điểm còn lại: {})",
+                        orderNumber, pointsRedeemed, newPoints);
+            }
+            // KHÔNG cộng điểm tích lũy ở đây - sẽ cộng khi thanh toán thành công
         }
-
+        
+        // Lưu pointsRedeemed và pointsEarned vào order (giờ đã có field trong entity)
+        order.setPointsRedeemed(pointsRedeemed);
+        order.setPointsEarned(pointsEarned);
         order.setDiscountAmount(billDiscountAmount);
         order.setTaxAmount(taxAmount);
         order.setTotalAmount(payable);
@@ -246,18 +256,8 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                 .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         resp.setSubtotal(subtotal);
-
-        try {
-            var f1 = order.getClass().getDeclaredField("pointsRedeemed");
-            var f2 = order.getClass().getDeclaredField("pointsEarned");
-            f1.setAccessible(true);
-            f2.setAccessible(true);
-            Object pr = f1.get(order);
-            Object pe = f2.get(order);
-            resp.setPointsRedeemed(pr == null ? null : (Integer) pr);
-            resp.setPointsEarned(pe == null ? null : (Integer) pe);
-        } catch (Exception ignored) {
-        }
+        resp.setPointsRedeemed(order.getPointsRedeemed());
+        resp.setPointsEarned(order.getPointsEarned());
         return resp;
     }
 
@@ -272,17 +272,8 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                             .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
                     resp.setSubtotal(subtotal);
-                    try {
-                        var f1 = order.getClass().getDeclaredField("pointsRedeemed");
-                        var f2 = order.getClass().getDeclaredField("pointsEarned");
-                        f1.setAccessible(true);
-                        f2.setAccessible(true);
-                        Object pr = f1.get(order);
-                        Object pe = f2.get(order);
-                        resp.setPointsRedeemed(pr == null ? null : (Integer) pr);
-                        resp.setPointsEarned(pe == null ? null : (Integer) pe);
-                    } catch (Exception ignored) {
-                    }
+                    resp.setPointsRedeemed(order.getPointsRedeemed());
+                    resp.setPointsEarned(order.getPointsEarned());
                     return resp;
                 })
                 .toList();
@@ -304,6 +295,27 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                 addInventoryBack(d.getProduct(), d.getQuantity(), order.getAccount(),
                         "Hủy đơn " + order.getOrderNumber());
             }
+            
+            // Trả lại điểm đã sử dụng vì điểm đã bị trừ khi tạo đơn
+            Customer c = order.getCustomer();
+            boolean isGuest = c == null || c.getCustomerId().toString()
+                    .equals("00000000-0000-0000-0000-000000000001");
+            if (!isGuest) {
+                int cur = c.getPoints() == null ? 0 : c.getPoints();
+                
+                // Lấy điểm đã sử dụng (pointsRedeemed) từ order
+                int pointsRedeemed = order.getPointsRedeemed() == null ? 0 : order.getPointsRedeemed();
+                
+                // Trả lại điểm đã sử dụng
+                if (pointsRedeemed > 0) {
+                    long next = (long) cur + pointsRedeemed;
+                    c.setPoints((int) next);
+                    customerRepository.save(c);
+                    log.info("Hủy đơn {} (chưa thanh toán): Đã trả lại {} điểm cho khách hàng",
+                            order.getOrderNumber(), pointsRedeemed);
+                }
+            }
+            
             order.setOrderStatus("Đã hủy");
             order.setPaymentStatus("Chưa thanh toán");
             payment.setPaymentStatus("Chưa thanh toán");
@@ -319,9 +331,14 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                     .equals("00000000-0000-0000-0000-000000000001");
             if (!isGuest) {
                 int cur = c.getPoints() == null ? 0 : c.getPoints();
+                
+                // Lấy điểm đã sử dụng (pointsRedeemed) từ order
+                int pointsRedeemed = order.getPointsRedeemed() == null ? 0 : order.getPointsRedeemed();
+                
+                // Trừ điểm đã tích lũy (earned) và trả lại điểm đã sử dụng (redeemed)
                 int earned = order.getTotalAmount() == null ? 0
                         : order.getTotalAmount().divide(BigDecimal.valueOf(500), 0, RoundingMode.FLOOR).intValue();
-                long next = (long) cur - Math.max(0, earned);
+                long next = (long) cur - Math.max(0, earned) + pointsRedeemed; // Trả lại điểm đã sử dụng
                 if (next < 0) next = 0;
                 c.setPoints((int) next);
                 customerRepository.save(c);
@@ -363,17 +380,8 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                 .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         resp.setSubtotal(subtotal);
-        try {
-            var f1 = order.getClass().getDeclaredField("pointsRedeemed");
-            var f2 = order.getClass().getDeclaredField("pointsEarned");
-            f1.setAccessible(true);
-            f2.setAccessible(true);
-            Object pr = f1.get(order);
-            Object pe = f2.get(order);
-            resp.setPointsRedeemed(pr == null ? null : (Integer) pr);
-            resp.setPointsEarned(pe == null ? null : (Integer) pe);
-        } catch (Exception ignored) {
-        }
+        resp.setPointsRedeemed(order.getPointsRedeemed());
+        resp.setPointsEarned(order.getPointsEarned());
         return resp;
     }
 
@@ -390,17 +398,8 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                 .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         resp.setSubtotal(subtotal);
-        try {
-            var f1 = order.getClass().getDeclaredField("pointsRedeemed");
-            var f2 = order.getClass().getDeclaredField("pointsEarned");
-            f1.setAccessible(true);
-            f2.setAccessible(true);
-            Object pr = f1.get(order);
-            Object pe = f2.get(order);
-            resp.setPointsRedeemed(pr == null ? null : (Integer) pr);
-            resp.setPointsEarned(pe == null ? null : (Integer) pe);
-        } catch (Exception ignored) {
-        }
+        resp.setPointsRedeemed(order.getPointsRedeemed());
+        resp.setPointsEarned(order.getPointsEarned());
         return resp;
     }
 
@@ -452,6 +451,34 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         Payment payment = paymentRepository.findByOrder(order);
         if (payment == null) {
             throw new NoSuchElementException("Không tìm thấy thanh toán cho đơn hàng");
+        }
+
+        // Xử lý điểm khi thanh toán thành công
+        Customer customer = order.getCustomer();
+        boolean isGuest = customer == null || customer.getCustomerId().toString()
+                .equals("00000000-0000-0000-0000-000000000001");
+        
+        if (!isGuest) {
+            // Lấy điểm đã sử dụng và điểm sẽ tích lũy từ order
+            int pointsRedeemed = order.getPointsRedeemed() == null ? 0 : order.getPointsRedeemed();
+            int pointsEarned = order.getPointsEarned() == null ? 0 : order.getPointsEarned();
+            
+            // Nếu pointsEarned chưa được tính (null hoặc 0), tính lại từ totalAmount
+            if (pointsEarned == 0 && order.getTotalAmount() != null) {
+                pointsEarned = order.getTotalAmount().divide(BigDecimal.valueOf(500), 0, RoundingMode.FLOOR).intValue();
+                // Lưu lại vào order để dùng sau này
+                order.setPointsEarned(pointsEarned);
+            }
+            
+            // Trừ điểm đã sử dụng và cộng điểm tích lũy
+            int currentPoints = customer.getPoints() == null ? 0 : customer.getPoints();
+            long newPoints = (long) currentPoints - pointsRedeemed + pointsEarned;
+            if (newPoints < 0) newPoints = 0;
+            customer.setPoints((int) newPoints);
+            customerRepository.save(customer);
+            
+            log.info("Đã cập nhật điểm cho khách hàng {}: trừ {} điểm, cộng {} điểm, điểm mới: {}",
+                    customer.getCustomerCode(), pointsRedeemed, pointsEarned, newPoints);
         }
 
         order.setOrderStatus("Hoàn tất");

@@ -23,4 +23,6 @@ public interface ProductService {
     List<ProductResponse> importProducts(List<ProductImportRequest> request);
 
     List<ProductResponse> getProductsBySupplierId(UUID supplierId);
+
+    ProductResponse toggleProductStatus(UUID id);
 }

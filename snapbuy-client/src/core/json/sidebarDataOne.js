@@ -73,51 +73,35 @@ export const SidebarData1 = [
     hasSubRoute: true,
     icon: "layout-grid",
     showSubRoute: false,
-    activeRoute: "users",
+    activeRoute: "sales",
     subRoutes: [
       {
-        tittle: "Nhập kho",
-        hasSubRoute: true,
+        tittle: "Đơn đặt hàng",
+        hasSubRoute: false,
         showSubRoute: false,
-        subRoutes: [
-          {
-            tittle: "Đơn đặt hàng",
-            hasSubRoute: false,
-            showSubRoute: false,
-            route: "/purchase-orders",
-            subRoutes: [],
-          },
-          {
-            tittle: "Tạo phiếu đặt hàng",
-            hasSubRoute: false,
-            showSubRoute: false,
-            route: "/stock-adjustment",
-            subRoutes: [],
-          },
-        ],
+        route: "/purchase-orders",
+        subRoutes: [],
       },
       {
-        tittle: "Khuyến mãi",
-        hasSubRoute: true,
+        tittle: "Đơn bán hàng",
+        hasSubRoute: false,
         showSubRoute: false,
-        activeRoute: "promo",
-        subRoutes: [
-          {
-            tittle: "Giảm giá",
-            hasSubRoute: false,
-            showSubRoute: false,
-            route: "/coupons",
-            subRoutes: [],
-          },
-          {
-            tittle: "Giảm giá sản phẩm",
-            hasSubRoute: false,
-            showSubRoute: false,
-            route: "/gift-cards",
-            subRoutes: [],
-          },
-          
-        ],
+        route: "/orders",
+        subRoutes: [],
+      },
+      {
+        tittle: "Phiếu giảm giá",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/coupons",
+        subRoutes: [],
+      },
+      {
+        tittle: "Giảm giá sản phẩm",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/gift-cards",
+        subRoutes: [],
       },
     ],
   },
@@ -126,7 +110,7 @@ export const SidebarData1 = [
     hasSubRoute: true,
     icon: "chart-bar",
     showSubRoute: false,
-    activeRoute: "users",
+    activeRoute: "reports",
     subRoutes: [
       {
         tittle: "Sales Report",

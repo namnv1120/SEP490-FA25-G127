@@ -4,7 +4,7 @@ import DeleteModal from "../../components/delete-modal";
 import TableTopHead from "../../components/table-top-head";
 import CommonFooter from "../../components/footer/CommonFooter";
 import { useState, useEffect } from "react";
-import { getAllSuppliers, deleteSupplier } from "../../services/SupplierService";
+import { getAllSuppliers, deleteSupplier, toggleSupplierStatus } from "../../services/SupplierService";
 import { message } from "antd";
 import { Modal } from "bootstrap";
 import { exportToExcel } from "../../utils/excelUtils";
@@ -34,8 +34,13 @@ const Suppliers = () => {
       setLoading(true);
       setError(null);
       const data = await getAllSuppliers();
-      setListData(data);
-      setTotalRecords(data.length);
+      const mappedData = data.map((supplier) => ({
+        ...supplier,
+        status: supplier.active === true || supplier.active === 1 ? "Hoạt động" : "Không hoạt động",
+        active: supplier.active === true || supplier.active === 1,
+      }));
+      setListData(mappedData);
+      setTotalRecords(mappedData.length);
     } catch (err) {
       setError("Lỗi khi tải danh sách nhà cung cấp. Vui lòng thử lại.");
     } finally {
@@ -119,6 +124,17 @@ const Suppliers = () => {
     setSelectedSupplier(null);
   };
 
+  const handleToggleStatus = async (supplier) => {
+    try {
+      await toggleSupplierStatus(supplier.supplierId);
+      await fetchSuppliers();
+      message.success("Đã cập nhật trạng thái nhà cung cấp thành công!");
+    } catch (err) {
+      console.error("❌ Lỗi khi chuyển đổi trạng thái nhà cung cấp:", err);
+      message.error("Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại.");
+    }
+  };
+
   const columns = [
     {
       header: (
@@ -145,9 +161,33 @@ const Suppliers = () => {
     },
     { header: "Email", field: "email", key: "email" },
     { header: "Số điện thoại", field: "phone", key: "phone" },
-    { header: "Quận/Phường", field: "ward", key: "ward" },
-    { header: "Thành phố", field: "city", key: "city" },
     { header: "Địa chỉ", field: "address", key: "address" },
+    {
+      header: "Trạng thái",
+      field: "status",
+      key: "status",
+      sortable: true,
+      body: (data) => (
+        <div className="d-flex align-items-center gap-2">
+          <span
+            className={`badge fw-medium fs-10 ${data.status === "Hoạt động" ? "bg-success" : "bg-danger"
+              }`}
+          >
+            {data.status}
+          </span>
+          <div className="form-check form-switch">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              role="switch"
+              checked={data.active}
+              onChange={() => handleToggleStatus(data)}
+              style={{ cursor: "pointer" }}
+            />
+          </div>
+        </div>
+      ),
+    },
     {
       header: "",
       field: "actions",
@@ -205,16 +245,7 @@ const Suppliers = () => {
             </div>
           )}
 
-          {loading && (
-            <div className="text-center p-5">
-              <div className="spinner-border" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-            </div>
-          )}
-
-          {!loading && (
-            <div className="card">
+          <div className="card">
               <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
                 <SearchFromApi
                   callback={handleSearch}
@@ -237,7 +268,6 @@ const Suppliers = () => {
                 </div>
               </div>
             </div>
-          )}
         </div>
         <CommonFooter />
       </div>

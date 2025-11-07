@@ -10,6 +10,7 @@ import com.g127.snapbuy.mapper.SupplierMapper;
 import com.g127.snapbuy.repository.SupplierRepository;
 import com.g127.snapbuy.service.SupplierService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SupplierServiceImpl implements SupplierService {
 
     private final SupplierRepository supplierRepository;
@@ -42,6 +44,8 @@ public class SupplierServiceImpl implements SupplierService {
 
     @Override
     public List<SupplierResponse> getAllSuppliers() {
+        // Trả về tất cả suppliers (bao gồm cả inactive) để admin có thể quản lý
+        // Frontend sẽ filter theo active khi hiển thị trong dropdown
         List<Supplier> suppliers = supplierRepository.findAll();
         return suppliers.stream()
                 .map(supplierMapper::toResponse)
@@ -62,5 +66,16 @@ public class SupplierServiceImpl implements SupplierService {
         Supplier supplier = supplierRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.SUPPLIER_NOT_FOUND));
         supplierRepository.delete(supplier);
+    }
+
+    @Override
+    public SupplierResponse toggleSupplierStatus(UUID id) {
+        Supplier supplier = supplierRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.SUPPLIER_NOT_FOUND));
+        supplier.setActive(!supplier.isActive());
+        supplier.setUpdatedDate(LocalDateTime.now());
+        Supplier savedSupplier = supplierRepository.save(supplier);
+        log.info("Toggling supplier {} status from {} to {}", id, !savedSupplier.isActive(), savedSupplier.isActive());
+        return supplierMapper.toResponse(savedSupplier);
     }
 }

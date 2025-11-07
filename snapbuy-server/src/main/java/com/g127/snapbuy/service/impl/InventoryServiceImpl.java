@@ -83,6 +83,8 @@ public class InventoryServiceImpl implements InventoryService {
     public List<InventoryResponse> getAllInventories() {
         return inventoryRepository.findAll()
                 .stream()
+                .filter(inventory -> inventory.getProduct() != null && 
+                        (inventory.getProduct().getActive() == null || inventory.getProduct().getActive()))
                 .map(inventoryMapper::toResponse)
                 .toList();
     }

@@ -35,13 +35,27 @@ public class RoleController {
     @GetMapping
     @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<List<RoleResponse>> list(@RequestParam(name = "active", required = false) String active) {
+        System.out.println("🔍 Controller received active parameter: " + active);
         Optional<Boolean> filter;
-        if (active == null) filter = Optional.empty();
-        else if ("all".equalsIgnoreCase(active)) filter = Optional.ofNullable(null);
-        else filter = Optional.of(Boolean.parseBoolean(active));
+        if (active == null) {
+            // Không có tham số -> chỉ trả về active roles
+            System.out.println("🔍 No active parameter, using empty Optional");
+            filter = Optional.empty();
+        } else if ("all".equalsIgnoreCase(active)) {
+            // active="all" -> trả về tất cả roles (bao gồm cả inactive)
+            // Sử dụng Optional.ofNullable(null) để đánh dấu là "all"
+            System.out.println("🔍 Active parameter is 'all', using Optional.ofNullable(null)");
+            filter = Optional.ofNullable(null);
+        } else {
+            // active="true" hoặc "false" -> filter theo giá trị boolean
+            boolean activeBool = Boolean.parseBoolean(active);
+            System.out.println("🔍 Active parameter is boolean: " + activeBool);
+            filter = Optional.of(activeBool);
+        }
 
         ApiResponse<List<RoleResponse>> response = new ApiResponse<>();
-        response.setResult(roleService.getAllRoles(filter));
+        List<RoleResponse> roles = roleService.getAllRoles(filter);
+        response.setResult(roles);
         return response;
     }
 
@@ -110,6 +124,15 @@ public class RoleController {
         ApiResponse<RoleResponse> response = new ApiResponse<>();
         response.setResult(roleService.setPermissions(roleId, req));
         response.setMessage("Cập nhật quyền cho vai trò thành công");
+        return response;
+    }
+
+    @PatchMapping("/{roleId}/toggle-status")
+    @PreAuthorize("hasRole('Quản trị viên')")
+    public ApiResponse<RoleResponse> toggleRoleStatus(@PathVariable UUID roleId) {
+        ApiResponse<RoleResponse> response = new ApiResponse<>();
+        response.setResult(roleService.toggleRoleStatus(roleId));
+        response.setMessage("Đã cập nhật trạng thái vai trò thành công");
         return response;
     }
 }

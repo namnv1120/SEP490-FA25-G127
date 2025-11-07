@@ -347,10 +347,19 @@
             left: 10px;
             border: 0;
             line-height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+            height: 38px;
+            width: 38px;
             .feather-search {
                 width: 14px;
                 height: 14px;
                 color: variables.$gray-300;
+                display: inline-block;
+                vertical-align: middle;
+                line-height: 1;
             }
         }
     }
@@ -936,7 +945,7 @@ th,td {
         }
     }
 }
-variables.$cyan:#06AED4;
+
 .badge-pending{
     background-color: variables.$cyan !important;
 }

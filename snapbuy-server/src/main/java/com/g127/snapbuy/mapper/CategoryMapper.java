@@ -17,6 +17,7 @@ public interface CategoryMapper {
     @Mapping(target = "categoryId", ignore = true)
     @Mapping(target = "createdDate", ignore = true)
     @Mapping(target = "updatedDate", ignore = true)
+    @Mapping(target = "active", ignore = true)
     void updateEntity(@MappingTarget Category entity, CategoryUpdateRequest request);
 
     CategoryResponse toResponse(Category entity);

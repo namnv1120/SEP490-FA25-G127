@@ -181,13 +181,13 @@ const ProductPriceList = () => {
     //   key: "validTo",
     //   sortable: true,
     // },
-    {
-      header: "Trạng thái",
-      field: "status",
-      key: "status",
-      sortable: true,
-      body: (data) => getStatusBadge(data.status),
-    },
+    // {
+    //   header: "Trạng thái",
+    //   field: "status",
+    //   key: "status",
+    //   sortable: true,
+    //   body: (data) => getStatusBadge(data.status),
+    // },
     {
       header: "",
       field: "actions",
@@ -236,25 +236,15 @@ const ProductPriceList = () => {
             </div>
           )}
 
-          {/* Loading State */}
-          {loading && (
-            <div className="text-center my-5">
-              <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Đang tải...</span>
-              </div>
-            </div>
-          )}
-
           {/* Product Price List Table */}
-          {!loading && (
-            <div className="card table-list-card">
-              <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-                <SearchFromApi
-                  callback={handleSearch}
-                  rows={rows}
-                  setRows={setRows}
-                />
-                {/* <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
+          <div className="card table-list-card">
+            <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+              <SearchFromApi
+                callback={handleSearch}
+                rows={rows}
+                setRows={setRows}
+              />
+              {/* <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
                   <div className="dropdown me-2">
                     <Link
                       to="#"
@@ -318,23 +308,22 @@ const ProductPriceList = () => {
                     </ul>
                   </div>
                 </div> */}
-              </div>
-              <div className="card-body">
-                <div className="table-responsive">
-                  <PrimeDataTable
-                    column={columns}
-                    data={productPrices}
-                    rows={rows}
-                    setRows={setRows}
-                    currentPage={currentPage}
-                    setCurrentPage={setCurrentPage}
-                    totalRecords={totalRecords}
-                    dataKey="priceId"
-                  />
-                </div>
+            </div>
+            <div className="card-body">
+              <div className="table-responsive">
+                <PrimeDataTable
+                  column={columns}
+                  data={productPrices}
+                  rows={rows}
+                  setRows={setRows}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  totalRecords={totalRecords}
+                  dataKey="priceId"
+                />
               </div>
             </div>
-          )}
+          </div>
         </div>
         <CommonFooter />
       </div>

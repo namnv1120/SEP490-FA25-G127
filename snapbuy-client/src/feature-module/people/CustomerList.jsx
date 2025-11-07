@@ -37,6 +37,7 @@ const Customers = () => {
       setListData(data);
       setTotalRecords(data.length || 0);
     } catch (error) {
+      console.error("Error fetching customers:", error);
     } finally {
       setLoading(false);
     }
@@ -157,6 +158,19 @@ const Customers = () => {
       },
     },
     {
+      header: "Tích điểm",
+      field: "points",
+      key: "points",
+      body: (data) => {
+        const points = data.points ?? 0;
+        return (
+          <span className="fw-bold text-primary">
+            {new Intl.NumberFormat('vi-VN').format(points)} điểm
+          </span>
+        );
+      },
+    },
+    {
       header: "",
       key: "actions",
       sortable: false,
@@ -202,22 +216,18 @@ const Customers = () => {
           </div>
 
           <div className="card-body p-0">
-            {loading ? (
-              <div className="text-center p-3">Đang tải dữ liệu...</div>
-            ) : (
-              <div className="table-responsive">
-                <PrimeDataTable
-                  column={columns}
-                  data={listData}
-                  rows={rows}
-                  setRows={setRows}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalRecords={totalRecords}
-                  dataKey="customerId"
-                />
-              </div>
-            )}
+            <div className="table-responsive">
+              <PrimeDataTable
+                column={columns}
+                data={listData}
+                rows={rows}
+                setRows={setRows}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                totalRecords={totalRecords}
+                dataKey="customerId"
+              />
+            </div>
           </div>
         </div>
       </div>
