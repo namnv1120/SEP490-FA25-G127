@@ -5,13 +5,19 @@ import com.g127.snapbuy.dto.request.ProductCreateRequest;
 import com.g127.snapbuy.dto.request.ProductImportRequest;
 import com.g127.snapbuy.dto.request.ProductUpdateRequest;
 import com.g127.snapbuy.dto.response.ProductResponse;
+import com.g127.snapbuy.service.BarcodeService;
 import com.g127.snapbuy.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,6 +28,7 @@ import java.util.UUID;
 public class ProductController {
 
     private final ProductService productService;
+    private final BarcodeService barcodeService;
 
     @PostMapping(consumes = {"multipart/form-data"})
     public ApiResponse<ProductResponse> createProduct(@ModelAttribute @Valid ProductCreateRequest request) {
@@ -51,6 +58,13 @@ public class ProductController {
     public ApiResponse<ProductResponse> getProductById(@PathVariable("id") UUID id) {
         ApiResponse<ProductResponse> response = new ApiResponse<>();
         response.setResult(productService.getProductById(id));
+        return response;
+    }
+
+    @GetMapping("/barcode/{barcode}")
+    public ApiResponse<ProductResponse> getProductByBarcode(@PathVariable("barcode") String barcode) {
+        ApiResponse<ProductResponse> response = new ApiResponse<>();
+        response.setResult(productService.getProductByBarcode(barcode));
         return response;
     }
 
@@ -85,6 +99,25 @@ public class ProductController {
         ApiResponse<ProductResponse> response = new ApiResponse<>();
         response.setResult(productService.toggleProductStatus(id));
         return response;
+    }
+
+    @GetMapping("/barcode-image/{barcode}")
+    public ResponseEntity<byte[]> getBarcodeImage(
+            @PathVariable("barcode") String barcode,
+            @RequestParam(defaultValue = "300") int width,
+            @RequestParam(defaultValue = "100") int height) {
+        try {
+            byte[] imageBytes = barcodeService.generateBarcodeImage(barcode, width, height);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.IMAGE_PNG);
+            headers.setContentLength(imageBytes.length);
+            
+            return new ResponseEntity<>(imageBytes, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            log.error("Error generating barcode image: {}", e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }

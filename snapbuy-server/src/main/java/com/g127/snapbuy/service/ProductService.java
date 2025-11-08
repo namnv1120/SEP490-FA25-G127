@@ -16,6 +16,8 @@ public interface ProductService {
 
     ProductResponse getProductById(UUID id);
 
+    ProductResponse getProductByBarcode(String barcode);
+
     List<ProductResponse> getAllProducts();
 
     void deleteProduct(UUID id);

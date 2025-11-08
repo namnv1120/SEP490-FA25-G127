@@ -152,43 +152,43 @@ INSERT INTO products (product_name, product_code, [description], category_id, su
 VALUES
     (N'Bộ nồi Inox 3 đáy Sunhouse SH333', 'PRD001', N'Bộ nồi inox 3 đáy cao cấp, dùng được cho bếp từ',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Bộ nồi Inox'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Bộ', N'16cm-20cm-24cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Bộ', N'16cm-20cm-24cm', NULL),
 
     (N'Bộ nồi Anod Sunhouse AN668', 'PRD002', N'Bộ nồi Anod phủ chống dính, nấu nhanh chín đều',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Bộ nồi Anod'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Bộ', N'18cm-22cm-26cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Bộ', N'18cm-22cm-26cm', NULL),
 
     (N'Chảo chống dính Sunhouse CS26', 'PRD003', N'Chảo chống dính sâu lòng 26cm, lớp phủ Whitford',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Chảo chống dính'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'26cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'26cm', NULL),
 
     (N'Nồi áp suất Sunhouse SH735', 'PRD004', N'Nồi áp suất 7L, tiết kiệm thời gian nấu ăn',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Nồi áp suất'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'24cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'24cm', NULL),
 
     (N'Nồi cơm điện Sunhouse SHD8955', 'PRD005', N'Nồi cơm điện 1.8L, công nghệ nấu 3D',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Nồi cơm điện'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'28x28x30cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'28x28x30cm', NULL),
 
     (N'Máy xay sinh tố Sunhouse SHD5115', 'PRD006', N'Máy xay sinh tố 1.5L, công suất 500W',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Máy xay sinh tố'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'35x20x40cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'35x20x40cm', NULL),
 
     (N'Bếp điện từ đơn Sunhouse SHB9100', 'PRD007', N'Bếp điện từ đơn 2000W, mặt kính chịu nhiệt',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Bếp điện từ'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Chiếc', N'30x37x6cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Chiếc', N'30x37x6cm', NULL),
 
     (N'Quạt đứng Sunhouse SHD7728', 'PRD008', N'Quạt đứng 3 cánh, 3 tốc độ gió',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Quạt đứng'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'40x40x120cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'40x40x120cm', NULL),
 
     (N'Chảo chống dính Sunhouse CS28', 'PRD009', N'Chảo chống dính đáy từ 28cm, an toàn sức khỏe',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Chảo chống dính'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'28cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg'),
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'28cm', NULL),
 
     (N'Nồi cơm điện cao tần Sunhouse SHD8858', 'PRD010', N'Nồi cơm điện cao tần 1.5L, nấu nhanh thơm ngon',
      (SELECT TOP 1 category_id FROM categories WHERE category_name = N'Nồi cơm điện'),
-     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'26x26x28cm', N'https://sunhouse.com.vn/pic/product/bo-noi-inox-3-day-sunhouse-sh335-002.jpg');
+     (SELECT TOP 1 supplier_id FROM suppliers WHERE supplier_code = 'SUP001'), N'Cái', N'26x26x28cm', NULL);
 
 
 INSERT INTO product_price (product_id, unit_price, cost_price)

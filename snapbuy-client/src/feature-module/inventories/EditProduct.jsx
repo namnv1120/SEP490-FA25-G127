@@ -11,6 +11,7 @@ import { getAllCategories } from "../../services/CategoryService";
 import { getAllSuppliers } from "../../services/SupplierService";
 import { getImageUrl } from "../../utils/imageUtils";
 import { message } from "antd";
+import { generateRandomBarcode, downloadBarcode, displayBarcodePreview } from "../../utils/barcodeUtils";
 
 
 const EditProduct = () => {
@@ -133,6 +134,18 @@ const EditProduct = () => {
     if (id) fetchProduct();
   }, [id]);
 
+  // Hiển thị barcode preview khi barcode thay đổi
+  useEffect(() => {
+    if (product?.barcode?.trim()) {
+      displayBarcodePreview(product.barcode, 'barcode-preview-edit');
+    } else {
+      const container = document.getElementById('barcode-preview-edit');
+      if (container) {
+        container.innerHTML = '';
+      }
+    }
+  }, [product?.barcode]);
+
   const handleSaveProduct = async () => {
     try {
       // Validate required fields
@@ -166,6 +179,12 @@ const EditProduct = () => {
       );
       formData.append("supplierId", selectedSupplier.value);
 
+      if (product.barcode?.trim()) {
+        formData.append("barcode", product.barcode.trim());
+      } else {
+        // Nếu barcode rỗng, gửi empty string để backend set null
+        formData.append("barcode", "");
+      }
       if (product.unit?.trim()) {
         formData.append("unit", product.unit.trim());
       }
@@ -283,6 +302,68 @@ const EditProduct = () => {
                                 onChange={(e) => setProduct({ ...product, productName: e.target.value })}
                                 className="form-control"
                               />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="row">
+                          <div className="col-sm-6 col-12">
+                            <div className="mb-3">
+                              <label className="form-label">
+                                Barcode (tùy chọn)
+                              </label>
+                              <div className="input-group">
+                                <input
+                                  type="text"
+                                  value={product?.barcode || ""}
+                                  onChange={(e) => setProduct({ ...product, barcode: e.target.value })}
+                                  className="form-control"
+                                  placeholder="Nhập barcode hoặc tạo tự động"
+                                />
+                                <button
+                                  type="button"
+                                  className="btn btn-outline-secondary"
+                                  onClick={() => {
+                                    const generatedBarcode = generateRandomBarcode(13);
+                                    setProduct({
+                                      ...product,
+                                      barcode: generatedBarcode,
+                                    });
+                                    message.success("Đã tạo barcode ngẫu nhiên");
+                                  }}
+                                  title="Tạo barcode ngẫu nhiên"
+                                >
+                                  <i className="ti ti-barcode" />
+                                </button>
+                                {product?.barcode?.trim() && (
+                                  <button
+                                    type="button"
+                                    className="btn btn-outline-primary"
+                                    onClick={async () => {
+                                      try {
+                                        await downloadBarcode(
+                                          product.barcode,
+                                          product.productName || "SanPham"
+                                        );
+                                        message.success("Đã tải barcode về máy");
+                                      } catch (error) {
+                                        message.error(error.message || "Không thể tải barcode");
+                                      }
+                                    }}
+                                    title="Tải barcode về máy"
+                                  >
+                                    <i className="ti ti-download" />
+                                  </button>
+                                )}
+                              </div>
+                              <small className="text-muted">
+                                Mỗi sản phẩm chỉ có thể có 1 barcode duy nhất. Có thể để trống và thêm sau.
+                              </small>
+                              {/* Preview barcode */}
+                              {product?.barcode?.trim() && (
+                                <div className="mt-3">
+                                  <div id="barcode-preview-edit" style={{ textAlign: 'center', padding: '10px', border: '1px solid #dee2e6', borderRadius: '4px', backgroundColor: '#f8f9fa' }}></div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
