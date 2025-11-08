@@ -716,7 +716,7 @@ export const SidebarData = [
     submenuItems: [
       {
         label: "Profile",
-        link: "/profile",
+        link: "/settings/profile",
         icon: 'user-circle',
         showSubRoute: false,
       },

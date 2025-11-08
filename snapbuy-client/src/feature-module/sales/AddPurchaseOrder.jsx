@@ -7,7 +7,7 @@ import { getAllSuppliers } from "../../services/SupplierService";
 import { getProductsBySupplierId } from "../../services/ProductService";
 import { createPurchaseOrder } from "../../services/PurchaseOrderService";
 import RefreshIcon from "../../components/tooltip-content/refresh";
-import CollapesIcon from "../../components/tooltip-content/Collapse";
+import CollapesIcon from "../../components/tooltip-content/collapes";
 
 const AddPurchaseOrder = () => {
   const navigate = useNavigate();

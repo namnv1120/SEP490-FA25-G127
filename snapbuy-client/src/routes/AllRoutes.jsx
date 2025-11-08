@@ -57,7 +57,7 @@ export const allRoutes = {
   bestseller: "/bestseller",
 
   // Settings
-  generalsettings: "/general-settings",
+  profile: "/settings/profile",
   appearance: "/appearance",
   languagesettings: "/language-settings",
   emailsettings: "/email-settings",
@@ -88,7 +88,6 @@ export const allRoutes = {
   email: "/email",
   todo: "/todo",
   activities: "/activities",
-  profile: "/profile",
   accounts: "/accounts",
   rolespermission: "/roles-permissions",
   permissions: "/permissions",

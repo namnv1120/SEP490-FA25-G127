@@ -9,7 +9,7 @@ import { getAllSuppliers } from "../../services/SupplierService";
 import CommonSelect from "../../components/select/common-select";
 import DeleteModal from "../../components/delete-modal";
 import RefreshIcon from "../../components/tooltip-content/refresh";
-import CollapesIcon from "../../components/tooltip-content/Collapse";
+import CollapesIcon from "../../components/tooltip-content/collapes";
 
 const AddProduct = () => {
   const route = allRoutes;

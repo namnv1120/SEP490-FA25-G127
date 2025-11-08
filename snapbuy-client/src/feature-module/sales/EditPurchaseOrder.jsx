@@ -10,7 +10,7 @@ import {
   updatePurchaseOrder,
 } from "../../services/PurchaseOrderService";
 import RefreshIcon from "../../components/tooltip-content/refresh";
-import CollapesIcon from "../../components/tooltip-content/Collapse";
+import CollapesIcon from "../../components/tooltip-content/collapes";
 
 const EditPurchaseOrder = () => {
   const navigate = useNavigate();
@@ -76,10 +76,10 @@ const EditPurchaseOrder = () => {
         const formattedItems = data.details.map((item) => ({
           product: item.productId
             ? {
-                value: item.productId,
-                label: item.productName,
-                unitPrice: item.unitPrice || 0,
-              }
+              value: item.productId,
+              label: item.productName,
+              unitPrice: item.unitPrice || 0,
+            }
             : null,
           quantity: item.quantity || 1,
           unitPrice: item.unitPrice || 0,
@@ -98,7 +98,7 @@ const EditPurchaseOrder = () => {
       console.error("❌ Lỗi chi tiết:", err);
       const errorMessage = err.message || "Không thể tải chi tiết đơn hàng.";
       message.error(errorMessage);
-      
+
       // Nếu lỗi 404 hoặc 500, quay về danh sách sau 2 giây
       if (err.message?.includes("Status: 404") || err.message?.includes("Status: 500")) {
         setTimeout(() => {
