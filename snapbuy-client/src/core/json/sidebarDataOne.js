@@ -297,7 +297,7 @@ export const SidebarData1 = [
         subRoutes: [
           {
             tittle: "Profile",
-            route: "/profile",
+            route: "/settings/profile",
             hasSubRoute: false,
             showSubRoute: false,
           },

@@ -24,8 +24,7 @@ const AccountList = lazy(() => import("../feature-module/accounts/AccountList"))
 const RoleList = lazy(() =>
   import("../feature-module/accounts/RoleList")
 );
-const Profile = lazy(() => import("../feature-module/accounts/Profile"));
-const PosSettings = lazy(() => import("../feature-module/settings/websitesettings/PosSettings"));
+const Profile = lazy(() => import("../feature-module/settings/Profile"));
 
 const Customers = lazy(() => import("../feature-module/people/CustomerList"));
 const PurchaseOrder = lazy(() =>
@@ -174,13 +173,6 @@ export const authRoutes = [
     path: routes.orders,
     name: "orders",
     element: <OrderList />,
-    route: Route,
-  },
-  {
-    id: 76,
-    path: routes.possettings,
-    name: "possettings",
-    element: <PosSettings />,
     route: Route,
   },
   {

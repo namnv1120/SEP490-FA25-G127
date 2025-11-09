@@ -146,8 +146,8 @@ CREATE TABLE purchase_order_detail
     purchase_order_detail_id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     purchase_order_id        UNIQUEIDENTIFIER NOT NULL,
     product_id               UNIQUEIDENTIFIER NOT NULL,
-    quantity                 INT              NOT NULL,
-    unit_price               DECIMAL(18, 2)   NOT NULL,
+    quantity                 INT            NOT NULL,
+    unit_price               DECIMAL(18, 2) NOT NULL,
     received_quantity        INT                          DEFAULT 0,
     total_price              AS (received_quantity * unit_price),
 

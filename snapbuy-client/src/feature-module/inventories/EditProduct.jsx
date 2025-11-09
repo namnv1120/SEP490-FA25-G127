@@ -5,7 +5,7 @@ import DeleteModal from "../../components/delete-modal";
 import CommonFooter from "../../components/footer/CommonFooter";
 import CommonSelect from "../../components/select/common-select";
 import RefreshIcon from "../../components/tooltip-content/refresh";
-import CollapesIcon from "../../components/tooltip-content/Collapse";
+import CollapesIcon from "../../components/tooltip-content/collapes";
 import { getProductById, updateProduct } from "../../services/ProductService";
 import { getAllCategories } from "../../services/CategoryService";
 import { getAllSuppliers } from "../../services/SupplierService";
