@@ -10,6 +10,7 @@ public enum ErrorCode {
     EMAIL_EXISTED(1001, "Email đã tồn tại"),
     NAME_EXISTED(1002, "Tên đã tồn tại"),
     CODE_EXISTED(1003, "Mã đã tồn tại"),
+    BARCODE_ALREADY_EXISTS(1004, "Barcode đã tồn tại trong hệ thống"),
 
     CUSTOMER_NOT_FOUND(2001, "Không tìm thấy khách hàng"),
     CATEGORY_NOT_FOUND(2002, "Không tìm thấy danh mục"),

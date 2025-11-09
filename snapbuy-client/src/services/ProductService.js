@@ -37,6 +37,20 @@ export const getProductById = async (id) => {
   }
 };
 
+// Tìm sản phẩm theo barcode
+export const getProductByBarcode = async (barcode) => {
+  try {
+    const response = await axios.get(
+      `${REST_API_BASE_URL}/barcode/${encodeURIComponent(barcode)}`,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("❌ Lỗi khi tìm sản phẩm theo barcode:", error);
+    throw error;
+  }
+};
+
 // Thêm sản phẩm
 export const createProduct = async (formData) => {
   try {

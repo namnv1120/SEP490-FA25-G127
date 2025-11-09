@@ -9,7 +9,8 @@ import { getAllSuppliers } from "../../services/SupplierService";
 import CommonSelect from "../../components/select/common-select";
 import DeleteModal from "../../components/delete-modal";
 import RefreshIcon from "../../components/tooltip-content/refresh";
-import CollapesIcon from "../../components/tooltip-content/collapes";
+import CollapesIcon from "../../components/tooltip-content/Collapse";
+import { generateRandomBarcode, downloadBarcode, displayBarcodePreview } from "../../utils/barcodeUtils";
 
 const AddProduct = () => {
   const route = allRoutes;
@@ -18,6 +19,7 @@ const AddProduct = () => {
   const [product, setProduct] = useState({
     productCode: "",
     productName: "",
+    barcode: "",
     description: "",
     unit: "",
     supplierName: "",
@@ -100,6 +102,18 @@ const AddProduct = () => {
     fetchSuppliers();
   }, []);
 
+  // Hiển thị barcode preview khi barcode thay đổi
+  useEffect(() => {
+    if (product.barcode?.trim()) {
+      displayBarcodePreview(product.barcode, 'barcode-preview-add');
+    } else {
+      const container = document.getElementById('barcode-preview-add');
+      if (container) {
+        container.innerHTML = '';
+      }
+    }
+  }, [product.barcode]);
+
 
   // 🧩 Validate dữ liệu
   const validateForm = () => {
@@ -141,6 +155,15 @@ const AddProduct = () => {
       newErrors.description = "Mô tả không được vượt quá 500 ký tự.";
     }
 
+    if (product.barcode && product.barcode.length > 100) {
+      newErrors.barcode = "Barcode không được vượt quá 100 ký tự.";
+    }
+
+    // Validate format barcode (chỉ chữ và số)
+    if (product.barcode && !/^[A-Za-z0-9]*$/.test(product.barcode)) {
+      newErrors.barcode = "Barcode chỉ cho phép chữ và số.";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -156,6 +179,9 @@ const AddProduct = () => {
     const formData = new FormData();
     formData.append("productCode", product.productCode.trim());
     formData.append("productName", product.productName.trim());
+    if (product.barcode?.trim()) {
+      formData.append("barcode", product.barcode.trim());
+    }
     formData.append("description", product.description.trim());
     formData.append("unit", product.unit.trim());
     formData.append("dimensions", product.dimensions.trim());
@@ -294,6 +320,79 @@ const AddProduct = () => {
                           {errors.productName && (
                             <div className="invalid-feedback">
                               {errors.productName}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="row">
+                      <div className="col-sm-6">
+                        <div className="mb-3">
+                          <label className="form-label">
+                            Barcode (tùy chọn)
+                          </label>
+                          <div className="input-group">
+                            <input
+                              type="text"
+                              className={`form-control ${errors.barcode ? "is-invalid" : ""}`}
+                              value={product.barcode || ""}
+                              onChange={(e) =>
+                                setProduct({
+                                  ...product,
+                                  barcode: e.target.value,
+                                })
+                              }
+                              placeholder="Nhập barcode hoặc tạo tự động"
+                            />
+                            <button
+                              type="button"
+                              className="btn btn-outline-secondary"
+                              onClick={() => {
+                                const generatedBarcode = generateRandomBarcode(13);
+                                setProduct({
+                                  ...product,
+                                  barcode: generatedBarcode,
+                                });
+                                message.success("Đã tạo barcode ngẫu nhiên");
+                              }}
+                              title="Tạo barcode ngẫu nhiên"
+                            >
+                              <i className="ti ti-barcode" />
+                            </button>
+                            {product.barcode?.trim() && (
+                              <button
+                                type="button"
+                                className="btn btn-outline-primary"
+                                onClick={async () => {
+                                  try {
+                                    await downloadBarcode(
+                                      product.barcode,
+                                      product.productName || "SanPham"
+                                    );
+                                    message.success("Đã tải barcode về máy");
+                                  } catch (error) {
+                                    message.error(error.message || "Không thể tải barcode");
+                                  }
+                                }}
+                                title="Tải barcode về máy"
+                              >
+                                <i className="ti ti-download" />
+                              </button>
+                            )}
+                          </div>
+                          {errors.barcode && (
+                            <div className="invalid-feedback">
+                              {errors.barcode}
+                            </div>
+                          )}
+                          <small className="text-muted">
+                            Mỗi sản phẩm chỉ có thể có 1 barcode duy nhất. Có thể để trống và thêm sau.
+                          </small>
+                          {/* Preview barcode */}
+                          {product.barcode?.trim() && (
+                            <div className="mt-3">
+                              <div id="barcode-preview-add" style={{ textAlign: 'center', padding: '10px', border: '1px solid #dee2e6', borderRadius: '4px', backgroundColor: '#f8f9fa' }}></div>
                             </div>
                           )}
                         </div>

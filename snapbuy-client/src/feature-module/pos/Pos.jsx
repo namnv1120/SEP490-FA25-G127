@@ -8,9 +8,10 @@ import AddCustomerModal from "../../core/modals/pos/AddCustomerModal";
 import CounterTwo from "../../components/counter/CounterTwo";
 import { Spin, message, Modal } from "antd";
 import { getAllCategories } from "../../services/CategoryService";
-import { getAllProducts } from "../../services/ProductService";
+import { getAllProducts, getProductByBarcode } from "../../services/ProductService";
 import { getCustomerById, searchCustomers } from "../../services/CustomerService";
 import { createOrder, completeOrder, getOrderById } from "../../services/OrderService";
+import { getImageUrl } from "../../utils/imageUtils";
 
 const Pos = () => {
   const [activeTab, setActiveTab] = useState("all");
@@ -36,6 +37,8 @@ const Pos = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [barcodeInput, setBarcodeInput] = useState("");
+  const [isScanning, setIsScanning] = useState(false);
   const [createdOrder, setCreatedOrder] = useState(null);
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [showCashPaymentModal, setShowCashPaymentModal] = useState(false);
@@ -128,12 +131,13 @@ const Pos = () => {
           productName: product.productName,
           code: product.productCode,
           productCode: product.productCode,
+          barcode: product.barcode || null,
           price: product.unitPrice,
           stock: product.quantityInStock,
           quantityInStock: product.quantityInStock, // Thêm field này để dùng cho validation
           categoryId: product.categoryId,
           categoryName: product.categoryName || "",
-          image: product.imageUrl || product.image || null,
+          image: getImageUrl(product.imageUrl || product.image || null),
         }));
 
       setProducts(mappedProducts);
@@ -333,6 +337,83 @@ const Pos = () => {
     };
   }, [Location.pathname, showAlert1]);
 
+  // Handle barcode scan - tự động thêm sản phẩm vào giỏ hàng
+  const handleBarcodeScan = async (barcode) => {
+    if (!barcode || barcode.trim().length === 0) {
+      return;
+    }
+
+    try {
+      setIsScanning(true);
+      const product = await getProductByBarcode(barcode.trim());
+      
+      // Map product data để phù hợp với format trong POS
+      const mappedProduct = {
+        id: product.productId,
+        productId: product.productId,
+        name: product.productName,
+        productName: product.productName,
+        code: product.productCode,
+        productCode: product.productCode,
+        price: product.unitPrice || 0,
+        stock: product.quantityInStock || 0,
+        quantityInStock: product.quantityInStock || 0,
+        categoryId: product.categoryId,
+        categoryName: product.categoryName || "",
+        image: getImageUrl(product.imageUrl || null),
+      };
+
+      // Tự động thêm vào giỏ hàng
+      handleAddToCart(mappedProduct, null);
+      
+      // Clear barcode input để sẵn sàng quét tiếp
+      setBarcodeInput("");
+      
+    } catch (error) {
+      message.error(`Không tìm thấy sản phẩm với barcode: ${barcode}`);
+      // Không clear input để user có thể thử lại
+    } finally {
+      setIsScanning(false);
+      // Tự động focus lại vào input sau khi xử lý xong (thành công hoặc lỗi)
+      setTimeout(() => {
+        const barcodeInputElement = document.getElementById("barcode-input");
+        if (barcodeInputElement) {
+          barcodeInputElement.focus();
+          barcodeInputElement.select(); // Select text để dễ dàng quét tiếp
+        }
+      }, 50);
+    }
+  };
+
+  // Handle barcode input key press
+  const handleBarcodeInputKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (barcodeInput.trim().length > 0) {
+        handleBarcodeScan(barcodeInput);
+      }
+    }
+  };
+
+  // Handle barcode input change
+  const handleBarcodeInputChange = (e) => {
+    const value = e.target.value;
+    setBarcodeInput(value);
+  };
+
+  // Auto focus vào barcode input khi component mount hoặc khi không có order
+  useEffect(() => {
+    if (!createdOrder) {
+      const timer = setTimeout(() => {
+        const barcodeInputElement = document.getElementById("barcode-input");
+        if (barcodeInputElement) {
+          barcodeInputElement.focus();
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [createdOrder]);
+
   // Handle add product to cart
   const handleAddToCart = (product, e) => {
     // Ngăn chặn event bubbling để không toggle active class
@@ -461,7 +542,8 @@ const Pos = () => {
 
     const matchSearch = !searchQuery ||
       product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.code?.toLowerCase().includes(searchQuery.toLowerCase());
+      product.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.barcode?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchCategory && matchSearch;
   });
 
@@ -937,20 +1019,47 @@ const Pos = () => {
                   </Slider>
                 )}
                 <div className="pos-products">
-                  <div className="d-flex align-items-center justify-content-between">
+                  <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
                     <h4 className="mb-3">Sản phẩm</h4>
-                    <div className="input-icon-start pos-search position-relative mb-3">
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Tìm kiếm sản phẩm..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        style={{ paddingLeft: '40px' }}
-                      />
-                      <span className="input-icon-addon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }}>
-                        <i className="ti ti-search" />
-                      </span>
+                    <div className="d-flex gap-2 align-items-center flex-wrap">
+                      {/* Barcode Scanner Input */}
+                      <div className="input-icon-start pos-search position-relative mb-3" style={{ minWidth: '200px' }}>
+                        <input
+                          id="barcode-input"
+                          type="text"
+                          className="form-control"
+                          placeholder="Quét barcode"
+                          value={barcodeInput}
+                          onChange={handleBarcodeInputChange}
+                          onKeyPress={handleBarcodeInputKeyPress}
+                          style={{ paddingLeft: '40px' }}
+                          disabled={isScanning}
+                          autoFocus={!createdOrder}
+                        />
+                        <span className="input-icon-addon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }}>
+                          <i className="ti ti-scan" />
+                        </span>
+                        {isScanning && (
+                          <span className="position-absolute" style={{ right: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 1 }}>
+                            <Spin size="small" />
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Search by name input */}
+                      <div className="input-icon-start pos-search position-relative mb-3">
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Tìm kiếm sản phẩm..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          style={{ paddingLeft: '40px' }}
+                        />
+                        <span className="input-icon-addon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }}>
+                          <i className="ti ti-search" />
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <div className="tabs_container">
@@ -978,11 +1087,7 @@ const Pos = () => {
                                 >
                                   <Link to="#" className="pro-img" onClick={(e) => e.preventDefault()}>
                                     <div className="product-image-placeholder">
-                                      {product.image ? (
-                                        <img src={product.image} alt={product.name} />
-                                      ) : (
-                                        <span>Không có hình ảnh</span>
-                                      )}
+                                      <img src={product.image || getImageUrl(null)} alt={product.name} />
                                     </div>
                                     <span>
                                       <i className="ti ti-circle-check-filled" />
@@ -1201,11 +1306,7 @@ const Pos = () => {
                           >
                             <Link to="#" className="pro-img" onClick={(e) => e.preventDefault()}>
                               <div className="product-image-placeholder">
-                                {item.image ? (
-                                  <img src={item.image} alt={item.name} />
-                                ) : (
-                                  <span>Không có hình ảnh</span>
-                                )}
+                                <img src={item.image || getImageUrl(null)} alt={item.name} />
                               </div>
                             </Link>
                             <div className="info" style={{ flex: 1, minWidth: 0 }}>

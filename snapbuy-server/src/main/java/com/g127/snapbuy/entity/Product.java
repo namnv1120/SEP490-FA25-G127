@@ -26,6 +26,9 @@ public class Product {
     @Column(name = "product_code", nullable = false, unique = true, length = 50)
     private String productCode;
 
+    @Column(name = "barcode", length = 100, unique = true, nullable = true)
+    private String barcode;
+
     @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
     private String description;
 

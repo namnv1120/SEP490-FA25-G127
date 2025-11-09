@@ -14,6 +14,7 @@ public class ProductResponse {
     private UUID productId;
     private String productName;
     private String productCode;
+    private String barcode;
     private String description;
     private UUID categoryId;
     private String categoryName;

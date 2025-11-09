@@ -57,6 +57,15 @@ public class ProductServiceImpl implements ProductService {
             product.setSupplier(supplier);
         }
 
+        // Validate barcode uniqueness nếu có
+        if (request.getBarcode() != null && !request.getBarcode().trim().isEmpty()) {
+            String barcode = request.getBarcode().trim();
+            if (productRepository.existsByBarcode(barcode)) {
+                throw new AppException(ErrorCode.BARCODE_ALREADY_EXISTS);
+            }
+            product.setBarcode(barcode);
+        }
+
         if (request.getImage() != null && !request.getImage().isEmpty()) {
             try {
                 String fileName = System.currentTimeMillis() + "_" + request.getImage().getOriginalFilename();
@@ -126,6 +135,21 @@ public class ProductServiceImpl implements ProductService {
             product.setSupplier(supplier);
         }
 
+        // Validate barcode uniqueness nếu có (và khác với barcode hiện tại)
+        if (request.getBarcode() != null && !request.getBarcode().trim().isEmpty()) {
+            String newBarcode = request.getBarcode().trim();
+            // Chỉ check unique nếu barcode thay đổi
+            if (!newBarcode.equals(product.getBarcode())) {
+                if (productRepository.existsByBarcode(newBarcode)) {
+                    throw new AppException(ErrorCode.BARCODE_ALREADY_EXISTS);
+                }
+            }
+            product.setBarcode(newBarcode);
+        } else {
+            // Nếu barcode rỗng, set null
+            product.setBarcode(null);
+        }
+
         // Xử lý upload ảnh mới nếu có
         if (request.getImage() != null && !request.getImage().isEmpty()) {
             try {
@@ -170,6 +194,41 @@ public class ProductServiceImpl implements ProductService {
             response.setUnitPrice(latestPrice.getUnitPrice());
             response.setCostPrice(latestPrice.getCostPrice());
         }
+
+        return response;
+    }
+
+    @Override
+    public ProductResponse getProductByBarcode(String barcode) {
+        if (barcode == null || barcode.trim().isEmpty()) {
+            throw new AppException(ErrorCode.PRODUCT_NOT_FOUND);
+        }
+
+        Product product = productRepository.findByBarcode(barcode.trim())
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+
+        // Chỉ trả về sản phẩm đang active
+        if (product.getActive() == null || !product.getActive()) {
+            throw new AppException(ErrorCode.PRODUCT_NOT_FOUND);
+        }
+
+        ProductResponse response = productMapper.toResponse(product);
+
+        // Lấy giá mới nhất
+        ProductPrice latestPrice = productPriceRepository
+                .findTopByProduct_ProductIdOrderByValidFromDesc(product.getProductId())
+                .orElse(null);
+
+        if (latestPrice != null) {
+            response.setUnitPrice(latestPrice.getUnitPrice());
+            response.setCostPrice(latestPrice.getCostPrice());
+        }
+
+        // Lấy số lượng tồn kho
+        inventoryRepository.findByProduct_ProductId(product.getProductId())
+                .ifPresent(inventory ->
+                        response.setQuantityInStock(inventory.getQuantityInStock())
+                );
 
         return response;
     }
