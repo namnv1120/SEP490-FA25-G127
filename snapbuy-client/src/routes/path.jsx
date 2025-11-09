@@ -37,6 +37,10 @@ const EditPurchaseOrder = lazy(() =>
   import("../feature-module/sales/EditPurchaseOrder")
 );
 
+const TransactionHistory = lazy(() =>
+  import("../feature-module/sales/TransactionHistory")
+);
+
 
 const routes = allRoutes;
 
@@ -176,12 +180,26 @@ export const authRoutes = [
     route: Route,
   },
   {
-    id: 106,
+    id: 20,
+    path: routes.possettings,
+    name: "possettings",
+    element: <PosSettings />,
+    route: Route,
+  },
+  {
+    id: 21,
     path: routes.permissions,
     name: "permissions",
     element: <Permissions />,
     route: Route,
   },
+  {
+    id: 22,
+    path: routes.transactionhistory,
+    name: "transaction-history",
+    element: <TransactionHistory />,
+    route: Route,
+  }
 ];
 
 export const posPage = [
