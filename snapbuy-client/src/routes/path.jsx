@@ -179,13 +179,13 @@ export const authRoutes = [
     element: <OrderList />,
     route: Route,
   },
-  {
-    id: 20,
-    path: routes.possettings,
-    name: "possettings",
-    element: <PosSettings />,
-    route: Route,
-  },
+  // {
+  //   id: 20,
+  //   path: routes.possettings,
+  //   name: "possettings",
+  //   element: <PosSettings />,
+  //   route: Route,
+  // },
   {
     id: 21,
     path: routes.permissions,

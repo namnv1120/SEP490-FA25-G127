@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import CommonFooter from "../../components/footer/commonFooter";
 import TooltipIcons from "../../components/tooltip-content/tooltipIcons";
-import PrimeDataTable from "../../components/data-table";
+import Datatable from "../../core/pagination/datatable";
 import CommonSelect from "../../components/select/common-select";
 import CommonDateRangePicker from "../../components/date-range-picker/common-date-range-picker";
 import RefreshIcon from "../../components/tooltip-content/refresh";
-import CollapesIcon from "../../components/tooltip-content/Collapse";
+import CollapesIcon from "../../components/tooltip-content/collapes";
 import { getTransactions } from "../../services/InventoryTransactionsService";
 
 const TransactionHistory = () => {
@@ -20,10 +20,61 @@ const TransactionHistory = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Load dữ liệu khi filter thay đổi
-  useEffect(() => {
-    loadTransactions();
-  }, [currentPage, rows, selectedProduct, selectedTransactionType, dateRange]);
+  // Mock data để test hiển thị
+  const mockData = [
+    {
+      transactionId: "TXN001",
+      transactionDate: "2025-10-01T08:30:00",
+      productName: "Bộ nồi Inox 3 đáy Sunhouse SH333",
+      transactionType: "IMPORT",
+      quantity: 100,
+      referenceType: "PURCHASE_ORDER",
+      referenceId: "REF001",
+    },
+    {
+      transactionId: "TXN002",
+      transactionDate: "2025-10-03T09:45:00",
+      productName: "Bộ nồi Anod Sunhouse AN668",
+      transactionType: "IMPORT",
+      quantity: 80,
+      referenceType: "PURCHASE_ORDER",
+      referenceId: "REF002",
+    },
+    {
+      transactionId: "TXN003",
+      transactionDate: "2025-10-05T10:00:00",
+      productName: "Chảo chống dính Sunhouse CS26",
+      transactionType: "IMPORT",
+      quantity: 120,
+      referenceType: "PURCHASE_ORDER",
+      referenceId: "REF003",
+    },
+    {
+      transactionId: "TXN004",
+      transactionDate: "2025-10-10T11:30:00",
+      productName: "Nồi cơm điện Sunhouse SHD8955",
+      transactionType: "IMPORT",
+      quantity: 60,
+      referenceType: "PURCHASE_ORDER",
+      referenceId: "REF004",
+    },
+    {
+      transactionId: "TXN005",
+      transactionDate: "2025-10-12T14:15:00",
+      productName: "Bếp điện từ đơn Sunhouse SHB9100",
+      transactionType: "IMPORT",
+      quantity: 70,
+      referenceType: "PURCHASE_ORDER",
+      referenceId: "REF005",
+    },
+  ];
+
+  const TransactionTypes = [
+    { value: "", label: "Tất cả" },
+    { value: "IMPORT", label: "Nhập kho" },
+    { value: "EXPORT", label: "Xuất kho" },
+    { value: "ADJUSTMENT", label: "Điều chỉnh" },
+  ];
 
   const loadTransactions = async () => {
     setLoading(true);
@@ -37,50 +88,63 @@ const TransactionHistory = () => {
         ? new Date(dateRange[1]).toISOString().split("T")[0]
         : null;
 
-      const data = await getTransactions({
+      const params = {
         page: currentPage - 1,
         size: rows,
-        sort: "transactionDate",
-        dir: "DESC",
         productId: selectedProduct || null,
         transactionType: selectedTransactionType || null,
         from,
         to,
-      });
+      };
 
-      // Gán transactionId tạm nếu null hoặc trùng
+      console.log("=== Tham số gửi lên API ===", params);
+
+      // Dùng mock data test
+      const data = { content: mockData, totalElements: mockData.length };
+
+      // Uncomment khi API sẵn sàng
+      // const data = await getTransactions(params);
+
       const normalizedData = (data.content || []).map((item, index) => ({
         ...item,
-        transactionId: item.transactionId || `temp-${index}`,
+        transactionId: item.transactionId ?? `temp-${index}-${Date.now()}`,
       }));
 
       setListData(normalizedData);
       setTotalRecords(data.totalElements || 0);
     } catch (err) {
-      console.error(err);
-      setError(
-        "Không thể tải dữ liệu giao dịch. Vui lòng kiểm tra kết nối hoặc đăng nhập lại."
-      );
+      console.error("=== Lỗi khi gọi API ===", err);
+      setError("Không thể tải dữ liệu giao dịch. Vui lòng kiểm tra kết nối.");
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    loadTransactions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, rows, selectedProduct, selectedTransactionType, dateRange]);
+
   const columns = [
     {
-      header: "Mã GD",
-      field: "transactionId",
-      body: (row) => (
+      title: "Mã GD",
+      dataIndex: "transactionId",
+      key: "transactionId",
+      sorter: (a, b) => a.transactionId.localeCompare(b.transactionId),
+      render: (text) => (
         <Link to="#" className="text-primary fw-medium small">
-          {row.transactionId.slice(0, 8)}...
+          {text.slice(0, 8)}...
         </Link>
       ),
     },
     {
-      header: "Thời gian",
-      field: "transactionDate",
-      body: (row) =>
-        new Date(row.transactionDate).toLocaleString("vi-VN", {
+      title: "Thời gian",
+      dataIndex: "transactionDate",
+      key: "transactionDate",
+      sorter: (a, b) =>
+        new Date(a.transactionDate) - new Date(b.transactionDate),
+      render: (text) =>
+        new Date(text).toLocaleString("vi-VN", {
           year: "numeric",
           month: "2-digit",
           day: "2-digit",
@@ -89,73 +153,75 @@ const TransactionHistory = () => {
         }),
     },
     {
-      header: "Sản phẩm",
-      field: "productName",
-      body: (row) => <span className="fw-medium">{row.productName}</span>,
+      title: "Sản phẩm",
+      dataIndex: "productName",
+      key: "productName",
+      sorter: (a, b) => a.productName.localeCompare(b.productName),
+      render: (text) => <span className="fw-medium">{text}</span>,
     },
     {
-      header: "Loại",
-      field: "transactionType",
-      body: (row) => {
+      title: "Loại",
+      dataIndex: "transactionType",
+      key: "transactionType",
+      sorter: (a, b) => a.transactionType.localeCompare(b.transactionType),
+      render: (type) => {
         const badge = {
           IMPORT: { class: "bg-success", text: "Nhập kho" },
           EXPORT: { class: "bg-danger", text: "Xuất kho" },
           ADJUSTMENT: { class: "bg-warning", text: "Điều chỉnh" },
-        }[row.transactionType] || {
-          class: "bg-secondary",
-          text: row.transactionType,
-        };
-
-        return <span className={`badge ${badge.class} small`}>{badge.text}</span>;
+        }[type] || { class: "bg-secondary", text: type };
+        return (
+          <span className={`badge ${badge.class} small`}>{badge.text}</span>
+        );
       },
     },
     {
-      header: "Số lượng",
-      field: "quantity",
-      body: (row) => (
-        <span className={row.quantity > 0 ? "text-success" : "text-danger"}>
+      title: "Số lượng",
+      dataIndex: "quantity",
+      key: "quantity",
+      sorter: (a, b) => a.quantity - b.quantity,
+      render: (qty) => (
+        <span className={qty > 0 ? "text-success" : "text-danger"}>
           <strong>
-            {row.quantity > 0 ? "+" : ""}
-            {row.quantity}
+            {qty > 0 ? "+" : ""}
+            {qty}
           </strong>
         </span>
       ),
     },
     {
-      header: "Tham chiếu",
-      field: "referenceType",
-      body: (row) => {
+      title: "Tham chiếu",
+      dataIndex: "referenceType",
+      key: "referenceType",
+      sorter: (a, b) =>
+        (a.referenceType || "").localeCompare(b.referenceType || ""),
+      render: (refType) => {
         const ref =
           {
             PURCHASE_ORDER: "Đơn nhập",
             SALES_ORDER: "Đơn bán",
             ADJUSTMENT: "Điều chỉnh kho",
-          }[row.referenceType] || row.referenceType;
+          }[refType] || refType;
         return <small className="text-muted">{ref}</small>;
       },
     },
     {
-      header: "Mã tham chiếu",
-      field: "referenceId",
-      body: (row) => (
+      title: "Mã tham chiếu",
+      dataIndex: "referenceId",
+      key: "referenceId",
+      sorter: (a, b) =>
+        (a.referenceId || "").localeCompare(b.referenceId || ""),
+      render: (refId) => (
         <code className="small text-muted">
-          {row.referenceId ? row.referenceId.slice(0, 8) + "..." : "-"}
+          {refId ? refId.slice(0, 8) + "..." : "-"}
         </code>
       ),
     },
   ];
 
-  const TransactionTypes = [
-    { value: "", label: "Tất cả" },
-    { value: "IMPORT", label: "Nhập kho" },
-    { value: "EXPORT", label: "Xuất kho" },
-    { value: "ADJUSTMENT", label: "Điều chỉnh" },
-  ];
-
   return (
     <div className="page-wrapper">
       <div className="content">
-        {/* Header */}
         <div className="page-header">
           <div className="add-item d-flex">
             <div className="page-title">
@@ -169,7 +235,6 @@ const TransactionHistory = () => {
           </ul>
         </div>
 
-        {/* Bộ lọc */}
         <div className="card mb-3 shadow-sm">
           <div className="card-body p-4">
             <form
@@ -200,8 +265,12 @@ const TransactionHistory = () => {
                 <div style={{ height: "38px" }}>
                   <CommonSelect
                     options={TransactionTypes}
-                    value={selectedTransactionType}
-                    onChange={(e) => setSelectedTransactionType(e.value)}
+                    value={TransactionTypes.find(
+                      (item) => item.value === selectedTransactionType
+                    )}
+                    onChange={(selected) =>
+                      setSelectedTransactionType(selected?.value || "")
+                    }
                     placeholder="Chọn loại"
                     className="w-100 h-100"
                   />
@@ -249,13 +318,14 @@ const TransactionHistory = () => {
           </div>
         </div>
 
-        {/* Bảng dữ liệu */}
         <div className="card table-list-card no-search shadow-sm">
           <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3 bg-light-subtle px-4 py-3">
             <div>
               <h5 className="mb-0 fw-semibold">
                 Danh sách giao dịch{" "}
-                <span className="text-muted small">({totalRecords} bản ghi)</span>
+                <span className="text-muted small">
+                  ({totalRecords} bản ghi)
+                </span>
               </h5>
             </div>
             <ul className="table-top-head">
@@ -284,18 +354,20 @@ const TransactionHistory = () => {
                 {error}
               </div>
             )}
-
-            <PrimeDataTable
-              column={columns}
-              data={listData}
-              dataKey="transactionId"
-              rows={rows}
-              setRows={setRows}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              totalRecords={totalRecords}
-              loading={loading}
-              emptyMessage="Không có giao dịch nào phù hợp."
+            <Datatable
+              columns={columns}
+              dataSource={listData}
+              current={currentPage}
+              pageSize={rows}
+              total={totalRecords}
+              onChange={(page, size) => {
+                setCurrentPage(page);
+                setRows(size);
+              }}
+              onShowSizeChange={(page, size) => {
+                setCurrentPage(page);
+                setRows(size);
+              }}
             />
           </div>
         </div>
