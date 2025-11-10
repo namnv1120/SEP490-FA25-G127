@@ -17,7 +17,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -511,10 +513,17 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                 order.getOrderNumber(), details.size());
     }
 
-    private String generateOrderNumber() {
-        long count = orderRepository.count() + 1;
-        return String.format("ORD-%05d", count);
+    private synchronized String generateOrderNumber() {
+        String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyMMdd"));
+
+        long countToday = orderRepository.countByCreatedDateBetween(
+                LocalDate.now().atStartOfDay(),
+                LocalDate.now().atTime(23, 59, 59)
+        );
+        long nextNumber = countToday + 1;
+        return "ORD" + datePart + String.format("%03d", nextNumber);
     }
+
 
     private void subtractInventoryOnly(Product product, int quantity) {
         Inventory inv = inventoryRepository.findByProduct(product)

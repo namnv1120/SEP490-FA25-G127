@@ -93,11 +93,70 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
         Boolean currentActive = category.getActive();
-        log.info("Toggling category {} status from {} to {}", id, currentActive, currentActive == null || !currentActive);
-        // Nếu active là null, mặc định là false, toggle thành true
-        category.setActive(currentActive == null || !currentActive);
+        Boolean newActive = currentActive == null || !currentActive;
+
+        category.setActive(newActive);
         category.setUpdatedDate(LocalDateTime.now());
         Category savedCategory = categoryRepository.save(category);
+        
+        if (newActive) {
+            if (category.getParentCategoryId() != null) {
+                enableParentCategories(category.getParentCategoryId());
+            }
+            
+            enableChildCategories(id);
+        } else {
+            disableChildCategories(id);
+        }
+        
         return categoryMapper.toResponse(savedCategory);
     }
+
+    private void disableChildCategories(UUID parentId) {
+        List<Category> childCategories = categoryRepository.findByParentCategoryId(parentId);
+        
+        for (Category child : childCategories) {
+            if (child.getActive() != null && child.getActive()) {
+                child.setActive(false);
+                child.setUpdatedDate(LocalDateTime.now());
+                categoryRepository.save(child);
+                log.info("Disabled child category {} (parent: {})", child.getCategoryId(), parentId);
+                
+                disableChildCategories(child.getCategoryId());
+            }
+        }
+    }
+    
+    private void enableChildCategories(UUID parentId) {
+        List<Category> childCategories = categoryRepository.findByParentCategoryId(parentId);
+        
+        for (Category child : childCategories) {
+            if (child.getActive() == null || !child.getActive()) {
+                child.setActive(true);
+                child.setUpdatedDate(LocalDateTime.now());
+                categoryRepository.save(child);
+                log.info("Enabled child category {} (parent: {})", child.getCategoryId(), parentId);
+                
+                enableChildCategories(child.getCategoryId());
+            }
+        }
+    }
+    
+    private void enableParentCategories(UUID parentId) {
+        Category parentCategory = categoryRepository.findById(parentId).orElse(null);
+        
+        if (parentCategory != null) {
+            if (parentCategory.getActive() == null || !parentCategory.getActive()) {
+                parentCategory.setActive(true);
+                parentCategory.setUpdatedDate(LocalDateTime.now());
+                categoryRepository.save(parentCategory);
+                log.info("Enabled parent category {} (child triggered)", parentId);
+                
+                if (parentCategory.getParentCategoryId() != null) {
+                    enableParentCategories(parentCategory.getParentCategoryId());
+                }
+            }
+        }
+    }
+    
 }

@@ -26,20 +26,10 @@ export const allRoutes = {
   suppliers: "/suppliers",
 
   // Reports
-  salesreport: "/sales-report",
-  purchasereport: "/purchase-report",
-  inventoryreport: "/inventory-report",
-  supplierreport: "/supplier-report",
-  customerreport: "/customer-report",
-  expensereport: "/expense-report",
-  incomereport: "/income-report",
-  taxreport: "/tax-report",
-  profitloss: "/profit-loss",
+  revenuereport: "/revenue-report",
   productreport: "/product-report",
-  productexpiredreport: "/product-expired-report",
-  productquantityreport: "/product-quantity-report",
-  saletaxreport: "/sale-tax-report",
-  annualreport: "/annual-report",
+  customerreport: "/customer-report",
+  supplierreport: "/supplier-report",
 
   // Expenses & Income
   expenselist: "/expense-list",

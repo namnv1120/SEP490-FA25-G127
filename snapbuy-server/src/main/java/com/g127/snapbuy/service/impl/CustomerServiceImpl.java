@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -34,9 +36,24 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setCreatedDate(LocalDateTime.now());
         customer.setUpdatedDate(LocalDateTime.now());
         customer.setPoints(0);
-        String code = "CUST-" + System.currentTimeMillis();
+
+        String code = generateCustomerCode();
         customer.setCustomerCode(code);
+
         return customerMapper.toResponse(customerRepository.save(customer));
+    }
+
+    private synchronized String generateCustomerCode() {
+        String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyMMdd"));
+
+        long countToday = customerRepository.countByCreatedDateBetween(
+                LocalDate.now().atStartOfDay(),
+                LocalDate.now().atTime(23, 59, 59)
+        );
+
+        long nextNumber = countToday + 1;
+
+        return "CUS" + datePart + String.format("%03d", nextNumber);
     }
 
     @Override

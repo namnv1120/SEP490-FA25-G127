@@ -9,8 +9,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, UUID> {
-    boolean existsByNumber(String number);
-
+    long countByOrderDateBetween(LocalDateTime start, LocalDateTime end);
     Page<PurchaseOrder> findByStatusContainingIgnoreCase(String status, Pageable pageable);
     Page<PurchaseOrder> findBySupplierId(UUID supplierId, Pageable pageable);
     Page<PurchaseOrder> findByOrderDateBetween(LocalDateTime from, LocalDateTime to, Pageable pageable);

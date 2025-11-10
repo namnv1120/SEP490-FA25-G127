@@ -19,7 +19,6 @@ const Customers = () => {
   const [rows, setRows] = useState(10);
   const [_searchQuery, setSearchQuery] = useState("");
 
-  // 🟢 State cho modal edit
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -29,7 +28,6 @@ const Customers = () => {
   });
   const [modalLoading, setModalLoading] = useState(false);
 
-  // 🟢 Load danh sách khách hàng
   const fetchCustomers = async () => {
     try {
       setLoading(true);
@@ -47,7 +45,6 @@ const Customers = () => {
     fetchCustomers();
   }, []);
 
-  // 🟢 Khi nhấn nút edit
   const handleEditClick = async (customer) => {
     setSelectedCustomerId(customer.customerId);
     setEditModalOpen(true);
@@ -69,13 +66,11 @@ const Customers = () => {
     }
   };
 
-  // 🟢 Đóng modal
   const handleModalClose = () => {
     setEditModalOpen(false);
     setSelectedCustomerId(null);
   };
 
-  // 🟢 Thay đổi input
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -84,7 +79,6 @@ const Customers = () => {
     }));
   };
 
-  // 🟢 Gửi cập nhật
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -235,7 +229,6 @@ const Customers = () => {
       <CommonFooter />
       <DeleteModal />
 
-      {/* 🟢 Modal chỉnh sửa khách hàng với Ant Design */}
       <Modal
         open={editModalOpen}
         onCancel={handleModalClose}

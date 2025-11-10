@@ -13,10 +13,7 @@ import java.util.UUID;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, UUID> {
-
-    Optional<Order> findByOrderNumber(String orderNumber);
-
-    boolean existsByOrderNumber(String orderNumber);
+    long countByCreatedDateBetween(LocalDateTime start, LocalDateTime end);
 
     @Query("SELECT SUM(o.totalAmount) FROM Order o " +
             "WHERE o.createdDate BETWEEN :startDate AND :endDate " +

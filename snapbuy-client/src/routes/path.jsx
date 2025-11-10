@@ -36,6 +36,18 @@ const AddPurchaseOrder = lazy(() =>
 const EditPurchaseOrder = lazy(() =>
   import("../feature-module/sales/EditPurchaseOrder")
 );
+const RevenueReport = lazy(() =>
+  import("../feature-module/reports/RevenueReport")
+);
+const ProductReport = lazy(() =>
+  import("../feature-module/reports/ProductReport")
+);
+const CustomerReport = lazy(() =>
+  import("../feature-module/reports/CustomerReport")
+);
+const SupplierReport = lazy(() =>
+  import("../feature-module/reports/SupplierReport")
+);
 
 
 const routes = allRoutes;
@@ -173,6 +185,34 @@ export const authRoutes = [
     path: routes.orders,
     name: "orders",
     element: <OrderList />,
+    route: Route,
+  },
+  {
+    id: 20,
+    path: routes.revenuereport,
+    name: "revenue-report",
+    element: <RevenueReport />,
+    route: Route,
+  },
+  {
+    id: 21,
+    path: routes.productreport,
+    name: "product-report",
+    element: <ProductReport />,
+    route: Route,
+  },
+  {
+    id: 22,
+    path: routes.customerreport,
+    name: "customer-report",
+    element: <CustomerReport />,
+    route: Route,
+  },
+  {
+    id: 23,
+    path: routes.supplierreport,
+    name: "supplier-report",
+    element: <SupplierReport />,
     route: Route,
   },
   {

@@ -25,7 +25,6 @@ public class RevenueServiceImpl implements RevenueService {
     @Override
     @Transactional(readOnly = true)
     public RevenueResponse getDailyRevenue(LocalDate date) {
-        log.info("Lấy doanh thu theo ngày: {}", date);
 
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
@@ -34,8 +33,6 @@ public class RevenueServiceImpl implements RevenueService {
                 startOfDay, endOfDay, PAID_VN);
         Long orderCount = orderRepository.countOrdersByDateRangeAndPaymentStatus(
                 startOfDay, endOfDay, PAID_VN);
-
-        log.info("Doanh thu ngày {}: {} VND từ {} đơn", date, totalRevenue, orderCount);
 
         return RevenueResponse.builder()
                 .totalRevenue(totalRevenue != null ? totalRevenue : BigDecimal.ZERO)
@@ -49,7 +46,6 @@ public class RevenueServiceImpl implements RevenueService {
     @Override
     @Transactional(readOnly = true)
     public RevenueResponse getMonthlyRevenue(int year, int month) {
-        log.info("Lấy doanh thu theo tháng: {}/{}", month, year);
 
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
@@ -60,8 +56,6 @@ public class RevenueServiceImpl implements RevenueService {
                 startOfMonth, endOfMonth, PAID_VN);
         Long orderCount = orderRepository.countOrdersByDateRangeAndPaymentStatus(
                 startOfMonth, endOfMonth, PAID_VN);
-
-        log.info("Doanh thu tháng {}/{}: {} VND từ {} đơn", month, year, totalRevenue, orderCount);
 
         return RevenueResponse.builder()
                 .totalRevenue(totalRevenue != null ? totalRevenue : BigDecimal.ZERO)
@@ -75,7 +69,6 @@ public class RevenueServiceImpl implements RevenueService {
     @Override
     @Transactional(readOnly = true)
     public RevenueResponse getYearlyRevenue(int year) {
-        log.info("Lấy doanh thu theo năm: {}", year);
 
         LocalDateTime startOfYear = LocalDate.of(year, 1, 1).atStartOfDay();
         LocalDateTime endOfYear = LocalDate.of(year, 12, 31).atTime(LocalTime.MAX);
@@ -84,8 +77,6 @@ public class RevenueServiceImpl implements RevenueService {
                 startOfYear, endOfYear, PAID_VN);
         Long orderCount = orderRepository.countOrdersByDateRangeAndPaymentStatus(
                 startOfYear, endOfYear, PAID_VN);
-
-        log.info("Doanh thu năm {}: {} VND từ {} đơn", year, totalRevenue, orderCount);
 
         return RevenueResponse.builder()
                 .totalRevenue(totalRevenue != null ? totalRevenue : BigDecimal.ZERO)
@@ -99,7 +90,6 @@ public class RevenueServiceImpl implements RevenueService {
     @Override
     @Transactional(readOnly = true)
     public RevenueResponse getCustomRevenue(LocalDate startDate, LocalDate endDate) {
-        log.info("Lấy doanh thu tùy chọn từ {} đến {}", startDate, endDate);
 
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end = endDate.atTime(LocalTime.MAX);
@@ -109,15 +99,12 @@ public class RevenueServiceImpl implements RevenueService {
         Long orderCount = orderRepository.countOrdersByDateRangeAndPaymentStatus(
                 start, end, PAID_VN);
 
-        log.info("Doanh thu từ {} đến {}: {} VND từ {} đơn",
-                startDate, endDate, totalRevenue, orderCount);
-
         return RevenueResponse.builder()
                 .totalRevenue(totalRevenue != null ? totalRevenue : BigDecimal.ZERO)
                 .orderCount(orderCount != null ? orderCount : 0L)
                 .startDate(start)
                 .endDate(end)
-                .period("TÙY_CHỌN")
+                .period("TUỲ CHỈNH")
                 .build();
     }
 }

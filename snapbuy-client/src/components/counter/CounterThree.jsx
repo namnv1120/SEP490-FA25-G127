@@ -16,7 +16,6 @@ const CounterThree = () => {
     }
   };
 
-  // ✅ Xóa interface & type annotation, chuyển sang JS thuần
   const handleChange = (e) => {
     const value = e.target.value;
     const numericValue = parseInt(value, 10);

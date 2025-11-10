@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 const CounterTwo = ({ defaultValue = 0, onChange }) => {
   const [quantity, setQuantity] = useState(defaultValue);
 
-  // Đồng bộ nếu defaultValue thay đổi từ bên ngoài
   useEffect(() => {
     setQuantity(defaultValue);
   }, [defaultValue]);
@@ -12,7 +11,7 @@ const CounterTwo = ({ defaultValue = 0, onChange }) => {
     if (quantity < 99) {
       const newVal = quantity + 1;
       setQuantity(newVal);
-      onChange && onChange(newVal); // Gọi callback
+      onChange && onChange(newVal);
     }
   };
 
@@ -20,7 +19,7 @@ const CounterTwo = ({ defaultValue = 0, onChange }) => {
     if (quantity > 0) {
       const newVal = quantity - 1;
       setQuantity(newVal);
-      onChange && onChange(newVal); // Gọi callback
+    onChange && onChange(newVal);
     }
   };
 

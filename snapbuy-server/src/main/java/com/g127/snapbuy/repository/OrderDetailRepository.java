@@ -87,4 +87,46 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, UUID> 
             @Param("sortBy") String sortBy,
             @Param("sortDir") String sortDir
     );
+
+    @Query(value = """
+            SELECT 
+                CAST(p.product_id AS VARCHAR(36)) as product_id,
+                p.product_name,
+                p.product_code,
+                SUM(od.quantity) as total_quantity_sold,
+                ISNULL(c.category_name, 'N/A') as category_name,
+                ISNULL(s.supplier_name, 'N/A') as supplier_name
+            FROM orders o
+            INNER JOIN order_detail od ON o.order_id = od.order_id
+            INNER JOIN products p ON od.product_id = p.product_id
+            LEFT JOIN categories c ON p.category_id = c.category_id
+            LEFT JOIN suppliers s ON p.supplier_id = s.supplier_id
+            WHERE o.payment_status = :paymentStatus
+              AND o.created_date >= :startDate
+              AND o.created_date <= :endDate
+            GROUP BY p.product_id, p.product_name, p.product_code, c.category_name, s.supplier_name
+            ORDER BY total_quantity_sold DESC
+            """, nativeQuery = true)
+    List<Object[]> getProductSalesByDateRange(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("paymentStatus") String paymentStatus);
+
+    @Query("SELECT SUM(od.quantity) FROM OrderDetail od " +
+            "JOIN od.order o " +
+            "WHERE o.createdDate BETWEEN :startDate AND :endDate " +
+            "AND o.paymentStatus = :paymentStatus")
+    Long sumTotalQuantitySold(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("paymentStatus") String paymentStatus);
+
+    @Query("SELECT COUNT(DISTINCT od.product.productId) FROM OrderDetail od " +
+            "JOIN od.order o " +
+            "WHERE o.createdDate BETWEEN :startDate AND :endDate " +
+            "AND o.paymentStatus = :paymentStatus")
+    Long countUniqueProductsSold(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("paymentStatus") String paymentStatus);
 }

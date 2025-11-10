@@ -19,7 +19,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -51,7 +53,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             if (i.getQuantity() <= 0) throw new IllegalArgumentException("Số lượng phải > 0");
         }
 
-        String number = generateUniqueNumber();
         LocalDateTime now = LocalDateTime.now();
 
         Map<UUID, BigDecimal> unitPriceByProduct = new HashMap<>();
@@ -477,22 +478,16 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     }
 
     private String generateUniqueNumber() {
-        String number;
-        int attempts = 0;
-        do {
-            number = generateNumber();
-            attempts++;
-        } while (purchaseOrderRepo.existsByNumber(number) && attempts < 5);
-        if (purchaseOrderRepo.existsByNumber(number)) {
-            throw new IllegalStateException("Không tạo được số phiếu duy nhất, vui lòng thử lại");
-        }
-        return number;
-    }
+        String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyMMdd"));
 
-    private String generateNumber() {
-        String date = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
-        String suffix = java.util.UUID.randomUUID().toString().substring(0, 4).toUpperCase();
-        return "PO-" + date + "-" + suffix;
+        long countToday = purchaseOrderRepo.countByOrderDateBetween(
+                LocalDate.now().atStartOfDay(),
+                LocalDate.now().atTime(23, 59, 59)
+        );
+
+        long nextNumber = countToday + 1;
+
+        return "PO" + datePart + String.format("%03d", nextNumber);
     }
 
     private String cleanNotes(String notes) {

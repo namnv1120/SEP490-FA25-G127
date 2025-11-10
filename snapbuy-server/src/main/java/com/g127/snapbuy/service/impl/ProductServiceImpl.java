@@ -135,10 +135,8 @@ public class ProductServiceImpl implements ProductService {
             product.setSupplier(supplier);
         }
 
-        // Validate barcode uniqueness nếu có (và khác với barcode hiện tại)
         if (request.getBarcode() != null && !request.getBarcode().trim().isEmpty()) {
             String newBarcode = request.getBarcode().trim();
-            // Chỉ check unique nếu barcode thay đổi
             if (!newBarcode.equals(product.getBarcode())) {
                 if (productRepository.existsByBarcode(newBarcode)) {
                     throw new AppException(ErrorCode.BARCODE_ALREADY_EXISTS);
@@ -146,11 +144,9 @@ public class ProductServiceImpl implements ProductService {
             }
             product.setBarcode(newBarcode);
         } else {
-            // Nếu barcode rỗng, set null
             product.setBarcode(null);
         }
 
-        // Xử lý upload ảnh mới nếu có
         if (request.getImage() != null && !request.getImage().isEmpty()) {
             try {
                 String fileName = System.currentTimeMillis() + "_" + request.getImage().getOriginalFilename();
@@ -166,10 +162,7 @@ public class ProductServiceImpl implements ProductService {
 
                 product.setImageUrl("/uploads/products/" + fileName);
 
-                log.info("✅ Updated image: {}", product.getImageUrl());
-
             } catch (Exception e) {
-                log.error("❌ Lỗi khi lưu ảnh sản phẩm", e);
                 throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
             }
         }
@@ -199,22 +192,27 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public ProductResponse getProductByBarcode(String barcode) {
         if (barcode == null || barcode.trim().isEmpty()) {
             throw new AppException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
-        Product product = productRepository.findByBarcode(barcode.trim())
+        Product product = productRepository.findByBarcodeWithCategory(barcode.trim())
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        // Chỉ trả về sản phẩm đang active
         if (product.getActive() == null || !product.getActive()) {
+            throw new AppException(ErrorCode.PRODUCT_NOT_FOUND);
+        }
+
+        if (product.getCategory() == null
+                || product.getCategory().getActive() == null 
+                || !product.getCategory().getActive()) {
             throw new AppException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
         ProductResponse response = productMapper.toResponse(product);
 
-        // Lấy giá mới nhất
         ProductPrice latestPrice = productPriceRepository
                 .findTopByProduct_ProductIdOrderByValidFromDesc(product.getProductId())
                 .orElse(null);
@@ -224,7 +222,6 @@ public class ProductServiceImpl implements ProductService {
             response.setCostPrice(latestPrice.getCostPrice());
         }
 
-        // Lấy số lượng tồn kho
         inventoryRepository.findByProduct_ProductId(product.getProductId())
                 .ifPresent(inventory ->
                         response.setQuantityInStock(inventory.getQuantityInStock())
@@ -234,8 +231,9 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public List<ProductResponse> getAllProducts() {
-        return productRepository.findAll()
+        return productRepository.findAllActiveWithActiveCategory()
                 .stream()
                 .map(product -> {
                     ProductResponse response = productMapper.toResponse(product);
@@ -255,7 +253,6 @@ public class ProductServiceImpl implements ProductService {
                 })
                 .toList();
     }
-
 
     @Override
     @Transactional
@@ -293,7 +290,6 @@ public class ProductServiceImpl implements ProductService {
                         .orElseThrow(() -> {
                             String error = String.format("Row %d: Category '%s' not found",
                                     rowNumber, request.getCategoryName());
-                            log.error("❌ {}", error);
                             return new RuntimeException(error);
                         });
 
@@ -301,7 +297,6 @@ public class ProductServiceImpl implements ProductService {
                         .orElseThrow(() -> {
                             String error = String.format("Row %d: Supplier '%s' not found",
                                     rowNumber, request.getSupplierName());
-                            log.error("❌ {}", error);
                             return new RuntimeException(error);
                         });
 
@@ -338,8 +333,6 @@ public class ProductServiceImpl implements ProductService {
 
                 importedProducts.add(productMapper.toResponse(savedProduct));
 
-                log.info("Row {}: Product '{}' imported successfully", rowNumber, request.getProductCode());
-
             } catch (Exception e) {
                 String error = String.format("Row %d: %s", rowNumber, e.getMessage());
                 log.error("{}", error);
@@ -359,6 +352,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public List<ProductResponse> getProductsBySupplierId(UUID supplierId) {
         Supplier supplier = supplierRepository.findById(supplierId)
                 .orElseThrow(() -> new AppException(ErrorCode.SUPPLIER_NOT_FOUND));
@@ -371,7 +365,15 @@ public class ProductServiceImpl implements ProductService {
         }
 
         return products.stream()
-                .filter(product -> product.getActive() == null || product.getActive())
+                .filter(product -> {
+                    // Chỉ trả về sản phẩm có category active
+                    boolean productActive = product.getActive() != null && product.getActive();
+                    // Category sẽ được load khi access (cần đảm bảo session còn mở với @Transactional)
+                    boolean categoryActive = product.getCategory() != null 
+                            && product.getCategory().getActive() != null 
+                            && product.getCategory().getActive();
+                    return productActive && categoryActive;
+                })
                 .map(product -> {
                     ProductResponse response = productMapper.toResponse(product);
 

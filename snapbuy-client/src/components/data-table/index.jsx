@@ -33,8 +33,8 @@ const PrimeDataTable = ({
 
   const customEmptyMessage = () => (
     <div className="no-record-found">
-      <h4>No records found.</h4>
-      <p>No records to show here...</p>
+      <h4>Không tìm thấy bản ghi.</h4>
+      <p>Không có dữ liệu để hiển thị...</p>
     </div>
   );
 

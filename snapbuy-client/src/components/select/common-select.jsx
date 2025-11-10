@@ -20,10 +20,10 @@ const CommonSelect = ({
       placeholder={placeholder}
       className={className}
       disabled={disabled}
-      appendTo={document.body} // ✅ render menu ra ngoài body để không bị che
-      panelStyle={{ zIndex: 9999 }} // ✅ đảm bảo nổi lên trên mọi thứ
+      appendTo={document.body}
+      panelStyle={{ zIndex: 9999 }}
       filter={filter}
-      scrollHeight="250px" // ✅ nếu danh sách dài
+      scrollHeight="250px"
     />
   );
 };

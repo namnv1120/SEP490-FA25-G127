@@ -12,7 +12,7 @@ dayjs.extend(customParseFormat);
 dayjs.extend(localeData);
 
 const { RangePicker } = DatePicker;
-const dateFormat = 'YYYY/MM/DD';
+const dateFormat = 'DD/MM/YYYY';
 
 const CommonDateRangePicker = () => {
   const [dates, setDates] = useState([
@@ -23,21 +23,20 @@ const CommonDateRangePicker = () => {
   const rangeRef = useRef(null);
 
   const predefinedRanges = {
-    Today: [dayjs(), dayjs()],
-    Yesterday: [dayjs().subtract(1, 'day'), dayjs().subtract(1, 'day')],
-    'Last 7 Days': [dayjs().subtract(6, 'day'), dayjs()],
-    'Last 30 Days': [dayjs().subtract(29, 'day'), dayjs()],
-    'This Month': [dayjs().startOf('month'), dayjs().endOf('month')],
-    'Last Month': [
+    'Hôm nay': [dayjs(), dayjs()],
+    'Hôm qua': [dayjs().subtract(1, 'day'), dayjs().subtract(1, 'day')],
+    '7 ngày qua': [dayjs().subtract(6, 'day'), dayjs()],
+    '30 ngày qua': [dayjs().subtract(29, 'day'), dayjs()],
+    'Tháng này': [dayjs().startOf('month'), dayjs().endOf('month')],
+    'Tháng trước': [
       dayjs().subtract(1, 'month').startOf('month'),
       dayjs().subtract(1, 'month').endOf('month'),
     ],
   };
 
   const handleMenuClick = ({ key }) => {
-    if (key === 'Custom Range') {
+    if (key === 'Khoảng tùy chỉnh') {
       setCustomVisible(true);
-      // Trigger calendar popup manually
       setTimeout(() => rangeRef.current?.focus(), 0);
     } else {
       setDates(predefinedRanges[key]);
@@ -58,14 +57,14 @@ const CommonDateRangePicker = () => {
       label,
     })),
     { type: 'divider' },
-    { key: 'Custom Range', label: 'Custom Range' },
+    { key: 'Khoảng tùy chỉnh', label: 'Khoảng tùy chỉnh' },
   ];
 
   const displayValue = `${dates[0].format(dateFormat)} - ${dates[1].format(dateFormat)}`;
 
   return (
     <div>
-      <Dropdown 
+      <Dropdown
         menu={{ items: menuItems, onClick: handleMenuClick }}
         trigger={['click']}
       >
@@ -76,7 +75,7 @@ const CommonDateRangePicker = () => {
         />
       </Dropdown>
 
-      {/* Hidden RangePicker - purely for calendar popup */}
+
       {customVisible && (
         <RangePicker
           open
