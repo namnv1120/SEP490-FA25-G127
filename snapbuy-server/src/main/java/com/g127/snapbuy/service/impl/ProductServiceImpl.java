@@ -92,7 +92,18 @@ public class ProductServiceImpl implements ProductService {
         product.setCreatedDate(LocalDateTime.now());
         product.setUpdatedDate(LocalDateTime.now());
 
-        Product savedProduct = productRepository.save(product);
+        Product savedProduct;
+        try {
+            savedProduct = productRepository.save(product);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // Nếu có lỗi constraint violation, kiểm tra xem có phải lỗi barcode không
+            String errorMessage = e.getMessage();
+            if (errorMessage != null && errorMessage.contains("UX_products_barcode")) {
+                throw new AppException(ErrorCode.BARCODE_ALREADY_EXISTS);
+            }
+            // Re-throw để GlobalExceptionHandler xử lý
+            throw e;
+        }
 
         // Giá mặc định
         ProductPrice price = new ProductPrice();
@@ -138,8 +149,9 @@ public class ProductServiceImpl implements ProductService {
         // Validate barcode uniqueness nếu có (và khác với barcode hiện tại)
         if (request.getBarcode() != null && !request.getBarcode().trim().isEmpty()) {
             String newBarcode = request.getBarcode().trim();
-            // Chỉ check unique nếu barcode thay đổi
-            if (!newBarcode.equals(product.getBarcode())) {
+            String currentBarcode = product.getBarcode();
+            // Chỉ check unique nếu barcode thay đổi (so sánh cả null case)
+            if (currentBarcode == null || !newBarcode.equals(currentBarcode)) {
                 if (productRepository.existsByBarcode(newBarcode)) {
                     throw new AppException(ErrorCode.BARCODE_ALREADY_EXISTS);
                 }
@@ -150,8 +162,13 @@ public class ProductServiceImpl implements ProductService {
             product.setBarcode(null);
         }
 
+        // Xử lý xóa ảnh nếu người dùng yêu cầu
+        if (request.getRemoveImage() != null && request.getRemoveImage()) {
+            product.setImageUrl(null);
+            log.info("✅ Removed image for product: {}", product.getProductId());
+        }
         // Xử lý upload ảnh mới nếu có
-        if (request.getImage() != null && !request.getImage().isEmpty()) {
+        else if (request.getImage() != null && !request.getImage().isEmpty()) {
             try {
                 String fileName = System.currentTimeMillis() + "_" + request.getImage().getOriginalFilename();
 
@@ -176,7 +193,17 @@ public class ProductServiceImpl implements ProductService {
 
         product.setUpdatedDate(LocalDateTime.now());
 
-        return productMapper.toResponse(productRepository.save(product));
+        try {
+            return productMapper.toResponse(productRepository.save(product));
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // Nếu có lỗi constraint violation, kiểm tra xem có phải lỗi barcode không
+            String errorMessage = e.getMessage();
+            if (errorMessage != null && errorMessage.contains("UX_products_barcode")) {
+                throw new AppException(ErrorCode.BARCODE_ALREADY_EXISTS);
+            }
+            // Re-throw để GlobalExceptionHandler xử lý
+            throw e;
+        }
     }
 
     @Override

@@ -30,6 +30,7 @@ const EditProduct = () => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isImageVisible, setIsImageVisible] = useState(true);
+  const [isImageRemoved, setIsImageRemoved] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -119,12 +120,12 @@ const EditProduct = () => {
           });
         }
 
-        // Set ảnh preview nếu có
-        if (data.imageUrl) {
-          const fullImageUrl = getImageUrl(data.imageUrl);
-          setImagePreview(fullImageUrl);
-          setIsImageVisible(true);
-        }
+        // Set ảnh preview (nếu có ảnh thì hiển thị ảnh, nếu không có thì hiển thị ảnh mặc định)
+        const fullImageUrl = getImageUrl(data.imageUrl);
+        setImagePreview(fullImageUrl);
+        setIsImageVisible(true);
+        // Nếu sản phẩm không có ảnh (imageUrl null hoặc rỗng), đánh dấu là đã xóa ảnh
+        setIsImageRemoved(!data.imageUrl || !data.imageUrl.trim());
 
       } catch (error) {
         console.error("❌ Lỗi lấy thông tin sản phẩm:", error);
@@ -179,11 +180,9 @@ const EditProduct = () => {
       );
       formData.append("supplierId", selectedSupplier.value);
 
+      // Xử lý barcode: nếu có thì gửi, nếu không có thì không gửi (backend sẽ set null)
       if (product.barcode?.trim()) {
         formData.append("barcode", product.barcode.trim());
-      } else {
-        // Nếu barcode rỗng, gửi empty string để backend set null
-        formData.append("barcode", "");
       }
       if (product.unit?.trim()) {
         formData.append("unit", product.unit.trim());
@@ -195,8 +194,11 @@ const EditProduct = () => {
         formData.append("description", product.description.trim());
       }
 
-      // Thêm ảnh nếu có file mới
-      if (imageFile) {
+      // Xử lý ảnh: nếu người dùng xóa ảnh và không chọn ảnh mới, gửi flag removeImage
+      if (isImageRemoved && !imageFile) {
+        formData.append("removeImage", "true");
+      } else if (imageFile) {
+        // Nếu có ảnh mới, gửi ảnh mới (và không gửi removeImage)
         formData.append("image", imageFile);
       }
 
@@ -215,8 +217,10 @@ const EditProduct = () => {
 
   const handleRemoveProduct = () => {
     setImageFile(null);
-    setImagePreview(null);
-    setIsImageVisible(false);
+    // Hiển thị ảnh mặc định khi xóa ảnh
+    setImagePreview(getImageUrl(null));
+    setIsImageVisible(true); // Vẫn hiển thị để người dùng thấy ảnh mặc định
+    setIsImageRemoved(true); // Đánh dấu là người dùng đã xóa ảnh
     if (product) {
       setProduct({ ...product, imageUrl: null });
     }
@@ -504,6 +508,7 @@ const EditProduct = () => {
                                       if (file) {
                                         setImageFile(file);
                                         setIsImageVisible(true);
+                                        setIsImageRemoved(false); // Nếu chọn ảnh mới, không xóa ảnh nữa
                                         const previewUrl = URL.createObjectURL(file);
                                         setImagePreview(previewUrl);
                                       }

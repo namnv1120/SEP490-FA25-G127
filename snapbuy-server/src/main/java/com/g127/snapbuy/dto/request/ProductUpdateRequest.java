@@ -41,4 +41,6 @@ public class ProductUpdateRequest {
     private Boolean active = true;
 
     private MultipartFile image;
+
+    private Boolean removeImage = false;
 }
