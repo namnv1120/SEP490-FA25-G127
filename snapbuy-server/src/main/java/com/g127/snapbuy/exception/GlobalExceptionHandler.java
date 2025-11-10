@@ -10,6 +10,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -108,6 +109,28 @@ public class GlobalExceptionHandler {
         ApiResponse<?> response = ApiResponse.builder()
                 .code(4003)
                 .message(ex.getMessage())
+                .build();
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<?>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        String message = ex.getMessage();
+        ErrorCode errorCode = ErrorCode.UNCATEGORIZED_ERROR;
+
+        // Kiểm tra nếu là lỗi duplicate barcode
+        if (message != null && message.contains("UX_products_barcode")) {
+            errorCode = ErrorCode.BARCODE_ALREADY_EXISTS;
+        }
+        // Kiểm tra nếu là lỗi duplicate product code
+        else if (message != null && (message.contains("UX_products_product_code") || message.contains("product_code"))) {
+            errorCode = ErrorCode.CODE_EXISTED;
+        }
+        // Kiểm tra các constraint khác nếu cần
+
+        ApiResponse<?> response = ApiResponse.builder()
+                .code(errorCode.getCode())
+                .message(errorCode.getMessage())
                 .build();
         return ResponseEntity.badRequest().body(response);
     }
