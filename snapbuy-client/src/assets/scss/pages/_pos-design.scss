@@ -615,6 +615,15 @@ aside {
                     margin-left: 5px;
                 }
             }
+            .product-wrap {
+                height: auto;
+                min-height: 0;
+                overflow: visible;
+                .empty-cart {
+                    display: flex !important;
+                    min-height: 200px;
+                }
+            }
         }
         .selling-info {
             margin-bottom: 20px;
