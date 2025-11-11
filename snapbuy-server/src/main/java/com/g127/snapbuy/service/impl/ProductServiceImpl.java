@@ -3,6 +3,7 @@ package com.g127.snapbuy.service.impl;
 import com.g127.snapbuy.dto.request.ProductCreateRequest;
 import com.g127.snapbuy.dto.request.ProductImportRequest;
 import com.g127.snapbuy.dto.request.ProductUpdateRequest;
+import com.g127.snapbuy.dto.response.PageResponse;
 import com.g127.snapbuy.dto.response.ProductResponse;
 import com.g127.snapbuy.entity.*;
 import com.g127.snapbuy.exception.AppException;
@@ -16,6 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
@@ -24,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -420,12 +425,67 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
+    public PageResponse<ProductResponse> searchByKeyword(String keyword, Pageable pageable) {
+        Page<Product> productPage = productRepository.searchByKeyword(keyword, 
+            org.springframework.data.domain.PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize()
+            ));
+        
+        List<UUID> productIds = productPage.getContent().stream()
+                .map(Product::getProductId)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        
+        List<Product> productsWithRelations = productIds.isEmpty() 
+            ? List.of()
+            : productRepository.findAllById(productIds);
+        
+        java.util.Map<UUID, Product> productMap = productsWithRelations.stream()
+                .collect(Collectors.toMap(Product::getProductId, p -> p));
+        
+        List<ProductResponse> responseList = productPage.getContent().stream()
+                .map(product -> {
+                    Product fullProduct = productMap.get(product.getProductId());
+                    if (fullProduct == null) {
+                        return null;
+                    }
+                    
+                    ProductResponse response = productMapper.toResponse(fullProduct);
+                    
+                    productPriceRepository.findTopByProduct_ProductIdOrderByValidFromDesc(fullProduct.getProductId())
+                            .ifPresent(latestPrice -> {
+                                response.setUnitPrice(latestPrice.getUnitPrice());
+                                response.setCostPrice(latestPrice.getCostPrice());
+                            });
+                    
+                    inventoryRepository.findByProduct_ProductId(fullProduct.getProductId())
+                            .ifPresent(inventory -> response.setQuantityInStock(inventory.getQuantityInStock()));
+                    
+                    return response;
+                })
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toList());
+        
+        return PageResponse.<ProductResponse>builder()
+                .content(responseList)
+                .totalElements(productPage.getTotalElements())
+                .totalPages(productPage.getTotalPages())
+                .size(productPage.getSize())
+                .number(productPage.getNumber())
+                .first(productPage.isFirst())
+                .last(productPage.isLast())
+                .empty(productPage.isEmpty())
+                .build();
+    }
+
+    @Override
     public ProductResponse toggleProductStatus(UUID id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
         Boolean currentActive = product.getActive();
         log.info("Toggling product {} status from {} to {}", id, currentActive, currentActive == null || !currentActive);
-        // Nếu active là null, mặc định là false, toggle thành true
         product.setActive(currentActive == null || !currentActive);
         product.setUpdatedDate(LocalDateTime.now());
         Product savedProduct = productRepository.save(product);

@@ -7,7 +7,7 @@ import { stockImg1 } from "../../utils/imagepath";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
-import { getAllProducts, deleteProduct, importProducts, toggleProductStatus } from "../../services/ProductService";
+import { getAllProducts, deleteProduct, importProducts, toggleProductStatus, searchProducts } from "../../services/ProductService";
 import ImportProductModal from "./ImportProduct";
 import ProductDetailModal from "../../core/modals/inventories/ProductDetailModal";
 import { message } from "antd";
@@ -32,40 +32,50 @@ const ProductList = () => {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [currentPage, rows, searchQuery]);
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getAllProducts();
 
-      const mappedProducts = data.map((product, index) => {
-        const imageUrl = product.image || product.imageUrl || "";
-        const fullImageUrl = getImageUrl(imageUrl) || stockImg1;
+      const backendPage = currentPage - 1;
 
-        return {
-          productId: product.productId || index + 1,
-          productCode: product.code || product.productCode || "Không có",
-          productName: product.name || product.productName || "Không có",
-          productImage: fullImageUrl,
-          category: product.category?.name || product.categoryName || "Không có",
-          description: product.description || "Không có",
-          supplier: product.supplier?.name || product.supplierName || "Không có",
-          dimensions: product.dimensions || "Không có",
-          imageUrl: imageUrl,
-          unitprice: `${product.unitPrice?.toLocaleString() || "0.00"} đ`,
-          unit: product.unit || "Không có",
-          qty: product.quantityInStock?.toString() || product.qty?.toString() || "0",
-          status: product.active === 1 || product.active === true ? "Hoạt động" : "Không hoạt động",
-          active: product.active === 1 || product.active === true,
-        };
-      });
+      const result = await searchProducts(
+        searchQuery || '',
+        backendPage,
+        rows,
+        'createdDate',
+        'DESC'
+      );
+
+      const mappedProducts = (result.content || [])
+        .filter((product) => product && product.productId != null)
+        .map((product) => {
+          const imageUrl = product.image || product.imageUrl || "";
+          const fullImageUrl = getImageUrl(imageUrl) || stockImg1;
+
+          return {
+            productId: product.productId,
+            productCode: product.productCode || "Không có",
+            productName: product.productName || "Không có",
+            productImage: fullImageUrl,
+            category: product.categoryName || "Không có",
+            description: product.description || "Không có",
+            supplier: product.supplierName || "Không có",
+            dimensions: product.dimensions || "Không có",
+            imageUrl: imageUrl,
+            unitprice: `${product.unitPrice?.toLocaleString() || "0.00"} đ`,
+            unit: product.unit || "Không có",
+            qty: product.quantityInStock?.toString() || "0",
+            status: product.active === 1 || product.active === true ? "Hoạt động" : "Không hoạt động",
+            active: product.active === 1 || product.active === true,
+          };
+        });
 
       setProducts(mappedProducts);
-      setTotalRecords(mappedProducts.length);
+      setTotalRecords(result.totalElements || 0);
     } catch (err) {
-      console.error("❌ Lỗi khi tải danh sách sản phẩm:", err);
       setError("Lỗi khi tải danh sách sản phẩm. Vui lòng thử lại.");
     } finally {
       setLoading(false);
@@ -103,12 +113,14 @@ const ProductList = () => {
   };
 
   const handleRefresh = () => {
-    fetchProducts();
+    setSearchQuery(undefined);
+    setCurrentPage(1);
     message.success("Danh sách sản phẩm đã được làm mới!");
   };
 
   const handleSearch = (value) => {
     setSearchQuery(value);
+    setCurrentPage(1);
   };
 
   const handleDeleteClick = (product) => {
@@ -126,10 +138,9 @@ const ProductList = () => {
   const handleDeleteConfirm = async (productId) => {
     try {
       await deleteProduct(productId);
-      fetchProducts();
+      await fetchProducts();
       setSelectedProduct(null);
 
-      //Đóng modal thủ công
       const modalElement = document.getElementById("delete-modal");
       if (modalElement) {
         const modal = Modal.getInstance(modalElement);
@@ -138,7 +149,6 @@ const ProductList = () => {
 
       message.success("Sản phẩm đã được xoá thành công!");
     } catch (error) {
-      console.error("❌ Lỗi khi xoá sản phẩm:", error);
       message.error("Lỗi khi xoá sản phẩm. Vui lòng thử lại.");
     }
   };
@@ -154,7 +164,6 @@ const ProductList = () => {
       await fetchProducts();
       message.success("Đã cập nhật trạng thái sản phẩm thành công!");
     } catch (err) {
-      console.error("❌ Lỗi khi chuyển đổi trạng thái sản phẩm:", err);
       message.error("Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại.");
     }
   };
@@ -190,7 +199,6 @@ const ProductList = () => {
       body: (data) => (
         <div className="d-flex align-items-center">
           <Link to="#" className="avatar avatar-md me-2">
-            {/* 👇 THÊM: Error handler cho ảnh */}
             <img
               alt={data.productName}
               src={data.productImage}
@@ -415,6 +423,7 @@ const ProductList = () => {
                   setCurrentPage={setCurrentPage}
                   totalRecords={totalRecords}
                   dataKey="productId"
+                  serverSidePagination={true}
                 />
               </div>
             </div>

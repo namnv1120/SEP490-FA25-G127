@@ -4,6 +4,7 @@ import com.g127.snapbuy.dto.request.PurchaseOrderApproveRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderCreateRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderReceiveRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderUpdateRequest;
+import com.g127.snapbuy.dto.response.PageResponse;
 import com.g127.snapbuy.dto.response.PurchaseOrderResponse;
 import com.g127.snapbuy.dto.response.PurchaseOrderDetailResponse;
 import com.g127.snapbuy.entity.*;
@@ -12,10 +13,15 @@ import com.g127.snapbuy.exception.ErrorCode;
 import com.g127.snapbuy.mapper.PurchaseOrderMapper;
 import com.g127.snapbuy.repository.*;
 import com.g127.snapbuy.service.PurchaseOrderService;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -28,6 +34,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class PurchaseOrderServiceImpl implements PurchaseOrderService {
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private final PurchaseOrderRepository purchaseOrderRepo;
     private final PurchaseOrderDetailRepository detailRepo;
@@ -163,6 +172,14 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         }
 
         List<PurchaseOrderDetail> details = detailRepo.findAllForUpdateByPurchaseOrderId(poId);
+        
+        boolean allHaveReceivedQuantity = details.stream()
+                .allMatch(d -> Optional.ofNullable(d.getReceivedQuantity()).orElse(0) > 0);
+        
+        if (!allHaveReceivedQuantity) {
+            throw new IllegalStateException("Phải cập nhật số lượng thực nhận cho tất cả sản phẩm trước khi nhận hàng");
+        }
+        
         Map<UUID, PurchaseOrderDetail> byId = details.stream()
                 .collect(Collectors.toMap(PurchaseOrderDetail::getId, d -> d));
 
@@ -237,7 +254,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             inventoryTxnRepo.save(txn);
         }
 
-        // 3) Tính lại tiền
         BigDecimal receivedSubtotal = details.stream()
                 .map(d -> Optional.ofNullable(d.getUnitPrice()).orElse(BigDecimal.ZERO)
                         .multiply(BigDecimal.valueOf(Optional.ofNullable(d.getReceivedQuantity()).orElse(0))))
@@ -305,7 +321,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
     @Override
     @Transactional
-    public Page<PurchaseOrderResponse> search(String status, UUID supplierId, LocalDateTime from, LocalDateTime to, Pageable pageable) {
+    public PageResponse<PurchaseOrderResponse> search(String status, UUID supplierId, LocalDateTime from, LocalDateTime to, Pageable pageable) {
         Page<PurchaseOrder> page;
         if (supplierId != null) {
             page = purchaseOrderRepo.findBySupplierId(supplierId, pageable);
@@ -331,12 +347,122 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         Map<UUID, Account> accountMap = accountIds.isEmpty() ? Map.of()
                 : accountRepo.findAllById(accountIds).stream().collect(Collectors.toMap(Account::getAccountId, a -> a));
 
-        return page.map(po -> purchaseOrderMapper.toResponse(
-                po,
-                detailsByPo.getOrDefault(po.getId(), List.of()),
-                supplierMap.getOrDefault(po.getSupplierId(), null),
-                accountMap.getOrDefault(po.getAccountId(), null)
-        ));
+        List<PurchaseOrderResponse> responseContent = page.getContent().stream()
+                .map(po -> purchaseOrderMapper.toResponse(
+                        po,
+                        detailsByPo.getOrDefault(po.getId(), List.of()),
+                        supplierMap.getOrDefault(po.getSupplierId(), null),
+                        accountMap.getOrDefault(po.getAccountId(), null)
+                ))
+                .toList();
+
+        return PageResponse.<PurchaseOrderResponse>builder()
+                .content(responseContent)
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .size(page.getSize())
+                .number(page.getNumber())
+                .first(page.isFirst())
+                .last(page.isLast())
+                .empty(page.isEmpty())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public PageResponse<PurchaseOrderResponse> searchByKeyword(String keyword, Pageable pageable) {
+        String orderByClause = buildOrderByClause(pageable.getSort());
+        
+        String baseQuery = "SELECT po.* FROM purchase_order po " +
+                "LEFT JOIN suppliers s ON po.supplier_id = s.supplier_id " +
+                "LEFT JOIN accounts a ON po.account_id = a.account_id " +
+                "WHERE (:keyword IS NULL OR :keyword = '' OR " +
+                "LOWER(po.purchase_order_number) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+                "ORDER BY " + orderByClause;
+        
+        String countQuery = "SELECT COUNT(po.purchase_order_id) FROM purchase_order po " +
+                "LEFT JOIN suppliers s ON po.supplier_id = s.supplier_id " +
+                "LEFT JOIN accounts a ON po.account_id = a.account_id " +
+                "WHERE (:keyword IS NULL OR :keyword = '' OR " +
+                "LOWER(po.purchase_order_number) LIKE LOWER(CONCAT('%', :keyword, '%')))";
+        
+        Query countQ = entityManager.createNativeQuery(countQuery);
+        countQ.setParameter("keyword", keyword);
+        Long totalCount = ((Number) countQ.getSingleResult()).longValue();
+        
+        Query dataQ = entityManager.createNativeQuery(baseQuery, PurchaseOrder.class);
+        dataQ.setParameter("keyword", keyword);
+        dataQ.setFirstResult((int) pageable.getOffset());
+        dataQ.setMaxResults(pageable.getPageSize());
+        
+        @SuppressWarnings("unchecked")
+        List<PurchaseOrder> content = dataQ.getResultList();
+        
+        List<UUID> poIds = content.stream().map(PurchaseOrder::getId).toList();
+        Map<UUID, List<PurchaseOrderDetail>> detailsByPo = poIds.isEmpty()
+                ? Map.of()
+                : detailRepo.findByPurchaseOrderIdIn(poIds).stream()
+                .collect(Collectors.groupingBy(PurchaseOrderDetail::getPurchaseOrderId));
+
+        Set<UUID> supplierIds = content.stream().map(PurchaseOrder::getSupplierId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<UUID, Supplier> supplierMap = supplierIds.isEmpty() ? Map.of()
+                : supplierRepo.findAllById(supplierIds).stream().collect(Collectors.toMap(Supplier::getSupplierId, s -> s));
+
+        Set<UUID> accountIds = content.stream().map(PurchaseOrder::getAccountId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<UUID, Account> accountMap = accountIds.isEmpty() ? Map.of()
+                : accountRepo.findAllById(accountIds).stream().collect(Collectors.toMap(Account::getAccountId, a -> a));
+
+        List<PurchaseOrderResponse> responseContent = content.stream()
+                .map(po -> purchaseOrderMapper.toResponse(
+                        po,
+                        detailsByPo.getOrDefault(po.getId(), List.of()),
+                        supplierMap.getOrDefault(po.getSupplierId(), null),
+                        accountMap.getOrDefault(po.getAccountId(), null)
+                ))
+                .toList();
+        
+        return PageResponse.<PurchaseOrderResponse>builder()
+                .content(responseContent)
+                .totalElements(totalCount)
+                .totalPages((int) Math.ceil((double) totalCount / pageable.getPageSize()))
+                .size(pageable.getPageSize())
+                .number(pageable.getPageNumber())
+                .first(pageable.getPageNumber() == 0)
+                .last(pageable.getPageNumber() >= (totalCount - 1) / pageable.getPageSize())
+                .empty(responseContent.isEmpty())
+                .build();
+    }
+    
+    private String mapFieldToColumn(String fieldName) {
+        if (fieldName == null || fieldName.isEmpty()) {
+            return "po.order_date";
+        }
+        
+        return switch (fieldName) {
+            case "orderDate" -> "po.order_date";
+            case "receivedDate" -> "po.received_date";
+            case "totalAmount" -> "po.total_amount";
+            case "purchaseOrderNumber" -> "po.purchase_order_number";
+            case "status" -> "po.status";
+            case "supplierName" -> "s.supplier_name";
+            case "fullName" -> "a.full_name";
+            default -> {
+                String snakeCase = fieldName.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase();
+                yield "po." + snakeCase;
+            }
+        };
+    }
+    
+    private String buildOrderByClause(Sort sort) {
+        if (sort == null || !sort.iterator().hasNext()) {
+            return "po.order_date DESC";
+        }
+        
+        Sort.Order order = sort.iterator().next();
+        String columnName = mapFieldToColumn(order.getProperty());
+        String direction = order.getDirection() == Sort.Direction.ASC ? "ASC" : "DESC";
+        
+        return columnName + " " + direction;
     }
 
     @Override
@@ -361,9 +487,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     public PurchaseOrderResponse getPurchaseOrderById(UUID poId) {
         PurchaseOrder po = purchaseOrderRepo.findById(poId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu nhập hàng với ID: " + poId));
-        
+
         List<PurchaseOrderDetail> details = detailRepo.findByPurchaseOrderId(poId);
-        
+
         Set<UUID> productIds = details.stream()
                 .map(PurchaseOrderDetail::getProductId)
                 .filter(Objects::nonNull)
@@ -371,15 +497,15 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         Map<UUID, Product> productMap = productIds.isEmpty() ? Map.of() :
                 productRepo.findAllById(productIds).stream()
                         .collect(Collectors.toMap(Product::getProductId, p -> p));
-        
+
         List<PurchaseOrderDetailResponse> detailResponses = details.stream().map(detail -> {
             Product product = productMap.get(detail.getProductId());
             return mapDetailResponse(detail, product);
         }).toList();
-        
+
         Supplier supplier = po.getSupplierId() != null ? supplierRepo.findById(po.getSupplierId()).orElse(null) : null;
         Account account = po.getAccountId() != null ? accountRepo.findById(po.getAccountId()).orElse(null) : null;
-        
+
         return purchaseOrderMapper.toResponseWithDetails(po, detailResponses, supplier, account);
     }
 
@@ -399,17 +525,38 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             throw new IllegalStateException("Không thể chỉnh sửa đơn hàng đã bị hủy. Trạng thái hiện tại: " + status);
         }
 
+        boolean isApproved = "Đã duyệt".equals(status);
+
         for (var i : req.getItems()) {
             productRepo.findById(i.getProductId())
                     .orElseThrow(() -> new NoSuchElementException("Sản phẩm không tồn tại: " + i.getProductId()));
             if (i.getQuantity() <= 0) throw new IllegalArgumentException("Số lượng phải > 0");
             if (i.getUnitPrice() == null || i.getUnitPrice().compareTo(BigDecimal.ZERO) <= 0)
                 throw new IllegalArgumentException("Đơn giá phải > 0");
+            
+            if (isApproved && i.getReceiveQuantity() != null) {
+                if (i.getReceiveQuantity() < 0) {
+                    throw new IllegalArgumentException("Số lượng thực nhận phải >= 0");
+                }
+                if (i.getReceiveQuantity() > i.getQuantity()) {
+                    throw new IllegalArgumentException("Số lượng thực nhận không được vượt quá số lượng ban đầu");
+                }
+            }
         }
 
-        BigDecimal newSubtotal = req.getItems().stream()
-                .map(i -> i.getUnitPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal newSubtotal;
+        if (isApproved) {
+            newSubtotal = req.getItems().stream()
+                    .map(i -> {
+                        int qty = (i.getReceiveQuantity() != null) ? i.getReceiveQuantity() : 0;
+                        return i.getUnitPrice().multiply(BigDecimal.valueOf(qty));
+                    })
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        } else {
+            newSubtotal = req.getItems().stream()
+                    .map(i -> i.getUnitPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
 
         BigDecimal taxRatePct = Optional.ofNullable(req.getTaxAmount()).orElse(BigDecimal.ZERO);
         BigDecimal newTax = newSubtotal.multiply(taxRatePct)
@@ -425,14 +572,20 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         detailRepo.deleteAllByPurchaseOrderId(poId);
         detailRepo.flush();
 
-        List<PurchaseOrderDetail> newDetails = req.getItems().stream().map(i ->
-                PurchaseOrderDetail.builder()
-                        .purchaseOrderId(poId)
-                        .productId(i.getProductId())
-                        .quantity(i.getQuantity())
-                        .unitPrice(i.getUnitPrice())
-                        .receivedQuantity(0)
-                        .build()
+        List<PurchaseOrderDetail> newDetails = req.getItems().stream().map(i -> {
+                    int receivedQty = 0;
+                    if (isApproved && i.getReceiveQuantity() != null) {
+                        receivedQty = i.getReceiveQuantity();
+                    }
+                    
+                    return PurchaseOrderDetail.builder()
+                            .purchaseOrderId(poId)
+                            .productId(i.getProductId())
+                            .quantity(i.getQuantity())
+                            .unitPrice(i.getUnitPrice())
+                            .receivedQuantity(receivedQty)
+                            .build();
+                }
         ).toList();
 
         detailRepo.saveAll(newDetails);

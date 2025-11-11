@@ -186,18 +186,6 @@ const SubCategoryList = () => {
       sortable: true,
     },
     {
-      header: "Ngày tạo",
-      field: "createddate",
-      key: "createddate",
-      sortable: true,
-    },
-    {
-      header: "Ngày cập nhật",
-      field: "updateddate",
-      key: "updateddate",
-      sortable: true,
-    },
-    {
       header: "Trạng thái",
       field: "status",
       key: "status",

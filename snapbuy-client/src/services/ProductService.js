@@ -15,29 +15,41 @@ const getAuthHeaders = () => {
   };
 };
 
-// Lấy toàn bộ sản phẩm
 export const getAllProducts = async () => {
   try {
     const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
     return response.data?.result || response.data || [];
   } catch (error) {
-    console.error("❌ Lỗi khi tải danh sách sản phẩm:", error);
     throw error;
   }
 };
 
-// Lấy sản phẩm theo ID
+export const searchProducts = async (keyword, page = 0, size = 10, sortBy = 'createdDate', sortDir = 'DESC') => {
+  try {
+    const params = new URLSearchParams();
+    if (keyword) params.append('keyword', keyword);
+    params.append('page', page);
+    params.append('size', size);
+    params.append('sortBy', sortBy);
+    params.append('sortDir', sortDir);
+    
+    const url = `${REST_API_BASE_URL}/search-by-keyword?${params}`;
+    const response = await axios.get(url, getAuthHeaders());
+    return response.data?.result || response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getProductById = async (id) => {
   try {
     const response = await axios.get(`${REST_API_BASE_URL}/${id}`, getAuthHeaders());
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Lỗi khi tải sản phẩm theo ID:", error);
     throw error;
   }
 };
 
-// Tìm sản phẩm theo barcode
 export const getProductByBarcode = async (barcode) => {
   try {
     const response = await axios.get(
@@ -46,12 +58,10 @@ export const getProductByBarcode = async (barcode) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Lỗi khi tìm sản phẩm theo barcode:", error);
     throw error;
   }
 };
 
-// Thêm sản phẩm
 export const createProduct = async (formData) => {
   try {
     const token = localStorage.getItem("authToken");
@@ -63,18 +73,15 @@ export const createProduct = async (formData) => {
       {
         headers: {
           Authorization: `${tokenType} ${token}`,
-          // Không set Content-Type - axios sẽ tự động set với boundary cho FormData
         },
       }
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Lỗi khi thêm sản phẩm:", error);
     throw error;
   }
 };
 
-// Cập nhật sản phẩm
 export const updateProduct = async (id, formData) => {
   try {
     const token = localStorage.getItem("authToken");
@@ -86,21 +93,15 @@ export const updateProduct = async (id, formData) => {
       {
         headers: {
           Authorization: `${tokenType} ${token}`,
-          // Không set Content-Type - axios sẽ tự động set với boundary cho FormData
         },
       }
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Lỗi khi cập nhật sản phẩm:", error);
-    if (error.response?.data?.message) {
-      console.error("📝 Thông báo lỗi từ server:", error.response.data.message);
-    }
     throw error;
   }
 };
 
-// Xóa sản phẩm
 export const deleteProduct = async (id) => {
   try {
     const response = await axios.delete(
@@ -109,12 +110,10 @@ export const deleteProduct = async (id) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Lỗi khi xóa sản phẩm:", error);
     throw error;
   }
 };
 
-// Import danh sách sản phẩm
 export const importProducts = async (products) => {
   try {
     const response = await axios.post(
@@ -124,7 +123,6 @@ export const importProducts = async (products) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Lỗi khi import sản phẩm:", error);
     throw error;
   }
 };
@@ -137,12 +135,10 @@ export const getProductsBySupplierId = async (supplierId) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Lỗi khi tải danh sách sản phẩm theo nha cung cap:", error);
     throw error;
   }
 };
 
-// Toggle trạng thái sản phẩm
 export const toggleProductStatus = async (productId) => {
   try {
     const response = await axios.patch(
@@ -152,7 +148,6 @@ export const toggleProductStatus = async (productId) => {
     );
     return response.data?.result || response.data;
   } catch (error) {
-    console.error("❌ Lỗi khi chuyển đổi trạng thái sản phẩm:", error);
     throw error;
   }
 };

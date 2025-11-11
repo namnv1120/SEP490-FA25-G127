@@ -15,17 +15,27 @@ const PrimeDataTable = ({
   footer = null,
   loading = false,
   isPaginationEnabled = true,
+  serverSidePagination = false, // Nếu true, data đã được phân trang từ server, không slice lại
   selectionMode,
   selection,
   onSelectionChange,
   dataKey = "id",
 }) => {
-  const skeletonRows = Array(rows).fill({});
+  const skeletonRows = Array(rows).fill(null).map((_, index) => ({
+    [dataKey]: `skeleton-${index}`
+  }));
   const totalPages = Math.ceil(totalRecords / rows);
 
-  const startIndex = (currentPage - 1) * rows;
-  const endIndex = startIndex + rows;
-  const paginatedData = loading ? skeletonRows : data.slice(startIndex, endIndex);
+
+  const paginatedData = loading
+    ? skeletonRows
+    : serverSidePagination
+      ? data
+      : (() => {
+        const startIndex = (currentPage - 1) * rows;
+        const endIndex = startIndex + rows;
+        return data.slice(startIndex, endIndex);
+      })();
 
   const onPageChange = (newPage) => {
     setCurrentPage(newPage);
@@ -38,7 +48,7 @@ const PrimeDataTable = ({
     </div>
   );
 
-  // Prepare DataTable props based on selection mode
+
   const getDataTableProps = () => {
     const baseProps = {
       value: paginatedData,
@@ -75,7 +85,7 @@ const PrimeDataTable = ({
         {column?.map((col, index) => (
           <Column
             header={col.header}
-            key={col.field || index}
+            key={col.key || col.field || `col-${index}`}
             field={col.field}
             body={(rowData, options) => {
               return loading ? (

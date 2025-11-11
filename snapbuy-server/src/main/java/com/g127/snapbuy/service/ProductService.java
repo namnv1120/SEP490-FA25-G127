@@ -3,6 +3,7 @@ package com.g127.snapbuy.service;
 import com.g127.snapbuy.dto.request.ProductCreateRequest;
 import com.g127.snapbuy.dto.request.ProductImportRequest;
 import com.g127.snapbuy.dto.request.ProductUpdateRequest;
+import com.g127.snapbuy.dto.response.PageResponse;
 import com.g127.snapbuy.dto.response.ProductResponse;
 
 import java.util.List;
@@ -27,4 +28,6 @@ public interface ProductService {
     List<ProductResponse> getProductsBySupplierId(UUID supplierId);
 
     ProductResponse toggleProductStatus(UUID id);
+
+    PageResponse<ProductResponse> searchByKeyword(String keyword, org.springframework.data.domain.Pageable pageable);
 }

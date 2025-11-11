@@ -29,13 +29,7 @@ public class PurchaseOrderUpdateRequest {
         private int quantity;
         @Positive
         private BigDecimal unitPrice;
+        @PositiveOrZero
+        private Integer receiveQuantity;
     }
 }
-
-
-
-
-
-
-
-

@@ -171,18 +171,6 @@ const CategoryList = () => {
       sortable: true,
     },
     {
-      header: "Ngày tạo",
-      field: "createddate",
-      key: "createddate",
-      sortable: true,
-    },
-    {
-      header: "Ngày chỉnh sửa",
-      field: "updateddate",
-      key: "updateddate",
-      sortable: true,
-    },
-    {
       header: "Trạng thái",
       field: "status",
       key: "status",

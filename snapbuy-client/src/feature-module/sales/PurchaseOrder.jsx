@@ -11,6 +11,8 @@ import {
   approvePurchaseOrder,
   cancelPurchaseOrder,
   receivePurchaseOrder,
+  getPurchaseOrderById,
+  searchPurchaseOrders,
 } from "../../services/PurchaseOrderService";
 import { message, Spin } from "antd";
 import { allRoutes } from "../../routes/AllRoutes";
@@ -30,8 +32,9 @@ const PurchaseOrder = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [sortField, setSortField] = useState(null);
+  const [sortOrder, setSortOrder] = useState(null);
 
-  // Thêm vào đầu component PurchaseOrder
   const getAccountRole = () => {
     const role = localStorage.getItem("role");
     return role;
@@ -83,15 +86,26 @@ const PurchaseOrder = () => {
 
   const handleSearch = (value) => {
     setSearchQuery(value);
+    setCurrentPage(1);
   };
 
-  // ✅ Fetch danh sách đơn hàng
   const fetchPurchaseOrders = async () => {
     try {
       setLoading(true);
-      const data = await getAllPurchaseOrders();
 
-      const formatted = data.map((item) => ({
+      const backendSortField = sortField || 'orderDate';
+      const backendSortDir = sortOrder === 'asc' ? 'ASC' : 'DESC';
+      const backendPage = currentPage - 1;
+
+      const result = await searchPurchaseOrders(
+        searchQuery || '',
+        backendPage,
+        rows,
+        backendSortField,
+        backendSortDir
+      );
+
+      const formatted = (result.content || []).map((item) => ({
         ...item,
         orderDate: item.orderDate || item.createdAt,
         receivedDate: item.receivedDate || null,
@@ -100,7 +114,7 @@ const PurchaseOrder = () => {
       }));
 
       setListData(formatted);
-      setTotalRecords(formatted.length);
+      setTotalRecords(result.totalElements || 0);
     } catch (error) {
       message.error("Không thể tải danh sách đơn đặt hàng!");
     } finally {
@@ -110,7 +124,17 @@ const PurchaseOrder = () => {
 
   useEffect(() => {
     fetchPurchaseOrders();
-  }, []);
+  }, [currentPage, rows, searchQuery, sortField, sortOrder]);
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+    setCurrentPage(1);
+  };
 
   const handleBulkAction = async (action) => {
     try {
@@ -195,6 +219,7 @@ const PurchaseOrder = () => {
 
       let successCount = 0;
       let errorCount = 0;
+      let errorMessages = [];
 
       for (const id of validOrders) {
         try {
@@ -203,11 +228,35 @@ const PurchaseOrder = () => {
           } else if (action === "cancel") {
             await cancelPurchaseOrder(id);
           } else if (action === "receive") {
-            await receivePurchaseOrder(id, { notes: "Nhận hàng loạt" });
+            const orderDetail = await getPurchaseOrderById(id);
+
+            const allHaveReceivedQty = orderDetail.details?.every(d =>
+              (d.receiveQuantity || d.receivedQuantity || 0) > 0
+            );
+
+            if (!allHaveReceivedQty) {
+              const order = listData.find(o => o.purchaseOrderId === id);
+              errorMessages.push(`${order?.purchaseOrderNumber || id}: Chưa cập nhật số lượng thực nhận`);
+              errorCount++;
+              continue;
+            }
+
+            const items = orderDetail.details?.map(d => ({
+              purchaseOrderDetailId: d.id || d.purchaseOrderDetailId,
+              receivedQuantity: 0
+            })) || [];
+
+            await receivePurchaseOrder(id, {
+              items,
+              notes: "Nhận hàng loạt"
+            });
           }
           successCount++;
         } catch (err) {
           errorCount++;
+          const order = listData.find(o => o.purchaseOrderId === id);
+          const errorMsg = err.response?.data?.message || err.message || "Lỗi không xác định";
+          errorMessages.push(`${order?.purchaseOrderNumber || id}: ${errorMsg}`);
         }
       }
 
@@ -215,7 +264,20 @@ const PurchaseOrder = () => {
         message.success(`Đã xử lý thành công ${successCount} đơn hàng!`);
       }
       if (errorCount > 0) {
-        message.error(`Có ${errorCount} đơn hàng xử lý thất bại!`);
+        message.error({
+          content: (
+            <div>
+              <p>Có {errorCount} đơn hàng xử lý thất bại:</p>
+              <ul style={{ marginTop: 8, paddingLeft: 20, maxHeight: 200, overflowY: 'auto' }}>
+                {errorMessages.slice(0, 5).map((msg, idx) => (
+                  <li key={idx}>{msg}</li>
+                ))}
+                {errorMessages.length > 5 && <li>... và {errorMessages.length - 5} lỗi khác</li>}
+              </ul>
+            </div>
+          ),
+          duration: 8,
+        });
       }
 
       await fetchPurchaseOrders();
@@ -225,13 +287,11 @@ const PurchaseOrder = () => {
       });
 
     } catch (err) {
-      console.error(err);
       message.error("Có lỗi xảy ra khi cập nhật!");
     } finally {
       setLoading(false);
     }
   };
-
 
   const handleDeleteClick = (item) => {
     setSelectedItem(item);
@@ -240,20 +300,16 @@ const PurchaseOrder = () => {
       if (modalElement) {
         const modal = new Modal(modalElement);
         modal.show();
-      } else {
-        console.error("Không tìm thấy phần tử modal xoá!");
       }
     }, 0);
   };
 
-  // ✅ Xác nhận xoá
   const handleDeleteConfirm = async (purchaseOrderId) => {
     try {
       await deletePurchaseOrder(purchaseOrderId);
       await fetchPurchaseOrders();
       setSelectedItem(null);
 
-      // Đóng modal thủ công
       const modalElement = document.getElementById("delete-modal");
       if (modalElement) {
         const modal = Modal.getInstance(modalElement);
@@ -306,6 +362,7 @@ const PurchaseOrder = () => {
       header: "Mã tạo đơn",
       field: "purchaseOrderNumber",
       key: "purchaseOrderNumber",
+      sortable: true,
       body: (row) => (
         <button
           type="button"
@@ -320,53 +377,68 @@ const PurchaseOrder = () => {
         </button>
       ),
     },
-    { header: "Nhà cung cấp", field: "supplierName", key: "supplierName" },
-    { header: "Người tạo đơn", field: "fullName", key: "fullName" },
+    { header: "Nhà cung cấp", field: "supplierName", key: "supplierName", sortable: true },
+    { header: "Người tạo đơn", field: "fullName", key: "fullName", sortable: true },
     {
       header: "Ngày tạo phiếu",
       body: (row) => formatDateTime(row.orderDate),
       field: "orderDate",
       key: "orderDate",
+      sortable: true,
     },
     {
       header: "Ngày nhận phiếu",
       body: (row) => formatDateTime(row.receivedDate),
       field: "receivedDate",
       key: "receivedDate",
+      sortable: true,
     },
     {
       header: "Tổng tiền",
       body: (row) => formatCurrency(row.totalAmount),
       field: "totalAmount",
       key: "totalAmount",
+      sortable: true,
     },
     {
       header: "Trạng thái",
       body: (row) => renderStatusBadge(row.status),
       field: "status",
       key: "status",
+      sortable: true,
     },
     {
       header: "",
       field: "actions",
       key: "actions",
       sortable: false,
-      body: (row) => (
-        <div className="edit-delete-action d-flex align-items-center">
-          <Link
-            to={route.editpurchaseorder?.replace(":id", row.purchaseOrderId)}
-            className="me-2 p-2 border rounded bg-transparent"
-          >
-            <i className="feather icon-edit"></i>
-          </Link>
-          <button
-            className="p-2 d-flex align-items-center border rounded bg-transparent"
-            onClick={() => handleDeleteClick(row)}
-          >
-            <i className="feather icon-trash-2"></i>
-          </button>
-        </div>
-      ),
+      body: (row) => {
+        const status = row.status?.toLowerCase();
+        const isReceived = status === "đã nhận hàng";
+        const isCancelled = status === "đã hủy";
+
+        // Không hiện nút Edit và Delete khi đã nhận hàng hoặc đã hủy
+        if (isReceived || isCancelled) {
+          return null;
+        }
+
+        return (
+          <div className="edit-delete-action d-flex align-items-center">
+            <Link
+              to={route.editpurchaseorder?.replace(":id", row.purchaseOrderId)}
+              className="me-2 p-2 border rounded bg-transparent"
+            >
+              <i className="feather icon-edit"></i>
+            </Link>
+            <button
+              className="p-2 d-flex align-items-center border rounded bg-transparent"
+              onClick={() => handleDeleteClick(row)}
+            >
+              <i className="feather icon-trash-2"></i>
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -442,6 +514,10 @@ const PurchaseOrder = () => {
                     setCurrentPage={setCurrentPage}
                     totalRecords={totalRecords}
                     dataKey="purchaseOrderId"
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                    serverSidePagination={true}
                   />
                 )}
               </div>

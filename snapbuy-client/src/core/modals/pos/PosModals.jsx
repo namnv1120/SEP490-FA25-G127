@@ -6,6 +6,7 @@ import CommonSelect from "../../../components/select/common-select";
 import { getAllOrders, getOrderById, cancelOrder } from "../../../services/OrderService";
 import { getCustomerById } from "../../../services/CustomerService";
 import { logoPng, barcodeImg3 } from "../../../utils/imagepath";
+import "../../../assets/css/pos-sidebar.css";
 
 const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onClosePaymentMethodModal, onPaymentCompleted, onSelectPaymentMethod, showCashPaymentModal, showMomoModal, showOrderSuccessModal, onCloseOrderSuccessModal, completedOrderForPrint, onCashPaymentConfirm, onMomoModalClose, onCompleteOrder, onCashPaymentCompleted, onHandleOrderPayment, onSelectOrder }) => {
   const [selectedTaxType, setSelectedTaxType] = useState(null);
@@ -20,6 +21,7 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersSearchQuery, setOrdersSearchQuery] = useState("");
+  const [ordersFetched, setOrdersFetched] = useState(false);
   const [cashReceived, setCashReceived] = useState("");
   const [momoPayUrl, setMomoPayUrl] = useState(null);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
@@ -202,34 +204,45 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
     }
   }, [showCashPaymentModal]);
 
-  // Fetch orders when modal opens
+  // Function to fetch orders
+  const fetchOrders = async (showLoading = true) => {
+    try {
+      if (showLoading) {
+        setOrdersLoading(true);
+      }
+      const data = await getAllOrders();
+      setOrders(data || []);
+      setOrdersFetched(true);
+    } catch (error) {
+      message.error("Không thể tải danh sách đơn hàng");
+      setOrders([]);
+    } finally {
+      if (showLoading) {
+        setOrdersLoading(false);
+      }
+    }
+  };
+
+  // Fetch orders when modal opens - always fetch but hide loading after first time
   useEffect(() => {
-    const fetchOrders = async () => {
-      // Check if orders modal is visible
+    const handleModalShown = async () => {
       const ordersModal = document.getElementById('orders');
       if (ordersModal && ordersModal.classList.contains('show')) {
-        try {
-          setOrdersLoading(true);
-          const data = await getAllOrders();
-          setOrders(data || []);
-        } catch (error) {
-          message.error("Không thể tải danh sách đơn hàng");
-          setOrders([]);
-        } finally {
-          setOrdersLoading(false);
-        }
+        // Show loading only if no data yet
+        await fetchOrders(orders.length === 0);
       }
     };
 
     // Listen for modal show event
     const ordersModal = document.getElementById('orders');
     if (ordersModal) {
-      ordersModal.addEventListener('shown.bs.modal', fetchOrders);
+      ordersModal.addEventListener('shown.bs.modal', handleModalShown);
       return () => {
-        ordersModal.removeEventListener('shown.bs.modal', fetchOrders);
+        ordersModal.removeEventListener('shown.bs.modal', handleModalShown);
       };
     }
-  }, []);
+  }, [orders.length]);
+
 
   // Helper function to get order status
   const getOrderStatus = (order) => {
@@ -1012,48 +1025,6 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
       {/* /Print Receipt Modal */}
 
       {/* Products */}
-      <div
-        className="modal fade modal-default pos-modal"
-        id="products"
-        aria-labelledby="products"
-      >
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header d-flex align-items-center justify-content-between">
-              <div className="d-flex align-items-center">
-                <h5 className="me-4">Products</h5>
-              </div>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="card bg-light mb-3">
-                <div className="card-body">
-                  <div className="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-3">
-                    <span className="badge bg-dark fs-12">
-                      Order ID : #-
-                    </span>
-                    <p className="fs-16">Number of Products : 0</p>
-                  </div>
-                  <div className="product-wrap h-auto">
-                    <div className="text-center py-3">
-                      <p>No products in this order</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* /Products */}
-
       {/* Create Customer */}
       <div
         className="modal fade"
@@ -1401,26 +1372,37 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
 
       {/* Orders */}
       <div
-        className="modal fade pos-modal"
+        className="modal fade pos-modal pos-orders-sidebar"
         id="orders"
         tabIndex={-1}
         aria-hidden="true"
       >
         <div
-          className="modal-dialog modal-lg modal-dialog-centered"
+          className="modal-dialog modal-dialog-sidebar"
           role="document"
         >
-          <div className="modal-content">
+          <div className="modal-content modal-content-sidebar">
             <div className="modal-header">
               <h5 className="modal-title">Danh sách đơn hàng</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
+              <div className="d-flex align-items-center gap-2">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-primary"
+                  onClick={() => fetchOrders(true)}
+                  disabled={ordersLoading}
+                  title="Làm mới danh sách"
+                >
+                  <i className={`ti ti-refresh ${ordersLoading ? 'spinning' : ''}`} />
+                </button>
+                <button
+                  type="button"
+                  className="close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"
+                >
+                  <span aria-hidden="true">×</span>
+                </button>
+              </div>
             </div>
             <div className="modal-body">
               <div className="tabs-sets">
@@ -1482,7 +1464,7 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                         <i className="ti ti-search" />
                       </span>
                     </div>
-                    <div className="order-body" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                    <div className="order-body">
                       {ordersLoading ? (
                         <div className="text-center py-4">
                           <Spin size="large" />
@@ -1576,7 +1558,7 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                         <i className="ti ti-search" />
                       </span>
                     </div>
-                    <div className="order-body" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                    <div className="order-body">
                       {ordersLoading ? (
                         <div className="text-center py-4">
                           <Spin size="large" />
@@ -1660,7 +1642,7 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                         <i className="ti ti-search" />
                       </span>
                     </div>
-                    <div className="order-body" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                    <div className="order-body">
                       {ordersLoading ? (
                         <div className="text-center py-4">
                           <Spin size="large" />

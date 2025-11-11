@@ -5,17 +5,16 @@ import com.g127.snapbuy.dto.request.PurchaseOrderApproveRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderCreateRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderReceiveRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderUpdateRequest;
+import com.g127.snapbuy.dto.response.PageResponse;
 import com.g127.snapbuy.dto.response.PurchaseOrderResponse;
 import com.g127.snapbuy.service.PurchaseOrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
-
 
 import java.util.List;
 import java.util.UUID;
@@ -76,7 +75,7 @@ public class PurchaseOrderController {
 
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
-    public ApiResponse<Page<PurchaseOrderResponse>> search(
+    public ApiResponse<PageResponse<PurchaseOrderResponse>> search(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) UUID supplierId,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
@@ -85,8 +84,29 @@ public class PurchaseOrderController {
             @RequestParam(defaultValue = "20") int size) {
         var pageable = org.springframework.data.domain.PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 200),
                 org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "orderDate"));
-        ApiResponse<org.springframework.data.domain.Page<PurchaseOrderResponse>> response = new ApiResponse<>();
+        ApiResponse<PageResponse<PurchaseOrderResponse>> response = new ApiResponse<>();
         response.setResult(service.search(status, supplierId, from, to, pageable));
+        return response;
+    }
+    
+    @GetMapping("/search-by-keyword")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
+    public ApiResponse<PageResponse<PurchaseOrderResponse>> searchByKeyword(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "orderDate") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir) {
+        org.springframework.data.domain.Sort.Direction direction = 
+            "ASC".equalsIgnoreCase(sortDir) ? org.springframework.data.domain.Sort.Direction.ASC : org.springframework.data.domain.Sort.Direction.DESC;
+        
+        var pageable = org.springframework.data.domain.PageRequest.of(
+            Math.max(page, 0), 
+            Math.min(Math.max(size, 1), 200),
+            org.springframework.data.domain.Sort.by(direction, sortBy)
+        );
+        ApiResponse<PageResponse<PurchaseOrderResponse>> response = new ApiResponse<>();
+        response.setResult(service.searchByKeyword(keyword, pageable));
         return response;
     }
 

@@ -4,6 +4,7 @@ import com.g127.snapbuy.dto.ApiResponse;
 import com.g127.snapbuy.dto.request.ProductCreateRequest;
 import com.g127.snapbuy.dto.request.ProductImportRequest;
 import com.g127.snapbuy.dto.request.ProductUpdateRequest;
+import com.g127.snapbuy.dto.response.PageResponse;
 import com.g127.snapbuy.dto.response.ProductResponse;
 import com.g127.snapbuy.service.BarcodeService;
 import com.g127.snapbuy.service.ProductService;
@@ -91,6 +92,27 @@ public class ProductController {
         ApiResponse<List<ProductResponse>> response = new ApiResponse<>();
         response.setResult(productService.getProductsBySupplierId(supplierId));
 
+        return response;
+    }
+
+    @GetMapping("/search-by-keyword")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
+    public ApiResponse<PageResponse<ProductResponse>> searchByKeyword(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdDate") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir) {
+        org.springframework.data.domain.Sort.Direction direction = 
+            "ASC".equalsIgnoreCase(sortDir) ? org.springframework.data.domain.Sort.Direction.ASC : org.springframework.data.domain.Sort.Direction.DESC;
+        
+        var pageable = org.springframework.data.domain.PageRequest.of(
+            Math.max(page, 0), 
+            Math.min(Math.max(size, 1), 200),
+            org.springframework.data.domain.Sort.by(direction, sortBy)
+        );
+        ApiResponse<PageResponse<ProductResponse>> response = new ApiResponse<>();
+        response.setResult(productService.searchByKeyword(keyword, pageable));
         return response;
     }
 

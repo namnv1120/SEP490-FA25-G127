@@ -703,15 +703,34 @@ const Pos = () => {
 
       // Load order details into cart
       if (fullOrderData.orderDetails && fullOrderData.orderDetails.length > 0) {
-        const cartItemsFromOrder = fullOrderData.orderDetails.map(detail => ({
-          id: detail.productId || detail.orderDetailId,
-          productId: detail.productId,
-          name: detail.productName || "N/A",
-          productName: detail.productName || "N/A",
-          price: detail.unitPrice || 0,
-          quantity: detail.quantity || 0,
-          discount: detail.discount || 0,
-        }));
+        const cartItemsFromOrder = await Promise.all(
+          fullOrderData.orderDetails.map(async (detail) => {
+            // Try to find product in current products list for additional info
+            let productInfo = products.find(p => String(p.productId) === String(detail.productId));
+            
+            // If not found in current list, use detail info only
+            if (!productInfo) {
+              productInfo = {
+                productCode: detail.productCode || "N/A",
+                image: getImageUrl(detail.imageUrl || null),
+                stock: detail.quantityInStock || 0,
+              };
+            }
+
+            return {
+              id: detail.productId || detail.orderDetailId,
+              productId: detail.productId,
+              name: detail.productName || "N/A",
+              productName: detail.productName || "N/A",
+              code: productInfo.productCode || productInfo.code || detail.productCode || "N/A",
+              price: detail.unitPrice || 0,
+              quantity: detail.quantity || 0,
+              stock: productInfo.stock || productInfo.quantityInStock || 0,
+              image: productInfo.image || getImageUrl(detail.imageUrl || null),
+              discount: detail.discount || 0,
+            };
+          })
+        );
 
         setCartItems(cartItemsFromOrder);
       }
@@ -1301,8 +1320,6 @@ const Pos = () => {
                           <div
                             className="d-flex align-items-center product-info flex-grow-1"
                             style={{ minWidth: 0 }}
-                            data-bs-toggle="modal"
-                            data-bs-target="#products"
                           >
                             <Link to="#" className="pro-img" onClick={(e) => e.preventDefault()}>
                               <div className="product-image-placeholder">

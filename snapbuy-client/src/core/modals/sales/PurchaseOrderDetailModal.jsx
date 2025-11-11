@@ -6,7 +6,6 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
   const [loading, setLoading] = useState(false);
   const [orderData, setOrderData] = useState(null);
 
-  // ✅ Load chi tiết đơn hàng
   useEffect(() => {
     if (isOpen && purchaseOrderId) {
       fetchOrderDetail();
@@ -26,11 +25,9 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
 
       setOrderData(data);
     } catch (error) {
-      console.error("❌ Lỗi chi tiết:", error);
       const errorMessage = error.message || "Không thể tải chi tiết đơn hàng!";
       message.error(errorMessage);
 
-      // Chỉ đóng modal nếu lỗi nghiêm trọng (500, 404, etc)
       if (error.message?.includes("Status: 404") || error.message?.includes("Status: 500")) {
         setTimeout(() => {
           onClose();
@@ -70,7 +67,6 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
     }
   };
 
-  // Tính toán tổng tiền từ details
   const subtotal =
     orderData?.details?.reduce(
       (sum, item) => sum + (item.quantity || 0) * (item.unitPrice || 0),
@@ -152,54 +148,74 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
                 <table className="table table-bordered align-middle mb-0">
                   <thead className="table-light">
                     <tr>
-                      <th style={{ width: "40%" }}>Sản phẩm</th>
+                      <th style={{ width: orderData.status?.toLowerCase() === "đã duyệt" || orderData.status?.toLowerCase() === "đã nhận hàng" ? "30%" : "40%" }}>Sản phẩm</th>
                       <th style={{ width: "15%" }} className="text-center">
                         Số lượng
                       </th>
+                      {(orderData.status?.toLowerCase() === "đã duyệt" || orderData.status?.toLowerCase() === "đã nhận hàng") && (
+                        <th style={{ width: "15%" }} className="text-center">
+                          SL thực nhận
+                        </th>
+                      )}
                       <th style={{ width: "20%" }} className="text-end">
                         Đơn giá
                       </th>
-                      <th style={{ width: "25%" }} className="text-end">
+                      <th style={{ width: "20%" }} className="text-end">
                         Thành tiền
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     {orderData.details && orderData.details.length > 0 ? (
-                      orderData.details.map((item, index) => (
-                        <tr key={index}>
-                          <td>
-                            <div>
-                              <p className="mb-0 fw-semibold">
-                                {item.productName || "—"}
-                              </p>
-                              {item.productCode && (
-                                <small className="text-muted">
-                                  Mã: {item.productCode}
-                                </small>
-                              )}
-                            </div>
-                          </td>
-                          <td className="text-center">
-                            {item.quantity || 0}
-                          </td>
-                          <td className="text-end">
-                            {formatCurrency(item.unitPrice || 0)}
-                          </td>
-                          <td className="text-end fw-semibold">
-                            {formatCurrency(
-                              (item.quantity || 0) * (item.unitPrice || 0)
+                      orderData.details.map((item, index) => {
+                        const isApprovedOrReceived = orderData.status?.toLowerCase() === "đã duyệt" || orderData.status?.toLowerCase() === "đã nhận hàng";
+                        const receiveQty = item.receiveQuantity || item.receivedQuantity || 0;
+                        const quantity = item.quantity || 0;
+                        const unitPrice = item.unitPrice || 0;
+                        const total = isApprovedOrReceived && receiveQty > 0
+                          ? receiveQty * unitPrice
+                          : quantity * unitPrice;
+
+                        return (
+                          <tr key={index}>
+                            <td>
+                              <div>
+                                <p className="mb-0 fw-semibold">
+                                  {item.productName || "—"}
+                                </p>
+                                {item.productCode && (
+                                  <small className="text-muted">
+                                    Mã: {item.productCode}
+                                  </small>
+                                )}
+                              </div>
+                            </td>
+                            <td className="text-center">
+                              {quantity}
+                            </td>
+                            {isApprovedOrReceived && (
+                              <td className="text-center">
+                                <span className={receiveQty > 0 ? "text-success fw-bold" : ""}>
+                                  {receiveQty}
+                                </span>
+                              </td>
                             )}
+                            <td className="text-end">
+                              {formatCurrency(unitPrice)}
+                            </td>
+                            <td className="text-end fw-semibold">
+                              {formatCurrency(total)}
+                            </td>
+                          </tr>
+                        );
+                      }))
+                      : (
+                        <tr>
+                          <td colSpan="4" className="text-center py-4 text-muted">
+                            Không có sản phẩm
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="4" className="text-center py-4 text-muted">
-                          Không có sản phẩm
-                        </td>
-                      </tr>
-                    )}
+                      )}
                   </tbody>
                 </table>
               </div>

@@ -22,14 +22,14 @@ const EditPurchaseOrder = () => {
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [products, setProducts] = useState([]);
   const [items, setItems] = useState([
-    { product: null, quantity: 1, unitPrice: 0, total: 0 },
+    { product: null, quantity: 1, unitPrice: 0, total: 0, receiveQuantity: 0 },
   ]);
   const [notes, setNotes] = useState("");
   const [taxAmount, setTaxAmount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderData, setOrderData] = useState(null);
+  const [orderStatus, setOrderStatus] = useState("");
 
-  // ✅ Load danh sách nhà cung cấp
   useEffect(() => {
     const fetchSuppliers = async () => {
       try {
@@ -48,7 +48,6 @@ const EditPurchaseOrder = () => {
     fetchSuppliers();
   }, []);
 
-  // ✅ Load chi tiết đơn hàng sau khi suppliers đã load
   useEffect(() => {
     if (id && suppliers.length > 0) {
       fetchOrderDetail();
@@ -60,8 +59,8 @@ const EditPurchaseOrder = () => {
       setLoading(true);
       const data = await getPurchaseOrderById(id);
       setOrderData(data);
+      setOrderStatus(data.status || "");
 
-      // Set supplier - sẽ trigger load products, sau đó products effect sẽ map items
       if (data.supplierId) {
         const supplier = suppliers.find(
           (s) => s.value === data.supplierId
@@ -71,35 +70,45 @@ const EditPurchaseOrder = () => {
         }
       }
 
-      // Set items tạm thời (sẽ được map lại khi products load xong)
       if (data.details && data.details.length > 0) {
-        const formattedItems = data.details.map((item) => ({
-          product: item.productId
-            ? {
-              value: item.productId,
-              label: item.productName,
-              unitPrice: item.unitPrice || 0,
-            }
-            : null,
-          quantity: item.quantity || 1,
-          unitPrice: item.unitPrice || 0,
-          total: (item.quantity || 0) * (item.unitPrice || 0),
-        }));
+        const isApproved = data.status?.toLowerCase() === "đã duyệt";
+        const isReceived = data.status?.toLowerCase() === "đã nhận hàng";
+        const formattedItems = data.details.map((item) => {
+          const receiveQty = item.receiveQuantity || item.receivedQuantity || 0;
+          const quantity = item.quantity || 1;
+          const unitPrice = item.unitPrice || 0;
+
+          const total = (isApproved || isReceived) && receiveQty > 0
+            ? receiveQty * unitPrice
+            : quantity * unitPrice;
+
+          return {
+            product: item.productId
+              ? {
+                value: item.productId,
+                label: item.productName,
+                unitPrice: unitPrice,
+              }
+              : null,
+            quantity: quantity,
+            unitPrice: unitPrice,
+            total: total,
+            receiveQuantity: receiveQty,
+          };
+        });
         setItems(formattedItems.length > 0 ? formattedItems : [
-          { product: null, quantity: 1, unitPrice: 0, total: 0 },
+          { product: null, quantity: 1, unitPrice: 0, total: 0, receiveQuantity: 0 },
         ]);
       } else {
-        setItems([{ product: null, quantity: 1, unitPrice: 0, total: 0 }]);
+        setItems([{ product: null, quantity: 1, unitPrice: 0, total: 0, receiveQuantity: 0 }]);
       }
 
       setNotes(data.notes || "");
       setTaxAmount(data.taxAmount || 0);
     } catch (err) {
-      console.error("❌ Lỗi chi tiết:", err);
       const errorMessage = err.message || "Không thể tải chi tiết đơn hàng.";
       message.error(errorMessage);
 
-      // Nếu lỗi 404 hoặc 500, quay về danh sách sau 2 giây
       if (err.message?.includes("Status: 404") || err.message?.includes("Status: 500")) {
         setTimeout(() => {
           navigate(route.purchaseorders);
@@ -130,28 +139,38 @@ const EditPurchaseOrder = () => {
           }));
         setProducts(options);
 
-        // Nếu có orderData và đang edit, map lại items với products mới
         if (orderData && orderData.details && selectedSupplier.value === orderData.supplierId) {
+          const isApproved = orderData.status?.toLowerCase() === "đã duyệt";
+          const isReceived = orderData.status?.toLowerCase() === "đã nhận hàng";
           const mappedItems = orderData.details.map((item) => {
             const productOption = options.find(
               (p) => p.value === item.productId
             );
+            const receiveQty = item.receiveQuantity || item.receivedQuantity || 0;
+            const quantity = item.quantity || 1;
+            const unitPrice = item.unitPrice || 0;
+
+            const total = (isApproved || isReceived) && receiveQty > 0
+              ? receiveQty * unitPrice
+              : quantity * unitPrice;
+
             return {
               product: productOption || {
                 value: item.productId,
                 label: item.productName,
-                unitPrice: item.unitPrice || 0,
+                unitPrice: unitPrice,
               },
-              quantity: item.quantity || 1,
-              unitPrice: item.unitPrice || 0,
-              total: (item.quantity || 0) * (item.unitPrice || 0),
+              quantity: quantity,
+              unitPrice: unitPrice,
+              total: total,
+              receiveQuantity: receiveQty,
             };
           });
 
           setItems(
             mappedItems.length > 0
               ? mappedItems
-              : [{ product: null, quantity: 1, unitPrice: 0, total: 0 }]
+              : [{ product: null, quantity: 1, unitPrice: 0, total: 0, receiveQuantity: 0 }]
           );
         }
       } catch (err) {
@@ -173,18 +192,30 @@ const EditPurchaseOrder = () => {
 
   const updateItem = (index, field, value) => {
     const newItems = [...items];
-    newItems[index] = { ...newItems[index], [field]: value };
 
-    if (field === "product" && value) {
-      newItems[index].unitPrice = value.unitPrice;
-      newItems[index].total =
-        newItems[index].quantity * value.unitPrice;
-    }
+    if (field === "receiveQuantity") {
+      const maxQty = newItems[index].quantity || 0;
+      const receiveQty = Math.min(parseFloat(value || 0), maxQty);
+      newItems[index].receiveQuantity = Math.max(0, receiveQty);
 
-    if (field === "quantity" || field === "unitPrice") {
-      const qty = parseFloat(newItems[index].quantity || 0);
-      const price = parseFloat(newItems[index].unitPrice || 0);
-      newItems[index].total = qty * price;
+      if (orderStatus?.toLowerCase() === "đã duyệt") {
+        const price = parseFloat(newItems[index].unitPrice || 0);
+        newItems[index].total = newItems[index].receiveQuantity * price;
+      }
+    } else {
+      newItems[index] = { ...newItems[index], [field]: value };
+
+      if (field === "product" && value) {
+        newItems[index].unitPrice = value.unitPrice;
+        newItems[index].total =
+          newItems[index].quantity * value.unitPrice;
+      }
+
+      if (field === "quantity" || field === "unitPrice") {
+        const qty = parseFloat(newItems[index].quantity || 0);
+        const price = parseFloat(newItems[index].unitPrice || 0);
+        newItems[index].total = qty * price;
+      }
     }
 
     setItems(newItems);
@@ -193,7 +224,7 @@ const EditPurchaseOrder = () => {
   const addItem = () => {
     setItems([
       ...items,
-      { product: null, quantity: 1, unitPrice: 0, total: 0 },
+      { product: null, quantity: 1, unitPrice: 0, total: 0, receiveQuantity: 0 },
     ]);
   };
 
@@ -202,7 +233,7 @@ const EditPurchaseOrder = () => {
     setItems(
       newItems.length
         ? newItems
-        : [{ product: null, quantity: 1, unitPrice: 0, total: 0 }]
+        : [{ product: null, quantity: 1, unitPrice: 0, total: 0, receiveQuantity: 0 }]
     );
   };
 
@@ -230,12 +261,14 @@ const EditPurchaseOrder = () => {
       return;
     }
 
+    const isApproved = orderStatus?.toLowerCase() === "đã duyệt";
+
     const request = {
-      // Không gửi supplierId vì không cho phép đổi nhà cung cấp sau khi tạo đơn
       items: items.map((i) => ({
         productId: i.product.value,
         quantity: i.quantity,
         unitPrice: i.unitPrice,
+        ...(isApproved && { receiveQuantity: i.receiveQuantity || 0 }),
       })),
       notes,
       taxAmount: parseFloat(taxAmount || 0),
@@ -247,7 +280,6 @@ const EditPurchaseOrder = () => {
       message.success("Cập nhật phiếu nhập hàng thành công!");
       navigate(route.purchaseorders);
     } catch (err) {
-      console.error("❌ Lỗi cập nhật phiếu nhập:", err);
       const res = err.response?.data;
       message.error(
         res?.message || "Không thể cập nhật phiếu nhập hàng."
@@ -304,7 +336,6 @@ const EditPurchaseOrder = () => {
                 options={suppliers}
                 value={selectedSupplier}
                 onChange={(opt) => {
-                  // Không cho phép đổi nhà cung cấp khi đang edit
                   if (!orderData) {
                     setSelectedSupplier(opt);
                     setItems([
@@ -322,13 +353,15 @@ const EditPurchaseOrder = () => {
               )}
             </div>
 
-            {/* DANH SÁCH SẢN PHẨM */}
             <div className="table-responsive mb-4">
               <table className="table table-bordered align-middle">
                 <thead className="table-light">
                   <tr>
-                    <th style={{ width: "35%" }}>Sản phẩm</th>
+                    <th style={{ width: orderStatus?.toLowerCase() === "đã duyệt" ? "30%" : "35%" }}>Sản phẩm</th>
                     <th style={{ width: "15%" }}>Số lượng</th>
+                    {orderStatus?.toLowerCase() === "đã duyệt" && (
+                      <th style={{ width: "15%" }}>Số lượng thực nhận</th>
+                    )}
                     <th style={{ width: "20%" }}>Đơn giá</th>
                     <th style={{ width: "20%" }}>Thành tiền</th>
                     <th style={{ width: "10%" }}>#</th>
@@ -345,6 +378,7 @@ const EditPurchaseOrder = () => {
                             updateItem(index, "product", opt)
                           }
                           placeholder="Chọn sản phẩm"
+                          disabled={orderStatus?.toLowerCase() === "đã duyệt"}
                         />
                       </td>
                       <td>
@@ -356,8 +390,32 @@ const EditPurchaseOrder = () => {
                           onChange={(e) =>
                             updateItem(index, "quantity", e.target.value)
                           }
+                          disabled={orderStatus?.toLowerCase() === "đã duyệt"}
+                          readOnly={orderStatus?.toLowerCase() === "đã duyệt"}
                         />
                       </td>
+                      {orderStatus?.toLowerCase() === "đã duyệt" && (
+                        <td>
+                          <input
+                            type="number"
+                            min="0"
+                            max={item.quantity}
+                            step="1"
+                            className="form-control"
+                            value={item.receiveQuantity || 0}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value) || 0;
+                              const maxVal = item.quantity || 0;
+                              if (val > maxVal) {
+                                message.warning(`Số lượng thực nhận không được vượt quá ${maxVal}`);
+                              }
+                              updateItem(index, "receiveQuantity", e.target.value);
+                            }}
+                            placeholder={`Tối đa: ${item.quantity}`}
+                            title={`Số lượng thực nhận (tối đa ${item.quantity})`}
+                          />
+                        </td>
+                      )}
                       <td>
                         <input
                           type="number"
@@ -368,6 +426,8 @@ const EditPurchaseOrder = () => {
                           onChange={(e) =>
                             updateItem(index, "unitPrice", e.target.value)
                           }
+                          disabled={orderStatus?.toLowerCase() === "đã duyệt"}
+                          readOnly={orderStatus?.toLowerCase() === "đã duyệt"}
                         />
                       </td>
                       <td>{item.total.toLocaleString("vi-VN")} ₫</td>
@@ -376,6 +436,7 @@ const EditPurchaseOrder = () => {
                           type="button"
                           className="btn btn-outline-danger btn-sm"
                           onClick={() => removeItem(index)}
+                          disabled={orderStatus?.toLowerCase() === "đã duyệt"}
                         >
                           <i className="feather icon-x" />
                         </button>
@@ -385,13 +446,17 @@ const EditPurchaseOrder = () => {
                 </tbody>
               </table>
 
-              <button
-                type="button"
-                className="btn btn-outline-primary"
-                onClick={addItem}
-              >
-                <i className="feather icon-plus me-2" /> Thêm sản phẩm
-              </button>
+              {orderStatus?.toLowerCase() !== "đã duyệt" &&
+                orderStatus?.toLowerCase() !== "đã hủy" &&
+                orderStatus?.toLowerCase() !== "đã nhận hàng" && (
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary"
+                    onClick={addItem}
+                  >
+                    <i className="feather icon-plus me-2" /> Thêm sản phẩm
+                  </button>
+                )}
             </div>
 
             {/* THUẾ & GHI CHÚ */}
@@ -403,6 +468,8 @@ const EditPurchaseOrder = () => {
                   rows={4}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
+                  disabled={orderStatus?.toLowerCase() === "đã hủy" || orderStatus?.toLowerCase() === "đã nhận hàng"}
+                  readOnly={orderStatus?.toLowerCase() === "đã hủy" || orderStatus?.toLowerCase() === "đã nhận hàng"}
                 />
               </div>
               <div className="col-md-6">
@@ -421,6 +488,8 @@ const EditPurchaseOrder = () => {
                       className="form-control w-50 text-end"
                       value={taxAmount}
                       onChange={(e) => setTaxAmount(e.target.value)}
+                      disabled={orderStatus?.toLowerCase() === "đã duyệt" || orderStatus?.toLowerCase() === "đã hủy" || orderStatus?.toLowerCase() === "đã nhận hàng"}
+                      readOnly={orderStatus?.toLowerCase() === "đã duyệt" || orderStatus?.toLowerCase() === "đã hủy" || orderStatus?.toLowerCase() === "đã nhận hàng"}
                     />
                   </div>
 
@@ -439,15 +508,20 @@ const EditPurchaseOrder = () => {
                 className="btn btn-secondary me-2"
                 onClick={() => navigate(route.purchaseorders)}
               >
-                Huỷ
+                {orderStatus?.toLowerCase() === "đã hủy" || orderStatus?.toLowerCase() === "đã nhận hàng"
+                  ? "Quay lại"
+                  : "Huỷ"}
               </button>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Đang lưu..." : "Cập nhật phiếu nhập"}
-              </button>
+              {orderStatus?.toLowerCase() !== "đã hủy" &&
+                orderStatus?.toLowerCase() !== "đã nhận hàng" && (
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Đang lưu..." : "Cập nhật phiếu nhập"}
+                  </button>
+                )}
             </div>
           </div>
         </form>
