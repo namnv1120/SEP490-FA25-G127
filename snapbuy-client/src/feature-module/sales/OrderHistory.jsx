@@ -7,27 +7,29 @@ import CommonSelect from "../../components/select/common-select";
 import CommonDateRangePicker from "../../components/date-range-picker/common-date-range-picker";
 import RefreshIcon from "../../components/tooltip-content/refresh";
 import CollapesIcon from "../../components/tooltip-content/collapes";
-import { getTransactions } from "../../services/InventoryTransactionsService";
+import { getAllOrders } from "../../services/OrderService";
 
-const TransactionHistory = () => {
+const OrderHistory = () => {
   const [listData, setListData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
-  const [selectedProduct, setSelectedProduct] = useState("");
-  const [selectedTransactionType, setSelectedTransactionType] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState("");
+  const [selectedEmployee, setSelectedEmployee] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
   const [dateRange, setDateRange] = useState([null, null]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const TransactionTypes = [
+  const OrderStatuses = [
     { value: "", label: "Tất cả" },
-    { value: "IMPORT", label: "Nhập kho" },
-    { value: "EXPORT", label: "Xuất kho" },
-    { value: "ADJUSTMENT", label: "Điều chỉnh" },
+    { value: "PENDING", label: "Chờ xử lý" },
+    { value: "CONFIRMED", label: "Đã xác nhận" },
+    { value: "SHIPPED", label: "Đã giao" },
+    { value: "CANCELLED", label: "Đã hủy" },
   ];
 
-  const loadTransactions = async () => {
+  const loadOrders = async () => {
     setLoading(true);
     setError("");
 
@@ -42,17 +44,15 @@ const TransactionHistory = () => {
       const params = {
         page: currentPage - 1,
         size: rows,
-        productId: selectedProduct || null,
-        transactionType: selectedTransactionType || null,
+        customerId: selectedCustomer || null,
+        employeeId: selectedEmployee || null,
+        status: selectedStatus || null,
         from,
         to,
       };
 
       console.log("=== Tham số gửi lên API ===", params);
-
-      // ✅ Gọi API thật
-      const data = await getTransactions(params);
-
+      const data = await getAllOrders(params);
       console.log("=== Dữ liệu trả về từ API ===", data);
 
       if (!data || !Array.isArray(data.content)) {
@@ -60,13 +60,12 @@ const TransactionHistory = () => {
       }
 
       const normalizedData = data.content.map((item, index) => ({
-        transactionId: item.transactionId || `temp-${index}-${Date.now()}`,
-        transactionDate: item.transactionDate,
-        productName: item.productName,
-        transactionType: item.transactionType,
-        quantity: item.quantity,
-        referenceType: item.referenceType,
-        referenceId: item.referenceId,
+        orderId: item.orderId || `temp-${index}-${Date.now()}`,
+        orderDate: item.orderDate,
+        customerName: item.customerName,
+        employeeName: item.employeeName,
+        total: item.total,
+        status: item.status,
       }));
 
       console.log("=== Dữ liệu sau khi chuẩn hóa ===", normalizedData);
@@ -77,7 +76,7 @@ const TransactionHistory = () => {
       console.error("=== Lỗi khi gọi API ===", err);
       setError(
         err.response?.data?.message ||
-          "Không thể tải dữ liệu giao dịch. Vui lòng kiểm tra kết nối hoặc API."
+          "Không thể tải dữ liệu đơn hàng. Vui lòng kiểm tra kết nối hoặc API."
       );
       setListData([]);
       setTotalRecords(0);
@@ -87,16 +86,16 @@ const TransactionHistory = () => {
   };
 
   useEffect(() => {
-    loadTransactions();
+    loadOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, rows, selectedProduct, selectedTransactionType, dateRange]);
+  }, [currentPage, rows, selectedCustomer, selectedEmployee, selectedStatus, dateRange]);
 
   const columns = [
     {
-      title: "Mã GD",
-      dataIndex: "transactionId",
-      key: "transactionId",
-      sorter: (a, b) => a.transactionId.localeCompare(b.transactionId),
+      title: "Mã đơn hàng",
+      dataIndex: "orderId",
+      key: "orderId",
+      sorter: (a, b) => a.orderId.localeCompare(b.orderId),
       render: (text) => (
         <Link to="#" className="text-primary fw-medium small">
           {text}
@@ -104,11 +103,10 @@ const TransactionHistory = () => {
       ),
     },
     {
-      title: "Thời gian",
-      dataIndex: "transactionDate",
-      key: "transactionDate",
-      sorter: (a, b) =>
-        new Date(a.transactionDate) - new Date(b.transactionDate),
+      title: "Ngày đặt hàng",
+      dataIndex: "orderDate",
+      key: "orderDate",
+      sorter: (a, b) => new Date(a.orderDate) - new Date(b.orderDate),
       render: (text) =>
         text
           ? new Date(text).toLocaleString("vi-VN", {
@@ -121,67 +119,44 @@ const TransactionHistory = () => {
           : "-",
     },
     {
-      title: "Sản phẩm",
-      dataIndex: "productName",
-      key: "productName",
-      sorter: (a, b) => a.productName.localeCompare(b.productName),
+      title: "Khách hàng",
+      dataIndex: "customerName",
+      key: "customerName",
+      sorter: (a, b) => a.customerName.localeCompare(b.customerName),
       render: (text) => <span className="fw-medium">{text}</span>,
     },
     {
-      title: "Loại",
-      dataIndex: "transactionType",
-      key: "transactionType",
-      sorter: (a, b) => a.transactionType.localeCompare(b.transactionType),
-      render: (type) => {
+      title: "Nhân viên",
+      dataIndex: "employeeName",
+      key: "employeeName",
+      sorter: (a, b) => a.employeeName.localeCompare(b.employeeName),
+      render: (text) => <span>{text}</span>,
+    },
+    {
+      title: "Tổng tiền",
+      dataIndex: "total",
+      key: "total",
+      sorter: (a, b) => a.total - b.total,
+      render: (total) => (
+        <strong className="text-success">
+          {total?.toLocaleString("vi-VN")} ₫
+        </strong>
+      ),
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      sorter: (a, b) => a.status.localeCompare(b.status),
+      render: (status) => {
         const badge = {
-          IMPORT: { class: "bg-success", text: "Nhập kho" },
-          EXPORT: { class: "bg-danger", text: "Xuất kho" },
-          ADJUSTMENT: { class: "bg-warning", text: "Điều chỉnh" },
-        }[type] || { class: "bg-secondary", text: type };
-        return (
-          <span className={`badge ${badge.class} small`}>{badge.text}</span>
-        );
+          PENDING: { class: "bg-warning", text: "Chờ xử lý" },
+          CONFIRMED: { class: "bg-primary", text: "Đã xác nhận" },
+          SHIPPED: { class: "bg-success", text: "Đã giao" },
+          CANCELLED: { class: "bg-danger", text: "Đã hủy" },
+        }[status] || { class: "bg-secondary", text: status };
+        return <span className={`badge ${badge.class} small`}>{badge.text}</span>;
       },
-    },
-    {
-      title: "Số lượng",
-      dataIndex: "quantity",
-      key: "quantity",
-      sorter: (a, b) => a.quantity - b.quantity,
-      render: (qty) => (
-        <span className={qty > 0 ? "text-success" : "text-danger"}>
-          <strong>
-            {qty > 0 ? "+" : ""}
-            {qty}
-          </strong>
-        </span>
-      ),
-    },
-    {
-      title: "Tham chiếu",
-      dataIndex: "referenceType",
-      key: "referenceType",
-      sorter: (a, b) =>
-        (a.referenceType || "").localeCompare(b.referenceType || ""),
-      render: (refType) => {
-        const ref =
-          {
-            PURCHASE_ORDER: "Đơn nhập",
-            SALES_ORDER: "Đơn bán",
-            ADJUSTMENT: "Điều chỉnh kho",
-          }[refType] || refType;
-        return <small className="text-muted">{ref}</small>;
-      },
-    },
-    {
-      title: "Mã tham chiếu",
-      dataIndex: "referenceId",
-      key: "referenceId",
-      sorter: (a, b) =>
-        (a.referenceId || "").localeCompare(b.referenceId || ""),
-      render: (refId) => (
-        <code className="small text-muted">{refId || "-"}</code>
-      ),
     },
   ];
 
@@ -191,12 +166,12 @@ const TransactionHistory = () => {
         <div className="page-header">
           <div className="add-item d-flex">
             <div className="page-title">
-              <h4>Lịch Sử Giao Dịch Kho</h4>
-              <h6>Theo dõi nhập, xuất, điều chỉnh hàng tồn</h6>
+              <h4>Lịch Sử Đơn Hàng</h4>
+              <h6>Theo dõi các đơn hàng đã đặt và xử lý</h6>
             </div>
           </div>
           <ul className="table-top-head">
-            <RefreshIcon onClick={loadTransactions} loading={loading} />
+            <RefreshIcon onClick={loadOrders} loading={loading} />
             <CollapesIcon />
           </ul>
         </div>
@@ -207,7 +182,7 @@ const TransactionHistory = () => {
               onSubmit={(e) => {
                 e.preventDefault();
                 setCurrentPage(1);
-                loadTransactions();
+                loadOrders();
               }}
               className="row g-3 align-items-end"
             >
@@ -224,31 +199,31 @@ const TransactionHistory = () => {
 
               <div className="col-12 col-md-6 col-lg-3">
                 <label className="form-label fw-semibold text-dark mb-1">
-                  Loại giao dịch
+                  Trạng thái đơn hàng
                 </label>
                 <CommonSelect
-                  options={TransactionTypes}
-                  value={TransactionTypes.find(
-                    (item) => item.value === selectedTransactionType
+                  options={OrderStatuses}
+                  value={OrderStatuses.find(
+                    (item) => item.value === selectedStatus
                   )}
                   onChange={(selected) =>
-                    setSelectedTransactionType(selected?.value || "")
+                    setSelectedStatus(selected?.value || "")
                   }
-                  placeholder="Chọn loại"
+                  placeholder="Chọn trạng thái"
                   className="w-100"
                 />
               </div>
 
               <div className="col-12 col-md-6 col-lg-3">
                 <label className="form-label fw-semibold text-dark mb-1">
-                  Mã sản phẩm
+                  Mã khách hàng
                 </label>
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="VD: PRD001"
-                  value={selectedProduct}
-                  onChange={(e) => setSelectedProduct(e.target.value.trim())}
+                  placeholder="VD: CUS001"
+                  value={selectedCustomer}
+                  onChange={(e) => setSelectedCustomer(e.target.value.trim())}
                 />
               </div>
 
@@ -268,7 +243,7 @@ const TransactionHistory = () => {
         <div className="card table-list-card no-search shadow-sm">
           <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
             <h5 className="mb-0 fw-semibold">
-              Danh sách giao dịch{" "}
+              Danh sách đơn hàng{" "}
               <span className="text-muted small">({totalRecords} bản ghi)</span>
             </h5>
             <ul className="table-top-head">
@@ -321,4 +296,4 @@ const TransactionHistory = () => {
   );
 };
 
-export default TransactionHistory;
+export default OrderHistory;

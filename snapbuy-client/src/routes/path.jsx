@@ -41,6 +41,10 @@ const TransactionHistory = lazy(() =>
   import("../feature-module/sales/TransactionHistory")
 );
 
+const OrderHistory = lazy(() =>
+  import("../feature-module/sales/OrderHistory")
+);
+
 
 const routes = allRoutes;
 
@@ -198,6 +202,13 @@ export const authRoutes = [
     path: routes.transactionhistory,
     name: "transaction-history",
     element: <TransactionHistory />,
+    route: Route,
+  },
+  {
+    id: 23,
+    path: routes.orderhistory,
+    name: "order-history",
+    element: <OrderHistory />,
     route: Route,
   }
 ];
