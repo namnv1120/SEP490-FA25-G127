@@ -14,8 +14,7 @@ const OrderHistory = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
-  const [selectedCustomer, setSelectedCustomer] = useState("");
-  const [selectedEmployee, setSelectedEmployee] = useState("");
+  const [selectedCustomerName, setSelectedCustomerName] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
   const [dateRange, setDateRange] = useState([null, null]);
   const [loading, setLoading] = useState(false);
@@ -25,14 +24,42 @@ const OrderHistory = () => {
     { value: "", label: "Tất cả" },
     { value: "PENDING", label: "Chờ xử lý" },
     { value: "CONFIRMED", label: "Đã xác nhận" },
-    { value: "SHIPPED", label: "Đã giao" },
     { value: "CANCELLED", label: "Đã hủy" },
   ];
+
+  const calculateTotal = (item) => {
+    const possibleKeys = [
+      "lineItems",
+      "orderDetails",
+      "items",
+      "orderLines",
+      "orderItems",
+      "details",
+    ];
+    for (const key of possibleKeys) {
+      const arr = item[key];
+      if (Array.isArray(arr) && arr.length > 0) {
+        return arr.reduce((sum, li) => {
+          const price =
+            Number(li.price) ||
+            Number(li.unitPrice) ||
+            Number(li.amount) ||
+            0;
+          const qty =
+            Number(li.quantity) ||
+            Number(li.qty) ||
+            Number(li.count) ||
+            1;
+          return sum + price * qty;
+        }, 0);
+      }
+    }
+    return 0;
+  };
 
   const loadOrders = async () => {
     setLoading(true);
     setError("");
-
     try {
       const from = dateRange[0]
         ? new Date(dateRange[0]).toISOString().split("T")[0]
@@ -44,40 +71,53 @@ const OrderHistory = () => {
       const params = {
         page: currentPage - 1,
         size: rows,
-        customerId: selectedCustomer || null,
-        employeeId: selectedEmployee || null,
+        customerName: selectedCustomerName || null,
         status: selectedStatus || null,
         from,
         to,
       };
 
-      console.log("=== Tham số gửi lên API ===", params);
-      const data = await getAllOrders(params);
-      console.log("=== Dữ liệu trả về từ API ===", data);
+      console.log("=== Tham số gửi API ===", params);
+      const response = await getAllOrders(params);
+      const data = response?.content || response || [];
 
-      if (!data || !Array.isArray(data.content)) {
-        throw new Error("Phản hồi API không đúng định dạng hoặc rỗng");
+      if (!Array.isArray(data)) {
+        throw new Error("Dữ liệu trả về không phải mảng");
       }
 
-      const normalizedData = data.content.map((item, index) => ({
-        orderId: item.orderId || `temp-${index}-${Date.now()}`,
-        orderDate: item.orderDate,
-        customerName: item.customerName,
-        employeeName: item.employeeName,
-        total: item.total,
-        status: item.status,
-      }));
+      if (data.length > 0) {
+        console.log("Cấu trúc mẫu:", JSON.stringify(data[0], null, 2));
+      }
 
-      console.log("=== Dữ liệu sau khi chuẩn hóa ===", normalizedData);
+      const normalizedData = data.map((item, index) => {
+        const total = calculateTotal(item);
+        const employeeName =
+          item.employeeName ||
+          item.staffName ||
+          item.createdBy ||
+          "-";
+
+        return {
+          key: item.orderId || `temp-${index}-${Date.now()}`,
+          orderId: item.orderId || "-",
+          orderNumber: item.orderNumber || `ORD-${String(index + 1).padStart(5, "0")}`,
+          orderDate: item.orderDate || item.createdAt || item.date || null,
+          customerName: item.customerName || "Khách lẻ",
+          total,
+          status: item.status || "PENDING",
+          employeeName,
+        };
+      });
 
       setListData(normalizedData);
-      setTotalRecords(data.totalElements || 0);
+      setTotalRecords(response?.totalElements || normalizedData.length);
     } catch (err) {
       console.error("=== Lỗi khi gọi API ===", err);
-      setError(
+      const msg =
         err.response?.data?.message ||
-          "Không thể tải dữ liệu đơn hàng. Vui lòng kiểm tra kết nối hoặc API."
-      );
+        err.message ||
+        "Không thể tải dữ liệu đơn hàng. Vui lòng thử lại.";
+      setError(msg);
       setListData([]);
       setTotalRecords(0);
     } finally {
@@ -87,15 +127,14 @@ const OrderHistory = () => {
 
   useEffect(() => {
     loadOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, rows, selectedCustomer, selectedEmployee, selectedStatus, dateRange]);
+  }, [currentPage, rows, selectedCustomerName, selectedStatus, dateRange]);
 
   const columns = [
     {
       title: "Mã đơn hàng",
-      dataIndex: "orderId",
-      key: "orderId",
-      sorter: (a, b) => a.orderId.localeCompare(b.orderId),
+      dataIndex: "orderNumber",
+      key: "orderNumber",
+      sorter: (a, b) => a.orderNumber.localeCompare(b.orderNumber),
       render: (text) => (
         <Link to="#" className="text-primary fw-medium small">
           {text}
@@ -106,7 +145,7 @@ const OrderHistory = () => {
       title: "Ngày đặt hàng",
       dataIndex: "orderDate",
       key: "orderDate",
-      sorter: (a, b) => new Date(a.orderDate) - new Date(b.orderDate),
+      sorter: (a, b) => new Date(a.orderDate || 0) - new Date(b.orderDate || 0),
       render: (text) =>
         text
           ? new Date(text).toLocaleString("vi-VN", {
@@ -129,19 +168,29 @@ const OrderHistory = () => {
       title: "Nhân viên",
       dataIndex: "employeeName",
       key: "employeeName",
-      sorter: (a, b) => a.employeeName.localeCompare(b.employeeName),
-      render: (text) => <span>{text}</span>,
+      sorter: (a, b) => (a.employeeName || "").localeCompare(b.employeeName || ""),
+      render: (name) => (
+        <span className={name === "-" ? "text-muted" : "fw-medium"}>
+          {name}
+        </span>
+      ),
     },
     {
       title: "Tổng tiền",
       dataIndex: "total",
       key: "total",
-      sorter: (a, b) => a.total - b.total,
-      render: (total) => (
-        <strong className="text-success">
-          {total?.toLocaleString("vi-VN")} ₫
-        </strong>
-      ),
+      sorter: (a, b) => (a.total || 0) - (b.total || 0),
+      render: (total) => {
+        const amount = Number(total);
+        if (isNaN(amount) || amount <= 0) {
+          return <span className="text-muted small">0 ₫</span>;
+        }
+        return (
+          <strong className="text-success">
+            {amount.toLocaleString("vi-VN")} ₫
+          </strong>
+        );
+      },
     },
     {
       title: "Trạng thái",
@@ -152,9 +201,8 @@ const OrderHistory = () => {
         const badge = {
           PENDING: { class: "bg-warning", text: "Chờ xử lý" },
           CONFIRMED: { class: "bg-primary", text: "Đã xác nhận" },
-          SHIPPED: { class: "bg-success", text: "Đã giao" },
           CANCELLED: { class: "bg-danger", text: "Đã hủy" },
-        }[status] || { class: "bg-secondary", text: status };
+        }[status] || { class: "bg-secondary", text: status || "Không rõ" };
         return <span className={`badge ${badge.class} small`}>{badge.text}</span>;
       },
     },
@@ -216,14 +264,14 @@ const OrderHistory = () => {
 
               <div className="col-12 col-md-6 col-lg-3">
                 <label className="form-label fw-semibold text-dark mb-1">
-                  Mã khách hàng
+                  Tên khách hàng
                 </label>
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="VD: CUS001"
-                  value={selectedCustomer}
-                  onChange={(e) => setSelectedCustomer(e.target.value.trim())}
+                  placeholder="VD: Nguyễn Văn A"
+                  value={selectedCustomerName}
+                  onChange={(e) => setSelectedCustomerName(e.target.value.trim())}
                 />
               </div>
 
@@ -233,7 +281,7 @@ const OrderHistory = () => {
                   className="btn btn-primary w-100"
                   disabled={loading}
                 >
-                  {loading ? "Đang tải..." : "Tìm kiếm"}
+                  {loading ? "Đang tìm..." : "Tìm kiếm"}
                 </button>
               </div>
             </form>
@@ -286,6 +334,7 @@ const OrderHistory = () => {
                 setCurrentPage(page);
                 setRows(size);
               }}
+              loading={loading}
             />
           </div>
         </div>
