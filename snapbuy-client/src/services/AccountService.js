@@ -21,7 +21,6 @@ export const getAllAccounts = async () => {
   }
 };
 
-// Tạo tài khoản mới
 export const createAccount = async (userData) => {
   try {
     const response = await axios.post(REST_API_BASE_URL, userData, {
@@ -44,7 +43,6 @@ export const getAccountById = async (id) => {
   }
 };
 
-// Lấy thông tin tài khoản hiện tại (đăng nhập)
 export const getMyInfo = async () => {
   try {
     const response = await axios.get(`${REST_API_BASE_URL}/my-info`, {
@@ -56,7 +54,6 @@ export const getMyInfo = async () => {
   }
 };
 
-// Cập nhật tài khoản
 export const updateAccount = async (id, updatedData) => {
   try {
     const response = await axios.put(`${REST_API_BASE_URL}/${id}`, updatedData, {
@@ -68,7 +65,6 @@ export const updateAccount = async (id, updatedData) => {
   }
 };
 
-// Xóa tài khoản
 export const deleteAccount = async (id) => {
   try {
     const response = await axios.delete(`${REST_API_BASE_URL}/${id}`, {
@@ -80,32 +76,6 @@ export const deleteAccount = async (id) => {
   }
 };
 
-// Đổi mật khẩu
-export const changePassword = async (id, passwordData) => {
-  return handleRequest('put', `${BASE_URL}/${id}/change-password`, passwordData);
-};
-
-// Gán role cho tài khoản
-export const assignRole = async (accountId, roleId) => {
-  return handleRequest('post', `${BASE_URL}/${accountId}/roles/${roleId}`);
-};
-
-// Bỏ gán role
-export const unassignRole = async (accountId, roleId) => {
-  return handleRequest('delete', `${BASE_URL}/${accountId}/roles/${roleId}`);
-};
-
-// Cập nhật thông tin nhân viên (bởi chủ shop)
-export const updateStaffByOwner = async (staffId, data) => {
-  return handleRequest('put', `${BASE_URL}/owner/${staffId}`, data);
-};
-
-// Cập nhật vai trò nhân viên (bởi chủ shop)
-export const updateStaffRolesByOwner = async (staffId, data) => {
-  return handleRequest('put', `${BASE_URL}/owner/${staffId}/roles`, data);
-};
-
-// Toggle trạng thái tài khoản
 export const toggleAccountStatus = async (accountId) => {
   try {
     const response = await axios.patch(
@@ -116,5 +86,31 @@ export const toggleAccountStatus = async (accountId) => {
     return response.data.result || response.data;
   } catch (error) {
     throw new Error(error.response?.data?.message || 'Lỗi khi chuyển đổi trạng thái tài khoản!');
+  }
+};
+
+export const requestEmailVerification = async (email) => {
+  try {
+    const response = await axios.post(
+      `${REST_API_BASE_URL}/me/request-email-verification`,
+      { email },
+      { headers: getAuthHeader() }
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Không thể gửi email xác nhận');
+  }
+};
+
+export const verifyEmailOtp = async (newEmail, code) => {
+  try {
+    const response = await axios.post(
+      `${REST_API_BASE_URL}/me/verify-email-otp`,
+      { newEmail, code },
+      { headers: getAuthHeader() }
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Xác thực email thất bại');
   }
 };

@@ -10,6 +10,7 @@ import {
 } from "react-bootstrap";
 import { allRoutes } from "../../routes/AllRoutes";
 import { getMyInfo } from "../../services/AccountService";
+import { getImageUrl } from "../../utils/imageUtils";
 import {
   avatar_02,
   avatar_03,
@@ -118,16 +119,17 @@ const Header = () => {
         const data = await getMyInfo();
         const userData = data.result || data;
 
-        // Roles là List<String>, lấy role đầu tiên và bỏ prefix ROLE_ nếu có
         let roleName = 'Admin';
         if (userData.roles && Array.isArray(userData.roles) && userData.roles.length > 0) {
           roleName = userData.roles[0].replace('ROLE_', '');
         }
 
+        const avatarUrl = userData.avatarUrl ? getImageUrl(userData.avatarUrl) : null;
+
         setUserInfo({
           fullName: userData.fullName || 'John Smilga',
           role: roleName,
-          avatarUrl: userData.avatarUrl || null
+          avatarUrl: avatarUrl
         });
       } catch (error) {
         console.error('Lỗi khi lấy thông tin user:', error);
@@ -135,6 +137,28 @@ const Header = () => {
     };
 
     fetchUserInfo();
+
+    const handleProfileUpdate = (event) => {
+      const userData = event.detail;
+      let roleName = 'Admin';
+      if (userData.roles && Array.isArray(userData.roles) && userData.roles.length > 0) {
+        roleName = userData.roles[0].replace('ROLE_', '');
+      }
+
+      const avatarUrl = userData.avatarUrl ? getImageUrl(userData.avatarUrl) : null;
+
+      setUserInfo({
+        fullName: userData.fullName || 'John Smilga',
+        role: roleName,
+        avatarUrl: avatarUrl
+      });
+    };
+
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
   }, []);
 
   const pathname = location.pathname;
@@ -260,7 +284,7 @@ const Header = () => {
                   </div>
                   <span className="input-group-text">
                     <kbd className="d-flex align-items-center">
-                      <img src={commandSvg} alt="img" className="me-1" />K
+                      <img src={commandSvg} alt="img" className="me-1" />←
                     </kbd>
                   </span>
                 </div>
@@ -384,13 +408,12 @@ const Header = () => {
               </Button>
             </div>
           </NavDropdown>
-
-          {/* Settings Link */}
+          {/* 
           <Nav.Item as="li" className="nav-item nav-item-box">
             <Nav.Link as={Link} to="/general-settings">
               <i className="feather icon-settings"></i>
             </Nav.Link>
-          </Nav.Item>
+          </Nav.Item> */}
 
           <NavDropdown
             as="li"

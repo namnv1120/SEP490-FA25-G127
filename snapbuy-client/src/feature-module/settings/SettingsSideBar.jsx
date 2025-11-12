@@ -10,11 +10,12 @@ const SettingsSideBar = () => {
     () =>
       [
         route.profile,
-        route.securitysettings,
+        route.emailsettings,
+        route.passwordsettings,
         route.notification,
         route.connectedapps,
       ].filter(Boolean),
-    [route.profile, route.securitysettings, route.notification, route.connectedapps]
+    [route.profile, route.emailsettings, route.passwordsettings, route.notification, route.connectedapps]
   );
 
   const websiteSettingPaths = useMemo(
@@ -72,7 +73,8 @@ const SettingsSideBar = () => {
                 onClick={toggleGeneralSettings}
                 className={
                   location.pathname === route.profile ||
-                    location.pathname === route.securitysettings ||
+                    location.pathname === route.emailsettings ||
+                    location.pathname === route.passwordsettings ||
                     location.pathname === route.notification ||
                     location.pathname === route.connectedapps
                     ? "active subdrop"
@@ -94,10 +96,18 @@ const SettingsSideBar = () => {
                 </li>
                 <li>
                   <Link
-                    to={route.securitysettings}
-                    className={location.pathname === route.securitysettings ? "active" : ""}
+                    to={route.emailsettings}
+                    className={location.pathname === route.emailsettings ? "active" : ""}
                   >
-                    Bảo mật
+                    Email
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to={route.passwordsettings}
+                    className={location.pathname === route.passwordsettings ? "active" : ""}
+                  >
+                    Mật khẩu
                   </Link>
                 </li>
                 <li>

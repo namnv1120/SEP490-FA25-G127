@@ -10,12 +10,16 @@ import com.g127.snapbuy.repository.RoleRepository;
 import com.g127.snapbuy.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -29,6 +33,9 @@ public class AccountServiceImpl implements AccountService {
     private final RoleRepository roleRepository;
     private final AccountMapper accountMapper;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${upload.dir}")
+    private String uploadDir;
 
     private static final Set<String> FORBIDDEN_STAFF_ROLES = Set.of("Quản trị viên", "Chủ cửa hàng");
 
@@ -83,6 +90,8 @@ public class AccountServiceImpl implements AccountService {
         Account acc = accountMapper.toEntity(req);
         acc.setUsername(req.getUsername().toLowerCase());
         acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+        acc.setEmail(null);
+        acc.setPhone(null);
         acc.setRoles(new LinkedHashSet<>());
 
         try {
@@ -105,6 +114,8 @@ public class AccountServiceImpl implements AccountService {
         Account account = accountMapper.toEntity(req);
         account.setUsername(req.getUsername().toLowerCase());
         account.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+        account.setEmail(null);
+        account.setPhone(null);
         account.setRoles(new LinkedHashSet<>());
 
         try {
@@ -125,10 +136,6 @@ public class AccountServiceImpl implements AccountService {
         String username = req.getUsername().toLowerCase();
         if (username.contains(" ")) throw new IllegalArgumentException("Tên đăng nhập không được chứa khoảng trắng");
         if (accountRepository.existsByUsernameIgnoreCase(username)) throw new IllegalArgumentException("Tên đăng nhập đã tồn tại");
-        if (accountRepository.existsByEmailIgnoreCase(req.getEmail())) throw new IllegalArgumentException("Email đã tồn tại");
-        if (req.getPhone() != null && !req.getPhone().isBlank() && accountRepository.existsByPhone(req.getPhone())) {
-            throw new IllegalArgumentException("Số điện thoại đã tồn tại");
-        }
     }
 
     @Override
@@ -317,9 +324,40 @@ public class AccountServiceImpl implements AccountService {
         }
 
         if (req.getFullName() != null) acc.setFullName(req.getFullName());
-        if (req.getEmail() != null) acc.setEmail(req.getEmail());
+        if (req.getEmail() != null && (acc.getEmail() == null || acc.getEmail().trim().isEmpty())) {
+            String newEmail = req.getEmail().trim();
+            if (accountRepository.existsByEmailIgnoreCase(newEmail)) {
+                throw new IllegalArgumentException("Email này đã được sử dụng bởi tài khoản khác");
+            }
+            acc.setEmail(newEmail);
+        }
         if (req.getPhone() != null) acc.setPhone(req.getPhone());
-        if (req.getAvatarUrl() != null) acc.setAvatarUrl(req.getAvatarUrl());
+        
+        if (req.getRemoveAvatar() != null && req.getRemoveAvatar()) {
+            acc.setAvatarUrl(null);
+            log.info("✅ Removed avatar for account: {}", acc.getAccountId());
+        } else if (req.getAvatar() != null && !req.getAvatar().isEmpty()) {
+            try {
+                String fileName = System.currentTimeMillis() + "_" + req.getAvatar().getOriginalFilename();
+                Path uploadPath = Paths.get(uploadDir, "avatars").toAbsolutePath();
+                
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+                
+                Path filePath = uploadPath.resolve(fileName);
+                req.getAvatar().transferTo(filePath.toFile());
+                
+                acc.setAvatarUrl("/uploads/avatars/" + fileName);
+                log.info("✅ Saved avatar: {}", acc.getAvatarUrl());
+            } catch (Exception e) {
+                log.error("❌ Lỗi khi lưu avatar", e);
+                throw new com.g127.snapbuy.exception.AppException(com.g127.snapbuy.exception.ErrorCode.FILE_UPLOAD_FAILED);
+            }
+        } else if (req.getAvatarUrl() != null) {
+            acc.setAvatarUrl(req.getAvatarUrl());
+        }
+        
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
             acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
         }

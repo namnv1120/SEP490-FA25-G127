@@ -17,8 +17,17 @@ public class ProductPriceUpdateRequest {
     @DecimalMin(value = "0.0", inclusive = false, message = "Đơn giá phải lớn hơn 0.")
     private BigDecimal unitPrice;
 
+    @NotNull(message = "Vui lòng nhập giá vốn.")
     @DecimalMin(value = "0.0", inclusive = true, message = "Giá vốn không được âm.")
     private BigDecimal costPrice;
+
+    @AssertTrue(message = "Giá bán không được thấp hơn giá nhập.")
+    private boolean isValidPrice() {
+        if (unitPrice == null || costPrice == null) {
+            return true;
+        }
+        return unitPrice.compareTo(costPrice) >= 0;
+    }
 
 //    private LocalDateTime validFrom;
 //    private LocalDateTime validTo;

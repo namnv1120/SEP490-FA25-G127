@@ -28,16 +28,6 @@ public class AccountCreateRequest {
     @NotBlank(message = "Vui lòng xác nhận mật khẩu.")
     private String confirmPassword;
 
-    @NotBlank(message = "Vui lòng nhập email.")
-    @Email(message = "Email không hợp lệ. Vui lòng kiểm tra lại.")
-    private String email;
-
-    @Pattern(
-            regexp = "^$|^\\d{10}$",
-            message = "Số điện thoại phải gồm đúng 10 chữ số."
-    )
-    private String phone;
-
     private String avatarUrl;
 
     @NotNull(message = "Trạng thái hoạt động không được để trống.")

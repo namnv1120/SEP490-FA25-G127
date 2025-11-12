@@ -4,6 +4,7 @@ import com.g127.snapbuy.dto.ApiResponse;
 import com.g127.snapbuy.dto.request.*;
 import com.g127.snapbuy.dto.response.AccountResponse;
 import com.g127.snapbuy.service.AccountService;
+import com.g127.snapbuy.service.EmailVerificationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class AccountController {
 
     private final AccountService accountService;
+    private final EmailVerificationService emailVerificationService;
 
     @PostMapping
     @PreAuthorize("hasRole('Quản trị viên')")
@@ -54,9 +56,9 @@ public class AccountController {
         return response;
     }
 
-    @PutMapping("/{accountId}")
+    @PutMapping(value = "/{accountId}", consumes = {"multipart/form-data"})
     public ApiResponse<AccountResponse> updateAccount(@PathVariable UUID accountId,
-                                                      @Valid @RequestBody AccountUpdateRequest req) {
+                                                      @ModelAttribute @Valid AccountUpdateRequest req) {
         ApiResponse<AccountResponse> response = new ApiResponse<>();
         response.setResult(accountService.updateAccount(accountId, req));
         response.setMessage("Cập nhật tài khoản thành công.");
@@ -164,6 +166,24 @@ public class AccountController {
         ApiResponse<AccountResponse> response = new ApiResponse<>();
         response.setResult(accountService.toggleAccountStatus(accountId));
         response.setMessage("Đã cập nhật trạng thái tài khoản thành công.");
+        return response;
+    }
+
+    @PostMapping("/me/request-email-verification")
+    public ApiResponse<Void> requestEmailVerification(@Valid @RequestBody EmailVerificationRequest req) {
+        UUID accountId = accountService.getMyInfo().getId();
+        emailVerificationService.requestOtp(accountId, req.getEmail());
+        ApiResponse<Void> response = new ApiResponse<>();
+        response.setMessage("Đã gửi mã xác nhận đến email. Vui lòng kiểm tra hộp thư của bạn.");
+        return response;
+    }
+
+    @PostMapping("/me/verify-email-otp")
+    public ApiResponse<Void> verifyEmailOtp(@Valid @RequestBody com.g127.snapbuy.dto.request.VerifyEmailOtpRequest req) {
+        UUID accountId = accountService.getMyInfo().getId();
+        emailVerificationService.verifyOtp(accountId, req);
+        ApiResponse<Void> response = new ApiResponse<>();
+        response.setMessage("Xác nhận email thành công!");
         return response;
     }
 }

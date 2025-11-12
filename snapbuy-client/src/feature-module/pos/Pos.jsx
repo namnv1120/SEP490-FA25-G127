@@ -346,7 +346,7 @@ const Pos = () => {
     try {
       setIsScanning(true);
       const product = await getProductByBarcode(barcode.trim());
-      
+
       // Map product data để phù hợp với format trong POS
       const mappedProduct = {
         id: product.productId,
@@ -365,10 +365,10 @@ const Pos = () => {
 
       // Tự động thêm vào giỏ hàng
       handleAddToCart(mappedProduct, null);
-      
+
       // Clear barcode input để sẵn sàng quét tiếp
       setBarcodeInput("");
-      
+
     } catch (error) {
       message.error(`Không tìm thấy sản phẩm với barcode: ${barcode}`);
       // Không clear input để user có thể thử lại
@@ -707,7 +707,7 @@ const Pos = () => {
           fullOrderData.orderDetails.map(async (detail) => {
             // Try to find product in current products list for additional info
             let productInfo = products.find(p => String(p.productId) === String(detail.productId));
-            
+
             // If not found in current list, use detail info only
             if (!productInfo) {
               productInfo = {
@@ -1064,7 +1064,7 @@ const Pos = () => {
                           </span>
                         )}
                       </div>
-                      
+
                       {/* Search by name input */}
                       <div className="input-icon-start pos-search position-relative mb-3">
                         <input
@@ -1284,8 +1284,8 @@ const Pos = () => {
                     </Link>
                   </div>
                 </div>
-                <div className="product-added block-section" style={{ flex: 1, overflowY: 'auto', marginBottom: '20px' }}>
-                  <div className="head-text d-flex align-items-center justify-content-between">
+                <div className="product-added block-section" style={{ flex: 1, marginBottom: '20px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                  <div className="head-text d-flex align-items-center justify-content-between" style={{ flexShrink: 0 }}>
                     <h5 className="d-flex align-items-center mb-0">
                       Sản phẩm đã thêm<span className="count">{cartItems.length}</span>
                     </h5>
@@ -1306,7 +1306,7 @@ const Pos = () => {
                       </Link>
                     )}
                   </div>
-                  <div className="product-wrap">
+                  <div className="product-wrap" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
                     {cartItems.length === 0 ? (
                       <div className="empty-cart">
                         <div className="fs-24 mb-1">

@@ -31,6 +31,12 @@ public class ProductPriceServiceImpl implements ProductPriceService {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
 
+        if (request.getUnitPrice() != null && request.getCostPrice() != null) {
+            if (request.getUnitPrice().compareTo(request.getCostPrice()) < 0) {
+                throw new AppException(ErrorCode.UNCATEGORIZED_ERROR);
+            }
+        }
+
         ProductPrice price = productPriceMapper.toEntity(request);
         price.setProduct(product);
         price.setCreatedDate(LocalDateTime.now());
@@ -44,6 +50,12 @@ public class ProductPriceServiceImpl implements ProductPriceService {
     public ProductPriceResponse updatePrice(UUID id, ProductPriceUpdateRequest request) {
         ProductPrice price = productPriceRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PRICE_NOT_FOUND));
+
+        if (request.getUnitPrice() != null && request.getCostPrice() != null) {
+            if (request.getUnitPrice().compareTo(request.getCostPrice()) < 0) {
+                throw new AppException(ErrorCode.UNCATEGORIZED_ERROR);
+            }
+        }
 
         productPriceMapper.updateEntity(price, request);
         return productPriceMapper.toResponse(productPriceRepository.save(price));

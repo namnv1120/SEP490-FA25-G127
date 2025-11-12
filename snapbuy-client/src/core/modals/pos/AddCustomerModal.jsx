@@ -7,7 +7,7 @@ const AddCustomerModal = ({ isOpen, initialPhone, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
-    gender: null,
+    gender: "Other",
   });
 
   // Reset và set phone khi modal mở
@@ -16,7 +16,7 @@ const AddCustomerModal = ({ isOpen, initialPhone, onClose, onSuccess }) => {
       setFormData({
         fullName: "",
         phone: initialPhone || "",
-        gender: null,
+        gender: "Other",
       });
     }
   }, [isOpen, initialPhone]);

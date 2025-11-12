@@ -2074,3 +2074,45 @@ div.p-datepicker table td.p-datepicker-today > span.p-highlight {
     }
   }
 }
+
+// Limit avatar image size in Profile page to match Add Image box
+.profile-pic-upload .add-choosen .phone-img {
+  width: 120px;
+  height: 120px;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+}
+
+// Limit avatar image size in Header (both dashboard and POS)
+.header .user-letter,
+.pos-header .user-letter {
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+}
+
+.header .user-img,
+.pos-header .user-img {
+  width: 38px;
+  height: 38px;
+  overflow: hidden;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+}

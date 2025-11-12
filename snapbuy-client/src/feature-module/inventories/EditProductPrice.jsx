@@ -69,16 +69,38 @@ const EditProductPrice = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
+    let processedValue = value;
+    
+    if (name === 'unitPrice' || name === 'costPrice') {
+      if (value === '' || value === '-') {
+        processedValue = value;
+      } else {
+        const numValue = parseFloat(value);
+        if (isNaN(numValue) || numValue < 0) {
+          return;
+        }
+        processedValue = value;
+      }
+    }
+    
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: processedValue,
     }));
 
-    // Clear error when user types
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
         [name]: "",
+      }));
+    }
+    
+    if (name === 'unitPrice' || name === 'costPrice') {
+      setErrors((prev) => ({
+        ...prev,
+        unitPrice: "",
+        costPrice: "",
       }));
     }
   };
@@ -90,25 +112,20 @@ const EditProductPrice = () => {
       newErrors.productId = "Làm ơn chọn sản phẩm";
     }
 
-    if (!formData.unitPrice || parseFloat(formData.unitPrice) <= 0) {
+    const unitPrice = parseFloat(formData.unitPrice);
+    const costPrice = parseFloat(formData.costPrice);
+
+    if (!formData.unitPrice || isNaN(unitPrice) || unitPrice <= 0) {
       newErrors.unitPrice = "Giá bán phải lớn hơn 0";
     }
 
-    if (!formData.costPrice || parseFloat(formData.costPrice) <= 0) {
-      newErrors.costPrice = "Giá nhập phải lớn hơn 0";
+    if (!formData.costPrice || isNaN(costPrice) || costPrice < 0) {
+      newErrors.costPrice = "Giá nhập không được âm";
     }
 
-    // if (!formData.validFrom) {
-    //   newErrors.validFrom = "Vui lòng chọn ngày bắt đầu hiệu lực";
-    // }
-
-    // if (formData.validTo && formData.validFrom) {
-    //   const from = new Date(formData.validFrom);
-    //   const to = new Date(formData.validTo);
-    //   if (to <= from) {
-    //     newErrors.validTo = "Ngày kết thúc phải sau ngày bắt đầu";
-    //   }
-    // }
+    if (unitPrice > 0 && costPrice >= 0 && unitPrice < costPrice) {
+      newErrors.unitPrice = "Giá bán không được thấp hơn giá nhập";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -239,6 +256,11 @@ const EditProductPrice = () => {
                           name="unitPrice"
                           value={formData.unitPrice}
                           onChange={handleChange}
+                          onKeyDown={(e) => {
+                            if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+                              e.preventDefault();
+                            }
+                          }}
                           placeholder="Nhập giá bán"
                           step="0.01"
                           min="0"
@@ -260,6 +282,11 @@ const EditProductPrice = () => {
                           name="costPrice"
                           value={formData.costPrice}
                           onChange={handleChange}
+                          onKeyDown={(e) => {
+                            if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+                              e.preventDefault();
+                            }
+                          }}
                           placeholder="Nhập giá nhập"
                           step="0.01"
                           min="0"

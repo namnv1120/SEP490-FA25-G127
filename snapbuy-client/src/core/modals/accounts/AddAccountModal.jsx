@@ -15,8 +15,6 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
     username: "",
     password: "",
     confirmPassword: "",
-    email: "",
-    phone: "",
     roles: [],
   });
 
@@ -38,8 +36,6 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
         username: "",
         password: "",
         confirmPassword: "",
-        email: "",
-        phone: "",
         roles: [],
       });
       setErrors({});
@@ -96,18 +92,6 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
       newErrors.confirmPassword = "Mật khẩu xác nhận không khớp.";
     }
 
-    // Email
-    if (!formData.email.trim()) {
-      newErrors.email = "Vui lòng nhập email.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Email không hợp lệ. Vui lòng kiểm tra lại.";
-    }
-
-    // Số điện thoại
-    if (formData.phone && !/^$|^\d{10}$/.test(formData.phone)) {
-      newErrors.phone = "Số điện thoại phải gồm đúng 10 chữ số.";
-    }
-
     // Vai trò
     if (!selectedRole) {
       newErrors.roles = "Vui lòng chọn một vai trò.";
@@ -151,8 +135,6 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
         username: formData.username.trim(),
         password: formData.password,
         confirmPassword: formData.confirmPassword,
-        email: formData.email.trim(),
-        phone: formData.phone.trim() || "",
         roles: formData.roles,
         active: true,
       };
@@ -166,8 +148,6 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
         username: "",
         password: "",
         confirmPassword: "",
-        email: "",
-        phone: "",
         roles: [],
       });
       setErrors({});
@@ -236,43 +216,6 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
           />
           {errors.username && (
             <div className="invalid-feedback">{errors.username}</div>
-          )}
-        </div>
-
-        {/* Email */}
-        <div className="mb-3">
-          <label className="form-label">
-            Email<span className="text-danger">*</span>
-          </label>
-          <input
-            type="email"
-            name="email"
-            className={`form-control ${errors.email ? "is-invalid" : ""}`}
-            value={formData.email}
-            onChange={handleInputChange}
-            placeholder="Nhập email"
-            disabled={loading}
-          />
-          {errors.email && (
-            <div className="invalid-feedback">{errors.email}</div>
-          )}
-        </div>
-
-        {/* Số điện thoại */}
-        <div className="mb-3">
-          <label className="form-label">Số điện thoại</label>
-          <input
-            type="text"
-            name="phone"
-            className={`form-control ${errors.phone ? "is-invalid" : ""}`}
-            value={formData.phone}
-            onChange={handleInputChange}
-            placeholder="Nhập số điện thoại (10 chữ số)"
-            disabled={loading}
-            maxLength={10}
-          />
-          {errors.phone && (
-            <div className="invalid-feedback">{errors.phone}</div>
           )}
         </div>
 

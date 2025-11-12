@@ -25,6 +25,8 @@ const RoleList = lazy(() =>
   import("../feature-module/accounts/RoleList")
 );
 const Profile = lazy(() => import("../feature-module/settings/Profile"));
+const EmailSettings = lazy(() => import("../feature-module/settings/EmailSettings"));
+const PasswordSettings = lazy(() => import("../feature-module/settings/PasswordSettings"));
 
 const Customers = lazy(() => import("../feature-module/people/CustomerList"));
 const PurchaseOrder = lazy(() =>
@@ -72,6 +74,20 @@ export const authRoutes = [
     path: routes.profile,
     name: "profile",
     element: <Profile />,
+    route: Route,
+  },
+  {
+    id: 3.1,
+    path: routes.emailsettings,
+    name: "email-settings",
+    element: <EmailSettings />,
+    route: Route,
+  },
+  {
+    id: 3.2,
+    path: routes.passwordsettings,
+    name: "password-settings",
+    element: <PasswordSettings />,
     route: Route,
   },
   {

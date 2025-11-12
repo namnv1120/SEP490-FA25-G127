@@ -4,6 +4,8 @@ import { Tooltip } from 'antd';
 import { Settings, User } from 'react-feather';
 import { allRoutes } from '../../routes/AllRoutes';
 import { getMyInfo } from '../../services/AccountService';
+import { getImageUrl } from '../../utils/imageUtils';
+import { avator1 } from '../../utils/imagepath';
 
 const PosHeader = () => {
   const [isFullscreen] = useState(false);
@@ -27,7 +29,7 @@ const PosHeader = () => {
 
   // Format time as 24h
   const formatTime24h = (date) => {
-    return date.toLocaleTimeString('en-US', { 
+    return date.toLocaleTimeString('en-US', {
       hour12: false,
       hour: '2-digit',
       minute: '2-digit',
@@ -54,17 +56,19 @@ const PosHeader = () => {
       try {
         const data = await getMyInfo();
         const userData = data.result || data;
-        
+
         // Roles là List<String>, lấy role đầu tiên và bỏ prefix ROLE_ nếu có
         let roleName = 'Role';
         if (userData.roles && Array.isArray(userData.roles) && userData.roles.length > 0) {
           roleName = userData.roles[0].replace('ROLE_', '');
         }
-        
+
+        const avatarUrl = userData.avatarUrl ? getImageUrl(userData.avatarUrl) : null;
+
         setUserInfo({
           fullName: userData.fullName || 'User Name',
           role: roleName,
-          avatarUrl: userData.avatarUrl || null
+          avatarUrl: avatarUrl
         });
       } catch (error) {
         console.error('Lỗi khi lấy thông tin user:', error);
@@ -72,6 +76,28 @@ const PosHeader = () => {
     };
 
     fetchUserInfo();
+
+    const handleProfileUpdate = (event) => {
+      const userData = event.detail;
+      let roleName = 'Role';
+      if (userData.roles && Array.isArray(userData.roles) && userData.roles.length > 0) {
+        roleName = userData.roles[0].replace('ROLE_', '');
+      }
+
+      const avatarUrl = userData.avatarUrl ? getImageUrl(userData.avatarUrl) : null;
+
+      setUserInfo({
+        fullName: userData.fullName || 'User Name',
+        role: roleName,
+        avatarUrl: avatarUrl
+      });
+    };
+
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
   }, []);
 
   // Close dropdown when clicking outside
@@ -131,8 +157,8 @@ const PosHeader = () => {
               Dashboard
             </Link>
           </li>
-          
-          <li className="nav-item nav-item-box">
+
+          {/* <li className="nav-item nav-item-box">
             <Link
               to="#"
               data-bs-toggle="modal"
@@ -224,7 +250,7 @@ const PosHeader = () => {
                 <i className="ti ti-settings" />
               </Link>
             </Tooltip>
-          </li>
+          </li> */}
           <li className="nav-item dropdown has-arrow main-drop profile-nav" style={{ position: 'relative', marginBottom: 0, paddingBottom: 0 }}>
             <Link
               to="#"
@@ -237,20 +263,20 @@ const PosHeader = () => {
               <span className="user-info p-0">
                 <span className="user-letter">
                   <img
-                    src={userInfo.avatarUrl || "src/assets/img/profiles/avator1.jpg"}
+                    src={userInfo.avatarUrl || avator1}
                     alt="Img"
                     className="img-fluid"
                     onError={(e) => {
-                      e.target.src = "src/assets/img/profiles/avator1.jpg";
+                      e.target.src = avator1;
                     }}
                   />
                 </span>
               </span>
             </Link>
             {dropdownVisible && (
-              <div 
-                className="dropdown-menu menu-drop-user show pos-user-dropdown" 
-                style={{ 
+              <div
+                className="dropdown-menu menu-drop-user show pos-user-dropdown"
+                style={{
                   position: 'absolute',
                   right: 0,
                   top: '100%',
@@ -268,25 +294,25 @@ const PosHeader = () => {
                 }}
               >
                 <div className="profilename">
-                    <div className="profileset">
-                      <span className="user-img">
-                        <img 
-                          src={userInfo.avatarUrl || "src/assets/img/profiles/avator1.jpg"} 
-                          alt="Img" 
-                          onError={(e) => {
-                            e.target.src = "src/assets/img/profiles/avator1.jpg";
-                          }}
-                        />
-                        <span className="status online" />
-                      </span>
-                      <div className="profilesets" style={{ minWidth: 0, flex: 1 }}>
-                        <h6 style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{userInfo.fullName}</h6>
-                        <h5 style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{userInfo.role}</h5>
-                      </div>
+                  <div className="profileset">
+                    <span className="user-img">
+                      <img
+                        src={userInfo.avatarUrl || avator1}
+                        alt="Img"
+                        onError={(e) => {
+                          e.target.src = avator1;
+                        }}
+                      />
+                      <span className="status online" />
+                    </span>
+                    <div className="profilesets" style={{ minWidth: 0, flex: 1 }}>
+                      <h6 style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{userInfo.fullName}</h6>
+                      <h5 style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{userInfo.role}</h5>
                     </div>
+                  </div>
                   <hr className="m-0" />
-                  <Link 
-                    className="dropdown-item d-flex align-items-center" 
+                  <Link
+                    className="dropdown-item d-flex align-items-center"
                     to={allRoutes.profile}
                     onClick={() => setDropdownVisible(false)}
                   >

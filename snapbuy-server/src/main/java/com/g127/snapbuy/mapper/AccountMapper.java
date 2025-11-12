@@ -20,7 +20,7 @@ public interface AccountMapper {
     @Mapping(target = "active", ignore = true)
     void updateAccount(@MappingTarget Account account, AccountUpdateRequest req);
 
-    @Mapping(target = "id", expression = "java(account.getAccountId() != null ? account.getAccountId().toString() : null)")
+    @Mapping(target = "id", expression = "java(account.getAccountId() != null ? account.getAccountId() : null)")
     @Mapping(target = "roles", expression = "java(account.getRoles() != null ? account.getRoles().stream().map(r -> r.getRoleName()).toList() : java.util.List.of())")
     @Mapping(target = "active", source = "active")
     AccountResponse toResponse(Account account);

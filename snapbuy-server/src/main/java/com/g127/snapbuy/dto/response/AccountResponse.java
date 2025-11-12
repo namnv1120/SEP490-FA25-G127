@@ -3,11 +3,12 @@ package com.g127.snapbuy.dto.response;
 import lombok.Builder;
 import lombok.Data;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Builder
 public class AccountResponse {
-    private String id;
+    private UUID id;
     private String fullName;
     private String username;
     private String email;

@@ -82,18 +82,10 @@ const Customers = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.fullName.trim()) {
-      message.warning("Vui lòng nhập họ và tên");
-      return;
-    }
-    if (!formData.phone.trim()) {
-      message.warning("Vui lòng nhập số điện thoại");
-      return;
-    }
+    const trimmedFullName = formData.fullName.trim();
 
-    const phoneRegex = /^\+?[0-9]{10,15}$/;
-    if (!phoneRegex.test(formData.phone)) {
-      message.warning("Số điện thoại không đúng định dạng");
+    if (!trimmedFullName || trimmedFullName.length < 2 || trimmedFullName.length > 50) {
+      message.error("Họ và tên phải từ 2 đến 50 ký tự");
       return;
     }
 
@@ -101,8 +93,7 @@ const Customers = () => {
       setModalLoading(true);
 
       const updateData = {
-        fullName: formData.fullName,
-        phone: formData.phone,
+        fullName: trimmedFullName,
         gender: formData.gender,
       };
 
@@ -258,24 +249,24 @@ const Customers = () => {
                 className="form-control"
                 value={formData.fullName}
                 onChange={handleInputChange}
-                required
                 disabled={modalLoading}
               />
             </div>
 
             <div className="mb-3">
               <label className="form-label">
-                Số điện thoại<span className="text-danger">*</span>
+                Số điện thoại
               </label>
               <input
                 type="text"
                 name="phone"
                 className="form-control"
                 value={formData.phone}
-                onChange={handleInputChange}
-                required
-                disabled={modalLoading}
+                disabled={true}
+                readOnly
+                style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
               />
+              <small className="text-muted">Số điện thoại không thể thay đổi</small>
             </div>
 
             <div className="mb-3">

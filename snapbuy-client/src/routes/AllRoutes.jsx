@@ -51,6 +51,7 @@ export const allRoutes = {
   appearance: "/appearance",
   languagesettings: "/language-settings",
   emailsettings: "/email-settings",
+  passwordsettings: "/password-settings",
   smssettings: "/sms-settings",
   otpsettings: "/otp-settings",
   paymentgateway: "/payment-gateway",
