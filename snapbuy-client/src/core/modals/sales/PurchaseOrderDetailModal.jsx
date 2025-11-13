@@ -60,6 +60,8 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
         return <span className="badge bg-warning text-dark">Chờ duyệt</span>;
       case "đã duyệt":
         return <span className="badge bg-info">Đã duyệt</span>;
+      case "chờ xác nhận":
+        return <span className="badge text-white" style={{ backgroundColor: '#ff9800' }}>Chờ xác nhận</span>;
       case "đã nhận hàng":
         return <span className="badge bg-success">Đã nhận hàng</span>;
       default:
@@ -67,14 +69,35 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
     }
   };
 
+  const isReceived = orderData?.status?.toLowerCase() === "đã nhận hàng";
+  const isWaitingConfirmation = orderData?.status?.toLowerCase() === "chờ xác nhận";
+  const isApproved = orderData?.status?.toLowerCase() === "đã duyệt";
+  // Nếu đã duyệt hoặc chờ xác nhận, tính theo số lượng thực nhận (kể cả = 0)
+  const shouldUseReceivedQty = isApproved || isWaitingConfirmation || isReceived;
+  
   const subtotal =
     orderData?.details?.reduce(
-      (sum, item) => sum + (item.quantity || 0) * (item.unitPrice || 0),
+      (sum, item) => {
+        const receiveQty = item.receiveQuantity || item.receivedQuantity || 0;
+        const quantity = item.quantity || 0;
+        const unitPrice = item.unitPrice || 0;
+        // Nếu đã duyệt/chờ xác nhận/đã nhận hàng và có receiveQuantity (kể cả = 0), tính theo receiveQuantity
+        // Ngược lại tính theo quantity
+        const qty = shouldUseReceivedQty && (receiveQty !== null && receiveQty !== undefined) ? receiveQty : quantity;
+        return sum + qty * unitPrice;
+      },
       0
     ) || 0;
 
   const taxAmount = orderData?.taxAmount || 0;
-  const totalAmount = subtotal + subtotal * (parseFloat(taxAmount || 0) / 100);
+  // Nếu đã nhận hàng, sử dụng totalAmount và taxAmount từ server (đã tính theo giá mới)
+  // Ngược lại tính theo công thức cũ
+  const calculatedTax = isReceived && orderData?.taxAmount != null
+    ? orderData.taxAmount
+    : subtotal * (parseFloat(taxAmount || 0) / 100);
+  const totalAmount = isReceived && orderData?.totalAmount 
+    ? orderData.totalAmount 
+    : subtotal + calculatedTax;
 
   return (
     <Modal
@@ -148,11 +171,11 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
                 <table className="table table-bordered align-middle mb-0">
                   <thead className="table-light">
                     <tr>
-                      <th style={{ width: orderData.status?.toLowerCase() === "đã duyệt" || orderData.status?.toLowerCase() === "đã nhận hàng" ? "30%" : "40%" }}>Sản phẩm</th>
+                      <th style={{ width: (orderData.status?.toLowerCase() === "đã duyệt" || orderData.status?.toLowerCase() === "chờ xác nhận" || orderData.status?.toLowerCase() === "đã nhận hàng") ? "30%" : "40%" }}>Sản phẩm</th>
                       <th style={{ width: "15%" }} className="text-center">
                         Số lượng
                       </th>
-                      {(orderData.status?.toLowerCase() === "đã duyệt" || orderData.status?.toLowerCase() === "đã nhận hàng") && (
+                      {(orderData.status?.toLowerCase() === "đã duyệt" || orderData.status?.toLowerCase() === "chờ xác nhận" || orderData.status?.toLowerCase() === "đã nhận hàng") && (
                         <th style={{ width: "15%" }} className="text-center">
                           SL thực nhận
                         </th>
@@ -168,11 +191,12 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
                   <tbody>
                     {orderData.details && orderData.details.length > 0 ? (
                       orderData.details.map((item, index) => {
-                        const isApprovedOrReceived = orderData.status?.toLowerCase() === "đã duyệt" || orderData.status?.toLowerCase() === "đã nhận hàng";
+                        const isApprovedOrReceived = orderData.status?.toLowerCase() === "đã duyệt" || orderData.status?.toLowerCase() === "chờ xác nhận" || orderData.status?.toLowerCase() === "đã nhận hàng";
                         const receiveQty = item.receiveQuantity || item.receivedQuantity || 0;
                         const quantity = item.quantity || 0;
                         const unitPrice = item.unitPrice || 0;
-                        const total = isApprovedOrReceived && receiveQty > 0
+                        // Nếu đã duyệt/chờ xác nhận/đã nhận hàng và có receiveQuantity (kể cả = 0), tính theo receiveQuantity
+                        const total = isApprovedOrReceived && (receiveQty !== null && receiveQty !== undefined)
                           ? receiveQty * unitPrice
                           : quantity * unitPrice;
 
@@ -232,11 +256,11 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
                     <span>Tổng tiền hàng:</span>
                     <strong>{formatCurrency(subtotal)}</strong>
                   </div>
-                  {taxAmount > 0 && (
+                  {calculatedTax > 0 && (
                     <div className="d-flex justify-content-between mb-2">
-                      <span>Thuế ({taxAmount}%):</span>
+                      <span>Thuế {isReceived ? "" : `(${taxAmount}%)`}:</span>
                       <strong>
-                        {formatCurrency(subtotal * (parseFloat(taxAmount) / 100))}
+                        {formatCurrency(calculatedTax)}
                       </strong>
                     </div>
                   )}

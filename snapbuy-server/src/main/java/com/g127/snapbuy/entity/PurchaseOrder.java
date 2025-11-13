@@ -46,4 +46,7 @@ public class PurchaseOrder {
 
     @Column(name = "notes")
     private String notes;
+
+    @Column(name = "email_sent_at")
+    private LocalDateTime emailSentAt;
 }
