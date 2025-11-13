@@ -11,11 +11,13 @@ import { getAllOrders } from "../../services/OrderService";
 
 const OrderHistory = () => {
   const [listData, setListData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
   const [selectedCustomerName, setSelectedCustomerName] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState([null, null]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -27,6 +29,7 @@ const OrderHistory = () => {
     { value: "CANCELLED", label: "Đã hủy" },
   ];
 
+  // --- Tính tổng tiền đơn hàng ---
   const calculateTotal = (item) => {
     const possibleKeys = [
       "lineItems",
@@ -54,7 +57,7 @@ const OrderHistory = () => {
         }, 0);
       }
     }
-    return 0;
+    return Number(item.total) || 0;
   };
 
   const loadOrders = async () => {
@@ -77,26 +80,13 @@ const OrderHistory = () => {
         to,
       };
 
-      console.log("=== Tham số gửi API ===", params);
       const response = await getAllOrders(params);
       const data = response?.content || response || [];
 
-      if (!Array.isArray(data)) {
-        throw new Error("Dữ liệu trả về không phải mảng");
-      }
-
-      if (data.length > 0) {
-        console.log("Cấu trúc mẫu:", JSON.stringify(data[0], null, 2));
-      }
+      if (!Array.isArray(data)) throw new Error("Dữ liệu trả về không đúng định dạng");
 
       const normalizedData = data.map((item, index) => {
         const total = calculateTotal(item);
-        const employeeName =
-          item.employeeName ||
-          item.staffName ||
-          item.createdBy ||
-          "-";
-
         return {
           key: item.orderId || `temp-${index}-${Date.now()}`,
           orderId: item.orderId || "-",
@@ -105,20 +95,21 @@ const OrderHistory = () => {
           customerName: item.customerName || "Khách lẻ",
           total,
           status: item.status || "PENDING",
-          employeeName,
         };
       });
 
       setListData(normalizedData);
+      setFilteredData(normalizedData);
       setTotalRecords(response?.totalElements || normalizedData.length);
     } catch (err) {
       console.error("=== Lỗi khi gọi API ===", err);
-      const msg =
+      setError(
         err.response?.data?.message ||
-        err.message ||
-        "Không thể tải dữ liệu đơn hàng. Vui lòng thử lại.";
-      setError(msg);
+          err.message ||
+          "Không thể tải dữ liệu đơn hàng. Vui lòng thử lại."
+      );
       setListData([]);
+      setFilteredData([]);
       setTotalRecords(0);
     } finally {
       setLoading(false);
@@ -128,6 +119,25 @@ const OrderHistory = () => {
   useEffect(() => {
     loadOrders();
   }, [currentPage, rows, selectedCustomerName, selectedStatus, dateRange]);
+
+  // --- Lọc theo từ khóa tìm kiếm ---
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredData(listData);
+    } else {
+      const lower = searchTerm.toLowerCase();
+      const filtered = listData.filter(
+        (item) =>
+          item.orderNumber.toLowerCase().includes(lower) ||
+          item.customerName.toLowerCase().includes(lower) ||
+          (item.orderDate &&
+            new Date(item.orderDate)
+              .toLocaleDateString("vi-VN")
+              .includes(lower))
+      );
+      setFilteredData(filtered);
+    }
+  }, [searchTerm, listData]);
 
   const columns = [
     {
@@ -165,26 +175,14 @@ const OrderHistory = () => {
       render: (text) => <span className="fw-medium">{text}</span>,
     },
     {
-      title: "Nhân viên",
-      dataIndex: "employeeName",
-      key: "employeeName",
-      sorter: (a, b) => (a.employeeName || "").localeCompare(b.employeeName || ""),
-      render: (name) => (
-        <span className={name === "-" ? "text-muted" : "fw-medium"}>
-          {name}
-        </span>
-      ),
-    },
-    {
       title: "Tổng tiền",
       dataIndex: "total",
       key: "total",
       sorter: (a, b) => (a.total || 0) - (b.total || 0),
       render: (total) => {
         const amount = Number(total);
-        if (isNaN(amount) || amount <= 0) {
+        if (isNaN(amount) || amount <= 0)
           return <span className="text-muted small">0 ₫</span>;
-        }
         return (
           <strong className="text-success">
             {amount.toLocaleString("vi-VN")} ₫
@@ -203,7 +201,9 @@ const OrderHistory = () => {
           CONFIRMED: { class: "bg-primary", text: "Đã xác nhận" },
           CANCELLED: { class: "bg-danger", text: "Đã hủy" },
         }[status] || { class: "bg-secondary", text: status || "Không rõ" };
-        return <span className={`badge ${badge.class} small`}>{badge.text}</span>;
+        return (
+          <span className={`badge ${badge.class} small`}>{badge.text}</span>
+        );
       },
     },
   ];
@@ -224,6 +224,7 @@ const OrderHistory = () => {
           </ul>
         </div>
 
+        {/* Bộ lọc và tìm kiếm */}
         <div className="card mb-3 shadow-sm">
           <div className="card-body p-4">
             <form
@@ -247,7 +248,7 @@ const OrderHistory = () => {
 
               <div className="col-12 col-md-6 col-lg-3">
                 <label className="form-label fw-semibold text-dark mb-1">
-                  Trạng thái đơn hàng
+                  Trạng thái
                 </label>
                 <CommonSelect
                   options={OrderStatuses}
@@ -276,23 +277,27 @@ const OrderHistory = () => {
               </div>
 
               <div className="col-12 col-md-6 col-lg-3">
-                <button
-                  type="submit"
-                  className="btn btn-primary w-100"
-                  disabled={loading}
-                >
-                  {loading ? "Đang tìm..." : "Tìm kiếm"}
-                </button>
+                <label className="form-label fw-semibold text-dark mb-1">
+                  Tìm kiếm nhanh
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Nhập mã đơn / tên KH / ngày"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
             </form>
           </div>
         </div>
 
+        {/* Bảng dữ liệu */}
         <div className="card table-list-card no-search shadow-sm">
           <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
             <h5 className="mb-0 fw-semibold">
               Danh sách đơn hàng{" "}
-              <span className="text-muted small">({totalRecords} bản ghi)</span>
+              <span className="text-muted small">({filteredData.length} bản ghi)</span>
             </h5>
             <ul className="table-top-head">
               <TooltipIcons />
@@ -322,7 +327,7 @@ const OrderHistory = () => {
             )}
             <Datatable
               columns={columns}
-              dataSource={listData}
+              dataSource={filteredData}
               current={currentPage}
               pageSize={rows}
               total={totalRecords}

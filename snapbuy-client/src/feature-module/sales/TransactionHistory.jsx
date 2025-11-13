@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import CommonFooter from "../../components/footer/commonFooter";
 import TooltipIcons from "../../components/tooltip-content/tooltipIcons";
@@ -21,76 +21,78 @@ const TransactionHistory = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const TransactionTypes = [
-    { value: "", label: "Tất cả" },
-    { value: "IMPORT", label: "Nhập kho" },
-    { value: "EXPORT", label: "Xuất kho" },
-    { value: "ADJUSTMENT", label: "Điều chỉnh" },
-  ];
+  const TransactionTypes = useMemo(
+    () => [
+      { value: "", label: "Tất cả" },
+      { value: "IMPORT", label: "Nhập kho" },
+      { value: "EXPORT", label: "Xuất kho" },
+      { value: "ADJUSTMENT", label: "Điều chỉnh" },
+    ],
+    []
+  );
 
-  const ReferenceTypes = [
-    { value: "", label: "Tất cả" },
-    { value: "PURCHASE_ORDER", label: "Đơn nhập" },
-    { value: "SALES_ORDER", label: "Đơn bán (POS)" },
-    { value: "ADJUSTMENT", label: "Điều chỉnh kho" },
-  ];
+  const ReferenceTypes = useMemo(
+    () => [
+      { value: "", label: "Tất cả" },
+      { value: "PURCHASE_ORDER", label: "Đơn nhập" },
+      { value: "SALES_ORDER", label: "Đơn bán (POS)" },
+      { value: "ADJUSTMENT", label: "Điều chỉnh kho" },
+    ],
+    []
+  );
 
   const dateRangeKey = useMemo(() => {
     if (!dateRange[0] || !dateRange[1]) return "null";
-    return `${dateRange[0].toISOString().split("T")[0]}_${
-      dateRange[1].toISOString().split("T")[0]
-    }`;
+    const [start, end] = dateRange.map(d => d.toISOString().split("T")[0]);
+    return `${start}_${end}`;
   }, [dateRange]);
 
-  const loadTransactions = async () => {
+  const loadTransactions = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const from = dateRange[0]
-        ? new Date(dateRange[0]).toISOString().split("T")[0]
-        : null;
-      const to = dateRange[1]
-        ? new Date(dateRange[1]).toISOString().split("T")[0]
-        : null;
+      const [from, to] = dateRange.map(d =>
+        d ? new Date(d).toISOString().split("T")[0] : null
+      );
 
       const params = {
         page: currentPage - 1,
         size: rows,
         sort: "transactionDate",
         dir: "DESC",
-        ...(selectedTransactionType && {
-          transactionType: selectedTransactionType,
-        }),
+        ...(selectedTransactionType && { transactionType: selectedTransactionType }),
         ...(selectedReferenceType && { referenceType: selectedReferenceType }),
         ...(from && { from }),
         ...(to && { to }),
       };
 
-      const response = await getTransactions(params);
+      const { content } = await getTransactions(params);
 
-      const normalizedData = response.content.map((item, index) => {
-        const date = item.transactionDate || item.createdAt || item.date;
-        const parsedDate = date ? new Date(date) : null;
+      const normalizedData = content.map((item, index) => {
+        const parsedDate = item.transactionDate
+          ? new Date(item.transactionDate)
+          : item.createdAt
+          ? new Date(item.createdAt)
+          : item.date
+          ? new Date(item.date)
+          : null;
 
-        const uniqueKey = item.transactionId
-          ? item.transactionId
-          : `fallback-${index}-${Date.now()}-${Math.random()
-              .toString(36)
-              .substr(2, 9)}`;
+        const uniqueKey =
+          item.transactionId ||
+          `fallback-${index}-${Date.now()}-${Math.random()
+            .toString(36)
+            .substr(2, 9)}`;
 
-        let prefix = "GD";
-        if (item.transactionType === "IMPORT") prefix = "NK";
-        else if (item.transactionType === "EXPORT") prefix = "XK";
-        else if (item.transactionType === "ADJUSTMENT") prefix = "DC";
+        const prefixMap = { IMPORT: "NK", EXPORT: "XK", ADJUSTMENT: "DC" };
+        const prefix = prefixMap[item.transactionType] || "GD";
 
         const offset = (currentPage - 1) * rows;
-        const displayIndex = offset + index + 1;
-        const shortCode = `${prefix}-${String(displayIndex).padStart(3, "0")}`;
+        const shortCode = `${prefix}-${String(offset + index + 1).padStart(3, "0")}`;
 
         return {
           key: uniqueKey,
           shortCode,
-          transactionDate: isNaN(parsedDate?.getTime()) ? null : parsedDate,
+          transactionDate: parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : null,
           productName: item.productName || "Không xác định",
           productCode: item.productCode || item.productId?.slice(0, 8) || "-",
           transactionType: item.transactionType || "UNKNOWN",
@@ -102,7 +104,7 @@ const TransactionHistory = () => {
       const trimmedSearch = searchProduct.trim().toLowerCase();
       const filteredData = trimmedSearch
         ? normalizedData.filter(
-            (item) =>
+            item =>
               item.productName.toLowerCase().includes(trimmedSearch) ||
               item.productCode.toLowerCase().includes(trimmedSearch)
           )
@@ -110,14 +112,21 @@ const TransactionHistory = () => {
 
       setListData(filteredData);
       setTotalRecords(filteredData.length);
-    } catch (err) {
+    } catch {
       setError("Không thể tải dữ liệu. Vui lòng thử lại.");
       setListData([]);
       setTotalRecords(0);
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    currentPage,
+    rows,
+    selectedTransactionType,
+    selectedReferenceType,
+    dateRange,
+    searchProduct,
+  ]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -125,24 +134,18 @@ const TransactionHistory = () => {
       loadTransactions();
     }, 300);
     return () => clearTimeout(timer);
-  }, [
-    searchProduct,
-    selectedTransactionType,
-    selectedReferenceType,
-    dateRangeKey,
-    rows,
-  ]);
+  }, [searchProduct, selectedTransactionType, selectedReferenceType, dateRangeKey, rows, loadTransactions]);
 
   useEffect(() => {
     loadTransactions();
-  }, [currentPage]);
+  }, [currentPage, loadTransactions]);
 
   const columns = [
     {
       title: "Mã GD",
       dataIndex: "shortCode",
       sorter: (a, b) => a.shortCode.localeCompare(b.shortCode),
-      render: (text) => (
+      render: text => (
         <Link to="#" className="text-primary fw-medium small">
           {text}
         </Link>
@@ -151,9 +154,8 @@ const TransactionHistory = () => {
     {
       title: "Thời gian",
       dataIndex: "transactionDate",
-      sorter: (a, b) =>
-        new Date(a.transactionDate) - new Date(b.transactionDate),
-      render: (date) =>
+      sorter: (a, b) => new Date(a.transactionDate) - new Date(b.transactionDate),
+      render: date =>
         date && !isNaN(date.getTime())
           ? date.toLocaleString("vi-VN", {
               year: "numeric",
@@ -181,22 +183,21 @@ const TransactionHistory = () => {
       title: "Loại",
       dataIndex: "transactionType",
       sorter: (a, b) => a.transactionType.localeCompare(b.transactionType),
-      render: (type) => {
-        const badge = {
-          IMPORT: { class: "bg-success", text: "Nhập kho" },
-          EXPORT: { class: "bg-danger", text: "Xuất kho" },
-          ADJUSTMENT: { class: "bg-warning", text: "Điều chỉnh" },
-        }[type] || { class: "bg-secondary", text: type };
-        return (
-          <span className={`badge ${badge.class} small`}>{badge.text}</span>
-        );
+      render: type => {
+        const badge =
+          {
+            IMPORT: { class: "bg-success", text: "Nhập kho" },
+            EXPORT: { class: "bg-danger", text: "Xuất kho" },
+            ADJUSTMENT: { class: "bg-warning", text: "Điều chỉnh" },
+          }[type] || { class: "bg-secondary", text: type };
+        return <span className={`badge ${badge.class} small`}>{badge.text}</span>;
       },
     },
     {
       title: "Số lượng",
       dataIndex: "quantity",
       sorter: (a, b) => a.quantity - b.quantity,
-      render: (qty) => (
+      render: qty => (
         <span className={qty > 0 ? "text-success" : "text-danger"}>
           <strong>
             {qty > 0 ? "+" : ""}
@@ -208,9 +209,8 @@ const TransactionHistory = () => {
     {
       title: "Tham chiếu",
       dataIndex: "referenceType",
-      sorter: (a, b) =>
-        (a.referenceType || "").localeCompare(b.referenceType || ""),
-      render: (refType) => {
+      sorter: (a, b) => (a.referenceType || "").localeCompare(b.referenceType || ""),
+      render: refType => {
         const map = {
           PURCHASE_ORDER: "Đơn nhập",
           SALES_ORDER: "Đơn bán (POS)",
@@ -249,7 +249,7 @@ const TransactionHistory = () => {
         <div className="card mb-3 shadow-sm">
           <div className="card-body p-4">
             <form
-              onSubmit={(e) => {
+              onSubmit={e => {
                 e.preventDefault();
                 setCurrentPage(1);
                 loadTransactions();
@@ -274,9 +274,9 @@ const TransactionHistory = () => {
                 <CommonSelect
                   options={TransactionTypes}
                   value={TransactionTypes.find(
-                    (i) => i.value === selectedTransactionType
+                    i => i.value === selectedTransactionType
                   )}
-                  onChange={(s) => setSelectedTransactionType(s?.value || "")}
+                  onChange={s => setSelectedTransactionType(s?.value || "")}
                   placeholder="Chọn loại"
                   className="w-100"
                 />
@@ -289,9 +289,9 @@ const TransactionHistory = () => {
                 <CommonSelect
                   options={ReferenceTypes}
                   value={ReferenceTypes.find(
-                    (i) => i.value === selectedReferenceType
+                    i => i.value === selectedReferenceType
                   )}
-                  onChange={(s) => setSelectedReferenceType(s?.value || "")}
+                  onChange={s => setSelectedReferenceType(s?.value || "")}
                   placeholder="Chọn loại"
                   className="w-100"
                 />
@@ -306,7 +306,7 @@ const TransactionHistory = () => {
                   className="form-control"
                   placeholder="Tên hoặc mã sản phẩm"
                   value={searchProduct}
-                  onChange={(e) => {
+                  onChange={e => {
                     setSearchProduct(e.target.value);
                     setCurrentPage(1);
                   }}
@@ -350,7 +350,7 @@ const TransactionHistory = () => {
               </div>
             )}
 
-            {listData.length === 0 && !loading && !error && (
+            {!loading && !error && listData.length === 0 && (
               <div className="text-center py-5 text-muted">
                 <i className="ti ti-package fs-1 d-block mb-3" />
                 <p>Không có giao dịch nào phù hợp với bộ lọc</p>
