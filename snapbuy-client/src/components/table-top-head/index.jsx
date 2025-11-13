@@ -6,8 +6,10 @@ import { setToggleHeader } from "../../core/redux/sidebarSlice";
 
 const TableTopHead = ({
   onExportExcel,
+  onSendEmail,
   onRefresh,
   showExcel = true,
+  showMail = false,
   showRefresh = true
 }) => {
   const dispatch = useDispatch();
@@ -31,6 +33,19 @@ const TableTopHead = ({
               onClick={onExportExcel}
             >
               <img src={excel} alt="excel" />
+            </Link>
+          </li>
+        )}
+        {showMail && (
+          <li>
+            <Link
+              to="#"
+              className="pr-tooltip"
+              data-pr-tooltip="Gửi email phiếu nhập kho tới nhà cung cấp"
+              data-pr-position="top"
+              onClick={onSendEmail}
+            >
+              <i className="ti ti-mail" style={{ fontSize: '20px' }} />
             </Link>
           </li>
         )}

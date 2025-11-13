@@ -56,7 +56,7 @@ const AddPurchaseOrder = () => {
           .map((p) => ({
             value: p.productId,
             label: p.productName,
-            unitPrice: p.unitPrice || 0,
+            unitPrice: p.costPrice || 0, // Sử dụng giá nhập (costPrice) thay vì giá bán (unitPrice)
           }));
         setProducts(options);
       } catch (err) {
@@ -68,17 +68,32 @@ const AddPurchaseOrder = () => {
 
   const updateItem = (index, field, value) => {
     const newItems = [...items];
-    newItems[index] = { ...newItems[index], [field]: value };
-
+    const currentItem = newItems[index];
+    
     if (field === "product" && value) {
-      newItems[index].unitPrice = value.unitPrice;
-      newItems[index].total = newItems[index].quantity * value.unitPrice;
-    }
+      // Kiểm tra xem có phải chọn lại cùng một sản phẩm không
+      const isSameProduct = currentItem.product && currentItem.product.value === value.value;
+      
+      // Nếu chọn lại cùng sản phẩm và đơn giá đã được chỉnh sửa (khác 0 và khác giá mặc định), giữ lại giá đó
+      // Nếu chọn sản phẩm khác hoặc đơn giá là 0, map giá mới
+      if (isSameProduct && currentItem.unitPrice > 0 && currentItem.unitPrice !== value.unitPrice) {
+        // Giữ lại giá đã chỉnh sửa
+        newItems[index] = { ...currentItem, product: value };
+      } else {
+        // Map giá mới
+        newItems[index] = { ...currentItem, product: value, unitPrice: value.unitPrice };
+      }
+      // Tính lại tổng tiền
+      const priceToUse = newItems[index].unitPrice;
+      newItems[index].total = newItems[index].quantity * priceToUse;
+    } else {
+      newItems[index] = { ...currentItem, [field]: value };
 
-    if (field === "quantity" || field === "unitPrice") {
-      const qty = parseFloat(newItems[index].quantity || 0);
-      const price = parseFloat(newItems[index].unitPrice || 0);
-      newItems[index].total = qty * price;
+      if (field === "quantity" || field === "unitPrice") {
+        const qty = parseFloat(newItems[index].quantity || 0);
+        const price = parseFloat(newItems[index].unitPrice || 0);
+        newItems[index].total = qty * price;
+      }
     }
 
     setItems(newItems);
@@ -121,8 +136,8 @@ const AddPurchaseOrder = () => {
       supplierId: selectedSupplier.value,
       items: items.map((i) => ({
         productId: i.product.value,
-        quantity: i.quantity,
-        unitPrice: i.unitPrice,
+        quantity: parseFloat(i.quantity) || 0,
+        unitPrice: parseFloat(i.unitPrice) || 0,
       })),
       notes,
       taxAmount: parseFloat(taxAmount || 0),
@@ -222,10 +237,14 @@ const AddPurchaseOrder = () => {
                       </td>
                       <td>
                         <input
-                          type="text"
-                          disabled
+                          type="number"
+                          min="0"
+                          step="0.01"
                           className="form-control"
                           value={item.unitPrice}
+                          onChange={(e) =>
+                            updateItem(index, "unitPrice", e.target.value)
+                          }
                         />
                       </td>
                       <td>{item.total.toLocaleString("vi-VN")} ₫</td>

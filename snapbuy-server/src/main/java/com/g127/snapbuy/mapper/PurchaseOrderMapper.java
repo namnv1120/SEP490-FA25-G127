@@ -30,6 +30,7 @@ public interface PurchaseOrderMapper {
     @Mapping(target = "supplierName", expression = "java(supplier != null ? supplier.getSupplierName() : null)")
     @Mapping(target = "fullName", expression = "java(account != null ? account.getFullName() : null)")
     @Mapping(target = "username", expression = "java(account != null ? account.getUsername() : null)")
+    @Mapping(target = "emailSentAt", source = "po.emailSentAt")
     PurchaseOrderResponse toResponse(PurchaseOrder po,
                                      List<PurchaseOrderDetail> details,
                                      Supplier supplier,
@@ -50,6 +51,7 @@ public interface PurchaseOrderMapper {
     @Mapping(target = "notes", source = "po.notes")
     @Mapping(target = "orderDate", source = "po.orderDate")
     @Mapping(target = "receivedDate", source = "po.receivedDate")
+    @Mapping(target = "emailSentAt", source = "po.emailSentAt")
     PurchaseOrderResponse toResponseWithDetails(PurchaseOrder po,
                                                List<PurchaseOrderDetailResponse> detailResponses,
                                                Supplier supplier,
