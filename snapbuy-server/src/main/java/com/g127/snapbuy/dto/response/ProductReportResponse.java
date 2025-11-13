@@ -32,6 +32,8 @@ public class ProductReportResponse {
         private Long totalQuantitySold; // Tổng số lượng đã bán
         private String categoryName;
         private String supplierName;
+        private BigDecimal unitPrice; // Giá bán
+        private BigDecimal costPrice; // Giá nhập
     }
 }
 

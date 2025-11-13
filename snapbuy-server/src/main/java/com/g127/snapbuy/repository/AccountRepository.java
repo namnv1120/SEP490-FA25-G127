@@ -4,6 +4,7 @@ import com.g127.snapbuy.entity.Account;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,4 +34,14 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
            where r.roleId = :roleId
            """)
     long countAccountsByRoleId(@Param("roleId") UUID roleId);
+
+    @Query("""
+           select distinct a
+           from Account a
+           join a.roles r
+           where r.roleName = :roleName
+           and a.active = true
+           order by a.fullName
+           """)
+    List<Account> findByRoleName(@Param("roleName") String roleName);
 }

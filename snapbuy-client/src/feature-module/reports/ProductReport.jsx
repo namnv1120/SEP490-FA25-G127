@@ -383,9 +383,22 @@ const ProductReport = () => {
                                     sortable: true,
                                   },
                                   {
-                                    header: "Nhà cung cấp",
-                                    field: "supplierName",
+                                    header: "Giá nhập",
+                                    field: "costPrice",
+                                    body: (rowData) => {
+                                      return formatCurrency(rowData.costPrice || 0);
+                                    },
                                     sortable: true,
+                                    className: "text-start",
+                                  },
+                                  {
+                                    header: "Giá bán",
+                                    field: "unitPrice",
+                                    body: (rowData) => {
+                                      return formatCurrency(rowData.unitPrice || 0);
+                                    },
+                                    sortable: true,
+                                    className: "text-start",
                                   },
                                   {
                                     header: "Số lượng đã bán",

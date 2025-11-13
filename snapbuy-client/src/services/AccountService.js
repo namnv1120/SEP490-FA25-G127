@@ -56,8 +56,11 @@ export const getMyInfo = async () => {
 
 export const updateAccount = async (id, updatedData) => {
   try {
-    const response = await axios.put(`${REST_API_BASE_URL}/${id}`, updatedData, {
-      headers: getAuthHeader(),
+    const response = await axios.put(`${REST_API_BASE_URL}/${id}/json`, updatedData, {
+      headers: {
+        ...getAuthHeader(),
+        'Content-Type': 'application/json',
+      },
     });
     return response.data;
   } catch (error) {
@@ -112,5 +115,18 @@ export const verifyEmailOtp = async (newEmail, code) => {
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.message || 'Xác thực email thất bại');
+  }
+};
+
+export const getAccountsByRoleName = async (roleName) => {
+  try {
+    const encodedRoleName = encodeURIComponent(roleName);
+    const response = await axios.get(
+      `${REST_API_BASE_URL}/by-role/${encodedRoleName}`,
+      { headers: getAuthHeader() }
+    );
+    return response.data.result || response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch accounts by role!');
   }
 };

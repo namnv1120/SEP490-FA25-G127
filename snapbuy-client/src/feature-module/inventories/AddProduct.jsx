@@ -600,7 +600,7 @@ const AddProduct = () => {
                               />
                               <div className="image-uploads">
                                 <i className="feather icon-plus-circle plus-down-add me-0" />
-                                <h4>Add Image</h4>
+                                <h4>Thêm ảnh</h4>
                               </div>
                             </div>
                           </div>

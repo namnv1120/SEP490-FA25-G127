@@ -59,6 +59,12 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @PreAuthorize("hasRole('Quản trị viên')")
     public AccountResponse createAccount(AccountCreateRequest req) {
+        // Nếu có roles trong request, sử dụng role đầu tiên
+        if (req.getRoles() != null && !req.getRoles().isEmpty()) {
+            String roleName = req.getRoles().get(0);
+            return createWithSingleRole(req, roleName);
+        }
+        // Mặc định là "Chủ cửa hàng" nếu không có role
         return createWithSingleRole(req, "Chủ cửa hàng");
     }
 
@@ -90,8 +96,7 @@ public class AccountServiceImpl implements AccountService {
         Account acc = accountMapper.toEntity(req);
         acc.setUsername(req.getUsername().toLowerCase());
         acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
-        acc.setEmail(null);
-        acc.setPhone(null);
+        // Don't set email and phone to avoid UNIQUE constraint violation with NULL
         acc.setRoles(new LinkedHashSet<>());
 
         try {
@@ -107,15 +112,14 @@ public class AccountServiceImpl implements AccountService {
     private AccountResponse createWithSingleRole(AccountCreateRequest req, String roleName) {
         validateNewAccount(req);
 
-        Role role = roleRepository.findByRoleName(roleName)
+        Role role = roleRepository.findByRoleNameIgnoreCase(roleName)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò: " + roleName));
         ensureActive(role);
 
         Account account = accountMapper.toEntity(req);
         account.setUsername(req.getUsername().toLowerCase());
         account.setPasswordHash(passwordEncoder.encode(req.getPassword()));
-        account.setEmail(null);
-        account.setPhone(null);
+        // Don't set email and phone to avoid UNIQUE constraint violation with NULL
         account.setRoles(new LinkedHashSet<>());
 
         try {
@@ -393,8 +397,7 @@ public class AccountServiceImpl implements AccountService {
             throw new IllegalStateException("Bạn không thể xóa tài khoản của chính mình");
 
         boolean hasProtectedRole = acc.getRoles().stream()
-                .anyMatch(r -> "Quản trị viên".equalsIgnoreCase(r.getRoleName())
-                        || "Chủ cửa hàng".equalsIgnoreCase(r.getRoleName()));
+                .anyMatch(r -> "Quản trị viên".equalsIgnoreCase(r.getRoleName()));
         if (hasProtectedRole) throw new IllegalStateException("Không thể xóa tài khoản có vai trò được bảo vệ");
 
         accountRepository.delete(acc);
@@ -416,5 +419,13 @@ public class AccountServiceImpl implements AccountService {
         Account savedAccount = accountRepository.save(account);
         log.info("Toggling account {} status from {} to {}", accountId, currentActive, savedAccount.getActive());
         return accountMapper.toResponse(savedAccount);
+    }
+
+    @Override
+    public List<AccountResponse> getAccountsByRoleName(String roleName) {
+        List<Account> accounts = accountRepository.findByRoleName(roleName);
+        return accounts.stream()
+                .map(accountMapper::toResponse)
+                .collect(Collectors.toList());
     }
 }

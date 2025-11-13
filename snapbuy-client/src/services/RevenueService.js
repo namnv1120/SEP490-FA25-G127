@@ -67,3 +67,24 @@ export const getCustomRevenue = async (startDate, endDate) => {
   }
 };
 
+// Lấy báo cáo doanh thu sản phẩm
+export const getProductRevenue = async (fromDate, toDate, accountId = null) => {
+  try {
+    // Encode datetime để tránh lỗi với ký tự đặc biệt trong URL
+    const encodedFrom = encodeURIComponent(fromDate);
+    const encodedTo = encodeURIComponent(toDate);
+    let url = `http://localhost:8080/api/reports/products-revenue?from=${encodedFrom}&to=${encodedTo}`;
+    if (accountId) {
+      url += `&accountId=${accountId}`;
+    }
+    const response = await axios.get(url, getAuthHeaders());
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("Error fetching product revenue:", error);
+    console.error("From date:", fromDate);
+    console.error("To date:", toDate);
+    console.error("Account ID:", accountId);
+    throw error;
+  }
+};
+

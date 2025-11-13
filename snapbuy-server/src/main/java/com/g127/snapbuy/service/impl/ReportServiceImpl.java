@@ -19,8 +19,8 @@ public class ReportServiceImpl implements ReportService {
     private final OrderDetailRepository orderDetailRepository;
 
     @Override
-    public List<ProductRevenueReportResponse> getProductRevenue(LocalDateTime fromDate, LocalDateTime toDate) {
-        List<Object[]> rows = orderDetailRepository.getProductRevenueReport(fromDate, toDate);
+    public List<ProductRevenueReportResponse> getProductRevenue(LocalDateTime fromDate, LocalDateTime toDate, UUID accountId) {
+        List<Object[]> rows = orderDetailRepository.getProductRevenueReport(fromDate, toDate, accountId);
         List<ProductRevenueReportResponse> result = new ArrayList<>();
         for (Object[] row : rows) {
             result.add(ProductRevenueReportResponse.builder()

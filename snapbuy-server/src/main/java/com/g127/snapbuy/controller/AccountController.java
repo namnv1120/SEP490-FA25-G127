@@ -65,6 +65,15 @@ public class AccountController {
         return response;
     }
 
+    @PutMapping(value = "/{accountId}/json", consumes = {"application/json"})
+    public ApiResponse<AccountResponse> updateAccountJson(@PathVariable UUID accountId,
+                                                           @RequestBody @Valid AccountUpdateRequest req) {
+        ApiResponse<AccountResponse> response = new ApiResponse<>();
+        response.setResult(accountService.updateAccount(accountId, req));
+        response.setMessage("Cập nhật tài khoản thành công.");
+        return response;
+    }
+
     @DeleteMapping("/{accountId}")
     @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<Void> deleteAccount(@PathVariable UUID accountId) {
@@ -184,6 +193,15 @@ public class AccountController {
         emailVerificationService.verifyOtp(accountId, req);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setMessage("Xác nhận email thành công!");
+        return response;
+    }
+
+    @GetMapping("/by-role/{roleName}")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    public ApiResponse<List<AccountResponse>> getAccountsByRoleName(@PathVariable String roleName) {
+        ApiResponse<List<AccountResponse>> response = new ApiResponse<>();
+        response.setResult(accountService.getAccountsByRoleName(roleName));
+        response.setMessage("Lấy danh sách tài khoản theo vai trò thành công.");
         return response;
     }
 }

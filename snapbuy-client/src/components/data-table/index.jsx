@@ -15,7 +15,7 @@ const PrimeDataTable = ({
   footer = null,
   loading = false,
   isPaginationEnabled = true,
-  serverSidePagination = false, // Nếu true, data đã được phân trang từ server, không slice lại
+  serverSidePagination = false,
   selectionMode,
   selection,
   onSelectionChange,
@@ -99,6 +99,7 @@ const PrimeDataTable = ({
             sortable={sortable === false ? false : col.sortable !== false}
             sortField={col.sortField ? col.sortField : col.field}
             className={col.className ? col.className : ""}
+            style={col.style || {}}
           />
         ))}
       </DataTable>

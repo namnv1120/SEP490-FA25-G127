@@ -122,7 +122,6 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
             }
 
             BigDecimal discountPercent = item.getDiscount() != null ? item.getDiscount() : BigDecimal.ZERO;
-            // Tự động áp dụng khuyến mãi tốt nhất cho sản phẩm này
             BigDecimal promoPercent = promotionService.computeBestDiscountPercent(product.getProductId(), unitPrice, LocalDateTime.now());
             if (promoPercent != null && promoPercent.compareTo(discountPercent) > 0) {
                 discountPercent = promoPercent;
@@ -162,7 +161,6 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         BigDecimal grandTotal = afterDiscount.add(taxAmount);
         if (grandTotal.compareTo(BigDecimal.ZERO) < 0) grandTotal = BigDecimal.ZERO;
 
-        // Tính toán điểm: Trừ điểm đã sử dụng ngay khi tạo đơn, cộng điểm tích lũy khi thanh toán
         int pointsRedeemed = 0;
         int pointsEarned = 0;
 
@@ -180,7 +178,6 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         if (!isGuest) {
             pointsEarned = payable.divide(BigDecimal.valueOf(500), 0, RoundingMode.FLOOR).intValue();
             
-            // Trừ điểm đã sử dụng ngay khi tạo đơn
             if (pointsRedeemed > 0) {
                 int currentPoints = customer.getPoints() == null ? 0 : customer.getPoints();
                 int newPoints = Math.max(0, currentPoints - pointsRedeemed);
@@ -189,10 +186,8 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                 log.info("Tạo đơn {}: Đã trừ {} điểm từ tài khoản khách hàng (điểm còn lại: {})",
                         orderNumber, pointsRedeemed, newPoints);
             }
-            // KHÔNG cộng điểm tích lũy ở đây - sẽ cộng khi thanh toán thành công
         }
         
-        // Lưu pointsRedeemed và pointsEarned vào order (giờ đã có field trong entity)
         order.setPointsRedeemed(pointsRedeemed);
         order.setPointsEarned(pointsEarned);
         order.setDiscountAmount(billDiscountAmount);
@@ -298,17 +293,14 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                         "Hủy đơn " + order.getOrderNumber());
             }
             
-            // Trả lại điểm đã sử dụng vì điểm đã bị trừ khi tạo đơn
             Customer c = order.getCustomer();
             boolean isGuest = c == null || c.getCustomerId().toString()
                     .equals("00000000-0000-0000-0000-000000000001");
             if (!isGuest) {
                 int cur = c.getPoints() == null ? 0 : c.getPoints();
                 
-                // Lấy điểm đã sử dụng (pointsRedeemed) từ order
                 int pointsRedeemed = order.getPointsRedeemed() == null ? 0 : order.getPointsRedeemed();
                 
-                // Trả lại điểm đã sử dụng
                 if (pointsRedeemed > 0) {
                     long next = (long) cur + pointsRedeemed;
                     c.setPoints((int) next);
@@ -334,13 +326,11 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
             if (!isGuest) {
                 int cur = c.getPoints() == null ? 0 : c.getPoints();
                 
-                // Lấy điểm đã sử dụng (pointsRedeemed) từ order
                 int pointsRedeemed = order.getPointsRedeemed() == null ? 0 : order.getPointsRedeemed();
                 
-                // Trừ điểm đã tích lũy (earned) và trả lại điểm đã sử dụng (redeemed)
                 int earned = order.getTotalAmount() == null ? 0
                         : order.getTotalAmount().divide(BigDecimal.valueOf(500), 0, RoundingMode.FLOOR).intValue();
-                long next = (long) cur - Math.max(0, earned) + pointsRedeemed; // Trả lại điểm đã sử dụng
+                long next = (long) cur - Math.max(0, earned) + pointsRedeemed;
                 if (next < 0) next = 0;
                 c.setPoints((int) next);
                 customerRepository.save(c);
@@ -455,32 +445,24 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
             throw new NoSuchElementException("Không tìm thấy thanh toán cho đơn hàng");
         }
 
-        // Xử lý điểm khi thanh toán thành công
         Customer customer = order.getCustomer();
         boolean isGuest = customer == null || customer.getCustomerId().toString()
                 .equals("00000000-0000-0000-0000-000000000001");
         
         if (!isGuest) {
-            // Lấy điểm đã sử dụng và điểm sẽ tích lũy từ order
             int pointsRedeemed = order.getPointsRedeemed() == null ? 0 : order.getPointsRedeemed();
             int pointsEarned = order.getPointsEarned() == null ? 0 : order.getPointsEarned();
             
-            // Nếu pointsEarned chưa được tính (null hoặc 0), tính lại từ totalAmount
             if (pointsEarned == 0 && order.getTotalAmount() != null) {
                 pointsEarned = order.getTotalAmount().divide(BigDecimal.valueOf(500), 0, RoundingMode.FLOOR).intValue();
-                // Lưu lại vào order để dùng sau này
                 order.setPointsEarned(pointsEarned);
             }
             
-            // Trừ điểm đã sử dụng và cộng điểm tích lũy
             int currentPoints = customer.getPoints() == null ? 0 : customer.getPoints();
             long newPoints = (long) currentPoints - pointsRedeemed + pointsEarned;
             if (newPoints < 0) newPoints = 0;
             customer.setPoints((int) newPoints);
             customerRepository.save(customer);
-            
-            log.info("Đã cập nhật điểm cho khách hàng {}: trừ {} điểm, cộng {} điểm, điểm mới: {}",
-                    customer.getCustomerCode(), pointsRedeemed, pointsEarned, newPoints);
         }
 
         order.setOrderStatus("Hoàn tất");
@@ -508,9 +490,6 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
 
         orderRepository.save(order);
         paymentRepository.save(payment);
-
-        log.info("Hoàn tất thanh toán cho đơn {}, đã ghi {} lịch sử tồn kho",
-                order.getOrderNumber(), details.size());
     }
 
     private synchronized String generateOrderNumber() {

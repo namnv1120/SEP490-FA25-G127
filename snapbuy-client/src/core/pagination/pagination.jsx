@@ -8,7 +8,7 @@ const Pagination = ({ current, pageSize, total, onChange, onShowSizeChange }) =>
     <div className="d-flex align-items-center justify-content-between px-3 py-2 border-top">
       {/* Left: Hiển thị số bản ghi */}
       <div className="d-flex align-items-center">
-        <span className="me-2">Row Per Pages</span>
+        <span className="me-2">Số bản ghi trên trang</span>
         <Select
           value={pageSize}
           onChange={(value) => onShowSizeChange(1, value)}
@@ -16,10 +16,9 @@ const Pagination = ({ current, pageSize, total, onChange, onShowSizeChange }) =>
           size="small"
         >
           <Option value={10}>10</Option>
-          <Option value={20}>20</Option>
-          <Option value={30}>30</Option>
+          <Option value={20}>25</Option>
+          <Option value={30}>50</Option>
         </Select>
-        <span className="ms-2">entries</span>
       </div>
 
       {/* Right: pagination */}
@@ -33,10 +32,10 @@ const Pagination = ({ current, pageSize, total, onChange, onShowSizeChange }) =>
         size="small"
         itemRender={(page, type, originalElement) => {
           if (type === "prev") {
-            return <a className="px-2">Prev</a>;
+            return <a className="px-2">Trước</a>;
           }
           if (type === "next") {
-            return <a className="px-2">Next</a>;
+            return <a className="px-2">Sau</a>;
           }
           return originalElement;
         }}

@@ -12,6 +12,8 @@ public interface AccountMapper {
     @Mapping(target = "accountId", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
     @Mapping(target = "roles", ignore = true)
+    @Mapping(target = "email", ignore = true)
+    @Mapping(target = "phone", ignore = true)
     Account toEntity(AccountCreateRequest req);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

@@ -10,11 +10,15 @@ const ImportExcelModal = ({
   columns,
   mapExcelRow,
   templateData,
+  categoriesData = [],
+  suppliersData = [],
+  validateData = null, // Hàm validate dữ liệu, trả về { errors: [], validatedData: [] }
   title = "Thêm dữ liệu từ excel",
 }) => {
   const [fileData, setFileData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fileList, setFileList] = useState([]);
+  const [validationErrors, setValidationErrors] = useState({}); // { rowIndex: "error message" }
 
   const handleFileUpload = (file) => {
     const reader = new FileReader();
@@ -44,8 +48,33 @@ const ImportExcelModal = ({
           status: 'done',
         }]);
 
+        // Validate dữ liệu nếu có hàm validate
+        if (validateData) {
+          const validationResult = validateData(mapped);
+          if (validationResult && validationResult.errors) {
+            const errorMap = {};
+            validationResult.errors.forEach((error, index) => {
+              if (error) {
+                errorMap[index] = error;
+              }
+            });
+            setValidationErrors(errorMap);
+            const errorCount = Object.keys(errorMap).length;
+            if (errorCount > 0) {
+              message.warning(`Đã tải ${mapped.length} dòng dữ liệu. Có ${errorCount} dòng có lỗi.`);
+            } else {
+              message.success(`Đã tải ${mapped.length} dòng dữ liệu`);
+            }
+          } else {
+            setValidationErrors({});
+            message.success(`Đã tải ${mapped.length} dòng dữ liệu`);
+          }
+        } else {
+          setValidationErrors({});
+          message.success(`Đã tải ${mapped.length} dòng dữ liệu`);
+        }
+
         setFileData(mapped);
-        message.success(`Đã tải ${mapped.length} dòng dữ liệu`);
 
       } catch (err) {
         message.error("Lỗi khi đọc dữ liệu Excel. Vui lòng kiểm tra file!");
@@ -67,6 +96,12 @@ const ImportExcelModal = ({
       return message.warning("Không có dữ liệu để nhập");
     }
 
+    // Kiểm tra lỗi validation trước khi import
+    const errorCount = Object.keys(validationErrors).length;
+    if (errorCount > 0) {
+      return message.error(`Có ${errorCount} dòng có lỗi. Vui lòng sửa lỗi trước khi nhập dữ liệu.`);
+    }
+
     setLoading(true);
     try {
       await onImport(fileData);
@@ -82,13 +117,43 @@ const ImportExcelModal = ({
   const handleClose = () => {
     setFileData([]);
     setFileList([]);
+    setValidationErrors({});
     onClose();
   };
 
   const downloadTemplate = () => {
-    const ws = XLSX.utils.json_to_sheet(templateData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Template");
+
+    // Trang 1: Products template
+    const wsProducts = XLSX.utils.json_to_sheet(templateData);
+    XLSX.utils.book_append_sheet(wb, wsProducts, "Sản phẩm");
+
+    // Trang 2: Categories (nếu có)
+    if (categoriesData && categoriesData.length > 0) {
+      const categoriesSheet = categoriesData.map(cat => ({
+        "Tên danh mục": cat.categoryName || "",
+        "Mô tả": cat.description || "",
+        "Danh mục cha": cat.parentCategoryName || "",
+      }));
+      const wsCategories = XLSX.utils.json_to_sheet(categoriesSheet);
+      XLSX.utils.book_append_sheet(wb, wsCategories, "Danh mục");
+    }
+
+    // Trang 3: Suppliers (nếu có)
+    if (suppliersData && suppliersData.length > 0) {
+      const suppliersSheet = suppliersData.map(sup => ({
+        "Mã nhà cung cấp": sup.supplierCode || "",
+        "Tên nhà cung cấp": sup.supplierName || "",
+        "Số điện thoại": sup.phone || "",
+        "Email": sup.email || "",
+        "Địa chỉ": sup.address || "",
+        "Thành phố": sup.city || "",
+        "Phường/Xã": sup.ward || "",
+      }));
+      const wsSuppliers = XLSX.utils.json_to_sheet(suppliersSheet);
+      XLSX.utils.book_append_sheet(wb, wsSuppliers, "Nhà cung cấp");
+    }
+
     XLSX.writeFile(wb, `${title.replace(/\s+/g, "_").toLowerCase()}_template.xlsx`);
     message.success("Tải về mẫu thành công!");
   };
@@ -140,10 +205,28 @@ const ImportExcelModal = ({
         <div style={{ marginTop: 20 }}>
           <p style={{ marginBottom: 10, fontWeight: 500 }}>
             Tìm thấy {fileData.length} dòng dữ liệu
+            {Object.keys(validationErrors).length > 0 && (
+              <span style={{ color: '#ff4d4f', marginLeft: 10 }}>
+                (Có {Object.keys(validationErrors).length} dòng có lỗi)
+              </span>
+            )}
           </p>
+          <style>
+            {`
+              .ant-table-tbody > tr.error-row > td {
+                background-color: #fff2f0 !important;
+              }
+              .ant-table-tbody > tr.error-row:hover > td {
+                background-color: #ffece8 !important;
+              }
+            `}
+          </style>
           <Table
             columns={columns}
-            dataSource={fileData}
+            dataSource={fileData.map((row, index) => ({
+              ...row,
+              error: validationErrors[index] || null,
+            }))}
             pagination={{
               pageSize: 10,
               showTotal: (total) => `Tổng ${total} dòng`
@@ -151,6 +234,9 @@ const ImportExcelModal = ({
             size="small"
             scroll={{ x: 'max-content' }}
             bordered
+            rowClassName={(record) => {
+              return record.error ? 'error-row' : '';
+            }}
           />
         </div>
       ) : (

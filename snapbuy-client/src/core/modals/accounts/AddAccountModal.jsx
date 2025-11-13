@@ -114,9 +114,11 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
   const handleRoleChange = (e) => {
     const selected = e.value;
     setSelectedRole(selected);
+    // Lấy role name từ selected object (có thể là {value, label} hoặc string)
+    const roleName = selected?.value || selected?.label || selected;
     setFormData((prev) => ({
       ...prev,
-      roles: selected ? [selected.value] : [],
+      roles: roleName ? [roleName] : [],
     }));
     setErrors((prev) => ({ ...prev, roles: "" }));
   };
@@ -130,12 +132,17 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
     try {
       setLoading(true);
 
+      // Đảm bảo roles là array và không có giá trị null/undefined
+      const rolesArray = formData.roles && formData.roles.length > 0
+        ? formData.roles.filter(r => r != null && r !== '')
+        : [];
+
       const newAccount = {
         fullName: formData.fullName.trim(),
         username: formData.username.trim(),
         password: formData.password,
         confirmPassword: formData.confirmPassword,
-        roles: formData.roles,
+        roles: rolesArray,
         active: true,
       };
 

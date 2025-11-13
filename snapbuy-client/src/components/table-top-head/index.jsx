@@ -28,7 +28,12 @@ const TableTopHead = ({
               className="pr-tooltip"
               data-pr-tooltip="Xuất Excel"
               data-pr-position="top"
-              onClick={onExportExcel}
+              onClick={(e) => {
+                e.preventDefault();
+                if (onExportExcel) {
+                  onExportExcel(e);
+                }
+              }}
             >
               <img src={excel} alt="excel" />
             </Link>

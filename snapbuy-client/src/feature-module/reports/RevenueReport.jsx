@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { message, DatePicker, ConfigProvider } from "antd";
 import viVN from "antd/locale/vi_VN";
 import dayjs from "dayjs";
@@ -10,8 +10,14 @@ import {
   getMonthlyRevenue,
   getYearlyRevenue,
   getCustomRevenue,
+  getProductRevenue,
 } from "../../services/RevenueService";
+import { getAccountsByRoleName } from "../../services/AccountService";
+import { exportToExcel } from "../../utils/excelUtils";
+import ExcelJS from "exceljs";
 import CommonFooter from "../../components/footer/CommonFooter";
+import PrimeDataTable from "../../components/data-table";
+import TableTopHead from "../../components/table-top-head";
 
 dayjs.locale("vi");
 
@@ -21,6 +27,7 @@ const RevenueReport = () => {
   const [loading, setLoading] = useState(false);
   const [revenueData, setRevenueData] = useState(null);
   const [detailedData, setDetailedData] = useState([]);
+  const [productRevenueData, setProductRevenueData] = useState([]);
   const [periodType, setPeriodType] = useState("daily");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -29,12 +36,59 @@ const RevenueReport = () => {
     dayjs().subtract(7, "day"),
     dayjs(),
   ]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rows, setRows] = useState(10);
+  const [selectedAccountId, setSelectedAccountId] = useState(null);
+  const [salesAccounts, setSalesAccounts] = useState([]);
+  const [savedStartDateTime, setSavedStartDateTime] = useState(null);
+  const [savedEndDateTime, setSavedEndDateTime] = useState(null);
+
+  useEffect(() => {
+    const loadSalesAccounts = async () => {
+      try {
+        const accounts = await getAccountsByRoleName("Nhân viên bán hàng");
+        setSalesAccounts(accounts || []);
+      } catch (error) {
+        console.error("Lỗi khi tải danh sách nhân viên bán hàng:", error);
+      }
+    };
+    loadSalesAccounts();
+  }, []);
+
+  const fetchProductRevenueData = async (startDateTime, endDateTime, accountId) => {
+    try {
+      const fromDateStr = startDateTime.toISOString();
+      const toDateStr = endDateTime.toISOString();
+      console.log("Fetching product revenue from:", fromDateStr, "to:", toDateStr, "accountId:", accountId);
+      const productRevenue = await getProductRevenue(fromDateStr, toDateStr, accountId);
+      console.log("Product revenue data received:", productRevenue);
+      setProductRevenueData(productRevenue || []);
+    } catch (productError) {
+      console.error("Lỗi khi tải dữ liệu doanh thu sản phẩm:", productError);
+      console.error("Error details:", productError.response?.data || productError.message);
+      message.error(
+        productError.response?.data?.message ||
+        "Lỗi khi tải dữ liệu doanh thu sản phẩm. Vui lòng thử lại."
+      );
+      setProductRevenueData([]);
+    }
+  };
+
+  // Auto fetch product revenue when account filter changes (if data already loaded)
+  useEffect(() => {
+    if (savedStartDateTime && savedEndDateTime && revenueData) {
+      fetchProductRevenueData(savedStartDateTime, savedEndDateTime, selectedAccountId);
+    }
+  }, [selectedAccountId]);
 
   const fetchRevenueData = async () => {
     try {
       setLoading(true);
       let data = null;
       let detailed = [];
+
+      let startDateTime = null;
+      let endDateTime = null;
 
       switch (periodType) {
         case "daily":
@@ -43,11 +97,18 @@ const RevenueReport = () => {
           const day = String(selectedDate.getDate()).padStart(2, "0");
           const dateStr = `${year}-${month}-${day}`;
           data = await getDailyRevenue(dateStr);
+          startDateTime = new Date(selectedDate);
+          startDateTime.setHours(0, 0, 0, 0);
+          endDateTime = new Date(selectedDate);
+          endDateTime.setHours(23, 59, 59, 999);
           break;
         case "monthly":
           data = await getMonthlyRevenue(selectedYear, selectedMonth);
-
+          startDateTime = new Date(selectedYear, selectedMonth - 1, 1);
+          startDateTime.setHours(0, 0, 0, 0);
           const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
+          endDateTime = new Date(selectedYear, selectedMonth - 1, daysInMonth);
+          endDateTime.setHours(23, 59, 59, 999);
           const dailyPromises = [];
           for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(selectedYear, selectedMonth - 1, day);
@@ -73,7 +134,10 @@ const RevenueReport = () => {
           break;
         case "yearly":
           data = await getYearlyRevenue(selectedYear);
-
+          startDateTime = new Date(selectedYear, 0, 1);
+          startDateTime.setHours(0, 0, 0, 0);
+          endDateTime = new Date(selectedYear, 11, 31);
+          endDateTime.setHours(23, 59, 59, 999);
           const monthlyPromises = [];
           for (let month = 1; month <= 12; month++) {
             monthlyPromises.push(
@@ -117,6 +181,10 @@ const RevenueReport = () => {
 
           const startDate = dateRange[0].toDate();
           const endDate = dateRange[1].toDate();
+          startDateTime = new Date(startDate);
+          startDateTime.setHours(0, 0, 0, 0);
+          endDateTime = new Date(endDate);
+          endDateTime.setHours(23, 59, 59, 999);
           const customDailyPromises = [];
           const currentDate = new Date(startDate);
 
@@ -156,6 +224,18 @@ const RevenueReport = () => {
 
       setRevenueData(data);
       setDetailedData(detailed);
+      setCurrentPage(1);
+
+      // Save date range for later use when filter changes
+      if (startDateTime && endDateTime) {
+        setSavedStartDateTime(startDateTime);
+        setSavedEndDateTime(endDateTime);
+      }
+
+      // Fetch product revenue data
+      if (startDateTime && endDateTime) {
+        await fetchProductRevenueData(startDateTime, endDateTime, selectedAccountId);
+      }
     } catch (error) {
       console.error("Lỗi khi tải dữ liệu doanh thu:", error);
       message.error(
@@ -164,6 +244,7 @@ const RevenueReport = () => {
       );
       setRevenueData(null);
       setDetailedData([]);
+      setProductRevenueData([]);
     } finally {
       setLoading(false);
     }
@@ -175,6 +256,108 @@ const RevenueReport = () => {
       style: "currency",
       currency: "VND",
     }).format(amount);
+  };
+
+  const handleExportExcel = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    if (!productRevenueData || productRevenueData.length === 0) {
+      message.warning("Không có dữ liệu sản phẩm để xuất Excel!");
+      return;
+    }
+
+    try {
+      // Tạo workbook mới
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Danh sách sản phẩm");
+
+      // Định nghĩa headers
+      const headers = ["STT", "Tên sản phẩm", "Giá bán (VNĐ)", "Số lượng", "Tổng tiền (VNĐ)"];
+      const centerColumns = ["STT", "Giá bán (VNĐ)", "Số lượng", "Tổng tiền (VNĐ)"];
+
+      // Thêm header row
+      const headerRow = worksheet.addRow(headers);
+      headerRow.font = { bold: true };
+      headerRow.alignment = { horizontal: "center", vertical: "middle" };
+      headerRow.height = 20;
+
+      // Thêm dữ liệu
+      productRevenueData.forEach((item, index) => {
+        const sellingPrice = item.totalSold > 0
+          ? item.totalRevenue / item.totalSold
+          : 0;
+
+        const row = worksheet.addRow([
+          index + 1,
+          item.productName || "",
+          new Intl.NumberFormat("vi-VN").format(sellingPrice),
+          item.totalSold || 0,
+          new Intl.NumberFormat("vi-VN").format(item.totalRevenue || 0),
+        ]);
+
+        // Căn giữa cho các cột số
+        row.getCell(1).alignment = { horizontal: "center", vertical: "middle" }; // STT
+        row.getCell(3).alignment = { horizontal: "center", vertical: "middle" }; // Giá bán
+        row.getCell(4).alignment = { horizontal: "center", vertical: "middle" }; // Số lượng
+        row.getCell(5).alignment = { horizontal: "center", vertical: "middle" }; // Tổng tiền
+      });
+
+      // Tính tổng tiền
+      const totalRevenue = productRevenueData.reduce(
+        (sum, item) => sum + (item.totalRevenue || 0),
+        0
+      );
+
+      // Thêm dòng tổng tiền
+      const accountName = selectedAccountId
+        ? salesAccounts.find((acc) => acc.id === selectedAccountId)?.fullName || ""
+        : "Tất cả nhân viên";
+
+      const totalRow = worksheet.addRow([
+        "",
+        `Tổng tiền của ${accountName}:`,
+        "",
+        "",
+        new Intl.NumberFormat("vi-VN").format(totalRevenue),
+      ]);
+
+      // Format dòng tổng
+      totalRow.font = { bold: true };
+      totalRow.getCell(2).alignment = { horizontal: "right", vertical: "middle" };
+      totalRow.getCell(5).alignment = { horizontal: "center", vertical: "middle" };
+
+      // Set column widths
+      worksheet.columns = [
+        { width: 10 }, // STT
+        { width: 40 }, // Tên sản phẩm
+        { width: 20 }, // Giá bán
+        { width: 15 }, // Số lượng
+        { width: 20 }, // Tổng tiền
+      ];
+
+      // Tạo file và download
+      const periodLabel = getPeriodLabel();
+      const safeAccountName = accountName.replace(/[^a-zA-Z0-9_]/g, "_");
+      const safePeriodLabel = periodLabel.replace(/[^a-zA-Z0-9_]/g, "_");
+      const filename = `Bao_cao_san_pham_${safePeriodLabel}_${safeAccountName}`;
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${filename}.xlsx`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+
+      message.success("Xuất Excel thành công!");
+    } catch (error) {
+      console.error("Lỗi khi xuất Excel:", error);
+      message.error("Lỗi khi xuất Excel. Vui lòng thử lại.");
+    }
   };
 
   const formatDate = (dateString) => {
@@ -518,6 +701,7 @@ const RevenueReport = () => {
                         setPeriodType(e.target.value);
                         setRevenueData(null);
                         setDetailedData([]);
+                        setProductRevenueData([]);
                       }}
                     >
                       <option value="daily">Theo ngày</option>
@@ -540,6 +724,7 @@ const RevenueReport = () => {
                           setSelectedDate(date);
                           setRevenueData(null);
                           setDetailedData([]);
+                          setProductRevenueData([]);
                         }}
                         dateFormat="dd/mm/yyyy"
                       />
@@ -559,6 +744,7 @@ const RevenueReport = () => {
                             setSelectedMonth(parseInt(e.target.value));
                             setRevenueData(null);
                             setDetailedData([]);
+                            setProductRevenueData([]);
                           }}
                         >
                           {Array.from({ length: 12 }, (_, i) => i + 1).map(
@@ -581,6 +767,7 @@ const RevenueReport = () => {
                             setSelectedYear(parseInt(e.target.value));
                             setRevenueData(null);
                             setDetailedData([]);
+                            setProductRevenueData([]);
                           }}
                         >
                           {Array.from(
@@ -607,6 +794,7 @@ const RevenueReport = () => {
                         onChange={(e) => {
                           setSelectedYear(parseInt(e.target.value));
                           setRevenueData(null);
+                          setProductRevenueData([]);
                         }}
                       >
                         {Array.from(
@@ -632,6 +820,7 @@ const RevenueReport = () => {
                           setDateRange(dates);
                           setRevenueData(null);
                           setDetailedData([]);
+                          setProductRevenueData([]);
                         }}
                         format="DD/MM/YYYY"
                         style={{ width: "100%" }}
@@ -853,78 +1042,116 @@ const RevenueReport = () => {
 
                     <div className="row mt-4">
                       <div className="col-lg-12">
-                        <div className="table-responsive">
-                          <table className="table table-bordered">
-                            <thead>
-                              <tr>
-                                <th>Thông tin</th>
-                                <th>Giá trị</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr>
-                                <td>
-                                  <strong>Kỳ báo cáo</strong>
-                                </td>
-                                <td>{revenueData.period || "N/A"}</td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <strong>Ngày bắt đầu</strong>
-                                </td>
-                                <td>
-                                  {revenueData.startDate
-                                    ? formatDate(revenueData.startDate)
-                                    : "N/A"}
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <strong>Ngày kết thúc</strong>
-                                </td>
-                                <td>
-                                  {revenueData.endDate
-                                    ? formatDate(revenueData.endDate)
-                                    : "N/A"}
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <strong>Tổng doanh thu</strong>
-                                </td>
-                                <td>
-                                  <strong className="text-primary">
-                                    {formatCurrency(revenueData.totalRevenue)}
-                                  </strong>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td>
-                                  <strong>Số lượng đơn hàng</strong>
-                                </td>
-                                <td>
-                                  <strong className="text-success">
-                                    {revenueData.orderCount || 0} đơn
-                                  </strong>
-                                </td>
-                              </tr>
-                              {revenueData.orderCount > 0 && (
-                                <tr>
-                                  <td>
-                                    <strong>Doanh thu trung bình/đơn</strong>
-                                  </td>
-                                  <td>
-                                    <strong className="text-info">
-                                      {formatCurrency(
-                                        revenueData.totalRevenue /
-                                        revenueData.orderCount
-                                      )}
-                                    </strong>
-                                  </td>
-                                </tr>
-                              )}
-                            </tbody>
-                          </table>
+                        <div className="card">
+                          <div className="card-header">
+                            <div className="d-flex justify-content-between align-items-center">
+                              <h5 className="card-title mb-0">Danh sách sản phẩm đã bán</h5>
+                              <div className="d-flex align-items-center gap-3">
+                                {productRevenueData && productRevenueData.length > 0 && (
+                                  <TableTopHead
+                                    onExportExcel={handleExportExcel}
+                                    showRefresh={false}
+                                  />
+                                )}
+                                <div className="form-group mb-0" style={{ minWidth: "250px" }}>
+                                  <select
+                                    className="form-select"
+                                    value={selectedAccountId || ""}
+                                    onChange={(e) => {
+                                      const accountId = e.target.value || null;
+                                      setSelectedAccountId(accountId);
+                                      setCurrentPage(1);
+                                    }}
+                                  >
+                                    <option value="">Tất cả nhân viên</option>
+                                    {salesAccounts.map((account) => (
+                                      <option key={account.id} value={account.id}>
+                                        {account.fullName}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="card-body">
+                            {selectedAccountId && productRevenueData.length > 0 && (
+                              <div className="alert alert-info mb-3">
+                                <strong>Tổng tiền của nhân viên: </strong>
+                                {formatCurrency(
+                                  productRevenueData.reduce(
+                                    (sum, item) => sum + (item.totalRevenue || 0),
+                                    0
+                                  )
+                                )}
+                              </div>
+                            )}
+                            {productRevenueData && Array.isArray(productRevenueData) && productRevenueData.length > 0 ? (
+                              <PrimeDataTable
+                                column={[
+                                  {
+                                    header: "STT",
+                                    field: "index",
+                                    body: (rowData, { rowIndex }) => {
+                                      return (currentPage - 1) * rows + rowIndex + 1;
+                                    },
+                                    sortable: false,
+                                    className: "text-start",
+                                  },
+                                  {
+                                    header: "Tên sản phẩm",
+                                    field: "productName",
+                                    sortable: true,
+                                  },
+                                  {
+                                    header: "Giá bán",
+                                    field: "sellingPrice",
+                                    body: (rowData) => {
+                                      const sellingPrice = rowData.totalSold > 0
+                                        ? rowData.totalRevenue / rowData.totalSold
+                                        : 0;
+                                      return formatCurrency(sellingPrice);
+                                    },
+                                    sortable: false,
+                                    className: "text-start",
+                                  },
+                                  {
+                                    header: "Số lượng",
+                                    field: "totalSold",
+                                    body: (rowData) => {
+                                      return new Intl.NumberFormat("vi-VN").format(
+                                        rowData.totalSold || 0
+                                      );
+                                    },
+                                    sortable: true,
+                                    className: "text-start",
+                                  },
+                                  {
+                                    header: "Tổng tiền",
+                                    field: "totalRevenue",
+                                    body: (rowData) => {
+                                      return formatCurrency(rowData.totalRevenue || 0
+                                      );
+                                    },
+                                    sortable: true,
+                                    className: "text-start",
+                                  },
+                                ]}
+                                data={productRevenueData || []}
+                                totalRecords={productRevenueData?.length || 0}
+                                currentPage={currentPage}
+                                setCurrentPage={setCurrentPage}
+                                rows={rows}
+                                setRows={setRows}
+                                loading={loading}
+                                dataKey="productId"
+                              />
+                            ) : (
+                              <div className="text-center text-muted py-4">
+                                <p>Không có sản phẩm nào được bán trong khoảng thời gian đã chọn.</p>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>

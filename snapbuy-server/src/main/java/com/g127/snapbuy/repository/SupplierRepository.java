@@ -15,6 +15,8 @@ import java.util.UUID;
 @Repository
 public interface SupplierRepository extends JpaRepository<Supplier, UUID> {
     Optional<Supplier> findBySupplierNameIgnoreCase(String supplierName);
+    Optional<Supplier> findBySupplierCodeIgnoreCase(String supplierCode);
+    boolean existsBySupplierCodeIgnoreCase(String supplierCode);
 
     @Query(value = """
             SELECT COUNT(DISTINCT s.supplier_id)

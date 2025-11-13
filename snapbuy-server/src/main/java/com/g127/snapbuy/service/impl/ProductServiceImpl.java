@@ -312,37 +312,291 @@ public class ProductServiceImpl implements ProductService {
             int rowNumber = i + 1;
 
             try {
-                if (productRepository.existsByProductCode(request.getProductCode())) {
-                    String error = String.format("Row %d: Product code '%s' already exists",
-                            rowNumber, request.getProductCode());
+                // Validate Product Code
+                String productCode = request.getProductCode() != null ? request.getProductCode().trim() : "";
+                if (productCode.isEmpty()) {
+                    String error = String.format("Row %d: Mã sản phẩm không được để trống", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+                if (productCode.length() < 3 || productCode.length() > 10) {
+                    String error = String.format("Row %d: Mã sản phẩm phải từ 3 đến 10 ký tự", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+                if (!productCode.matches("^[a-zA-Z0-9_-]+$")) {
+                    String error = String.format("Row %d: Mã sản phẩm chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+                if (productRepository.existsByProductCode(productCode)) {
+                    String error = String.format("Row %d: Mã sản phẩm '%s' đã tồn tại", rowNumber, productCode);
                     log.warn("⚠️ {}", error);
                     errors.add(error);
                     continue;
                 }
 
-                Category category = categoryRepository.findByCategoryNameIgnoreCase(request.getCategoryName())
-                        .orElseThrow(() -> {
-                            String error = String.format("Row %d: Category '%s' not found",
-                                    rowNumber, request.getCategoryName());
-                            return new RuntimeException(error);
+                // Validate Product Name
+                String productName = request.getProductName() != null ? request.getProductName().trim() : "";
+                if (productName.isEmpty()) {
+                    String error = String.format("Row %d: Tên sản phẩm không được để trống", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+                if (productName.length() < 3 || productName.length() > 100) {
+                    String error = String.format("Row %d: Tên sản phẩm phải từ 3 đến 100 ký tự", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+
+                // Validate Category Name
+                String categoryName = request.getCategoryName() != null ? request.getCategoryName().trim() : "";
+                if (categoryName.isEmpty()) {
+                    String error = String.format("Row %d: Tên danh mục không được để trống", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+
+                // Validate Supplier Code
+                String supplierCode = request.getSupplierCode() != null ? request.getSupplierCode().trim() : "";
+                if (supplierCode.isEmpty()) {
+                    String error = String.format("Row %d: Mã nhà cung cấp không được để trống", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+                if (supplierCode.length() < 3 || supplierCode.length() > 10) {
+                    String error = String.format("Row %d: Mã nhà cung cấp phải từ 3 đến 10 ký tự", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+                if (!supplierCode.matches("^[a-zA-Z0-9_-]+$")) {
+                    String error = String.format("Row %d: Mã nhà cung cấp chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+
+                // Validate Supplier Name
+                String supplierName = request.getSupplierName() != null ? request.getSupplierName().trim() : "";
+                if (supplierName.isEmpty()) {
+                    String error = String.format("Row %d: Tên nhà cung cấp không được để trống", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+                if (supplierName.length() < 3 || supplierName.length() > 100) {
+                    String error = String.format("Row %d: Tên nhà cung cấp phải từ 3 đến 100 ký tự", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+
+                // Validate Unit
+                if (request.getUnit() != null && request.getUnit().trim().length() > 10) {
+                    String error = String.format("Row %d: Đơn vị không được quá 10 ký tự", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+
+                // Validate Dimensions
+                if (request.getDimensions() != null && request.getDimensions().trim().length() > 30) {
+                    String error = String.format("Row %d: Kích thước không được quá 30 ký tự", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+
+                // Validate Barcode
+                if (request.getBarcode() != null && !request.getBarcode().trim().isEmpty()) {
+                    String barcode = request.getBarcode().trim();
+                    if (barcode.length() > 50) {
+                        String error = String.format("Row %d: Barcode không được quá 50 ký tự", rowNumber);
+                        errors.add(error);
+                        continue;
+                    }
+                    if (!barcode.matches("^[a-zA-Z0-9]*$")) {
+                        String error = String.format("Row %d: Barcode chỉ được chứa chữ và số", rowNumber);
+                        errors.add(error);
+                        continue;
+                    }
+                }
+
+                // Tìm hoặc tạo Category
+                Category category = categoryRepository.findByCategoryNameIgnoreCase(categoryName)
+                        .orElseGet(() -> {
+                            log.info("Creating new category: {}", categoryName);
+                            Category newCategory = new Category();
+                            newCategory.setCategoryName(categoryName);
+                            newCategory.setDescription("Tự động tạo từ import");
+                            newCategory.setActive(true);
+                            newCategory.setCreatedDate(LocalDateTime.now());
+                            newCategory.setUpdatedDate(LocalDateTime.now());
+                            return categoryRepository.save(newCategory);
                         });
 
-                Supplier supplier = supplierRepository.findBySupplierNameIgnoreCase(request.getSupplierName())
-                        .orElseThrow(() -> {
-                            String error = String.format("Row %d: Supplier '%s' not found",
-                                    rowNumber, request.getSupplierName());
-                            return new RuntimeException(error);
-                        });
+                // Kiểm tra category có con hay không
+                List<Category> childCategories = categoryRepository.findByParentCategoryId(category.getCategoryId());
+                boolean hasChildren = childCategories != null && !childCategories.isEmpty();
+                
+                // Nếu category có con, bắt buộc phải dùng category con
+                if (hasChildren) {
+                    String subCategoryName = request.getSubCategoryName() != null ? request.getSubCategoryName().trim() : "";
+                    if (subCategoryName.isEmpty()) {
+                        String error = String.format("Row %d: Danh mục '%s' đã có danh mục con. Bắt buộc phải nhập danh mục con, không được dùng danh mục cha", 
+                                rowNumber, categoryName);
+                        errors.add(error);
+                        continue;
+                    }
+                    
+                    // Lưu categoryId vào biến final để sử dụng trong lambda
+                    final UUID parentCategoryId = category.getCategoryId();
+                    
+                    // Tìm hoặc tạo subcategory
+                    Category subCategory = categoryRepository.findByCategoryNameIgnoreCase(subCategoryName)
+                            .orElseGet(() -> {
+                                log.info("Creating new subcategory: {} under category: {}", 
+                                        subCategoryName, categoryName);
+                                Category newSubCategory = new Category();
+                                newSubCategory.setCategoryName(subCategoryName);
+                                newSubCategory.setDescription("Tự động tạo từ import");
+                                newSubCategory.setParentCategoryId(parentCategoryId);
+                                newSubCategory.setActive(true);
+                                newSubCategory.setCreatedDate(LocalDateTime.now());
+                                newSubCategory.setUpdatedDate(LocalDateTime.now());
+                                return categoryRepository.save(newSubCategory);
+                            });
+                    
+                    // Kiểm tra subcategory có phải con của category không
+                    if (subCategory.getParentCategoryId() == null || 
+                        !subCategory.getParentCategoryId().equals(category.getCategoryId())) {
+                        String error = String.format("Row %d: Danh mục con '%s' không thuộc về danh mục '%s'", 
+                                rowNumber, subCategoryName, categoryName);
+                        errors.add(error);
+                        continue;
+                    }
+                    
+                    category = subCategory; // Sử dụng subcategory làm category cho product
+                } else {
+                    // Nếu category không có con, kiểm tra xem có nhập subCategoryName không
+                    // Nếu có thì validate subCategoryName phải thuộc về category này
+                    String subCategoryName = request.getSubCategoryName() != null ? request.getSubCategoryName().trim() : "";
+                    if (!subCategoryName.isEmpty()) {
+                        Category subCategory = categoryRepository.findByCategoryNameIgnoreCase(subCategoryName)
+                                .orElse(null);
+                        if (subCategory != null) {
+                            if (subCategory.getParentCategoryId() == null || 
+                                !subCategory.getParentCategoryId().equals(category.getCategoryId())) {
+                                String error = String.format("Row %d: Danh mục con '%s' không thuộc về danh mục '%s'", 
+                                        rowNumber, subCategoryName, categoryName);
+                                errors.add(error);
+                                continue;
+                            }
+                            category = subCategory;
+                        } else {
+                            // Tạo subcategory mới
+                            Category newSubCategory = new Category();
+                            newSubCategory.setCategoryName(subCategoryName);
+                            newSubCategory.setDescription("Tự động tạo từ import");
+                            newSubCategory.setParentCategoryId(category.getCategoryId());
+                            newSubCategory.setActive(true);
+                            newSubCategory.setCreatedDate(LocalDateTime.now());
+                            newSubCategory.setUpdatedDate(LocalDateTime.now());
+                            category = categoryRepository.save(newSubCategory);
+                        }
+                    }
+                }
+
+                // Validate và tìm hoặc tạo Supplier
+                Supplier supplier = null;
+                String trimmedCode = (request.getSupplierCode() != null && !request.getSupplierCode().trim().isEmpty()) 
+                        ? request.getSupplierCode().trim() : null;
+                String trimmedName = (request.getSupplierName() != null && !request.getSupplierName().trim().isEmpty()) 
+                        ? request.getSupplierName().trim() : null;
+                
+                if (trimmedCode == null || trimmedName == null) {
+                    String error = String.format("Row %d: Supplier code and name are required", rowNumber);
+                    log.warn("⚠️ {}", error);
+                    errors.add(error);
+                    continue;
+                }
+                
+                // Kiểm tra mã NCC có tồn tại không
+                Supplier supplierByCode = supplierRepository.findBySupplierCodeIgnoreCase(trimmedCode)
+                        .orElse(null);
+                
+                // Kiểm tra tên NCC có tồn tại không
+                Supplier supplierByName = supplierRepository.findBySupplierNameIgnoreCase(trimmedName)
+                        .orElse(null);
+                
+                boolean codeExists = supplierByCode != null;
+                boolean nameExists = supplierByName != null;
+                
+                // Logic validation theo yêu cầu:
+                // 1. Nếu mã và tên đều mới → tạo mới
+                // 2. Nếu mã đã có nhưng tên khác → báo lỗi
+                // 3. Nếu mã mới nhưng tên đã có → báo lỗi
+                // 4. Nếu mã và tên đều đã có và khớp → sử dụng supplier đó
+                
+                if (codeExists && nameExists) {
+                    // Cả mã và tên đều đã có
+                    if (supplierByCode.getSupplierId().equals(supplierByName.getSupplierId())) {
+                        // Mã và tên khớp với nhau (cùng một supplier)
+                        supplier = supplierByCode;
+                        log.info("Found existing supplier: {} ({})", supplier.getSupplierName(), supplier.getSupplierCode());
+                    } else {
+                        // Mã và tên không khớp (mã thuộc supplier khác, tên thuộc supplier khác)
+                        String error = String.format("Row %d: Mã nhà cung cấp '%s' và tên nhà cung cấp '%s' không khớp. " +
+                                "Mã này thuộc về nhà cung cấp '%s', còn tên này thuộc về nhà cung cấp có mã '%s'",
+                                rowNumber, trimmedCode, trimmedName, 
+                                supplierByCode.getSupplierName(), supplierByName.getSupplierCode());
+                        log.warn("⚠️ {}", error);
+                        errors.add(error);
+                        continue;
+                    }
+                } else if (codeExists && !nameExists) {
+                    // Mã đã có nhưng tên mới → báo lỗi
+                    String error = String.format("Row %d: Mã nhà cung cấp '%s' đã tồn tại và thuộc về nhà cung cấp '%s', " +
+                            "nhưng tên nhà cung cấp '%s' không khớp",
+                            rowNumber, trimmedCode, supplierByCode.getSupplierName(), trimmedName);
+                    log.warn("⚠️ {}", error);
+                    errors.add(error);
+                    continue;
+                } else if (!codeExists && nameExists) {
+                    // Mã mới nhưng tên đã có → báo lỗi
+                    String error = String.format("Row %d: Tên nhà cung cấp '%s' đã tồn tại và thuộc về nhà cung cấp có mã '%s', " +
+                            "nhưng mã nhà cung cấp '%s' không khớp",
+                            rowNumber, trimmedName, supplierByName.getSupplierCode(), trimmedCode);
+                    log.warn("⚠️ {}", error);
+                    errors.add(error);
+                    continue;
+                } else {
+                    // Cả mã và tên đều mới → tạo mới
+                    log.info("Creating new supplier: {} (code: {})", trimmedName, trimmedCode);
+                    Supplier newSupplier = new Supplier();
+                    newSupplier.setSupplierCode(trimmedCode);
+                    newSupplier.setSupplierName(trimmedName);
+                    newSupplier.setActive(true);
+                    newSupplier.setCreatedDate(LocalDateTime.now());
+                    newSupplier.setUpdatedDate(LocalDateTime.now());
+                    supplier = supplierRepository.save(newSupplier);
+                    log.info("Created new supplier: {} (code: {})", supplier.getSupplierName(), supplier.getSupplierCode());
+                }
 
                 Product product = new Product();
-                product.setProductCode(request.getProductCode());
-                product.setProductName(request.getProductName());
+                product.setProductCode(productCode);
+                product.setProductName(productName);
                 product.setDescription(request.getDescription());
                 product.setCategory(category);
                 product.setSupplier(supplier);
-                product.setUnit(request.getUnit());
-                product.setDimensions(request.getDimensions());
-                product.setImageUrl(request.getImageUrl());
+                product.setUnit(request.getUnit() != null ? request.getUnit().trim() : null);
+                product.setDimensions(request.getDimensions() != null ? request.getDimensions().trim() : null);
+                // Set barcode thay vì imageUrl
+                if (request.getBarcode() != null && !request.getBarcode().trim().isEmpty()) {
+                    String barcode = request.getBarcode().trim();
+                    // Kiểm tra barcode có trùng không
+                    if (productRepository.existsByBarcode(barcode)) {
+                        String error = String.format("Row %d: Barcode '%s' đã tồn tại", rowNumber, barcode);
+                        errors.add(error);
+                        continue;
+                    }
+                    product.setBarcode(barcode);
+                }
                 product.setCreatedDate(LocalDateTime.now());
                 product.setUpdatedDate(LocalDateTime.now());
 

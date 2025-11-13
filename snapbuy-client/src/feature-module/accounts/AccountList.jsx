@@ -4,8 +4,10 @@ import AddAccount from "../../core/modals/accounts/AddAccountModal";
 import EditAccount from "../../core/modals/accounts/EditAccountModal";
 import TableTopHead from "../../components/table-top-head";
 import Table from "../../core/pagination/datatable";
-import { getAllAccounts, toggleAccountStatus } from "../../services/AccountService";
+import DeleteModal from "../../components/delete-modal";
+import { getAllAccounts, toggleAccountStatus, deleteAccount } from "../../services/AccountService";
 import { message } from "antd";
+import { Modal } from "bootstrap";
 
 const AccountList = () => {
   const [dataSource, setDataSource] = useState([]);
@@ -14,6 +16,7 @@ const AccountList = () => {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState(null);
 
   useEffect(() => {
     fetchAccounts();
@@ -45,6 +48,51 @@ const AccountList = () => {
       console.error("❌ Lỗi khi chuyển đổi trạng thái tài khoản:", err);
       message.error(err.response?.data?.message || "Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại.");
     }
+  };
+
+  const handleDeleteClick = (account) => {
+    setAccountToDelete(account);
+    setTimeout(() => {
+      const modalElement = document.getElementById("delete-modal");
+      if (modalElement) {
+        const modal = new Modal(modalElement);
+        modal.show();
+      } else {
+        console.error("❌ Không tìm thấy phần tử modal xoá.");
+      }
+    }, 0);
+  };
+
+  const handleDeleteConfirm = async (accountId) => {
+    try {
+      await deleteAccount(accountId);
+
+      const modalElement = document.getElementById("delete-modal");
+      const modal = Modal.getInstance(modalElement);
+
+      if (modal) {
+        modal.hide();
+      }
+
+      setTimeout(() => {
+        document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+        document.body.classList.remove("modal-open");
+        document.body.style.removeProperty("overflow");
+        document.body.style.removeProperty("padding-right");
+      }, 0);
+
+      await fetchAccounts();
+      message.success("Tài khoản đã được xoá thành công!");
+    } catch (err) {
+      console.error("❌ Lỗi khi xoá tài khoản:", err);
+      message.error(err.response?.data?.message || "Lỗi khi xoá tài khoản. Vui lòng thử lại.");
+    } finally {
+      setAccountToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setAccountToDelete(null);
   };
 
   const columns = [
@@ -127,9 +175,10 @@ const AccountList = () => {
             <Link
               className="confirm-text p-2"
               to="#"
-              onClick={() => setSelectedAccountId(record.id)}
-              data-bs-toggle="modal"
-              data-bs-target="#delete-modal"
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteClick(record);
+              }}
             >
               <i data-feather="trash-2" className="feather-trash-2"></i>
             </Link>
@@ -218,6 +267,12 @@ const AccountList = () => {
         }}
       />
 
+      <DeleteModal
+        itemId={accountToDelete?.id}
+        itemName={accountToDelete?.fullName}
+        onDelete={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
     </div>
   );
 };

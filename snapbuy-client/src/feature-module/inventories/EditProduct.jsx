@@ -484,7 +484,7 @@ const EditProduct = () => {
                         <div className="d-flex align-items-center justify-content-between flex-fill">
                           <h5 className="d-flex align-items-center">
                             <i className="feather icon-image text-primary me-2" />
-                            <span>Image</span>
+                            <span>Ảnh</span>
                           </h5>
                         </div>
                       </div>
@@ -516,7 +516,7 @@ const EditProduct = () => {
                                   />
                                   <div className="image-uploads">
                                     <i className="feather icon-plus-circle plus-down-add me-0" />
-                                    <h4>Add Image</h4>
+                                    <h4>Thêm ảnh</h4>
                                   </div>
                                 </div>
                               </div>

@@ -1,6 +1,185 @@
+import { useState, useEffect } from "react";
 import ImportExcelModal from "../../components/ImportExcelModal";
+import { getAllCategories } from "../../services/CategoryService";
+import { getAllSuppliers } from "../../services/SupplierService";
 
 const ImportProduct = ({ visible, onClose, onImport }) => {
+  const [categoriesData, setCategoriesData] = useState([]);
+  const [suppliersData, setSuppliersData] = useState([]);
+
+  useEffect(() => {
+    if (visible) {
+      fetchCategories();
+      fetchSuppliers();
+    }
+  }, [visible]);
+
+  const fetchCategories = async () => {
+    try {
+      const data = await getAllCategories();
+      // Map để có parentCategoryName
+      const mapped = data.map(cat => {
+        const parent = data.find(p => p.categoryId === cat.parentCategoryId);
+        return {
+          ...cat,
+          parentCategoryName: parent ? parent.categoryName : ""
+        };
+      });
+      setCategoriesData(mapped);
+    } catch (error) {
+      console.error("Lỗi khi lấy danh mục:", error);
+    }
+  };
+
+  const fetchSuppliers = async () => {
+    try {
+      const data = await getAllSuppliers();
+      setSuppliersData(data);
+    } catch (error) {
+      console.error("Lỗi khi lấy nhà cung cấp:", error);
+    }
+  };
+  // Hàm validate dữ liệu đầy đủ
+  const validateSupplierData = (data) => {
+    const errors = new Array(data.length).fill(null);
+
+    data.forEach((row, index) => {
+      const rowErrors = [];
+      const rowNum = index + 1;
+
+      // Validate Product Code
+      const productCode = (row.productCode || "").trim();
+      if (!productCode) {
+        rowErrors.push("Mã sản phẩm không được để trống");
+      } else {
+        if (productCode.length < 3 || productCode.length > 10) {
+          rowErrors.push("Mã sản phẩm phải từ 3 đến 10 ký tự");
+        }
+        if (!/^[a-zA-Z0-9_-]+$/.test(productCode)) {
+          rowErrors.push("Mã sản phẩm chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang");
+        }
+      }
+
+      // Validate Product Name
+      const productName = (row.productName || "").trim();
+      if (!productName) {
+        rowErrors.push("Tên sản phẩm không được để trống");
+      } else if (productName.length < 3 || productName.length > 100) {
+        rowErrors.push("Tên sản phẩm phải từ 3 đến 100 ký tự");
+      }
+
+      // Validate Category Name
+      const categoryName = (row.categoryName || "").trim();
+      if (!categoryName) {
+        rowErrors.push("Tên danh mục không được để trống");
+      }
+
+      // Validate Supplier Code
+      const supplierCode = (row.supplierCode || "").trim();
+      if (!supplierCode) {
+        rowErrors.push("Mã nhà cung cấp không được để trống");
+      } else {
+        if (supplierCode.length < 3 || supplierCode.length > 10) {
+          rowErrors.push("Mã nhà cung cấp phải từ 3 đến 10 ký tự");
+        }
+        if (!/^[a-zA-Z0-9_-]+$/.test(supplierCode)) {
+          rowErrors.push("Mã nhà cung cấp chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang");
+        }
+      }
+
+      // Validate Supplier Name
+      const supplierName = (row.supplierName || "").trim();
+      if (!supplierName) {
+        rowErrors.push("Tên nhà cung cấp không được để trống");
+      } else if (supplierName.length < 3 || supplierName.length > 100) {
+        rowErrors.push("Tên nhà cung cấp phải từ 3 đến 100 ký tự");
+      }
+
+      // Validate Unit
+      const unit = (row.unit || "").trim();
+      if (unit && unit.length > 10) {
+        rowErrors.push("Đơn vị không được quá 10 ký tự");
+      }
+
+      // Validate Dimensions
+      const dimensions = (row.dimensions || "").trim();
+      if (dimensions && dimensions.length > 30) {
+        rowErrors.push("Kích thước không được quá 30 ký tự");
+      }
+
+      // Validate Barcode
+      const barcode = (row.barcode || "").trim();
+      if (barcode) {
+        if (barcode.length > 50) {
+          rowErrors.push("Barcode không được quá 50 ký tự");
+        }
+        if (!/^[a-zA-Z0-9]*$/.test(barcode)) {
+          rowErrors.push("Barcode chỉ được chứa chữ và số");
+        }
+      }
+
+      // Validate Supplier matching
+      if (supplierCode && supplierName) {
+        const supplierByCode = suppliersData.find(
+          s => s.supplierCode && s.supplierCode.trim().toLowerCase() === supplierCode.toLowerCase()
+        );
+        const supplierByName = suppliersData.find(
+          s => s.supplierName && s.supplierName.trim().toLowerCase() === supplierName.toLowerCase()
+        );
+
+        const codeExists = supplierByCode != null;
+        const nameExists = supplierByName != null;
+
+        if (codeExists && nameExists) {
+          if (supplierByCode.supplierId !== supplierByName.supplierId) {
+            rowErrors.push(`Mã nhà cung cấp '${supplierCode}' và tên nhà cung cấp '${supplierName}' không khớp`);
+          }
+        } else if (codeExists && !nameExists) {
+          rowErrors.push(`Mã nhà cung cấp '${supplierCode}' đã tồn tại nhưng tên '${supplierName}' không khớp`);
+        } else if (!codeExists && nameExists) {
+          rowErrors.push(`Tên nhà cung cấp '${supplierName}' đã tồn tại nhưng mã '${supplierCode}' không khớp`);
+        }
+      }
+
+      // Validate Category - kiểm tra category có con hay không
+      if (categoryName) {
+        const category = categoriesData.find(
+          c => c.categoryName && c.categoryName.trim().toLowerCase() === categoryName.toLowerCase()
+        );
+        if (category) {
+          // Kiểm tra category có con hay không
+          const hasChildren = categoriesData.some(
+            c => c.parentCategoryId === category.categoryId
+          );
+
+          if (hasChildren) {
+            // Category có con, bắt buộc phải nhập subCategoryName
+            const subCategoryName = (row.subCategoryName || "").trim();
+            if (!subCategoryName) {
+              rowErrors.push(`Danh mục '${categoryName}' đã có danh mục con. Bắt buộc phải nhập danh mục con`);
+            } else {
+              // Kiểm tra subCategory có thuộc về category này không
+              const subCategory = categoriesData.find(
+                c => c.categoryName && c.categoryName.trim().toLowerCase() === subCategoryName.toLowerCase()
+              );
+              if (subCategory) {
+                if (subCategory.parentCategoryId !== category.categoryId) {
+                  rowErrors.push(`Danh mục con '${subCategoryName}' không thuộc về danh mục '${categoryName}'`);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (rowErrors.length > 0) {
+        errors[index] = `Dòng ${rowNum}: ${rowErrors.join("; ")}`;
+      }
+    });
+
+    return { errors, validatedData: data };
+  };
+
   const columns = [
     {
       title: "Mã sản phẩm",
@@ -16,13 +195,31 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       width: 200
     },
     {
+      title: "Mô tả",
+      dataIndex: "description",
+      key: "description",
+      width: 200
+    },
+    {
       title: "Danh mục",
       dataIndex: "categoryName",
       key: "categoryName",
       width: 150
     },
     {
-      title: "Nhà cung cấp",
+      title: "Danh mục con(Tuỳ chọn)",
+      dataIndex: "subCategoryName",
+      key: "subCategoryName",
+      width: 150
+    },
+    {
+      title: "Mã nhà cung cấp",
+      dataIndex: "supplierCode",
+      key: "supplierCode",
+      width: 120
+    },
+    {
+      title: "Tên nhà cung cấp",
       dataIndex: "supplierName",
       key: "supplierName",
       width: 200
@@ -40,48 +237,67 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       width: 150
     },
     {
-      title: "Mô tả",
-      dataIndex: "description",
-      key: "description",
-      width: 250
+      title: "Barcode",
+      dataIndex: "barcode",
+      key: "barcode",
+      width: 150
+    },
+    {
+      title: "Lỗi",
+      dataIndex: "error",
+      key: "error",
+      width: 400,
+      render: (text) => {
+        if (!text) return null;
+        return (
+          <span style={{ color: '#ff4d4f', fontSize: '12px' }}>
+            {text}
+          </span>
+        );
+      }
     },
   ];
 
   const mapExcelRow = (row, index) => {
-
     return {
       key: index,
       productCode: row["Mã sản phẩm"] || "",
       productName: row["Tên sản phẩm"] || "",
       description: row["Mô tả"] || "",
       categoryName: row["Danh mục"] || "",
-      supplierName: row["Nhà cung cấp"] || "",
+      subCategoryName: row["Danh mục con"] || "",
+      supplierCode: row["Mã nhà cung cấp"] || "",
+      supplierName: row["Tên nhà cung cấp"] || "",
       unit: row["Đơn vị"] || "",
       dimensions: row["Kích thước"] || "",
-      imageUrl: row["Ảnh"] || "",
+      barcode: row["Barcode"] || "",
     };
   };
 
   const templateData = [
     {
-      "Mã sản phẩm": "PRD1",
+      "Mã sản phẩm": "PRD001",
       "Tên sản phẩm": "Samsung Galaxy S23",
       "Mô tả": "Latest Samsung flagship phone",
       "Danh mục": "Electronics",
-      "Nhà cung cấp": "Samsung Vietnam",
+      "Danh mục con": "",
+      "Mã nhà cung cấp": "SUP001",
+      "Tên nhà cung cấp": "Samsung Vietnam",
       "Đơn vị": "Cái",
       "Kích thước": "15x7x0.8",
-      "Ảnh": ""
+      "Barcode": "1234567890123",
     },
     {
-      "Mã sản phẩm": "PRD2",
+      "Mã sản phẩm": "PRD002",
       "Tên sản phẩm": "Apple iPhone 14",
       "Mô tả": "Newest iPhone model",
       "Danh mục": "Electronics",
-      "Nhà cung cấp": "Apple",
+      "Danh mục con": "",
+      "Mã nhà cung cấp": "SUP002",
+      "Tên nhà cung cấp": "Apple",
       "Đơn vị": "Cái",
       "Kích thước": "15x7x0.8",
-      "Ảnh": ""
+      "Barcode": "9876543210987",
     }
   ];
 
@@ -93,6 +309,9 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       columns={columns}
       mapExcelRow={mapExcelRow}
       templateData={templateData}
+      categoriesData={categoriesData}
+      suppliersData={suppliersData}
+      validateData={validateSupplierData}
       title="Thêm sản phẩm từ Excel"
     />
   );

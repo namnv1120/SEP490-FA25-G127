@@ -4,8 +4,8 @@ CREATE TABLE accounts
     full_name     NVARCHAR(100)        NOT NULL,
     username      NVARCHAR(50) UNIQUE  NOT NULL,
     password_hash NVARCHAR(255)        NOT NULL,
-    email         NVARCHAR(100) UNIQUE NULL,
-    phone         NVARCHAR(15)  UNIQUE NULL ,
+    email         NVARCHAR(100)        NULL,
+    phone         NVARCHAR(15)         NULL,
     avatar_url    NVARCHAR(500)        NULL,
     active        BIT                          DEFAULT 1,
     created_date  DATETIME2                    DEFAULT GETDATE(),
@@ -268,5 +268,7 @@ CREATE INDEX ix_order_detail_order_id ON order_detail (order_id);
 CREATE INDEX ix_order_detail_product_id ON order_detail (product_id);
 CREATE INDEX ix_payment_order_id ON payments (order_id);
 CREATE INDEX ix_account_username ON accounts (username);
+CREATE UNIQUE INDEX UX_accounts_email ON accounts(email) WHERE email IS NOT NULL;
+CREATE UNIQUE INDEX UX_accounts_phone ON accounts(phone) WHERE phone IS NOT NULL;
 CREATE INDEX ix_inventory_transaction_product_id ON inventory_transaction (product_id);
 

@@ -23,7 +23,7 @@ const CustomPaginator = ({
         <div className="parent-class-datatable">
           <div className="dataTables_length" id="DataTables_Table_0_length">
             <label>
-              Số dòng mỗi trang{" "}
+              Số bản ghi trên trang{" "}
               <select
                 name="DataTables_Table_0_length"
                 aria-controls="DataTables_Table_0"
@@ -36,7 +36,6 @@ const CustomPaginator = ({
                 <option value={50}>50</option>
                 <option value={100}>100</option>
               </select>{" "}
-              bản ghi
             </label>
           </div>
           <div

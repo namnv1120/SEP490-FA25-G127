@@ -135,6 +135,7 @@ const Profile = () => {
           setCanEditEmail(!userEmail || userEmail.trim() === "");
           window.dispatchEvent(new CustomEvent('profileUpdated', { detail: user }));
         } catch (error) {
+          message.error(error.message || "Không thể tải thông tin tài khoản");
         }
       };
 
@@ -208,13 +209,13 @@ const Profile = () => {
                 <SettingsSideBar />
                 <div className="card flex-fill mb-0">
                   <div className="card-header">
-                    <h4 className="fs-18 fw-bold">Profile</h4>
+                    <h4 className="fs-18 fw-bold">Trang cá nhân</h4>
                   </div>
                   <div className="card-body">
                     {isLoading ? (
                       <div className="text-center py-5">
                         <div className="spinner-border text-primary" role="status">
-                          <span className="visually-hidden">Loading...</span>
+                          <span className="visually-hidden">Đang tải...</span>
                         </div>
                       </div>
                     ) : (
@@ -238,7 +239,7 @@ const Profile = () => {
                                 />
                                 <div className="image-uploads">
                                   <i className="feather icon-plus-circle plus-down-add me-0" />
-                                  <h4>Add Image</h4>
+                                  <h4>Thêm ảnh</h4>
                                 </div>
                               </div>
                             </div>
@@ -255,7 +256,7 @@ const Profile = () => {
                             )}
                           </div>
                           <span className="fs-13 fw-medium mt-2">
-                            Upload an image below 2 MB, Accepted File format JPG, PNG
+                            Định dạng file: JPG, PNG. Kích thước tối đa 2MB.
                           </span>
                         </div>
 

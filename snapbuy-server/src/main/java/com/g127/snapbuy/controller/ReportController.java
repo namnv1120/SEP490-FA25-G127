@@ -22,10 +22,11 @@ public class ReportController {
     @GetMapping("/products-revenue")
     public ApiResponse<List<ProductRevenueReportResponse>> getProductRevenueReport(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @RequestParam(required = false) UUID accountId) {
 
         ApiResponse<List<ProductRevenueReportResponse>> response = new ApiResponse<>();
-        response.setResult(reportService.getProductRevenue(from, to));
+        response.setResult(reportService.getProductRevenue(from, to, accountId));
         return response;
     }
 

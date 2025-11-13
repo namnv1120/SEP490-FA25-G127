@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ReportService {
-    List<ProductRevenueReportResponse> getProductRevenue(LocalDateTime fromDate, LocalDateTime toDate);
+    List<ProductRevenueReportResponse> getProductRevenue(LocalDateTime fromDate, LocalDateTime toDate, UUID accountId);
 
     List<ProductRevenueReportResponse> getProductRevenueFlexible(
             LocalDateTime from, LocalDateTime to,

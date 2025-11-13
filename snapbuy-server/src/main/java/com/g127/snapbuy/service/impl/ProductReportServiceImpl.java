@@ -47,6 +47,8 @@ public class ProductReportServiceImpl implements ProductReportService {
                                 .totalQuantitySold(row[3] != null ? ((Number) row[3]).longValue() : 0L)
                                 .categoryName(row[4] != null ? row[4].toString() : "N/A")
                                 .supplierName(row[5] != null ? row[5].toString() : "N/A")
+                                .unitPrice(row[6] != null ? new BigDecimal(row[6].toString()) : BigDecimal.ZERO)
+                                .costPrice(row[7] != null ? new BigDecimal(row[7].toString()) : BigDecimal.ZERO)
                                 .build();
                     } catch (Exception e) {
                         return null;
@@ -91,6 +93,8 @@ public class ProductReportServiceImpl implements ProductReportService {
                                 .totalQuantitySold(row[3] != null ? ((Number) row[3]).longValue() : 0L)
                                 .categoryName(row[4] != null ? row[4].toString() : "N/A")
                                 .supplierName(row[5] != null ? row[5].toString() : "N/A")
+                                .unitPrice(row[6] != null ? new BigDecimal(row[6].toString()) : BigDecimal.ZERO)
+                                .costPrice(row[7] != null ? new BigDecimal(row[7].toString()) : BigDecimal.ZERO)
                                 .build();
                     } catch (Exception e) {
                         return null;
@@ -132,6 +136,8 @@ public class ProductReportServiceImpl implements ProductReportService {
                                 .totalQuantitySold(row[3] != null ? ((Number) row[3]).longValue() : 0L)
                                 .categoryName(row[4] != null ? row[4].toString() : "N/A")
                                 .supplierName(row[5] != null ? row[5].toString() : "N/A")
+                                .unitPrice(row[6] != null ? new BigDecimal(row[6].toString()) : BigDecimal.ZERO)
+                                .costPrice(row[7] != null ? new BigDecimal(row[7].toString()) : BigDecimal.ZERO)
                                 .build();
                     } catch (Exception e) {
                         return null;
@@ -173,6 +179,8 @@ public class ProductReportServiceImpl implements ProductReportService {
                                 .totalQuantitySold(row[3] != null ? ((Number) row[3]).longValue() : 0L)
                                 .categoryName(row[4] != null ? row[4].toString() : "N/A")
                                 .supplierName(row[5] != null ? row[5].toString() : "N/A")
+                                .unitPrice(row[6] != null ? new BigDecimal(row[6].toString()) : BigDecimal.ZERO)
+                                .costPrice(row[7] != null ? new BigDecimal(row[7].toString()) : BigDecimal.ZERO)
                                 .build();
                     } catch (Exception e) {
                         return null;
