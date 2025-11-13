@@ -2,6 +2,7 @@ package com.g127.snapbuy.service;
 
 import com.g127.snapbuy.dto.request.PurchaseOrderApproveRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderCreateRequest;
+import com.g127.snapbuy.dto.request.PurchaseOrderEmailRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderReceiveRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderUpdateRequest;
 import com.g127.snapbuy.dto.response.PageResponse;
@@ -32,4 +33,10 @@ public interface PurchaseOrderService {
     PurchaseOrderResponse getPurchaseOrderById(UUID poId);
 
     PurchaseOrderResponse update(UUID poId, PurchaseOrderUpdateRequest req, String usernameOrEmail);
+    
+    PurchaseOrderResponse confirm(UUID poId, PurchaseOrderReceiveRequest req, String usernameOrEmail);
+    
+    PurchaseOrderResponse revert(UUID poId, PurchaseOrderApproveRequest req, String usernameOrEmail);
+    
+    void sendPurchaseOrderEmail(PurchaseOrderEmailRequest request);
 }

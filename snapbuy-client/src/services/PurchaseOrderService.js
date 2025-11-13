@@ -138,3 +138,45 @@ export const searchPurchaseOrders = async (keyword, page = 0, size = 10, sortBy 
   }
 };
 
+// Xác nhận nhận hàng từ trạng thái "Chờ xác nhận" → "Đã nhận hàng" (chủ shop)
+export const confirmPurchaseOrder = async (orderId, confirmData = {}) => {
+  try {
+    const response = await axios.put(
+      `${REST_API_BASE_URL}/${orderId}/confirm`,
+      confirmData,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Quay lại từ trạng thái "Chờ xác nhận" → "Đã duyệt" (chủ shop)
+export const revertPurchaseOrder = async (orderId, revertData = {}) => {
+  try {
+    const response = await axios.put(
+      `${REST_API_BASE_URL}/${orderId}/revert`,
+      revertData,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Gửi email phiếu nhập kho đến nhà cung cấp
+export const sendPurchaseOrderEmail = async (emailData) => {
+  try {
+    const response = await axios.post(
+      `${REST_API_BASE_URL}/send-email`,
+      emailData,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+

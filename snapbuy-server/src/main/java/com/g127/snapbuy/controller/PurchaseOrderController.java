@@ -3,6 +3,7 @@ package com.g127.snapbuy.controller;
 import com.g127.snapbuy.dto.ApiResponse;
 import com.g127.snapbuy.dto.request.PurchaseOrderApproveRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderCreateRequest;
+import com.g127.snapbuy.dto.request.PurchaseOrderEmailRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderReceiveRequest;
 import com.g127.snapbuy.dto.request.PurchaseOrderUpdateRequest;
 import com.g127.snapbuy.dto.response.PageResponse;
@@ -15,7 +16,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -134,6 +134,38 @@ public class PurchaseOrderController {
         ApiResponse<PurchaseOrderResponse> response = new ApiResponse<>();
         response.setResult(service.update(id, req, principal.getUsername()));
         response.setMessage("Cập nhật phiếu nhập hàng thành công!");
+        return response;
+    }
+
+    @PutMapping("/{id}/confirm")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    public ApiResponse<PurchaseOrderResponse> confirm(@PathVariable UUID id,
+                                                      @Valid @RequestBody PurchaseOrderReceiveRequest req,
+                                                      @AuthenticationPrincipal User principal) {
+        ApiResponse<PurchaseOrderResponse> response = new ApiResponse<>();
+        response.setResult(service.confirm(id, req, principal.getUsername()));
+        response.setMessage("Đã xác nhận nhận hàng thành công!");
+        return response;
+    }
+
+    @PutMapping("/{id}/revert")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    public ApiResponse<PurchaseOrderResponse> revert(@PathVariable UUID id,
+                                                     @Valid @RequestBody PurchaseOrderApproveRequest req,
+                                                     @AuthenticationPrincipal User principal) {
+        ApiResponse<PurchaseOrderResponse> response = new ApiResponse<>();
+        response.setResult(service.revert(id, req, principal.getUsername()));
+        response.setMessage("Đã quay lại trạng thái đã duyệt!");
+        return response;
+    }
+
+    @PostMapping("/send-email")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
+    public ApiResponse<String> sendEmail(@Valid @RequestBody PurchaseOrderEmailRequest request) {
+        ApiResponse<String> response = new ApiResponse<>();
+        service.sendPurchaseOrderEmail(request);
+        response.setResult("Đã gửi email thành công!");
+        response.setMessage("Đã gửi email phiếu nhập kho đến nhà cung cấp!");
         return response;
     }
 

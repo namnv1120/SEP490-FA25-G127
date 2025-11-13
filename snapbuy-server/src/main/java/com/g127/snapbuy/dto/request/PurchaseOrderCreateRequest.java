@@ -38,5 +38,8 @@ public class PurchaseOrderCreateRequest {
 
         @Positive
         private int quantity;
+
+        @PositiveOrZero
+        private BigDecimal unitPrice;
     }
 }

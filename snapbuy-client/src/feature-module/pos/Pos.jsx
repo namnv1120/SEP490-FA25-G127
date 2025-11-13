@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
@@ -39,6 +39,7 @@ const Pos = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [barcodeInput, setBarcodeInput] = useState("");
   const [isScanning, setIsScanning] = useState(false);
+  const [isBarcodeInputFocused, setIsBarcodeInputFocused] = useState(false);
   const [createdOrder, setCreatedOrder] = useState(null);
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [showCashPaymentModal, setShowCashPaymentModal] = useState(false);
@@ -48,6 +49,11 @@ const Pos = () => {
   const [showOrderSuccessModal, setShowOrderSuccessModal] = useState(false);
   const [completedOrderForPrint, setCompletedOrderForPrint] = useState(null); // Lưu order đã thanh toán để in
   const momoPollingIntervalRef = useRef(null);
+  const barcodeBufferRef = useRef("");
+  const barcodeTimerRef = useRef(null);
+  const lastKeyTimeRef = useRef(0);
+  const handleBarcodeScanRef = useRef(null);
+  const lastMessageRef = useRef({ type: null, content: null, timestamp: 0 });
 
   const settings = {
     dots: false,
@@ -82,6 +88,36 @@ const Pos = () => {
       },
     ],
   };
+
+  // Config message để giới hạn số lượng hiển thị
+  useEffect(() => {
+    message.config({
+      maxCount: 3, // Chỉ hiển thị tối đa 3 message cùng lúc
+      duration: 2, // Tự động ẩn sau 2 giây
+      rtl: false,
+    });
+  }, []);
+
+  // Helper function để hiển thị message và tránh duplicate
+  const showMessage = useCallback((type, content) => {
+    const now = Date.now();
+    const lastMessage = lastMessageRef.current;
+    
+    // Nếu message giống hệt và được gọi trong vòng 500ms, bỏ qua
+    if (
+      lastMessage.type === type &&
+      lastMessage.content === content &&
+      now - lastMessage.timestamp < 500
+    ) {
+      return;
+    }
+    
+    // Cập nhật ref
+    lastMessageRef.current = { type, content, timestamp: now };
+    
+    // Hiển thị message
+    message[type](content);
+  }, []);
 
   // Fetch data from API
   useEffect(() => {
@@ -337,9 +373,108 @@ const Pos = () => {
     };
   }, [Location.pathname, showAlert1]);
 
+  // Hàm helper để focus vào barcode input (không đổi category)
+  // Định nghĩa trước để dùng trong các hàm khác
+  const focusBarcodeInput = useCallback((changeCategory = false) => {
+    if (!createdOrder) {
+      // Chỉ set category về "all" nếu được yêu cầu (khi quét barcode)
+      if (changeCategory) {
+        setActiveTab("all");
+      }
+      const scrollY = window.scrollY || window.pageYOffset;
+      setTimeout(() => {
+        const barcodeInputElement = document.getElementById("barcode-input");
+        if (barcodeInputElement) {
+          // Khôi phục scroll position trước khi focus
+          window.scrollTo(0, scrollY);
+          // Focus mà không scroll
+          barcodeInputElement.focus({ preventScroll: true });
+          setIsBarcodeInputFocused(true);
+        }
+      }, 100);
+    }
+  }, [createdOrder]);
+
+  // Handle add product to cart - Định nghĩa trước để dùng trong handleBarcodeScan
+  const handleAddToCart = useCallback((product, e) => {
+    // Ngăn chặn event bubbling để không toggle active class
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+
+    // Validate số lượng tồn kho
+    const availableStock = product.stock || product.quantityInStock || 0;
+    if (availableStock <= 0) {
+      message.error(`Sản phẩm "${product.name || product.productName}" đã hết hàng!`);
+      // Tự động focus lại vào barcode input (không đổi category)
+      focusBarcodeInput(false);
+      return;
+    }
+
+    // Sử dụng functional update để tránh stale closure
+    setCartItems(prevCartItems => {
+      const existingItem = prevCartItems.find(item =>
+        String(item.productId) === String(product.productId)
+      );
+
+      if (existingItem) {
+        // If product already in cart, increase quantity
+        const newQuantity = existingItem.quantity + 1;
+        const currentStock = existingItem.stock || availableStock;
+
+        // Validate số lượng không vượt quá tồn kho
+        if (newQuantity > currentStock) {
+          message.error(`Số lượng vượt quá tồn kho! Tồn kho hiện có: ${currentStock}`);
+          // Tự động focus lại vào barcode input (không đổi category)
+          setTimeout(() => {
+            focusBarcodeInput(false);
+          }, 100);
+          return prevCartItems; // Return unchanged if validation fails
+        }
+
+        // Hiển thị message khi thêm sản phẩm đã có trong giỏ (tăng số lượng)
+        showMessage("success", "Đã cập nhật số lượng sản phẩm trong giỏ hàng");
+        
+        return prevCartItems.map(item =>
+          String(item.productId) === String(product.productId)
+            ? { ...item, quantity: newQuantity }
+            : item
+        );
+      } else {
+        // Add new product to cart
+        const cartItem = {
+          id: product.productId,
+          productId: product.productId,
+          name: product.name,
+          code: product.code,
+          price: product.price,
+          quantity: 1,
+          stock: availableStock,
+          image: product.image,
+          categoryName: product.categoryName,
+        };
+        // Hiển thị message khi thêm sản phẩm mới vào giỏ hàng
+        showMessage("success", "Đã thêm sản phẩm vào giỏ hàng");
+        return [...prevCartItems, cartItem];
+      }
+    });
+
+    // Sau khi thêm sản phẩm bằng tay, tự động focus lại vào barcode input (giữ nguyên category)
+    focusBarcodeInput(false);
+  }, [createdOrder, focusBarcodeInput, showMessage]);
+
   // Handle barcode scan - tự động thêm sản phẩm vào giỏ hàng
-  const handleBarcodeScan = async (barcode) => {
+  const handleBarcodeScan = useCallback(async (barcode, skipFocusCheck = false) => {
     if (!barcode || barcode.trim().length === 0) {
+      return;
+    }
+
+    // Kiểm tra xem barcode input có đang được focus không (trừ khi được gọi từ global listener)
+    if (!skipFocusCheck && !isBarcodeInputFocused) {
+      message.warning("Vui lòng click vào ô quét barcode trước khi quét!");
+      // Tự động focus vào barcode input và set category về "all" (vì đang quét barcode)
+      focusBarcodeInput(true);
       return;
     }
 
@@ -363,6 +498,9 @@ const Pos = () => {
         image: getImageUrl(product.imageUrl || null),
       };
 
+      // Set category về "all" khi quét barcode (đã được set trong focusBarcodeInput nếu cần)
+      setActiveTab("all");
+
       // Tự động thêm vào giỏ hàng
       handleAddToCart(mappedProduct, null);
 
@@ -375,15 +513,27 @@ const Pos = () => {
     } finally {
       setIsScanning(false);
       // Tự động focus lại vào input sau khi xử lý xong (thành công hoặc lỗi)
+      // Set category về "all" và focus vào barcode input (vì đang quét barcode)
+      setActiveTab("all");
+      const scrollY = window.scrollY || window.pageYOffset;
       setTimeout(() => {
         const barcodeInputElement = document.getElementById("barcode-input");
         if (barcodeInputElement) {
-          barcodeInputElement.focus();
+          // Khôi phục scroll position trước khi focus
+          window.scrollTo(0, scrollY);
+          // Focus mà không scroll
+          barcodeInputElement.focus({ preventScroll: true });
           barcodeInputElement.select(); // Select text để dễ dàng quét tiếp
+          setIsBarcodeInputFocused(true);
         }
       }, 50);
     }
-  };
+  }, [isBarcodeInputFocused, handleAddToCart, createdOrder]);
+
+  // Lưu ref để dùng trong global listener
+  useEffect(() => {
+    handleBarcodeScanRef.current = handleBarcodeScan;
+  }, [handleBarcodeScan]);
 
   // Handle barcode input key press
   const handleBarcodeInputKeyPress = (e) => {
@@ -395,6 +545,16 @@ const Pos = () => {
     }
   };
 
+  // Handle barcode input focus
+  const handleBarcodeInputFocus = () => {
+    setIsBarcodeInputFocused(true);
+  };
+
+  // Handle barcode input blur
+  const handleBarcodeInputBlur = () => {
+    setIsBarcodeInputFocused(false);
+  };
+
   // Handle barcode input change
   const handleBarcodeInputChange = (e) => {
     const value = e.target.value;
@@ -404,80 +564,135 @@ const Pos = () => {
   // Auto focus vào barcode input khi component mount hoặc khi không có order
   useEffect(() => {
     if (!createdOrder) {
+      // Set category về "all" khi vào trang
+      setActiveTab("all");
       const timer = setTimeout(() => {
         const barcodeInputElement = document.getElementById("barcode-input");
         if (barcodeInputElement) {
-          barcodeInputElement.focus();
+          // Focus mà không scroll
+          barcodeInputElement.focus({ preventScroll: true });
+          setIsBarcodeInputFocused(true);
         }
       }, 500);
       return () => clearTimeout(timer);
     }
   }, [createdOrder]);
 
-  // Handle add product to cart
-  const handleAddToCart = (product, e) => {
-    // Ngăn chặn event bubbling để không toggle active class
-    if (e) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
-
-    // Validate số lượng tồn kho
-    const availableStock = product.stock || product.quantityInStock || 0;
-    if (availableStock <= 0) {
-      message.error(`Sản phẩm "${product.name || product.productName}" đã hết hàng!`);
-      return;
-    }
-
-    const existingItem = cartItems.find(item =>
-      String(item.productId) === String(product.productId)
-    );
-
-    if (existingItem) {
-      // If product already in cart, increase quantity
-      const newQuantity = existingItem.quantity + 1;
-      const currentStock = existingItem.stock || availableStock;
-
-      // Validate số lượng không vượt quá tồn kho
-      if (newQuantity > currentStock) {
-        message.error(`Số lượng vượt quá tồn kho! Tồn kho hiện có: ${currentStock}`);
+  // Global keyboard listener để phát hiện barcode scanner input
+  // Barcode scanner thường gõ rất nhanh (tất cả ký tự trong vòng 100-200ms) và kết thúc bằng Enter
+  // Tạm thời comment để tránh lỗi, sẽ bật lại sau khi xác nhận component render được
+  /*
+  useEffect(() => {
+    const handleGlobalKeyPress = (e) => {
+      // Bỏ qua nếu đang ở trong modal hoặc đang có order đang được tạo
+      if (createdOrder || showPaymentMethodModal || showCashPaymentModal || showMomoModal || showOrderSuccessModal) {
         return;
       }
 
-      setCartItems(cartItems.map(item =>
-        String(item.productId) === String(product.productId)
-          ? { ...item, quantity: newQuantity }
-          : item
-      ));
-      message.success("Đã cập nhật số lượng sản phẩm trong giỏ hàng");
-    } else {
-      // Add new product to cart
-      const cartItem = {
-        id: product.productId,
-        productId: product.productId,
-        name: product.name,
-        code: product.code,
-        price: product.price,
-        quantity: 1,
-        stock: availableStock,
-        image: product.image,
-        categoryName: product.categoryName,
+      // Bỏ qua nếu đang focus vào barcode input (đã có handler riêng)
+      const activeElement = document.activeElement;
+      if (activeElement && activeElement.id === "barcode-input") {
+        return;
+      }
+
+      const currentTime = Date.now();
+      const timeSinceLastKey = currentTime - lastKeyTimeRef.current;
+
+      // Nếu là ký tự bình thường và thời gian giữa các ký tự < 100ms (barcode scanner pattern)
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        // Nếu thời gian giữa các ký tự quá dài (> 200ms), reset buffer (có thể là user đang gõ bình thường)
+        if (timeSinceLastKey > 200) {
+          barcodeBufferRef.current = "";
+        }
+
+        barcodeBufferRef.current += e.key;
+        lastKeyTimeRef.current = currentTime;
+
+        // Clear timer cũ
+        if (barcodeTimerRef.current) {
+          clearTimeout(barcodeTimerRef.current);
+        }
+
+        // Set timer để xử lý barcode sau 150ms không có ký tự mới (đợi Enter)
+        barcodeTimerRef.current = setTimeout(() => {
+          // Nếu buffer có giá trị và có vẻ là barcode (độ dài hợp lý)
+          if (barcodeBufferRef.current.length >= 3 && barcodeBufferRef.current.length <= 50) {
+            // Tự động focus vào barcode input và xử lý
+            const barcodeInputElement = document.getElementById("barcode-input");
+            if (barcodeInputElement) {
+              barcodeInputElement.focus();
+              setIsBarcodeInputFocused(true);
+              setBarcodeInput(barcodeBufferRef.current);
+              // Xử lý barcode scan (bỏ qua focus check vì đã tự động focus)
+              if (handleBarcodeScanRef.current) {
+                handleBarcodeScanRef.current(barcodeBufferRef.current, true);
+              }
+              barcodeBufferRef.current = "";
+            }
+          } else {
+            // Reset buffer nếu không phải barcode hợp lệ
+            barcodeBufferRef.current = "";
+          }
+        }, 150);
+      } else if (e.key === "Enter" && barcodeBufferRef.current.length >= 3) {
+        // Nếu là Enter và có buffer, xử lý ngay
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const barcodeValue = barcodeBufferRef.current;
+        barcodeBufferRef.current = "";
+
+        // Clear timer
+        if (barcodeTimerRef.current) {
+          clearTimeout(barcodeTimerRef.current);
+          barcodeTimerRef.current = null;
+        }
+
+        // Tự động focus vào barcode input và xử lý
+        const barcodeInputElement = document.getElementById("barcode-input");
+        if (barcodeInputElement) {
+          barcodeInputElement.focus();
+          setIsBarcodeInputFocused(true);
+          setBarcodeInput(barcodeValue);
+          // Xử lý barcode scan (bỏ qua focus check vì đã tự động focus)
+          if (handleBarcodeScanRef.current) {
+            handleBarcodeScanRef.current(barcodeValue, true);
+          }
+        }
+      }
+    };
+
+    // Chỉ thêm listener khi không có order
+    if (!createdOrder) {
+      document.addEventListener("keydown", handleGlobalKeyPress);
+      return () => {
+        document.removeEventListener("keydown", handleGlobalKeyPress);
+        if (barcodeTimerRef.current) {
+          clearTimeout(barcodeTimerRef.current);
+        }
       };
-      setCartItems([...cartItems, cartItem]);
-      message.success("Đã thêm sản phẩm vào giỏ hàng");
     }
-  };
+  }, [createdOrder, showPaymentMethodModal, showCashPaymentModal, showMomoModal, showOrderSuccessModal]);
+  */
 
   // Handle update cart item quantity
-  const handleUpdateQuantity = (itemId, newQuantity) => {
+  const handleUpdateQuantity = (itemId, newQuantity, shouldShowMessage = true) => {
     if (newQuantity <= 0) {
       setCartItems(cartItems.filter(item => item.id !== itemId));
+      if (shouldShowMessage) {
+        showMessage("success", "Đã xóa sản phẩm khỏi giỏ hàng");
+      }
       return;
     }
 
     // Find the item to validate stock
     const item = cartItems.find(item => item.id === itemId);
     if (!item) return;
+
+    // Kiểm tra xem số lượng có thay đổi không
+    if (item.quantity === newQuantity) {
+      return; // Không có thay đổi, không cần cập nhật
+    }
 
     // Validate số lượng không vượt quá tồn kho
     const availableStock = item.stock || 0;
@@ -489,14 +704,24 @@ const Pos = () => {
           ? { ...cartItem, quantity: availableStock }
           : cartItem
       ));
+      // Tự động focus lại vào barcode input (không đổi category)
+      setTimeout(() => {
+        focusBarcodeInput(false);
+      }, 100);
       return;
     }
 
+    // Cập nhật số lượng
     setCartItems(cartItems.map(cartItem =>
       cartItem.id === itemId
         ? { ...cartItem, quantity: newQuantity }
         : cartItem
     ));
+    
+    // Chỉ hiển thị thông báo khi được yêu cầu (khi user thay đổi số lượng thủ công)
+    if (shouldShowMessage) {
+      showMessage("success", "Đã cập nhật số lượng sản phẩm trong giỏ hàng");
+    }
   };
 
   // Hàm lấy tất cả category IDs bao gồm parent và sub-categories
@@ -1051,6 +1276,8 @@ const Pos = () => {
                           value={barcodeInput}
                           onChange={handleBarcodeInputChange}
                           onKeyPress={handleBarcodeInputKeyPress}
+                          onFocus={handleBarcodeInputFocus}
+                          onBlur={handleBarcodeInputBlur}
                           style={{ paddingLeft: '40px' }}
                           disabled={isScanning}
                           autoFocus={!createdOrder}
@@ -1140,7 +1367,17 @@ const Pos = () => {
             {/* /Products */}
             {/* Order Details */}
             <div className="col-md-12 col-lg-5 col-xl-4 ps-0 theiaStickySidebar">
-              <aside className="product-order-list" style={{ display: 'flex', flexDirection: 'column', maxHeight: 'calc(100vh - 20px)' }}>
+              <aside 
+                className="product-order-list" 
+                style={{ display: 'flex', flexDirection: 'column', maxHeight: 'calc(100vh - 20px)' }}
+                onClick={(e) => {
+                  // Khi click vào phần giỏ hàng, tự động focus lại vào barcode input (giữ nguyên category)
+                  // Chỉ focus nếu không có order đang được tạo và không phải click vào input/button/link
+                  if (!createdOrder && !e.target.closest('input') && !e.target.closest('button') && !e.target.closest('a')) {
+                    focusBarcodeInput(false);
+                  }
+                }}
+              >
                 {createdOrder && (
                   <div className="order-head bg-light d-flex align-items-center justify-content-between w-100">
                     <div>
@@ -1296,7 +1533,7 @@ const Pos = () => {
                         onClick={(e) => {
                           e.preventDefault();
                           setCartItems([]);
-                          message.info("Đã xóa tất cả sản phẩm");
+                          showMessage("info", "Đã xóa tất cả sản phẩm");
                         }}
                       >
                         <span className="me-2">
@@ -1350,7 +1587,7 @@ const Pos = () => {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 setCartItems(cartItems.filter(i => i.id !== item.id));
-                                message.success("Đã xóa sản phẩm khỏi giỏ hàng");
+                                showMessage("success", "Đã xóa sản phẩm khỏi giỏ hàng");
                               }}
                             >
                               <i className="feather icon-trash-2 feather-14" />

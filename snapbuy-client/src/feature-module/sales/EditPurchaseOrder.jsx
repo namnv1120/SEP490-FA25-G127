@@ -72,13 +72,14 @@ const EditPurchaseOrder = () => {
 
       if (data.details && data.details.length > 0) {
         const isApproved = data.status?.toLowerCase() === "đã duyệt";
+        const isWaitingConfirmation = data.status?.toLowerCase() === "chờ xác nhận";
         const isReceived = data.status?.toLowerCase() === "đã nhận hàng";
         const formattedItems = data.details.map((item) => {
           const receiveQty = item.receiveQuantity || item.receivedQuantity || 0;
           const quantity = item.quantity || 1;
           const unitPrice = item.unitPrice || 0;
 
-          const total = (isApproved || isReceived) && receiveQty > 0
+          const total = (isApproved || isWaitingConfirmation || isReceived) && receiveQty > 0
             ? receiveQty * unitPrice
             : quantity * unitPrice;
 
@@ -135,22 +136,25 @@ const EditPurchaseOrder = () => {
           .map((p) => ({
             value: p.productId,
             label: p.productName,
-            unitPrice: p.unitPrice || 0,
+            unitPrice: p.costPrice || 0, // Sử dụng giá nhập (costPrice) thay vì giá bán (unitPrice)
           }));
         setProducts(options);
 
         if (orderData && orderData.details && selectedSupplier.value === orderData.supplierId) {
           const isApproved = orderData.status?.toLowerCase() === "đã duyệt";
+          const isWaitingConfirmation = orderData.status?.toLowerCase() === "chờ xác nhận";
           const isReceived = orderData.status?.toLowerCase() === "đã nhận hàng";
+          
           const mappedItems = orderData.details.map((item) => {
             const productOption = options.find(
               (p) => p.value === item.productId
             );
             const receiveQty = item.receiveQuantity || item.receivedQuantity || 0;
             const quantity = item.quantity || 1;
+            // Luôn sử dụng giá đã lưu trong database, không map lại từ giá nhập
             const unitPrice = item.unitPrice || 0;
 
-            const total = (isApproved || isReceived) && receiveQty > 0
+            const total = (isApproved || isWaitingConfirmation || isReceived) && receiveQty > 0
               ? receiveQty * unitPrice
               : quantity * unitPrice;
 
@@ -198,23 +202,52 @@ const EditPurchaseOrder = () => {
       const receiveQty = Math.min(parseFloat(value || 0), maxQty);
       newItems[index].receiveQuantity = Math.max(0, receiveQty);
 
-      if (orderStatus?.toLowerCase() === "đã duyệt") {
+      if (orderStatus?.toLowerCase() === "đã duyệt" || orderStatus?.toLowerCase() === "chờ xác nhận") {
         const price = parseFloat(newItems[index].unitPrice || 0);
-        newItems[index].total = newItems[index].receiveQuantity * price;
+        const receiveQty = parseFloat(newItems[index].receiveQuantity || 0);
+        // Cho phép receiveQuantity = 0, tính tổng tiền theo receiveQuantity (kể cả = 0)
+        newItems[index].total = receiveQty * price;
       }
     } else {
-      newItems[index] = { ...newItems[index], [field]: value };
-
       if (field === "product" && value) {
-        newItems[index].unitPrice = value.unitPrice;
-        newItems[index].total =
-          newItems[index].quantity * value.unitPrice;
-      }
-
-      if (field === "quantity" || field === "unitPrice") {
+        // Kiểm tra xem có phải chọn lại cùng một sản phẩm không
+        const isSameProduct = newItems[index].product && newItems[index].product.value === value.value;
+        
+        // Nếu chọn lại cùng sản phẩm và đơn giá đã được chỉnh sửa (khác giá mặc định), giữ lại giá đó
+        // Nếu chọn sản phẩm khác hoặc đơn giá chưa được chỉnh sửa, map giá mới
+        if (isSameProduct && newItems[index].unitPrice > 0 && newItems[index].unitPrice !== value.unitPrice) {
+          // Giữ lại giá đã chỉnh sửa
+          newItems[index] = { ...newItems[index], product: value };
+        } else {
+          // Map giá mới (lần đầu chọn hoặc chọn sản phẩm khác)
+          newItems[index] = { ...newItems[index], product: value, unitPrice: value.unitPrice };
+        }
+        // Tính lại tổng tiền
+        const priceToUse = newItems[index].unitPrice;
         const qty = parseFloat(newItems[index].quantity || 0);
-        const price = parseFloat(newItems[index].unitPrice || 0);
-        newItems[index].total = qty * price;
+        // Nếu đơn đã duyệt hoặc chờ xác nhận, tính theo số lượng thực nhận
+        if (orderStatus?.toLowerCase() === "đã duyệt" || orderStatus?.toLowerCase() === "chờ xác nhận") {
+          const receiveQty = parseFloat(newItems[index].receiveQuantity || 0);
+          newItems[index].total = receiveQty > 0 ? receiveQty * priceToUse : qty * priceToUse;
+        } else {
+          newItems[index].total = qty * priceToUse;
+        }
+      } else {
+        newItems[index] = { ...newItems[index], [field]: value };
+
+        if (field === "quantity" || field === "unitPrice") {
+          const qty = parseFloat(newItems[index].quantity || 0);
+          const price = parseFloat(newItems[index].unitPrice || 0);
+          
+          // Nếu đơn đã duyệt hoặc chờ xác nhận, tính theo số lượng thực nhận (kể cả = 0)
+          if (orderStatus?.toLowerCase() === "đã duyệt" || orderStatus?.toLowerCase() === "chờ xác nhận") {
+            const receiveQty = parseFloat(newItems[index].receiveQuantity || 0);
+            // Cho phép receiveQuantity = 0, tính tổng tiền theo receiveQuantity
+            newItems[index].total = receiveQty * price;
+          } else {
+            newItems[index].total = qty * price;
+          }
+        }
       }
     }
 
@@ -262,13 +295,14 @@ const EditPurchaseOrder = () => {
     }
 
     const isApproved = orderStatus?.toLowerCase() === "đã duyệt";
+    const isWaitingConfirmation = orderStatus?.toLowerCase() === "chờ xác nhận";
 
     const request = {
       items: items.map((i) => ({
         productId: i.product.value,
         quantity: i.quantity,
         unitPrice: i.unitPrice,
-        ...(isApproved && { receiveQuantity: i.receiveQuantity || 0 }),
+        ...((isApproved || isWaitingConfirmation) && { receiveQuantity: i.receiveQuantity || 0 }),
       })),
       notes,
       taxAmount: parseFloat(taxAmount || 0),
@@ -357,9 +391,9 @@ const EditPurchaseOrder = () => {
               <table className="table table-bordered align-middle">
                 <thead className="table-light">
                   <tr>
-                    <th style={{ width: orderStatus?.toLowerCase() === "đã duyệt" ? "30%" : "35%" }}>Sản phẩm</th>
+                    <th style={{ width: (orderStatus?.toLowerCase() === "đã duyệt" || orderStatus?.toLowerCase() === "chờ xác nhận") ? "30%" : "35%" }}>Sản phẩm</th>
                     <th style={{ width: "15%" }}>Số lượng</th>
-                    {orderStatus?.toLowerCase() === "đã duyệt" && (
+                    {(orderStatus?.toLowerCase() === "đã duyệt" || orderStatus?.toLowerCase() === "chờ xác nhận") && (
                       <th style={{ width: "15%" }}>Số lượng thực nhận</th>
                     )}
                     <th style={{ width: "20%" }}>Đơn giá</th>
@@ -390,11 +424,11 @@ const EditPurchaseOrder = () => {
                           onChange={(e) =>
                             updateItem(index, "quantity", e.target.value)
                           }
-                          disabled={orderStatus?.toLowerCase() === "đã duyệt"}
-                          readOnly={orderStatus?.toLowerCase() === "đã duyệt"}
+                          disabled={orderStatus?.toLowerCase() === "đã duyệt" || orderStatus?.toLowerCase() === "chờ xác nhận"}
+                          readOnly={orderStatus?.toLowerCase() === "đã duyệt" || orderStatus?.toLowerCase() === "chờ xác nhận"}
                         />
                       </td>
-                      {orderStatus?.toLowerCase() === "đã duyệt" && (
+                      {(orderStatus?.toLowerCase() === "đã duyệt" || orderStatus?.toLowerCase() === "chờ xác nhận") && (
                         <td>
                           <input
                             type="number"
@@ -413,6 +447,8 @@ const EditPurchaseOrder = () => {
                             }}
                             placeholder={`Tối đa: ${item.quantity}`}
                             title={`Số lượng thực nhận (tối đa ${item.quantity})`}
+                            disabled={orderStatus?.toLowerCase() === "chờ xác nhận"}
+                            readOnly={orderStatus?.toLowerCase() === "chờ xác nhận"}
                           />
                         </td>
                       )}
@@ -420,14 +456,15 @@ const EditPurchaseOrder = () => {
                         <input
                           type="number"
                           min="0"
-                          step="0.01"
+                          step="1000"
                           className="form-control"
-                          value={item.unitPrice}
-                          onChange={(e) =>
-                            updateItem(index, "unitPrice", e.target.value)
-                          }
-                          disabled={orderStatus?.toLowerCase() === "đã duyệt"}
-                          readOnly={orderStatus?.toLowerCase() === "đã duyệt"}
+                          value={item.unitPrice || 0}
+                          onChange={(e) => {
+                            const value = parseFloat(e.target.value) || 0;
+                            updateItem(index, "unitPrice", value);
+                          }}
+                          disabled={orderStatus?.toLowerCase() === "đã duyệt" || orderStatus?.toLowerCase() === "chờ xác nhận" || orderStatus?.toLowerCase() === "đã nhận hàng"}
+                          readOnly={orderStatus?.toLowerCase() === "đã duyệt" || orderStatus?.toLowerCase() === "chờ xác nhận" || orderStatus?.toLowerCase() === "đã nhận hàng"}
                         />
                       </td>
                       <td>{item.total.toLocaleString("vi-VN")} ₫</td>
@@ -436,7 +473,7 @@ const EditPurchaseOrder = () => {
                           type="button"
                           className="btn btn-outline-danger btn-sm"
                           onClick={() => removeItem(index)}
-                          disabled={orderStatus?.toLowerCase() === "đã duyệt"}
+                          disabled={orderStatus?.toLowerCase() === "đã duyệt" || orderStatus?.toLowerCase() === "chờ xác nhận"}
                         >
                           <i className="feather icon-x" />
                         </button>
@@ -447,6 +484,7 @@ const EditPurchaseOrder = () => {
               </table>
 
               {orderStatus?.toLowerCase() !== "đã duyệt" &&
+                orderStatus?.toLowerCase() !== "chờ xác nhận" &&
                 orderStatus?.toLowerCase() !== "đã hủy" &&
                 orderStatus?.toLowerCase() !== "đã nhận hàng" && (
                   <button
@@ -468,8 +506,8 @@ const EditPurchaseOrder = () => {
                   rows={4}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  disabled={orderStatus?.toLowerCase() === "đã hủy" || orderStatus?.toLowerCase() === "đã nhận hàng"}
-                  readOnly={orderStatus?.toLowerCase() === "đã hủy" || orderStatus?.toLowerCase() === "đã nhận hàng"}
+                  disabled={orderStatus?.toLowerCase() === "đã hủy" || orderStatus?.toLowerCase() === "đã nhận hàng" || orderStatus?.toLowerCase() === "chờ xác nhận"}
+                  readOnly={orderStatus?.toLowerCase() === "đã hủy" || orderStatus?.toLowerCase() === "đã nhận hàng" || orderStatus?.toLowerCase() === "chờ xác nhận"}
                 />
               </div>
               <div className="col-md-6">
@@ -488,8 +526,8 @@ const EditPurchaseOrder = () => {
                       className="form-control w-50 text-end"
                       value={taxAmount}
                       onChange={(e) => setTaxAmount(e.target.value)}
-                      disabled={orderStatus?.toLowerCase() === "đã duyệt" || orderStatus?.toLowerCase() === "đã hủy" || orderStatus?.toLowerCase() === "đã nhận hàng"}
-                      readOnly={orderStatus?.toLowerCase() === "đã duyệt" || orderStatus?.toLowerCase() === "đã hủy" || orderStatus?.toLowerCase() === "đã nhận hàng"}
+                      disabled={orderStatus?.toLowerCase() === "đã duyệt" || orderStatus?.toLowerCase() === "chờ xác nhận" || orderStatus?.toLowerCase() === "đã hủy" || orderStatus?.toLowerCase() === "đã nhận hàng"}
+                      readOnly={orderStatus?.toLowerCase() === "đã duyệt" || orderStatus?.toLowerCase() === "chờ xác nhận" || orderStatus?.toLowerCase() === "đã hủy" || orderStatus?.toLowerCase() === "đã nhận hàng"}
                     />
                   </div>
 
@@ -513,7 +551,8 @@ const EditPurchaseOrder = () => {
                   : "Huỷ"}
               </button>
               {orderStatus?.toLowerCase() !== "đã hủy" &&
-                orderStatus?.toLowerCase() !== "đã nhận hàng" && (
+                orderStatus?.toLowerCase() !== "đã nhận hàng" &&
+                orderStatus?.toLowerCase() !== "chờ xác nhận" && (
                   <button
                     type="submit"
                     className="btn btn-primary"
