@@ -16,7 +16,7 @@ import {
   Legend,
 } from "chart.js";
 import { allRoutes } from "../../routes/AllRoutes";
-import CommonDateRangePicker from "../../components/data-range-picker/common-date-range-picker";
+import CommonDateRangePicker from "../../components/date-range-picker/common-date-range-picker";
 import { getAllPurchaseOrders } from "../../services/PurchaseOrderService";
 import { getAllProducts } from "../../services/ProductService";
 import { getAllCustomers } from "../../services/CustomerService";

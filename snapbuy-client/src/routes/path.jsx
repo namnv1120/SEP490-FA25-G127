@@ -51,6 +51,14 @@ const SupplierReport = lazy(() =>
   import("../feature-module/reports/SupplierReport")
 );
 
+const TransactionHistory = lazy(() =>
+  import("../feature-module/sales/TransactionHistory")
+);
+
+const OrderHistory = lazy(() =>
+  import("../feature-module/sales/OrderHistory")
+);
+
 
 const routes = allRoutes;
 
@@ -203,6 +211,13 @@ export const authRoutes = [
     element: <OrderList />,
     route: Route,
   },
+  // {
+  //   id: 20,
+  //   path: routes.possettings,
+  //   name: "possettings",
+  //   element: <PosSettings />,
+  //   route: Route,
+  // },
   {
     id: 20,
     path: routes.revenuereport,
@@ -232,12 +247,26 @@ export const authRoutes = [
     route: Route,
   },
   {
-    id: 106,
+    id: 24,
     path: routes.permissions,
     name: "permissions",
     element: <Permissions />,
     route: Route,
   },
+  {
+    id: 25,
+    path: routes.transactionhistory,
+    name: "transaction-history",
+    element: <TransactionHistory />,
+    route: Route,
+  },
+  {
+    id: 26,
+    path: routes.orderhistory,
+    name: "order-history",
+    element: <OrderHistory />,
+    route: Route,
+  }
 ];
 
 export const posPage = [

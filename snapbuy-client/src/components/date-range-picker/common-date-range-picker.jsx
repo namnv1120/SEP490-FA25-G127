@@ -35,7 +35,7 @@ const CommonDateRangePicker = () => {
   };
 
   const handleMenuClick = ({ key }) => {
-    if (key === 'Khoảng tùy chỉnh') {
+    if (key === 'Tùy chọn ngày') {
       setCustomVisible(true);
       setTimeout(() => rangeRef.current?.focus(), 0);
     } else {
@@ -57,7 +57,7 @@ const CommonDateRangePicker = () => {
       label,
     })),
     { type: 'divider' },
-    { key: 'Khoảng tùy chỉnh', label: 'Khoảng tùy chỉnh' },
+    { key: 'Tùy chọn ngày', label: 'Tùy chọn ngày' },
   ];
 
   const displayValue = `${dates[0].format(dateFormat)} - ${dates[1].format(dateFormat)}`;
@@ -71,7 +71,6 @@ const CommonDateRangePicker = () => {
         <Input
           readOnly
           value={displayValue}
-          className=""
         />
       </Dropdown>
 
