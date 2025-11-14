@@ -126,6 +126,19 @@ const ImportExcelModal = ({
 
     // Trang 1: Products template
     const wsProducts = XLSX.utils.json_to_sheet(templateData);
+    // Set độ rộng cột cho sheet Sản phẩm
+    wsProducts["!cols"] = [
+      { wch: 15 }, // Mã sản phẩm
+      { wch: 30 }, // Tên sản phẩm
+      { wch: 40 }, // Mô tả
+      { wch: 20 }, // Danh mục
+      { wch: 25 }, // Danh mục con
+      { wch: 18 }, // Mã nhà cung cấp
+      { wch: 30 }, // Tên nhà cung cấp
+      { wch: 12 }, // Đơn vị
+      { wch: 18 }, // Kích thước
+      { wch: 20 }, // Barcode
+    ];
     XLSX.utils.book_append_sheet(wb, wsProducts, "Sản phẩm");
 
     // Trang 2: Categories (nếu có)
@@ -136,6 +149,12 @@ const ImportExcelModal = ({
         "Danh mục cha": cat.parentCategoryName || "",
       }));
       const wsCategories = XLSX.utils.json_to_sheet(categoriesSheet);
+      // Set độ rộng cột cho sheet Danh mục
+      wsCategories["!cols"] = [
+        { wch: 25 }, // Tên danh mục
+        { wch: 40 }, // Mô tả
+        { wch: 25 }, // Danh mục cha
+      ];
       XLSX.utils.book_append_sheet(wb, wsCategories, "Danh mục");
     }
 
@@ -151,6 +170,16 @@ const ImportExcelModal = ({
         "Phường/Xã": sup.ward || "",
       }));
       const wsSuppliers = XLSX.utils.json_to_sheet(suppliersSheet);
+      // Set độ rộng cột cho sheet Nhà cung cấp
+      wsSuppliers["!cols"] = [
+        { wch: 18 }, // Mã nhà cung cấp
+        { wch: 30 }, // Tên nhà cung cấp
+        { wch: 15 }, // Số điện thoại
+        { wch: 30 }, // Email
+        { wch: 40 }, // Địa chỉ
+        { wch: 20 }, // Thành phố
+        { wch: 20 }, // Phường/Xã
+      ];
       XLSX.utils.book_append_sheet(wb, wsSuppliers, "Nhà cung cấp");
     }
 

@@ -83,13 +83,6 @@ export const SidebarData1 = [
         subRoutes: [],
       },
       {
-        tittle: "Đơn bán hàng",
-        hasSubRoute: false,
-        showSubRoute: false,
-        route: "/orders",
-        subRoutes: [],
-      },
-            {
         tittle: "Lịch sử đơn hàng",
         hasSubRoute: false,
         showSubRoute: false,

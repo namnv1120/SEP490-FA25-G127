@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { DatePicker, Dropdown, Input } from 'antd';
 import dayjs from 'dayjs';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
@@ -14,13 +14,29 @@ dayjs.extend(localeData);
 const { RangePicker } = DatePicker;
 const dateFormat = 'DD/MM/YYYY';
 
-const CommonDateRangePicker = () => {
-  const [dates, setDates] = useState([
-    dayjs().subtract(6, 'days'),
-    dayjs(),
-  ]);
+const CommonDateRangePicker = ({ value, onChange, className }) => {
+  // Convert value từ Date objects hoặc null sang dayjs
+  const getDayjsDates = () => {
+    if (value && Array.isArray(value) && value[0] && value[1]) {
+      return [dayjs(value[0]), dayjs(value[1])];
+    }
+    return [dayjs().subtract(6, 'days'), dayjs()];
+  };
+
+  const [dates, setDates] = useState(getDayjsDates());
   const [customVisible, setCustomVisible] = useState(false);
   const rangeRef = useRef(null);
+
+  // Sync dates với value từ props
+  useEffect(() => {
+    if (value && Array.isArray(value) && value[0] && value[1]) {
+      setDates([dayjs(value[0]), dayjs(value[1])]);
+    } else if (!value || (Array.isArray(value) && (!value[0] || !value[1]))) {
+      // Reset về default nếu value là null hoặc empty
+      const defaultDates = [dayjs().subtract(6, 'days'), dayjs()];
+      setDates(defaultDates);
+    }
+  }, [value]);
 
   const predefinedRanges = {
     'Hôm nay': [dayjs(), dayjs()],
@@ -39,15 +55,24 @@ const CommonDateRangePicker = () => {
       setCustomVisible(true);
       setTimeout(() => rangeRef.current?.focus(), 0);
     } else {
-      setDates(predefinedRanges[key]);
+      const newDates = predefinedRanges[key];
+      setDates(newDates);
       setCustomVisible(false);
+      // Gọi onChange với Date objects
+      if (onChange) {
+        onChange([newDates[0].toDate(), newDates[1].toDate()]);
+      }
     }
   };
 
   const handleCustomChange = (value) => {
-    if (value) {
+    if (value && value[0] && value[1]) {
       setDates(value);
       setCustomVisible(false);
+      // Gọi onChange với Date objects
+      if (onChange) {
+        onChange([value[0].toDate(), value[1].toDate()]);
+      }
     }
   };
 
@@ -60,10 +85,12 @@ const CommonDateRangePicker = () => {
     { key: 'Tùy chọn ngày', label: 'Tùy chọn ngày' },
   ];
 
-  const displayValue = `${dates[0].format(dateFormat)} - ${dates[1].format(dateFormat)}`;
+  const displayValue = dates[0] && dates[1] 
+    ? `${dates[0].format(dateFormat)} - ${dates[1].format(dateFormat)}`
+    : '';
 
   return (
-    <div>
+    <div className={className} style={{ position: 'relative' }}>
       <Dropdown
         menu={{ items: menuItems, onClick: handleMenuClick }}
         trigger={['click']}
@@ -71,23 +98,24 @@ const CommonDateRangePicker = () => {
         <Input
           readOnly
           value={displayValue}
+          placeholder="Chọn khoảng thời gian"
         />
       </Dropdown>
 
-
       {customVisible && (
-        <RangePicker
-          open
-          ref={rangeRef}
-          onChange={handleCustomChange}
-          format={dateFormat}
-          value={dates}
-          allowClear={false}
-          style={{ position: 'absolute', top: 0, left: 0, opacity: 0, pointerEvents: 'none' }}
-          onOpenChange={(open) => {
-            if (!open) setCustomVisible(false);
-          }}
-        />
+        <div style={{ position: 'absolute', zIndex: 1000, top: '100%', left: 0, marginTop: '4px' }}>
+          <RangePicker
+            open
+            ref={rangeRef}
+            onChange={handleCustomChange}
+            format={dateFormat}
+            value={dates}
+            allowClear={false}
+            onOpenChange={(open) => {
+              if (!open) setCustomVisible(false);
+            }}
+          />
+        </div>
       )}
     </div>
   );

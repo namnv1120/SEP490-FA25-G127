@@ -16,9 +16,12 @@ const getAuthHeaders = () => {
 };
 
 
-export const getAllOrders = async () => {
+export const getAllOrders = async (params = {}) => {
   try {
-    const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
+    const response = await axios.get(REST_API_BASE_URL, {
+      ...getAuthHeaders(),
+      params: params,
+    });
     return response.data?.result || response.data || [];
   } catch (error) {
     throw error;

@@ -709,7 +709,15 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                   className="form-control"
                   placeholder="Nhập số tiền khách đưa"
                   value={cashReceived}
-                  onChange={(e) => setCashReceived(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Chỉ cho phép số dương hoặc rỗng
+                    if (value === "" || (!isNaN(value) && parseFloat(value) >= 0)) {
+                      setCashReceived(value);
+                    }
+                  }}
+                  min="0"
+                  step="1000"
                   style={{ fontSize: '16px', paddingLeft: '40px' }}
                   autoFocus
                 />

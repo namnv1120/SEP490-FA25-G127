@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -31,4 +32,24 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
             @Param("paymentStatus") String paymentStatus);
+
+    @Query("""
+        SELECT DISTINCT o FROM Order o
+        LEFT JOIN o.customer c
+        LEFT JOIN o.account a
+        WHERE (:searchTerm IS NULL OR :searchTerm = '' OR
+               LOWER(o.orderNumber) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR
+               LOWER(c.fullName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR
+               LOWER(a.fullName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR
+               LOWER(a.username) LIKE LOWER(CONCAT('%', :searchTerm, '%')))
+        AND (:orderStatus IS NULL OR :orderStatus = '' OR o.orderStatus = :orderStatus)
+        AND (:fromDate IS NULL OR o.orderDate >= :fromDate)
+        AND (:toDate IS NULL OR o.orderDate <= :toDate)
+        ORDER BY o.orderDate DESC
+        """)
+    List<Order> searchOrders(
+            @Param("searchTerm") String searchTerm,
+            @Param("orderStatus") String orderStatus,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate);
 }

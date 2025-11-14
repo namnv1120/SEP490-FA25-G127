@@ -29,6 +29,12 @@ const routeNameMap = {
   pos: "POS",
   forgotpassword: "Quên mật khẩu",
   resetpassword: "Đặt lại mật khẩu",
+  "transaction-history": "Lịch sử giao dịch",
+  "order-history": "Lịch sử đơn hàng",
+  "revenue-report": "Báo cáo doanh thu",
+  "product-report": "Báo cáo sản phẩm",
+  "customer-report": "Báo cáo khách hàng",
+  "supplier-report": "Báo cáo nhà cung cấp",
 };
 
 const PageTitle = () => {

@@ -16,7 +16,6 @@ const EditProduct = lazy(() => import("../feature-module/inventories/EditProduct
 const ProductPriceList = lazy(() => import("../feature-module/inventories/ProductPriceList"));
 const EditProductPrice = lazy(() => import("../feature-module/inventories/EditProductPrice"));
 const InventoryList = lazy(() => import("../feature-module/inventories/InventoryList"));
-const OrderList = lazy(() => import("../feature-module/sales/OrderList"));
 const CategoryList = lazy(() => import("../feature-module/inventories/CategoryList"));
 const SubCategories = lazy(() => import("../feature-module/inventories/SubCategoryList"));
 
@@ -202,13 +201,6 @@ export const authRoutes = [
     path: routes.editpurchaseorder,
     name: "edit-purchaseorder",
     element: <EditPurchaseOrder />,
-    route: Route,
-  },
-  {
-    id: 19,
-    path: routes.orders,
-    name: "orders",
-    element: <OrderList />,
     route: Route,
   },
   // {

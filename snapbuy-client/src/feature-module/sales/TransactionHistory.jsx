@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import CommonFooter from "../../components/footer/commonFooter";
 import TooltipIcons from "../../components/tooltip-content/tooltipIcons";
-import Datatable from "../../core/pagination/datatable";
+import PrimeDataTable from "../../components/data-table";
 import CommonSelect from "../../components/select/common-select";
 import CommonDateRangePicker from "../../components/date-range-picker/common-date-range-picker";
 import RefreshIcon from "../../components/tooltip-content/refresh";
@@ -72,10 +72,10 @@ const TransactionHistory = () => {
         const parsedDate = item.transactionDate
           ? new Date(item.transactionDate)
           : item.createdAt
-          ? new Date(item.createdAt)
-          : item.date
-          ? new Date(item.date)
-          : null;
+            ? new Date(item.createdAt)
+            : item.date
+              ? new Date(item.date)
+              : null;
 
         const uniqueKey =
           item.transactionId ||
@@ -104,10 +104,10 @@ const TransactionHistory = () => {
       const trimmedSearch = searchProduct.trim().toLowerCase();
       const filteredData = trimmedSearch
         ? normalizedData.filter(
-            item =>
-              item.productName.toLowerCase().includes(trimmedSearch) ||
-              item.productCode.toLowerCase().includes(trimmedSearch)
-          )
+          item =>
+            item.productName.toLowerCase().includes(trimmedSearch) ||
+            item.productCode.toLowerCase().includes(trimmedSearch)
+        )
         : normalizedData;
 
       setListData(filteredData);
@@ -142,85 +142,107 @@ const TransactionHistory = () => {
 
   const columns = [
     {
-      title: "Mã GD",
-      dataIndex: "shortCode",
-      sorter: (a, b) => a.shortCode.localeCompare(b.shortCode),
-      render: text => (
+      header: (
+        <label className="checkboxs">
+          <input type="checkbox" id="select-all" />
+          <span className="checkmarks" />
+        </label>
+      ),
+      body: () => (
+        <label className="checkboxs">
+          <input type="checkbox" />
+          <span className="checkmarks" />
+        </label>
+      ),
+      sortable: false,
+      key: "checked",
+    },
+    {
+      header: "Mã GD",
+      field: "shortCode",
+      key: "shortCode",
+      sortable: true,
+      body: (data) => (
         <Link to="#" className="text-primary fw-medium small">
-          {text}
+          {data.shortCode}
         </Link>
       ),
     },
     {
-      title: "Thời gian",
-      dataIndex: "transactionDate",
-      sorter: (a, b) => new Date(a.transactionDate) - new Date(b.transactionDate),
-      render: date =>
-        date && !isNaN(date.getTime())
-          ? date.toLocaleString("vi-VN", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-            })
+      header: "Thời gian",
+      field: "transactionDate",
+      key: "transactionDate",
+      sortable: true,
+      body: (data) =>
+        data.transactionDate && !isNaN(new Date(data.transactionDate).getTime())
+          ? new Date(data.transactionDate).toLocaleString("vi-VN", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
           : "-",
     },
     {
-      title: "Sản phẩm",
-      dataIndex: "productName",
-      sorter: (a, b) => a.productName.localeCompare(b.productName),
-      render: (text, record) => (
+      header: "Sản phẩm",
+      field: "productName",
+      key: "productName",
+      sortable: true,
+      body: (data) => (
         <div>
-          <span className="fw-medium d-block">{text}</span>
-          {record.productCode !== "-" && (
-            <small className="text-muted">Mã: {record.productCode}</small>
+          <span className="fw-medium d-block">{data.productName}</span>
+          {data.productCode !== "-" && (
+            <small className="text-muted">Mã: {data.productCode}</small>
           )}
         </div>
       ),
     },
     {
-      title: "Loại",
-      dataIndex: "transactionType",
-      sorter: (a, b) => a.transactionType.localeCompare(b.transactionType),
-      render: type => {
+      header: "Loại",
+      field: "transactionType",
+      key: "transactionType",
+      sortable: true,
+      body: (data) => {
         const badge =
           {
             IMPORT: { class: "bg-success", text: "Nhập kho" },
             EXPORT: { class: "bg-danger", text: "Xuất kho" },
             ADJUSTMENT: { class: "bg-warning", text: "Điều chỉnh" },
-          }[type] || { class: "bg-secondary", text: type };
+          }[data.transactionType] || { class: "bg-secondary", text: data.transactionType };
         return <span className={`badge ${badge.class} small`}>{badge.text}</span>;
       },
     },
     {
-      title: "Số lượng",
-      dataIndex: "quantity",
-      sorter: (a, b) => a.quantity - b.quantity,
-      render: qty => (
-        <span className={qty > 0 ? "text-success" : "text-danger"}>
+      header: "Số lượng",
+      field: "quantity",
+      key: "quantity",
+      sortable: true,
+      body: (data) => (
+        <span className={data.quantity > 0 ? "text-success" : "text-danger"}>
           <strong>
-            {qty > 0 ? "+" : ""}
-            {Math.abs(qty)}
+            {data.quantity > 0 ? "+" : ""}
+            {Math.abs(data.quantity)}
           </strong>
         </span>
       ),
     },
     {
-      title: "Tham chiếu",
-      dataIndex: "referenceType",
-      sorter: (a, b) => (a.referenceType || "").localeCompare(b.referenceType || ""),
-      render: refType => {
+      header: "Tham chiếu",
+      field: "referenceType",
+      key: "referenceType",
+      sortable: true,
+      body: (data) => {
         const map = {
           PURCHASE_ORDER: "Đơn nhập",
           SALES_ORDER: "Đơn bán (POS)",
           ADJUSTMENT: "Điều chỉnh kho",
         };
-        const text = map[refType] || refType || "Không rõ";
+        const text = map[data.referenceType] || data.referenceType || "Không rõ";
         return (
           <small
             className={
-              refType === "SALES_ORDER" ? "text-primary fw-bold" : "text-muted"
+              data.referenceType === "SALES_ORDER" ? "text-primary fw-bold" : "text-muted"
             }
           >
             {text}
@@ -357,18 +379,17 @@ const TransactionHistory = () => {
               </div>
             )}
 
-            <Datatable
-              columns={columns}
-              dataSource={listData}
-              current={currentPage}
-              pageSize={rows}
-              total={totalRecords}
-              onChange={(page, size) => {
-                setCurrentPage(page);
-                setRows(size);
-              }}
+            <PrimeDataTable
+              column={columns}
+              data={listData}
+              rows={rows}
+              setRows={setRows}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              totalRecords={totalRecords}
+              dataKey="key"
               loading={loading}
-              rowKey="key"
+              serverSidePagination={false}
             />
           </div>
         </div>

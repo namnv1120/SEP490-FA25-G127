@@ -34,10 +34,42 @@ public class OrderController {
     }
 
     @GetMapping
-    public ApiResponse<List<OrderResponse>> getAllOrders() {
+    public ApiResponse<List<OrderResponse>> getAllOrders(
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) String orderStatus,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to) {
         ApiResponse<List<OrderResponse>> response = new ApiResponse<>();
-        response.setResult(orderService.getAllOrders());
-        response.setMessage("Lấy danh sách đơn hàng thành công.");
+        
+        // Parse dates if provided
+        java.time.LocalDateTime fromDate = null;
+        java.time.LocalDateTime toDate = null;
+        
+        if (from != null && !from.trim().isEmpty()) {
+            try {
+                fromDate = java.time.LocalDate.parse(from).atStartOfDay();
+            } catch (Exception e) {
+                // Ignore parse errors
+            }
+        }
+        
+        if (to != null && !to.trim().isEmpty()) {
+            try {
+                toDate = java.time.LocalDate.parse(to).atTime(23, 59, 59);
+            } catch (Exception e) {
+                // Ignore parse errors
+            }
+        }
+        
+        // If any search parameter is provided, use search method
+        if (searchTerm != null || orderStatus != null || fromDate != null || toDate != null) {
+            response.setResult(orderService.searchOrders(searchTerm, orderStatus, fromDate, toDate));
+            response.setMessage("Tìm kiếm đơn hàng thành công.");
+        } else {
+            response.setResult(orderService.getAllOrders());
+            response.setMessage("Lấy danh sách đơn hàng thành công.");
+        }
+        
         return response;
     }
 

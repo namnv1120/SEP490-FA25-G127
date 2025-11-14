@@ -277,6 +277,46 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
     }
 
     @Override
+    public List<OrderResponse> searchOrders(String searchTerm, String orderStatus, LocalDateTime fromDate, LocalDateTime toDate) {
+        // Normalize searchTerm - null hoặc empty string
+        String normalizedSearchTerm = (searchTerm == null || searchTerm.trim().isEmpty()) ? null : searchTerm.trim();
+        String normalizedOrderStatus = (orderStatus == null || orderStatus.trim().isEmpty()) ? null : orderStatus.trim();
+        
+        // Set time for date range
+        LocalDateTime normalizedFromDate = null;
+        LocalDateTime normalizedToDate = null;
+        
+        if (fromDate != null) {
+            normalizedFromDate = fromDate.withHour(0).withMinute(0).withSecond(0).withNano(0);
+        }
+        if (toDate != null) {
+            normalizedToDate = toDate.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+        }
+        
+        List<Order> orders = orderRepository.searchOrders(
+                normalizedSearchTerm,
+                normalizedOrderStatus,
+                normalizedFromDate,
+                normalizedToDate
+        );
+        
+        return orders.stream()
+                .map(order -> {
+                    List<OrderDetail> details = orderDetailRepository.findByOrder(order);
+                    Payment payment = paymentRepository.findByOrder(order);
+                    OrderResponse resp = orderMapper.toResponse(order, details, payment);
+                    BigDecimal subtotal = details.stream()
+                            .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    resp.setSubtotal(subtotal);
+                    resp.setPointsRedeemed(order.getPointsRedeemed());
+                    resp.setPointsEarned(order.getPointsEarned());
+                    return resp;
+                })
+                .toList();
+    }
+
+    @Override
     @Transactional
     public OrderResponse cancelOrder(UUID orderId) {
         Order order = orderRepository.findById(orderId)
@@ -311,8 +351,8 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
             }
             
             order.setOrderStatus("Đã hủy");
-            order.setPaymentStatus("Chưa thanh toán");
-            payment.setPaymentStatus("Chưa thanh toán");
+            order.setPaymentStatus("Thất bại");
+            payment.setPaymentStatus("Thất bại");
 
         } else if ("Đã thanh toán".equalsIgnoreCase(order.getPaymentStatus())) {
             for (OrderDetail d : details) {

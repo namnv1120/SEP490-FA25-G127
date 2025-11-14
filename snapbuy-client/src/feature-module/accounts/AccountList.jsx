@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import AddAccount from "../../core/modals/accounts/AddAccountModal";
 import EditAccount from "../../core/modals/accounts/EditAccountModal";
 import TableTopHead from "../../components/table-top-head";
-import Table from "../../core/pagination/datatable";
+import PrimeDataTable from "../../components/data-table";
 import DeleteModal from "../../components/delete-modal";
 import { getAllAccounts, toggleAccountStatus, deleteAccount } from "../../services/AccountService";
 import { message } from "antd";
@@ -17,6 +17,8 @@ const AccountList = () => {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rows, setRows] = useState(10);
 
   useEffect(() => {
     fetchAccounts();
@@ -97,42 +99,64 @@ const AccountList = () => {
 
   const columns = [
     {
-      title: "Họ và tên",
-      dataIndex: "fullName",
-      sorter: (a, b) => a.fullName.length - b.fullName.length,
+      header: (
+        <label className="checkboxs">
+          <input type="checkbox" id="select-all" />
+          <span className="checkmarks" />
+        </label>
+      ),
+      body: () => (
+        <label className="checkboxs">
+          <input type="checkbox" />
+          <span className="checkmarks" />
+        </label>
+      ),
+      sortable: false,
+      key: "checked",
     },
     {
-      title: "Tên đăng nhập",
-      dataIndex: "username",
-      sorter: (a, b) => a.username.length - b.username.length,
+      header: "Họ và tên",
+      field: "fullName",
+      key: "fullName",
+      sortable: true,
     },
     {
-      title: "Email",
-      dataIndex: "email",
-      width: "20%",
-      sorter: (a, b) => a.email.localeCompare(b.email),
+      header: "Tên đăng nhập",
+      field: "username",
+      key: "username",
+      sortable: true,
     },
     {
-      title: "Số điện thoại",
-      dataIndex: "phone",
-      sorter: (a, b) => a.phone.length - b.phone.length,
+      header: "Email",
+      field: "email",
+      key: "email",
+      sortable: true,
+      style: { width: "20%" },
     },
     {
-      title: "Vai trò",
-      dataIndex: "roles",
-      sorter: (a, b) => a.roles.length - b.roles.length,
+      header: "Số điện thoại",
+      field: "phone",
+      key: "phone",
+      sortable: true,
     },
     {
-      title: "Trạng thái",
-      dataIndex: "active",
-      render: (isActive, record) => {
-        const active = isActive === true || isActive === 1 || isActive === "1";
+      header: "Vai trò",
+      field: "roles",
+      key: "roles",
+      sortable: true,
+    },
+    {
+      header: "Trạng thái",
+      field: "active",
+      key: "active",
+      sortable: true,
+      body: (data) => {
+        const active = data.active === true || data.active === 1 || data.active === "1";
         return (
           <div className="d-flex align-items-center gap-2">
             <span
               className={`badge fw-medium fs-10 ${active ? "bg-success" : "bg-danger"}`}
             >
-
               {active ? "Hoạt động" : "Không hoạt động"}
             </span>
             <div className="form-check form-switch">
@@ -141,23 +165,20 @@ const AccountList = () => {
                 type="checkbox"
                 role="switch"
                 checked={active}
-                onChange={() => handleToggleStatus(record)}
+                onChange={() => handleToggleStatus(data)}
                 style={{ cursor: "pointer" }}
               />
             </div>
           </div>
         );
       },
-      sorter: (a, b) => (a.isActive === b.isActive ? 0 : a.isActive ? -1 : 1),
     },
-
     {
-      title: "",
-      dataIndex: "actions",
+      header: "",
+      field: "actions",
       key: "actions",
-      width: "5%",
-      align: "center",
-      render: (text, record) => (
+      sortable: false,
+      body: (data) => (
         <div className="action-table-data text-center">
           <div className="edit-delete-action d-flex justify-content-center">
             <Link
@@ -165,8 +186,8 @@ const AccountList = () => {
               to="#"
               onClick={(e) => {
                 e.preventDefault();
-                setSelectedAccount(record);
-                setSelectedAccountId(record.id);
+                setSelectedAccount(data);
+                setSelectedAccountId(data.id);
                 setEditModalOpen(true);
               }}
             >
@@ -177,7 +198,7 @@ const AccountList = () => {
               to="#"
               onClick={(e) => {
                 e.preventDefault();
-                handleDeleteClick(record);
+                handleDeleteClick(data);
               }}
             >
               <i data-feather="trash-2" className="feather-trash-2"></i>
@@ -243,7 +264,18 @@ const AccountList = () => {
 
             <div className="card-body">
               <div className="table-responsive">
-                <Table columns={columns} dataSource={dataSource} />
+                <PrimeDataTable
+                  column={columns}
+                  data={dataSource}
+                  rows={rows}
+                  setRows={setRows}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  totalRecords={dataSource.length}
+                  dataKey="id"
+                  loading={loading}
+                  serverSidePagination={false}
+                />
               </div>
             </div>
           </div>

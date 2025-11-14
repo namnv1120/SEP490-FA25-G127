@@ -28,7 +28,6 @@ public class OrderResponse {
     private String notes;
     private List<OrderDetailResponse> orderDetails;
     private PaymentResponse payment;
-    //Gia goc
     private BigDecimal subtotal;
     private Integer pointsRedeemed;
     private Integer pointsEarned;

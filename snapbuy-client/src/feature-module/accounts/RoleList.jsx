@@ -4,7 +4,7 @@ import AddRole from "../../core/modals/accounts/AddRoleModal";
 import EditRole from "../../core/modals/accounts/EditRoleModal";
 import DeleteModal from "../../components/delete-modal";
 import TableTopHead from "../../components/table-top-head";
-import Table from "../../core/pagination/datatable";
+import PrimeDataTable from "../../components/data-table";
 
 import {
   getAllRoles,
@@ -20,6 +20,8 @@ const RoleList = () => {
   const [selectedRole, setSelectedRole] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rows, setRows] = useState(10);
 
   const fetchRoles = async () => {
     try {
@@ -80,22 +82,40 @@ const RoleList = () => {
 
   const columns = [
     {
-      title: "Vai trò",
-      dataIndex: "roleName",
-      align: "left",
-      sorter: (a, b) => a.roleName.localeCompare(b.roleName),
+      header: (
+        <label className="checkboxs">
+          <input type="checkbox" id="select-all" />
+          <span className="checkmarks" />
+        </label>
+      ),
+      body: () => (
+        <label className="checkboxs">
+          <input type="checkbox" />
+          <span className="checkmarks" />
+        </label>
+      ),
+      sortable: false,
+      key: "checked",
     },
     {
-      title: "Mô tả",
-      dataIndex: "description",
-      align: "left",
-      sorter: (a, b) => a.createdOn.localeCompare(b.description),
+      header: "Vai trò",
+      field: "roleName",
+      key: "roleName",
+      sortable: true,
     },
     {
-      title: "Trạng thái",
-      dataIndex: "active",
-      render: (isActive, record) => {
-        const active = isActive === true || isActive === 1 || isActive === "1";
+      header: "Mô tả",
+      field: "description",
+      key: "description",
+      sortable: true,
+    },
+    {
+      header: "Trạng thái",
+      field: "active",
+      key: "active",
+      sortable: true,
+      body: (data) => {
+        const active = data.active === true || data.active === 1 || data.active === "1";
         return (
           <div className="d-flex align-items-center gap-2">
             <span
@@ -109,35 +129,28 @@ const RoleList = () => {
                 type="checkbox"
                 role="switch"
                 checked={active}
-                onChange={() => handleToggleStatus(record)}
+                onChange={() => handleToggleStatus(data)}
                 style={{ cursor: "pointer" }}
               />
             </div>
           </div>
         );
       },
-      sorter: (a, b) => (a.isActive === b.isActive ? 0 : a.isActive ? -1 : 1),
     },
     {
-      title: "",
-      dataIndex: "actions",
+      header: "",
+      field: "actions",
       key: "actions",
-      align: "center",
-      render: (_, record) => (
+      sortable: false,
+      body: (data) => (
         <div className="action-table-data">
           <div className="edit-delete-action">
-            {/* <Link
-              to={allRoutes.permissions}
-              className="me-2 d-flex align-items-center p-2 border rounded"
-            >
-              <i className="ti ti-shield"></i>
-            </Link> */}
             <Link
               className="me-2 p-2"
               to="#"
               onClick={(e) => {
                 e.preventDefault();
-                setSelectedRole(record);
+                setSelectedRole(data);
                 setEditModalOpen(true);
               }}
             >
@@ -148,7 +161,7 @@ const RoleList = () => {
               to="#"
               data-bs-toggle="modal"
               data-bs-target="#delete-modal"
-              onClick={() => setSelectedRole(record)}
+              onClick={() => setSelectedRole(data)}
             >
               <i data-feather="trash-2" className="feather-trash-2"></i>
             </Link>
@@ -212,7 +225,18 @@ const RoleList = () => {
 
             <div className="card-body">
               <div className="table-responsive">
-                <Table columns={columns} dataSource={roles} />
+                <PrimeDataTable
+                  column={columns}
+                  data={roles}
+                  rows={rows}
+                  setRows={setRows}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  totalRecords={roles.length}
+                  dataKey="id"
+                  loading={loading}
+                  serverSidePagination={false}
+                />
               </div>
             </div>
           </div>

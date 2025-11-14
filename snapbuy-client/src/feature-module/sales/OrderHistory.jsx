@@ -1,32 +1,34 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import CommonFooter from "../../components/footer/commonFooter";
 import TooltipIcons from "../../components/tooltip-content/tooltipIcons";
-import Datatable from "../../core/pagination/datatable";
+import PrimeDataTable from "../../components/data-table";
 import CommonSelect from "../../components/select/common-select";
 import CommonDateRangePicker from "../../components/date-range-picker/common-date-range-picker";
 import RefreshIcon from "../../components/tooltip-content/refresh";
 import CollapesIcon from "../../components/tooltip-content/collapes";
 import { getAllOrders } from "../../services/OrderService";
+import { getAccountById } from "../../services/AccountService";
 
 const OrderHistory = () => {
-  const [listData, setListData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
-  const [selectedCustomerName, setSelectedCustomerName] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState([null, null]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [accountNamesMap, setAccountNamesMap] = useState({});
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
   const OrderStatuses = [
     { value: "", label: "Tất cả" },
-    { value: "PENDING", label: "Chờ xử lý" },
-    { value: "CONFIRMED", label: "Đã xác nhận" },
-    { value: "CANCELLED", label: "Đã hủy" },
+    { value: "Chờ xác nhận", label: "Chờ xác nhận" },
+    { value: "Hoàn tất", label: "Hoàn tất" },
+    { value: "Đã hủy", label: "Đã hủy" },
   ];
 
   // --- Tính tổng tiền đơn hàng ---
@@ -61,148 +63,309 @@ const OrderHistory = () => {
   };
 
   const loadOrders = async () => {
-    setLoading(true);
+    // Chỉ set loading cho lần đầu tiên, không set khi filter/search
+    if (isInitialLoad) {
+      setLoading(true);
+    }
     setError("");
     try {
-      const from = dateRange[0]
-        ? new Date(dateRange[0]).toISOString().split("T")[0]
-        : null;
-      const to = dateRange[1]
-        ? new Date(dateRange[1]).toISOString().split("T")[0]
-        : null;
+      // Chuẩn bị params cho API search
+      const params = {};
 
-      const params = {
-        page: currentPage - 1,
-        size: rows,
-        customerName: selectedCustomerName || null,
-        status: selectedStatus || null,
-        from,
-        to,
-      };
+      // Thêm searchTerm nếu có
+      if (debouncedSearchTerm && debouncedSearchTerm.trim()) {
+        params.searchTerm = debouncedSearchTerm.trim();
+      }
 
+      // Thêm orderStatus nếu có
+      if (selectedStatus && selectedStatus.trim()) {
+        params.orderStatus = selectedStatus.trim();
+      }
+
+      // Thêm date range nếu có
+      if (dateRange[0] && dateRange[1]) {
+        const fromDate = new Date(dateRange[0]);
+        fromDate.setHours(0, 0, 0, 0);
+        const toDate = new Date(dateRange[1]);
+        toDate.setHours(23, 59, 59, 999);
+
+        // Format date as YYYY-MM-DD theo local timezone (không dùng toISOString vì nó convert sang UTC)
+        const formatDate = (date) => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+
+        params.from = formatDate(fromDate);
+        params.to = formatDate(toDate);
+      }
+
+      // Gọi API với params
       const response = await getAllOrders(params);
-      const data = response?.content || response || [];
+      const allData = response?.content || response || [];
 
-      if (!Array.isArray(data)) throw new Error("Dữ liệu trả về không đúng định dạng");
+      if (!Array.isArray(allData)) throw new Error("Dữ liệu trả về không đúng định dạng");
 
-      const normalizedData = data.map((item, index) => {
-        const total = calculateTotal(item);
+      const normalizedData = allData.map((item, index) => {
+        // Lấy payment method từ payment object hoặc trực tiếp
+        const paymentMethod = item.payment?.paymentMethod ||
+          item.paymentMethod ||
+          (item.paymentStatus === "PAID" || item.paymentStatus === "PAYMENT_COMPLETED" ? "Tiền mặt" : "-");
+
         return {
           key: item.orderId || `temp-${index}-${Date.now()}`,
           orderId: item.orderId || "-",
           orderNumber: item.orderNumber || `ORD-${String(index + 1).padStart(5, "0")}`,
-          orderDate: item.orderDate || item.createdAt || item.date || null,
+          orderDate: item.orderDate || item.createdDate || item.createdAt || item.date || null,
           customerName: item.customerName || "Khách lẻ",
-          total,
-          status: item.status || "PENDING",
+          accountId: item.accountId || null,
+          orderStatus: item.orderStatus || "PENDING",
+          paymentStatus: item.paymentStatus || "UNPAID",
+          paymentMethod: paymentMethod,
+          totalAmount: Number(item.totalAmount) || calculateTotal(item) || 0,
         };
       });
 
-      setListData(normalizedData);
-      setFilteredData(normalizedData);
-      setTotalRecords(response?.totalElements || normalizedData.length);
+      // Fetch account names for all unique accountIds
+      const uniqueAccountIds = [...new Set(normalizedData.map(item => item.accountId).filter(Boolean))];
+      const accountNames = {};
+
+      // Fetch account names in parallel
+      await Promise.all(
+        uniqueAccountIds.map(async (accountId) => {
+          try {
+            const account = await getAccountById(accountId);
+            accountNames[accountId] = account.fullName || account.username || "-";
+          } catch (err) {
+            console.error(`Failed to fetch account ${accountId}:`, err);
+            accountNames[accountId] = "-";
+          }
+        })
+      );
+
+      // Update normalizedData with account names
+      const dataWithAccountNames = normalizedData.map(item => ({
+        ...item,
+        createdBy: item.accountId ? (accountNames[item.accountId] || "-") : "-",
+      }));
+
+      setAccountNamesMap(accountNames);
+      setFilteredData(dataWithAccountNames);
+      setTotalRecords(dataWithAccountNames.length);
+      setIsInitialLoad(false);
     } catch (err) {
       console.error("=== Lỗi khi gọi API ===", err);
       setError(
         err.response?.data?.message ||
-          err.message ||
-          "Không thể tải dữ liệu đơn hàng. Vui lòng thử lại."
+        err.message ||
+        "Không thể tải dữ liệu đơn hàng. Vui lòng thử lại."
       );
-      setListData([]);
       setFilteredData([]);
       setTotalRecords(0);
+      setIsInitialLoad(false);
     } finally {
       setLoading(false);
     }
   };
 
+  // Debounce searchTerm
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Tạo key từ dateRange để trigger useEffect
+  const dateRangeKey = useMemo(() => {
+    if (dateRange[0] && dateRange[1]) {
+      return `${dateRange[0]?.getTime() || ''}-${dateRange[1]?.getTime() || ''}`;
+    }
+    return 'no-date';
+  }, [dateRange]);
+
+  // Effect để trigger loadOrders khi các filter thay đổi
   useEffect(() => {
     loadOrders();
-  }, [currentPage, rows, selectedCustomerName, selectedStatus, dateRange]);
+  }, [currentPage, rows, selectedStatus, debouncedSearchTerm, dateRangeKey]);
 
-  // --- Lọc theo từ khóa tìm kiếm ---
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredData(listData);
-    } else {
-      const lower = searchTerm.toLowerCase();
-      const filtered = listData.filter(
-        (item) =>
-          item.orderNumber.toLowerCase().includes(lower) ||
-          item.customerName.toLowerCase().includes(lower) ||
-          (item.orderDate &&
-            new Date(item.orderDate)
-              .toLocaleDateString("vi-VN")
-              .includes(lower))
-      );
-      setFilteredData(filtered);
-    }
-  }, [searchTerm, listData]);
+  // Hàm lấy badge cho Order Status
+  const getOrderStatusBadge = (status) => {
+    if (!status) return { class: "bg-secondary", text: "Không rõ" };
+
+    const statusLower = status.toLowerCase().trim();
+    const statusUpper = status.toUpperCase().trim();
+
+    // Order Status mapping (tiếng Việt và tiếng Anh)
+    const orderStatusMap = {
+      // Tiếng Việt
+      "chờ xác nhận": { class: "bg-warning", text: "Chờ xác nhận" },
+      "chờ xử lý": { class: "bg-info", text: "Chờ xử lý" },
+      "hoàn tất": { class: "bg-success", text: "Hoàn tất" },
+      "đã hủy": { class: "bg-danger", text: "Đã hủy" },
+      // Tiếng Anh
+      "PENDING": { class: "bg-warning", text: "Chờ xác nhận" },
+      "CONFIRMED": { class: "bg-primary", text: "Đã xác nhận" },
+      "COMPLETED": { class: "bg-success", text: "Hoàn tất" },
+      "CANCELLED": { class: "bg-danger", text: "Đã hủy" },
+      "CANCELED": { class: "bg-danger", text: "Đã hủy" },
+    };
+
+    return orderStatusMap[statusLower] ||
+      orderStatusMap[statusUpper] ||
+      { class: "bg-secondary", text: status };
+  };
+
+  // Hàm lấy badge cho Payment Status
+  const getPaymentStatusBadge = (status) => {
+    if (!status) return { class: "bg-secondary", text: "Không rõ" };
+
+    const statusLower = status.toLowerCase().trim();
+    const statusUpper = status.toUpperCase().trim();
+
+    // Payment Status mapping (tiếng Việt và tiếng Anh)
+    const paymentStatusMap = {
+      // Tiếng Việt
+      "chưa thanh toán": { class: "bg-warning", text: "Chưa thanh toán" },
+      "đã thanh toán": { class: "bg-success", text: "Đã thanh toán" },
+      "đã hoàn tiền": { class: "bg-info", text: "Đã hoàn tiền" },
+      "thất bại": { class: "bg-danger", text: "Thất bại" },
+      // Tiếng Anh
+      "UNPAID": { class: "bg-warning", text: "Chưa thanh toán" },
+      "PENDING": { class: "bg-warning", text: "Chưa thanh toán" },
+      "PAID": { class: "bg-success", text: "Đã thanh toán" },
+      "PAYMENT_COMPLETED": { class: "bg-success", text: "Đã thanh toán" },
+      "REFUNDED": { class: "bg-info", text: "Đã hoàn tiền" },
+      "FAILED": { class: "bg-danger", text: "Thất bại" },
+      "PARTIAL": { class: "bg-info", text: "Thanh toán một phần" },
+    };
+
+    return paymentStatusMap[statusLower] ||
+      paymentStatusMap[statusUpper] ||
+      { class: "bg-secondary", text: status };
+  };
 
   const columns = [
     {
-      title: "Mã đơn hàng",
-      dataIndex: "orderNumber",
+      header: (
+        <label className="checkboxs">
+          <input type="checkbox" id="select-all" />
+          <span className="checkmarks" />
+        </label>
+      ),
+      body: () => (
+        <label className="checkboxs">
+          <input type="checkbox" />
+          <span className="checkmarks" />
+        </label>
+      ),
+      sortable: false,
+      key: "checked",
+    },
+    {
+      header: "Mã đơn",
+      field: "orderNumber",
       key: "orderNumber",
-      sorter: (a, b) => a.orderNumber.localeCompare(b.orderNumber),
-      render: (text) => (
+      sortable: true,
+      body: (data) => (
         <Link to="#" className="text-primary fw-medium small">
-          {text}
+          {data.orderNumber}
         </Link>
       ),
     },
     {
-      title: "Ngày đặt hàng",
-      dataIndex: "orderDate",
+      header: "Tên khách hàng",
+      field: "customerName",
+      key: "customerName",
+      sortable: true,
+      body: (data) => <span className="fw-medium">{data.customerName}</span>,
+    },
+    {
+      header: "Người tạo đơn",
+      field: "createdBy",
+      key: "createdBy",
+      sortable: true,
+      body: (data) => <span className="text-muted">{data.createdBy}</span>,
+    },
+    {
+      header: "Ngày đặt hàng",
+      field: "orderDate",
       key: "orderDate",
-      sorter: (a, b) => new Date(a.orderDate || 0) - new Date(b.orderDate || 0),
-      render: (text) =>
-        text
-          ? new Date(text).toLocaleString("vi-VN", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-            })
+      sortable: true,
+      body: (data) =>
+        data.orderDate
+          ? new Date(data.orderDate).toLocaleString("vi-VN", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
           : "-",
     },
     {
-      title: "Khách hàng",
-      dataIndex: "customerName",
-      key: "customerName",
-      sorter: (a, b) => a.customerName.localeCompare(b.customerName),
-      render: (text) => <span className="fw-medium">{text}</span>,
+      header: "Trạng thái đơn",
+      field: "orderStatus",
+      key: "orderStatus",
+      sortable: true,
+      body: (data) => {
+        const badge = getOrderStatusBadge(data.orderStatus);
+        return (
+          <span className={`badge ${badge.class} small`}>{badge.text}</span>
+        );
+      },
     },
     {
-      title: "Tổng tiền",
-      dataIndex: "total",
-      key: "total",
-      sorter: (a, b) => (a.total || 0) - (b.total || 0),
-      render: (total) => {
-        const amount = Number(total);
+      header: "Trạng thái thanh toán",
+      field: "paymentStatus",
+      key: "paymentStatus",
+      sortable: true,
+      body: (data) => {
+        const badge = getPaymentStatusBadge(data.paymentStatus);
+        return (
+          <span className={`badge ${badge.class} small`}>{badge.text}</span>
+        );
+      },
+    },
+    {
+      header: "Hình thức",
+      field: "paymentMethod",
+      key: "paymentMethod",
+      sortable: true,
+      body: (data) => {
+        const method = (data.paymentMethod || "-").toString();
+        const methodUpper = method.toUpperCase();
+        const methodMap = {
+          "CASH": "Tiền mặt",
+          "MOMO": "Ví điện tử MoMo",
+          "VÍ ĐIỆN TỬ": "Ví điện tử MoMo",
+          "TIỀN MẶT": "Tiền mặt",
+          "CARD": "Thẻ",
+          "BANK_TRANSFER": "Chuyển khoản",
+          "BANKTRANSFER": "Chuyển khoản",
+        };
+        // Check both uppercase and original method
+        const displayMethod = methodMap[methodUpper] ||
+          methodMap[method] ||
+          (method === "-" ? "-" : method);
+        return <span className="text-muted">{displayMethod}</span>;
+      },
+    },
+    {
+      header: "Tổng tiền",
+      field: "totalAmount",
+      key: "totalAmount",
+      sortable: true,
+      body: (data) => {
+        const amount = Number(data.totalAmount);
         if (isNaN(amount) || amount <= 0)
           return <span className="text-muted small">0 ₫</span>;
         return (
           <strong className="text-success">
             {amount.toLocaleString("vi-VN")} ₫
           </strong>
-        );
-      },
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "status",
-      key: "status",
-      sorter: (a, b) => a.status.localeCompare(b.status),
-      render: (status) => {
-        const badge = {
-          PENDING: { class: "bg-warning", text: "Chờ xử lý" },
-          CONFIRMED: { class: "bg-primary", text: "Đã xác nhận" },
-          CANCELLED: { class: "bg-danger", text: "Đã hủy" },
-        }[status] || { class: "bg-secondary", text: status || "Không rõ" };
-        return (
-          <span className={`badge ${badge.class} small`}>{badge.text}</span>
         );
       },
     },
@@ -237,11 +400,14 @@ const OrderHistory = () => {
             >
               <div className="col-12 col-md-6 col-lg-3">
                 <label className="form-label fw-semibold text-dark mb-1">
-                  Khoảng thời gian
+                  Thời gian tạo đơn
                 </label>
                 <CommonDateRangePicker
                   value={dateRange}
-                  onChange={setDateRange}
+                  onChange={(newRange) => {
+                    setDateRange(newRange);
+                    setCurrentPage(1);
+                  }}
                   className="w-100"
                 />
               </div>
@@ -263,27 +429,14 @@ const OrderHistory = () => {
                 />
               </div>
 
-              <div className="col-12 col-md-6 col-lg-3">
+              <div className="col-12 col-md-6 col-lg-3 ms-auto">
                 <label className="form-label fw-semibold text-dark mb-1">
-                  Tên khách hàng
+                  Tìm kiếm
                 </label>
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="VD: Nguyễn Văn A"
-                  value={selectedCustomerName}
-                  onChange={(e) => setSelectedCustomerName(e.target.value.trim())}
-                />
-              </div>
-
-              <div className="col-12 col-md-6 col-lg-3">
-                <label className="form-label fw-semibold text-dark mb-1">
-                  Tìm kiếm nhanh
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Nhập mã đơn / tên KH / ngày"
+                  placeholder="Tìm theo mã đơn, tên khách hàng, tên người tạo đơn..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -325,21 +478,17 @@ const OrderHistory = () => {
                 {error}
               </div>
             )}
-            <Datatable
-              columns={columns}
-              dataSource={filteredData}
-              current={currentPage}
-              pageSize={rows}
-              total={totalRecords}
-              onChange={(page, size) => {
-                setCurrentPage(page);
-                setRows(size);
-              }}
-              onShowSizeChange={(page, size) => {
-                setCurrentPage(page);
-                setRows(size);
-              }}
-              loading={loading}
+            <PrimeDataTable
+              column={columns}
+              data={filteredData}
+              rows={rows}
+              setRows={setRows}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              totalRecords={filteredData.length}
+              dataKey="key"
+              loading={loading && !isInitialLoad}
+              serverSidePagination={false}
             />
           </div>
         </div>
