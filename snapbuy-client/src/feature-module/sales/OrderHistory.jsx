@@ -9,6 +9,7 @@ import RefreshIcon from "../../components/tooltip-content/refresh";
 import CollapesIcon from "../../components/tooltip-content/collapes";
 import { getAllOrders } from "../../services/OrderService";
 import { getAccountById } from "../../services/AccountService";
+import OrderDetailModal from "../../core/modals/sales/OrderDetailModal";
 
 const OrderHistory = () => {
   const [filteredData, setFilteredData] = useState([]);
@@ -23,6 +24,8 @@ const OrderHistory = () => {
   const [accountNamesMap, setAccountNamesMap] = useState({});
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   const OrderStatuses = [
     { value: "", label: "Tất cả" },
@@ -46,15 +49,9 @@ const OrderHistory = () => {
       if (Array.isArray(arr) && arr.length > 0) {
         return arr.reduce((sum, li) => {
           const price =
-            Number(li.price) ||
-            Number(li.unitPrice) ||
-            Number(li.amount) ||
-            0;
+            Number(li.price) || Number(li.unitPrice) || Number(li.amount) || 0;
           const qty =
-            Number(li.quantity) ||
-            Number(li.qty) ||
-            Number(li.count) ||
-            1;
+            Number(li.quantity) || Number(li.qty) || Number(li.count) || 1;
           return sum + price * qty;
         }, 0);
       }
@@ -63,80 +60,77 @@ const OrderHistory = () => {
   };
 
   const loadOrders = async () => {
-    // Chỉ set loading cho lần đầu tiên, không set khi filter/search
-    if (isInitialLoad) {
-      setLoading(true);
-    }
+    if (isInitialLoad) setLoading(true);
     setError("");
     try {
-      // Chuẩn bị params cho API search
       const params = {};
-
-      // Thêm searchTerm nếu có
-      if (debouncedSearchTerm && debouncedSearchTerm.trim()) {
+      if (debouncedSearchTerm?.trim())
         params.searchTerm = debouncedSearchTerm.trim();
-      }
-
-      // Thêm orderStatus nếu có
-      if (selectedStatus && selectedStatus.trim()) {
-        params.orderStatus = selectedStatus.trim();
-      }
-
-      // Thêm date range nếu có
+      if (selectedStatus?.trim()) params.orderStatus = selectedStatus.trim();
       if (dateRange[0] && dateRange[1]) {
         const fromDate = new Date(dateRange[0]);
         fromDate.setHours(0, 0, 0, 0);
         const toDate = new Date(dateRange[1]);
         toDate.setHours(23, 59, 59, 999);
-
-        // Format date as YYYY-MM-DD theo local timezone (không dùng toISOString vì nó convert sang UTC)
         const formatDate = (date) => {
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          return `${year}-${month}-${day}`;
+          const y = date.getFullYear();
+          const m = String(date.getMonth() + 1).padStart(2, "0");
+          const d = String(date.getDate()).padStart(2, "0");
+          return `${y}-${m}-${d}`;
         };
-
         params.from = formatDate(fromDate);
         params.to = formatDate(toDate);
       }
 
-      // Gọi API với params
       const response = await getAllOrders(params);
       const allData = response?.content || response || [];
+      if (!Array.isArray(allData))
+        throw new Error("Dữ liệu trả về không đúng định dạng");
 
-      if (!Array.isArray(allData)) throw new Error("Dữ liệu trả về không đúng định dạng");
-
+      // Chuẩn hóa dữ liệu
       const normalizedData = allData.map((item, index) => {
-        // Lấy payment method từ payment object hoặc trực tiếp
-        const paymentMethod = item.payment?.paymentMethod ||
+        const paymentMethod =
+          item.payment?.paymentMethod ||
           item.paymentMethod ||
-          (item.paymentStatus === "PAID" || item.paymentStatus === "PAYMENT_COMPLETED" ? "Tiền mặt" : "-");
-
+          (item.paymentStatus === "PAID" ||
+            item.paymentStatus === "PAYMENT_COMPLETED"
+            ? "Tiền mặt"
+            : "-");
         return {
           key: item.orderId || `temp-${index}-${Date.now()}`,
           orderId: item.orderId || "-",
-          orderNumber: item.orderNumber || `ORD-${String(index + 1).padStart(5, "0")}`,
-          orderDate: item.orderDate || item.createdDate || item.createdAt || item.date || null,
+          orderNumber:
+            item.orderNumber || `ORD-${String(index + 1).padStart(5, "0")}`,
+          orderDate:
+            item.orderDate ||
+            item.createdDate ||
+            item.createdAt ||
+            item.date ||
+            null,
           customerName: item.customerName || "Khách lẻ",
           accountId: item.accountId || null,
           orderStatus: item.orderStatus || "PENDING",
           paymentStatus: item.paymentStatus || "UNPAID",
           paymentMethod: paymentMethod,
           totalAmount: Number(item.totalAmount) || calculateTotal(item) || 0,
+          rawData: item,
         };
       });
 
-      // Fetch account names for all unique accountIds
-      const uniqueAccountIds = [...new Set(normalizedData.map(item => item.accountId).filter(Boolean))];
-      const accountNames = {};
+      // Lấy danh sách accountId duy nhất
+      const uniqueAccountIds = [
+        ...new Set(
+          normalizedData.map((item) => item.accountId).filter(Boolean)
+        ),
+      ];
 
-      // Fetch account names in parallel
+      const accountNames = {};
       await Promise.all(
         uniqueAccountIds.map(async (accountId) => {
           try {
             const account = await getAccountById(accountId);
-            accountNames[accountId] = account.fullName || account.username || "-";
+            accountNames[accountId] =
+              account.fullName || account.username || account.name || "-";
           } catch (err) {
             console.error(`Failed to fetch account ${accountId}:`, err);
             accountNames[accountId] = "-";
@@ -150,16 +144,23 @@ const OrderHistory = () => {
         accountName: item.accountName || (item.accountId ? (accountNames[item.accountId] || "-") : "-"),
       }));
 
+      // Sắp xếp theo ngày đặt hàng giảm dần (đơn mới nhất ở trên)
+      const sortedData = [...dataWithAccountNames].sort((a, b) => {
+        const dateA = a.orderDate ? new Date(a.orderDate).getTime() : 0;
+        const dateB = b.orderDate ? new Date(b.orderDate).getTime() : 0;
+        return dateB - dateA; // Giảm dần (mới nhất trước)
+      });
+
       setAccountNamesMap(accountNames);
-      setFilteredData(dataWithAccountNames);
-      setTotalRecords(dataWithAccountNames.length);
+      setFilteredData(sortedData);
+      setTotalRecords(sortedData.length);
       setIsInitialLoad(false);
     } catch (err) {
       console.error("=== Lỗi khi gọi API ===", err);
       setError(
         err.response?.data?.message ||
         err.message ||
-        "Không thể tải dữ liệu đơn hàng. Vui lòng thử lại."
+        "Không thể tải dữ liệu đơn hàng."
       );
       setFilteredData([]);
       setTotalRecords(0);
@@ -169,82 +170,56 @@ const OrderHistory = () => {
     }
   };
 
-  // Debounce searchTerm
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 500); // 500ms delay
-
+    const timer = setTimeout(() => setDebouncedSearchTerm(searchTerm), 500);
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Tạo key từ dateRange để trigger useEffect
   const dateRangeKey = useMemo(() => {
-    if (dateRange[0] && dateRange[1]) {
-      return `${dateRange[0]?.getTime() || ''}-${dateRange[1]?.getTime() || ''}`;
-    }
-    return 'no-date';
+    return dateRange[0] && dateRange[1]
+      ? `${dateRange[0].getTime()}-${dateRange[1].getTime()}`
+      : "no-date";
   }, [dateRange]);
 
-  // Effect để trigger loadOrders khi các filter thay đổi
   useEffect(() => {
     loadOrders();
   }, [currentPage, rows, selectedStatus, debouncedSearchTerm, dateRangeKey]);
 
-  // Hàm lấy badge cho Order Status
-  const getOrderStatusBadge = (status) => {
-    if (!status) return { class: "bg-secondary", text: "Không rõ" };
-
-    const statusLower = status.toLowerCase().trim();
-    const statusUpper = status.toUpperCase().trim();
-
-    // Order Status mapping (tiếng Việt và tiếng Anh)
-    const orderStatusMap = {
-      // Tiếng Việt
-      "chờ xác nhận": { class: "bg-warning", text: "Chờ xác nhận" },
-      "chờ xử lý": { class: "bg-info", text: "Chờ xử lý" },
-      "hoàn tất": { class: "bg-success", text: "Hoàn tất" },
-      "đã hủy": { class: "bg-danger", text: "Đã hủy" },
-      // Tiếng Anh
-      "PENDING": { class: "bg-warning", text: "Chờ xác nhận" },
-      "CONFIRMED": { class: "bg-primary", text: "Đã xác nhận" },
-      "COMPLETED": { class: "bg-success", text: "Hoàn tất" },
-      "CANCELLED": { class: "bg-danger", text: "Đã hủy" },
-      "CANCELED": { class: "bg-danger", text: "Đã hủy" },
-    };
-
-    return orderStatusMap[statusLower] ||
-      orderStatusMap[statusUpper] ||
-      { class: "bg-secondary", text: status };
+  // Hàm mở modal chi tiết
+  const handleViewDetail = (order) => {
+    setSelectedOrder(order);
+    setShowModal(true);
   };
 
-  // Hàm lấy badge cho Payment Status
+  // Badge functions
+  const getOrderStatusBadge = (status) => {
+    const map = {
+      "chờ xác nhận": { class: "bg-warning", text: "Chờ xác nhận" },
+      "hoàn tất": { class: "bg-success", text: "Hoàn tất" },
+      "đã hủy": { class: "bg-danger", text: "Đã hủy" },
+      PENDING: { class: "bg-warning", text: "Chờ xác nhận" },
+      COMPLETED: { class: "bg-success", text: "Hoàn tất" },
+      CANCELLED: { class: "bg-danger", text: "Đã hủy" },
+      CANCELED: { class: "bg-danger", text: "Đã hủy" },
+    };
+    const key = Object.keys(map).find(
+      (k) => k.toLowerCase() === status?.toLowerCase()
+    );
+    return map[key] || { class: "bg-secondary", text: status || "Không rõ" };
+  };
+
   const getPaymentStatusBadge = (status) => {
-    if (!status) return { class: "bg-secondary", text: "Không rõ" };
-
-    const statusLower = status.toLowerCase().trim();
-    const statusUpper = status.toUpperCase().trim();
-
-    // Payment Status mapping (tiếng Việt và tiếng Anh)
-    const paymentStatusMap = {
-      // Tiếng Việt
+    const map = {
       "chưa thanh toán": { class: "bg-warning", text: "Chưa thanh toán" },
       "đã thanh toán": { class: "bg-success", text: "Đã thanh toán" },
-      "đã hoàn tiền": { class: "bg-info", text: "Đã hoàn tiền" },
-      "thất bại": { class: "bg-danger", text: "Thất bại" },
-      // Tiếng Anh
-      "UNPAID": { class: "bg-warning", text: "Chưa thanh toán" },
-      "PENDING": { class: "bg-warning", text: "Chưa thanh toán" },
-      "PAID": { class: "bg-success", text: "Đã thanh toán" },
-      "PAYMENT_COMPLETED": { class: "bg-success", text: "Đã thanh toán" },
-      "REFUNDED": { class: "bg-info", text: "Đã hoàn tiền" },
-      "FAILED": { class: "bg-danger", text: "Thất bại" },
-      "PARTIAL": { class: "bg-info", text: "Thanh toán một phần" },
+      UNPAID: { class: "bg-warning", text: "Chưa thanh toán" },
+      PAID: { class: "bg-success", text: "Đã thanh toán" },
+      PAYMENT_COMPLETED: { class: "bg-success", text: "Đã thanh toán" },
     };
-
-    return paymentStatusMap[statusLower] ||
-      paymentStatusMap[statusUpper] ||
-      { class: "bg-secondary", text: status };
+    const key = Object.keys(map).find(
+      (k) => k.toLowerCase() === status?.toLowerCase()
+    );
+    return map[key] || { class: "bg-secondary", text: status || "Không rõ" };
   };
 
   const columns = [
@@ -270,9 +245,13 @@ const OrderHistory = () => {
       key: "orderNumber",
       sortable: true,
       body: (data) => (
-        <Link to="#" className="text-primary fw-medium small">
+        <span
+          className="text-primary fw-medium small cursor-pointer"
+          onClick={() => handleViewDetail(data)}
+          style={{ cursor: "pointer" }}
+        >
           {data.orderNumber}
-        </Link>
+        </span>
       ),
     },
     {
@@ -336,21 +315,17 @@ const OrderHistory = () => {
       sortable: true,
       body: (data) => {
         const method = (data.paymentMethod || "-").toString();
-        const methodUpper = method.toUpperCase();
-        const methodMap = {
-          "CASH": "Tiền mặt",
-          "MOMO": "Ví điện tử MoMo",
-          "VÍ ĐIỆN TỬ": "Ví điện tử MoMo",
+        const map = {
+          CASH: "Tiền mặt",
+          MOMO: "Ví MoMo",
           "TIỀN MẶT": "Tiền mặt",
-          "CARD": "Thẻ",
-          "BANK_TRANSFER": "Chuyển khoản",
-          "BANKTRANSFER": "Chuyển khoản",
+          BANK_TRANSFER: "Chuyển khoản",
         };
-        // Check both uppercase and original method
-        const displayMethod = methodMap[methodUpper] ||
-          methodMap[method] ||
-          (method === "-" ? "-" : method);
-        return <span className="text-muted">{displayMethod}</span>;
+        return (
+          <span className="text-muted">
+            {map[method.toUpperCase()] || method}
+          </span>
+        );
       },
     },
     {
@@ -360,12 +335,12 @@ const OrderHistory = () => {
       sortable: true,
       body: (data) => {
         const amount = Number(data.totalAmount);
-        if (isNaN(amount) || amount <= 0)
-          return <span className="text-muted small">0 ₫</span>;
-        return (
+        return amount > 0 ? (
           <strong className="text-success">
             {amount.toLocaleString("vi-VN")} ₫
           </strong>
+        ) : (
+          <span className="text-muted small">0 ₫</span>
         );
       },
     },
@@ -387,7 +362,7 @@ const OrderHistory = () => {
           </ul>
         </div>
 
-        {/* Bộ lọc và tìm kiếm */}
+        {/* Bộ lọc */}
         <div className="card mb-3 shadow-sm">
           <div className="card-body p-4">
             <form
@@ -411,7 +386,6 @@ const OrderHistory = () => {
                   className="w-100"
                 />
               </div>
-
               <div className="col-12 col-md-6 col-lg-3">
                 <label className="form-label fw-semibold text-dark mb-1">
                   Trạng thái
@@ -428,7 +402,6 @@ const OrderHistory = () => {
                   className="w-100"
                 />
               </div>
-
               <div className="col-12 col-md-6 col-lg-3 ms-auto">
                 <label className="form-label fw-semibold text-dark mb-1">
                   Tìm kiếm
@@ -436,7 +409,7 @@ const OrderHistory = () => {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Tìm theo mã đơn, tên khách hàng, tên người tạo đơn..."
+                  placeholder="Tìm theo mã đơn, tên khách..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -445,35 +418,27 @@ const OrderHistory = () => {
           </div>
         </div>
 
-        {/* Bảng dữ liệu */}
+        {/* Bảng */}
         <div className="card table-list-card no-search shadow-sm">
           <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
             <h5 className="mb-0 fw-semibold">
               Danh sách đơn hàng{" "}
-              <span className="text-muted small">({filteredData.length} bản ghi)</span>
+              <span className="text-muted small">
+                ({filteredData.length} bản ghi)
+              </span>
             </h5>
             <ul className="table-top-head">
               <TooltipIcons />
               <li>
-                <Link
-                  to="#"
-                  data-bs-toggle="tooltip"
-                  data-bs-placement="top"
-                  title="In"
-                  className="text-muted"
-                >
+                <Link to="#" className="text-muted">
                   <i className="ti ti-printer fs-5" />
                 </Link>
               </li>
             </ul>
           </div>
-
           <div className="card-body p-0">
             {error && (
-              <div
-                className="alert alert-danger d-flex align-items-center gap-2 mx-3 mt-3"
-                role="alert"
-              >
+              <div className="alert alert-danger d-flex align-items-center gap-2 mx-3 mt-3">
                 <i className="ti ti-alert-circle" />
                 {error}
               </div>
@@ -493,6 +458,14 @@ const OrderHistory = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal chi tiết đơn hàng */}
+      <OrderDetailModal
+        show={showModal}
+        onHide={() => setShowModal(false)}
+        order={selectedOrder}
+        accountNamesMap={accountNamesMap}
+      />
 
       <CommonFooter />
     </div>
