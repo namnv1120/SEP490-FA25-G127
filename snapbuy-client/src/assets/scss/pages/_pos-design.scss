@@ -224,7 +224,7 @@
         color:  variables.$sub-title;
         @include mixins.transition(all 0.5s ease);
         .pro-img {
-            background-color: variables.$light;
+            background-color: transparent;
             @include mixins.rounded(10px);
             display: -webkit-box;
             display: -ms-flexbox;
@@ -237,7 +237,28 @@
             -ms-flex-pack: center;
             margin-bottom: 10px;
             position: relative;
-            padding: 10px;
+            padding: 0;
+            .product-image-placeholder {
+                width: 100%;
+                aspect-ratio: 1;
+                background-color: variables.$light;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+                @include mixins.rounded(10px);
+                padding: 10px;
+                box-sizing: border-box;
+                img {
+                    max-width: calc(100% - 0px);
+                    max-height: calc(100% - 0px);
+                    width: auto;
+                    height: auto;
+                    object-fit: contain;
+                    object-position: center;
+                    @include mixins.transition(all 0.5s ease);
+                }
+            }
             img {
                 @include mixins.transition(all 0.5s ease);
             }
@@ -293,6 +314,9 @@
         &:hover, &.active {
             border-color: variables.$success;
             .pro-img {
+                .product-image-placeholder img {
+                    transform: scale(1.2);
+                }
                 img {
                     transform: scale(1.2);
                 }
@@ -404,6 +428,21 @@
                 -ms-flex-pack: center;
                 margin-right: 10px;
                 flex-shrink: 0;
+                .product-image-placeholder {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    overflow: hidden;
+                    @include mixins.rounded(10px);
+                    img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: contain;
+                        object-position: center;
+                    }
+                }
             }
 
         }

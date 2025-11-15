@@ -378,7 +378,7 @@ export { default as stockImg04 } from "../../assets/img/products/stock-img-04.pn
 export { default as stockImg05 } from "../../assets/img/products/stock-img-05.png";
 export { default as stockImg06 } from "../../assets/img/products/stock-img-06.png";
 export { default as stockImg1 } from "../../assets/img/products/stock-img-01.png";
-export { default as box } from "../../assets/img/products/box.png";
+export { default as box } from "../../assets/img/products/box.jpg";
 
 export { default as avatar_03 } from "../../assets/img/profiles/avatar-03.jpg";
 export { default as avatar_17 } from "../../assets/img/profiles/avatar-17.jpg";
