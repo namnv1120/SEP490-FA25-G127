@@ -720,6 +720,12 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                   step="1000"
                   style={{ fontSize: '16px', paddingLeft: '40px' }}
                   autoFocus
+                  onKeyDown={(e) => {
+                    // Chặn nhập dấu trừ, dấu cộng, và ký tự e/E
+                    if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === "E") {
+                      e.preventDefault();
+                    }
+                  }}
                 />
                 <span className="input-icon-addon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }}>
                   <i className="ti ti-currency-dollar text-gray-9" />

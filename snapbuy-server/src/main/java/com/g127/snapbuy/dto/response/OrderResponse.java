@@ -18,7 +18,7 @@ public class OrderResponse {
     private UUID customerId;
     private String customerName;
     private UUID accountId;
-    private String createdBy;
+    private String accountName;
     private LocalDateTime orderDate;
     private String orderStatus;
     private String paymentStatus;

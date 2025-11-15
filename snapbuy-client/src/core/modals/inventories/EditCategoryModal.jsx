@@ -9,6 +9,7 @@ const EditCategory = ({ isOpen, categoryId, onSuccess, onClose }) => {
     description: "",
     active: true,
   });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (isOpen && categoryId) {
@@ -34,12 +35,33 @@ const EditCategory = ({ isOpen, categoryId, onSuccess, onClose }) => {
     }
   };
 
+  // 🧩 Validate dữ liệu
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.categoryName.trim()) {
+      newErrors.categoryName = "Vui lòng nhập tên danh mục.";
+    } else if (formData.categoryName.length < 3) {
+      newErrors.categoryName = "Tên danh mục phải có ít nhất 3 ký tự.";
+    } else if (formData.categoryName.length > 100) {
+      newErrors.categoryName = "Tên danh mục không được vượt quá 100 ký tự.";
+    }
+
+    if (formData.description && formData.description.length > 1000) {
+      newErrors.description = "Mô tả không được vượt quá 1000 ký tự.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const handleStatusChange = (e) => {
@@ -50,8 +72,8 @@ const EditCategory = ({ isOpen, categoryId, onSuccess, onClose }) => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.categoryName.trim()) {
-      message.warning("Vui lòng nhập tên danh mục");
+    if (!validateForm()) {
+      message.warning("Vui lòng kiểm tra lại thông tin nhập.");
       return;
     }
 
@@ -108,24 +130,33 @@ const EditCategory = ({ isOpen, categoryId, onSuccess, onClose }) => {
             <input
               type="text"
               name="categoryName"
-              className="form-control"
+              className={`form-control ${errors.categoryName ? "is-invalid" : ""}`}
               value={formData.categoryName}
               onChange={handleInputChange}
-              required
               disabled={loading}
             />
+            {errors.categoryName && (
+              <div className="invalid-feedback">
+                {errors.categoryName}
+              </div>
+            )}
           </div>
 
           <div className="mb-3 input-blocks">
             <label className="form-label">Mô tả</label>
             <textarea
               name="description"
-              className="form-control"
+              className={`form-control ${errors.description ? "is-invalid" : ""}`}
               rows="3"
               value={formData.description}
               onChange={handleInputChange}
               disabled={loading}
             />
+            {errors.description && (
+              <div className="invalid-feedback">
+                {errors.description}
+              </div>
+            )}
           </div>
 
           <div className="mb-0">

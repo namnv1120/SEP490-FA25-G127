@@ -15,7 +15,7 @@ public class InventoryTransactionResponse {
     private UUID productId;
     private String productName;
     private UUID accountId;
-    private String accountUsername;
+    private String accountName;
     private String transactionType;
     private Integer quantity;
     private BigDecimal unitPrice;

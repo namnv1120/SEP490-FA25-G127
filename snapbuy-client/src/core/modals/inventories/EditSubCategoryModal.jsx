@@ -10,6 +10,7 @@ const EditSubCategory = ({ isOpen, categoryId, parentCategories, onSuccess, onCl
     parentCategoryId: "",
     active: true,
   });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (isOpen && categoryId) {
@@ -36,12 +37,37 @@ const EditSubCategory = ({ isOpen, categoryId, parentCategories, onSuccess, onCl
     }
   };
 
+  // 🧩 Validate dữ liệu
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.categoryName.trim()) {
+      newErrors.categoryName = "Vui lòng nhập tên danh mục con.";
+    } else if (formData.categoryName.length < 3) {
+      newErrors.categoryName = "Tên danh mục con phải có ít nhất 3 ký tự.";
+    } else if (formData.categoryName.length > 100) {
+      newErrors.categoryName = "Tên danh mục con không được vượt quá 100 ký tự.";
+    }
+
+    if (!formData.parentCategoryId) {
+      newErrors.parentCategoryId = "Vui lòng chọn danh mục cha.";
+    }
+
+    if (formData.description && formData.description.length > 1000) {
+      newErrors.description = "Mô tả không được vượt quá 1000 ký tự.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const handleStatusChange = (e) => {
@@ -52,13 +78,8 @@ const EditSubCategory = ({ isOpen, categoryId, parentCategories, onSuccess, onCl
   };
 
   const handleSubmit = async () => {
-    if (!formData.categoryName.trim()) {
-      message.warning("Vui lòng nhập tên danh mục con");
-      return;
-    }
-
-    if (!formData.parentCategoryId) {
-      message.warning("Vui lòng chọn danh mục cha");
+    if (!validateForm()) {
+      message.warning("Vui lòng kiểm tra lại thông tin nhập.");
       return;
     }
 
@@ -117,10 +138,9 @@ const EditSubCategory = ({ isOpen, categoryId, parentCategories, onSuccess, onCl
             </label>
             <select
               name="parentCategoryId"
-              className="form-select"
+              className={`form-select ${errors.parentCategoryId ? "is-invalid" : ""}`}
               value={formData.parentCategoryId}
               onChange={handleInputChange}
-              required
               disabled={loading}
             >
               <option value="">Chọn danh mục cha</option>
@@ -130,6 +150,11 @@ const EditSubCategory = ({ isOpen, categoryId, parentCategories, onSuccess, onCl
                 </option>
               ))}
             </select>
+            {errors.parentCategoryId && (
+              <div className="invalid-feedback">
+                {errors.parentCategoryId}
+              </div>
+            )}
           </div>
 
           <div className="mb-3">
@@ -139,24 +164,33 @@ const EditSubCategory = ({ isOpen, categoryId, parentCategories, onSuccess, onCl
             <input
               type="text"
               name="categoryName"
-              className="form-control"
+              className={`form-control ${errors.categoryName ? "is-invalid" : ""}`}
               value={formData.categoryName}
               onChange={handleInputChange}
-              required
               disabled={loading}
             />
+            {errors.categoryName && (
+              <div className="invalid-feedback">
+                {errors.categoryName}
+              </div>
+            )}
           </div>
 
           <div className="mb-3 input-blocks">
             <label className="form-label">Mô tả</label>
             <textarea
               name="description"
-              className="form-control"
+              className={`form-control ${errors.description ? "is-invalid" : ""}`}
               rows="3"
               value={formData.description}
               onChange={handleInputChange}
               disabled={loading}
             />
+            {errors.description && (
+              <div className="invalid-feedback">
+                {errors.description}
+              </div>
+            )}
           </div>
 
           <div className="mb-0">

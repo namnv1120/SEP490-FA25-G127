@@ -1,6 +1,7 @@
 package com.g127.snapbuy.service.impl;
 
 import com.g127.snapbuy.dto.response.InventoryTransactionResponse;
+import com.g127.snapbuy.dto.response.PageResponse;
 import com.g127.snapbuy.entity.InventoryTransaction;
 import com.g127.snapbuy.mapper.InventoryTransactionMapper;
 import com.g127.snapbuy.repository.InventoryTransactionRepository;
@@ -36,11 +37,17 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
     }
 
     @Override
-    public Page<InventoryTransactionResponse> list(int page, int size, String sort, Sort.Direction dir, UUID productId, String transactionType, String referenceType, UUID referenceId, LocalDateTime from, LocalDateTime to) {
+    public PageResponse<InventoryTransactionResponse> list(int page, int size, String sort, Sort.Direction dir, UUID productId, String productName, String transactionType, String referenceType, UUID referenceId, LocalDateTime from, LocalDateTime to) {
         Specification<InventoryTransaction> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (productId != null) {
                 predicates.add(cb.equal(root.get("product").get("productId"), productId));
+            }
+            if (productName != null && !productName.isBlank()) {
+                predicates.add(cb.or(
+                    cb.like(cb.lower(root.get("product").get("productName")), "%" + productName.toLowerCase() + "%"),
+                    cb.like(cb.lower(root.get("product").get("productCode")), "%" + productName.toLowerCase() + "%")
+                ));
             }
             if (transactionType != null && !transactionType.isBlank()) {
                 predicates.add(cb.equal(root.get("transactionType"), transactionType));
@@ -63,7 +70,21 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
         Page<InventoryTransaction> pageData = transactionRepository.findAll(
                 spec, PageRequest.of(page, Math.max(1, size), dir, sort)
         );
-        return pageData.map(mapper::toResponse);
+        
+        List<InventoryTransactionResponse> content = pageData.getContent().stream()
+                .map(mapper::toResponse)
+                .toList();
+        
+        return PageResponse.<InventoryTransactionResponse>builder()
+                .content(content)
+                .totalElements(pageData.getTotalElements())
+                .totalPages(pageData.getTotalPages())
+                .size(pageData.getSize())
+                .number(pageData.getNumber())
+                .first(pageData.isFirst())
+                .last(pageData.isLast())
+                .empty(pageData.isEmpty())
+                .build();
     }
 }
 

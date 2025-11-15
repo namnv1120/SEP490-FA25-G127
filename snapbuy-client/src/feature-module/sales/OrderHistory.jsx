@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import CommonFooter from "../../components/footer/commonFooter";
+import CommonFooter from "../../components/footer/CommonFooter";
 import TooltipIcons from "../../components/tooltip-content/tooltipIcons";
 import PrimeDataTable from "../../components/data-table";
 import CommonSelect from "../../components/select/common-select";
@@ -144,10 +144,10 @@ const OrderHistory = () => {
         })
       );
 
-      // Update normalizedData with account names
+      // Update normalizedData with account names (use accountName from backend if available, otherwise fetch)
       const dataWithAccountNames = normalizedData.map(item => ({
         ...item,
-        createdBy: item.accountId ? (accountNames[item.accountId] || "-") : "-",
+        accountName: item.accountName || (item.accountId ? (accountNames[item.accountId] || "-") : "-"),
       }));
 
       setAccountNamesMap(accountNames);
@@ -284,10 +284,10 @@ const OrderHistory = () => {
     },
     {
       header: "Người tạo đơn",
-      field: "createdBy",
-      key: "createdBy",
+      field: "accountName",
+      key: "accountName",
       sortable: true,
-      body: (data) => <span className="text-muted">{data.createdBy}</span>,
+      body: (data) => <span className="text-muted">{data.accountName || "-"}</span>,
     },
     {
       header: "Ngày đặt hàng",

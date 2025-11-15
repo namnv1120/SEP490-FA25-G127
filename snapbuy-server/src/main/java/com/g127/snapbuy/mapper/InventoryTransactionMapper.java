@@ -11,7 +11,7 @@ public interface InventoryTransactionMapper {
     @Mapping(target = "productId", expression = "java(entity.getProduct() != null ? entity.getProduct().getProductId() : null)")
     @Mapping(target = "productName", expression = "java(entity.getProduct() != null ? entity.getProduct().getProductName() : null)")
     @Mapping(target = "accountId", expression = "java(entity.getAccount() != null ? entity.getAccount().getAccountId() : null)")
-    @Mapping(target = "accountUsername", expression = "java(entity.getAccount() != null ? entity.getAccount().getUsername() : null)")
+    @Mapping(target = "accountName", expression = "java(entity.getAccount() != null ? (entity.getAccount().getFullName() != null ? entity.getAccount().getFullName() : entity.getAccount().getUsername()) : null)")
     InventoryTransactionResponse toResponse(InventoryTransaction entity);
 }
 

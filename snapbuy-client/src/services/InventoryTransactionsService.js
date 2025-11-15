@@ -21,25 +21,20 @@ export const getTransactions = async ({
   dir = "DESC",
   productId = null,
   productName = null,
-  productCode = null,
   transactionType = "",
   referenceType = "",
   from = null,
   to = null,
 }) => {
   try {
-    console.groupCollapsed("GỬI REQUEST LẤY LỊCH SỬ GIAO DỊCH");
-    console.log("Tham số:", { page, size, sort, dir, productName, productCode, transactionType, referenceType, from, to });
-    console.groupEnd();
-
     const params = new URLSearchParams();
     params.append("page", page);
     params.append("size", size);
-    if (sort) params.append("sort", `${sort},${dir}`);
+    params.append("sort", sort);
+    params.append("dir", dir);
 
     if (productId) params.append("productId", productId);
-    if (productName) params.append("productName", productName);
-    if (productCode) params.append("productCode", productCode);
+    if (productName && productName.trim()) params.append("productName", productName.trim());
     if (transactionType) params.append("transactionType", transactionType);
     if (referenceType) params.append("referenceType", referenceType);
     if (from) params.append("from", from);
@@ -51,46 +46,41 @@ export const getTransactions = async ({
     });
 
     const rawData = response.data;
-    console.groupCollapsed("PHẢN HỒI TỪ BACKEND");
-    console.log("Raw response:", rawData);
-    console.groupEnd();
-
     let content = [];
     let totalElements = 0;
     let totalPages = 1;
     let number = page;
     let pageSize = size;
 
-    // ƯU TIÊN: { code: 1000, result: [...] }
-    if (rawData?.code === 1000 && Array.isArray(rawData.result)) {
-      content = rawData.result;
-      totalElements = content.length;
-      console.log(`Dùng 'result' → ${content.length} giao dịch`);
+    // Xử lý ApiResponse<Page<InventoryTransactionResponse>>
+    if (rawData?.result) {
+      const pageData = rawData.result;
+      if (pageData?.content && Array.isArray(pageData.content)) {
+        content = pageData.content;
+        totalElements = pageData.totalElements ?? 0;
+        totalPages = pageData.totalPages ?? 1;
+        number = pageData.number ?? page;
+        pageSize = pageData.size ?? size;
+      }
     }
-    // Spring Data chuẩn
+    // Spring Data Page trực tiếp
     else if (rawData?.content && Array.isArray(rawData.content)) {
       content = rawData.content;
-      totalElements = rawData.totalElements ?? content.length;
+      totalElements = rawData.totalElements ?? 0;
       totalPages = rawData.totalPages ?? 1;
       number = rawData.number ?? page;
       pageSize = rawData.size ?? size;
     }
-    // Mảng trực tiếp
+    // Mảng trực tiếp (fallback)
     else if (Array.isArray(rawData)) {
       content = rawData;
       totalElements = content.length;
     }
-    // Không hợp lệ
     else {
       console.warn("Cấu trúc không hỗ trợ:", rawData);
       content = [];
       totalElements = 0;
     }
-
-    console.groupCollapsed("DỮ LIỆU SAU CHUẨN HÓA");
-    console.table(content);
-    console.log("Tổng:", totalElements);
-    console.groupEnd();
 
     return { content, totalElements, totalPages, number, size: pageSize };
   } catch (error) {

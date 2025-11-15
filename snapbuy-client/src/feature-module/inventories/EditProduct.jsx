@@ -31,6 +31,8 @@ const EditProduct = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [isImageVisible, setIsImageVisible] = useState(true);
   const [isImageRemoved, setIsImageRemoved] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -147,28 +149,67 @@ const EditProduct = () => {
     }
   }, [product?.barcode]);
 
-  const handleSaveProduct = async () => {
+  // 🧩 Validate dữ liệu
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!product?.productCode?.trim()) {
+      newErrors.productCode = "Vui lòng nhập mã sản phẩm.";
+    } else if (product.productCode.length > 50) {
+      newErrors.productCode = "Mã sản phẩm không được vượt quá 50 ký tự.";
+    } else if (!/^[A-Za-z0-9_-]+$/.test(product.productCode)) {
+      newErrors.productCode = "Mã sản phẩm chỉ cho phép chữ, số, gạch dưới hoặc gạch ngang.";
+    }
+
+    if (!product?.productName?.trim()) {
+      newErrors.productName = "Vui lòng nhập tên sản phẩm.";
+    } else if (product.productName.length > 200) {
+      newErrors.productName = "Tên sản phẩm không được vượt quá 200 ký tự.";
+    }
+
+    if (!selectedCategory && !selectedSubCategory) {
+      newErrors.category = "Vui lòng chọn danh mục.";
+    }
+
+    if (!selectedSupplier?.value) {
+      newErrors.supplier = "Vui lòng chọn nhà cung cấp.";
+    }
+
+    if (product?.unit && product.unit.length > 20) {
+      newErrors.unit = "Đơn vị tính không được vượt quá 20 ký tự.";
+    }
+
+    if (product?.dimensions && product.dimensions.length > 50) {
+      newErrors.dimensions = "Kích thước không được vượt quá 50 ký tự.";
+    }
+
+    if (product?.description && product.description.length > 10000) {
+      newErrors.description = "Mô tả không được vượt quá 10000 ký tự.";
+    }
+
+    if (product?.barcode && product.barcode.length > 100) {
+      newErrors.barcode = "Barcode không được vượt quá 100 ký tự.";
+    }
+
+    // Validate format barcode (chỉ chữ và số)
+    if (product?.barcode && !/^[A-Za-z0-9]*$/.test(product.barcode)) {
+      newErrors.barcode = "Barcode chỉ cho phép chữ và số.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSaveProduct = async (e) => {
+    if (e) e.preventDefault();
+
+    if (!validateForm()) {
+      message.warning("Vui lòng kiểm tra lại thông tin nhập.");
+      return;
+    }
+
     try {
-      // Validate required fields
-      if (!selectedCategory && !selectedSubCategory) {
-        message.error("Vui lòng chọn danh mục!");
-        return;
-      }
-
-      if (!selectedSupplier?.value) {
-        message.error("Vui lòng chọn nhà cung cấp!");
-        return;
-      }
-
-      if (!product?.productCode?.trim()) {
-        message.error("Vui lòng nhập mã sản phẩm!");
-        return;
-      }
-
-      if (!product?.productName?.trim()) {
-        message.error("Vui lòng nhập tên sản phẩm!");
-        return;
-      }
+      setIsSubmitting(true);
 
       // Tạo FormData để gửi dữ liệu (giống AddProduct)
       const formData = new FormData();
@@ -210,8 +251,21 @@ const EditProduct = () => {
       navigate(route.products);
     } catch (error) {
       console.error("Cập nhật thất bại:", error);
-      const errorMessage = error.response?.data?.message || "Cập nhật thất bại! Vui lòng thử lại.";
-      message.error(errorMessage);
+      const res = error.response?.data;
+
+      if (res?.code === 4000 && res?.message) {
+        const messages = res.message
+          .split(";")
+          .map((msg) => msg.trim())
+          .filter(Boolean);
+        messages.forEach((msg) => message.error(msg));
+      } else if (res?.message) {
+        message.error(res.message);
+      } else {
+        message.error("Cập nhật thất bại! Vui lòng thử lại.");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -251,7 +305,7 @@ const EditProduct = () => {
             </ul>
           </div>
 
-          <form>
+          <form onSubmit={handleSaveProduct}>
             <div className="card mb-0">
               <div className="card-body add-product pb-0">
                 <div className="accordions-items-seperate" id="accordionSpacingExample">
@@ -289,9 +343,17 @@ const EditProduct = () => {
                               <input
                                 type="text"
                                 value={product?.productCode || ""}
-                                onChange={(e) => setProduct({ ...product, productCode: e.target.value })}
-                                className="form-control"
+                                onChange={(e) => {
+                                  setProduct({ ...product, productCode: e.target.value });
+                                  setErrors((prev) => ({ ...prev, productCode: "" }));
+                                }}
+                                className={`form-control ${errors.productCode ? "is-invalid" : ""}`}
                               />
+                              {errors.productCode && (
+                                <div className="invalid-feedback">
+                                  {errors.productCode}
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="col-sm-6 col-12">
@@ -303,9 +365,17 @@ const EditProduct = () => {
                               <input
                                 type="text"
                                 value={product?.productName || ""}
-                                onChange={(e) => setProduct({ ...product, productName: e.target.value })}
-                                className="form-control"
+                                onChange={(e) => {
+                                  setProduct({ ...product, productName: e.target.value });
+                                  setErrors((prev) => ({ ...prev, productName: "" }));
+                                }}
+                                className={`form-control ${errors.productName ? "is-invalid" : ""}`}
                               />
+                              {errors.productName && (
+                                <div className="invalid-feedback">
+                                  {errors.productName}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -319,8 +389,11 @@ const EditProduct = () => {
                                 <input
                                   type="text"
                                   value={product?.barcode || ""}
-                                  onChange={(e) => setProduct({ ...product, barcode: e.target.value })}
-                                  className="form-control"
+                                  onChange={(e) => {
+                                    setProduct({ ...product, barcode: e.target.value });
+                                    setErrors((prev) => ({ ...prev, barcode: "" }));
+                                  }}
+                                  className={`form-control ${errors.barcode ? "is-invalid" : ""}`}
                                   placeholder="Nhập barcode hoặc tạo tự động"
                                 />
                                 <button
@@ -359,6 +432,11 @@ const EditProduct = () => {
                                   </button>
                                 )}
                               </div>
+                              {errors.barcode && (
+                                <div className="invalid-feedback d-block">
+                                  {errors.barcode}
+                                </div>
+                              )}
                               <small className="text-muted">
                                 Mỗi sản phẩm chỉ có thể có 1 barcode duy nhất. Có thể để trống và thêm sau.
                               </small>
@@ -381,15 +459,21 @@ const EditProduct = () => {
                                 </label>
                               </div>
                               <CommonSelect
-                                className="w-100"
+                                className={`w-100 ${errors.category ? "is-invalid" : ""}`}
                                 options={categories}
                                 value={selectedCategory}
                                 onChange={(selectedOption) => {
                                   setSelectedCategory(selectedOption);
                                   setSelectedSubCategory(null);
+                                  setErrors((prev) => ({ ...prev, category: "" }));
                                 }}
                                 placeholder="Chọn danh mục"
                               />
+                              {errors.category && (
+                                <div className="text-danger small mt-1">
+                                  {errors.category}
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="col-sm-6 col-12">
@@ -418,10 +502,18 @@ const EditProduct = () => {
                               <input
                                 type="text"
                                 value={product?.unit || ""}
-                                onChange={(e) => setProduct({ ...product, unit: e.target.value })}
-                                className="form-control"
+                                onChange={(e) => {
+                                  setProduct({ ...product, unit: e.target.value });
+                                  setErrors((prev) => ({ ...prev, unit: "" }));
+                                }}
+                                className={`form-control ${errors.unit ? "is-invalid" : ""}`}
                                 placeholder="Điền đơn vị tính (ví dụ: cái, chiếc...)"
                               />
+                              {errors.unit && (
+                                <div className="invalid-feedback">
+                                  {errors.unit}
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="col-sm-6 col-12">
@@ -431,12 +523,20 @@ const EditProduct = () => {
                                 <span className="text-danger ms-1">*</span>
                               </label>
                               <CommonSelect
-                                className="w-100"
+                                className={`w-100 ${errors.supplier ? "is-invalid" : ""}`}
                                 options={suppliers}
                                 value={selectedSupplier}
-                                onChange={setSelectedSupplier}
+                                onChange={(opt) => {
+                                  setSelectedSupplier(opt);
+                                  setErrors((prev) => ({ ...prev, supplier: "" }));
+                                }}
                                 placeholder="Chọn nhà cung cấp"
                               />
+                              {errors.supplier && (
+                                <div className="text-danger small mt-1">
+                                  {errors.supplier}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -447,9 +547,17 @@ const EditProduct = () => {
                               <input
                                 type="text"
                                 value={product?.dimensions || ""}
-                                onChange={(e) => setProduct({ ...product, dimensions: e.target.value })}
-                                className="form-control"
+                                onChange={(e) => {
+                                  setProduct({ ...product, dimensions: e.target.value });
+                                  setErrors((prev) => ({ ...prev, dimensions: "" }));
+                                }}
+                                className={`form-control ${errors.dimensions ? "is-invalid" : ""}`}
                               />
+                              {errors.dimensions && (
+                                <div className="invalid-feedback">
+                                  {errors.dimensions}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -458,13 +566,19 @@ const EditProduct = () => {
                             <label className="form-label">Mô tả</label>
                             <textarea
                               value={product?.description || ""}
-                              onChange={(e) =>
-                                setProduct({ ...product, description: e.target.value })
-                              }
-                              className="form-control"
+                              onChange={(e) => {
+                                setProduct({ ...product, description: e.target.value });
+                                setErrors((prev) => ({ ...prev, description: "" }));
+                              }}
+                              className={`form-control ${errors.description ? "is-invalid" : ""}`}
                               rows={5}
                             />
-                            <p className="fs-14 mt-1">Tối đa 500 ký tự</p>
+                            {errors.description && (
+                              <div className="invalid-feedback">
+                                {errors.description}
+                              </div>
+                            )}
+                            <p className="fs-14 mt-1">Tối đa 10000 ký tự</p>
                           </div>
                         </div>
                       </div>
@@ -551,11 +665,11 @@ const EditProduct = () => {
                   Huỷ
                 </button>
                 <button
-                  type="button"
+                  type="submit"
                   className="btn btn-submit"
-                  onClick={handleSaveProduct}
+                  disabled={isSubmitting}
                 >
-                  Lưu
+                  {isSubmitting ? "Đang lưu..." : "Lưu"}
                 </button>
               </div>
             </div>

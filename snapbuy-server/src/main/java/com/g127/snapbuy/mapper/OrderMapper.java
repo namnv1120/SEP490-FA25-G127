@@ -21,6 +21,7 @@ public interface OrderMapper {
     @Mapping(source = "customer.customerId", target = "customerId")
     @Mapping(source = "customer.fullName", target = "customerName", defaultValue = "Guest Customer")
     @Mapping(source = "account.accountId", target = "accountId")
+    @Mapping(target = "accountName", expression = "java(order.getAccount() != null ? (order.getAccount().getFullName() != null ? order.getAccount().getFullName() : order.getAccount().getUsername()) : null)")
     OrderResponse toBaseResponse(Order order);
 
     @Named("toOrderDetailResponseList")
