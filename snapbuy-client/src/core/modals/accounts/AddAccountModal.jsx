@@ -79,14 +79,14 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
     }
 
     // Mật khẩu
-    if (!formData.password) {
+    if (!formData.password || !formData.password.trim()) {
       newErrors.password = "Vui lòng nhập mật khẩu.";
     } else if (formData.password.length < 6) {
       newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự.";
     }
 
     // Xác nhận mật khẩu
-    if (!formData.confirmPassword) {
+    if (!formData.confirmPassword || !formData.confirmPassword.trim()) {
       newErrors.confirmPassword = "Vui lòng xác nhận mật khẩu.";
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Mật khẩu xác nhận không khớp.";
@@ -261,15 +261,22 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
               onChange={handleInputChange}
               placeholder="Nhập mật khẩu (ít nhất 6 ký tự)"
               disabled={loading}
+              style={{
+                paddingRight: errors.password ? "3rem" : "2.5rem"
+              }}
             />
             <span
-              className={`ti toggle-password position-absolute end-0 top-50 translate-middle-y me-2 ${showPassword ? "ti-eye" : "ti-eye-off"}`}
+              className={`ti toggle-password position-absolute top-50 translate-middle-y ${showPassword ? "ti-eye" : "ti-eye-off"}`}
               onClick={() => setShowPassword(!showPassword)}
-              style={{ cursor: "pointer" }}
+              style={{
+                cursor: "pointer",
+                right: errors.password ? "2rem" : "0.75rem",
+                zIndex: 10
+              }}
             />
           </div>
           {errors.password && (
-            <div className="invalid-feedback">{errors.password}</div>
+            <div className="invalid-feedback d-block">{errors.password}</div>
           )}
         </div>
 
@@ -287,15 +294,22 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
               onChange={handleInputChange}
               placeholder="Nhập lại mật khẩu"
               disabled={loading}
+              style={{
+                paddingRight: errors.confirmPassword ? "3rem" : "2.5rem"
+              }}
             />
             <span
-              className={`ti toggle-password position-absolute end-0 top-50 translate-middle-y me-2 ${showConfirmPassword ? "ti-eye" : "ti-eye-off"}`}
+              className={`ti toggle-password position-absolute top-50 translate-middle-y ${showConfirmPassword ? "ti-eye" : "ti-eye-off"}`}
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              style={{ cursor: "pointer" }}
+              style={{
+                cursor: "pointer",
+                right: errors.confirmPassword ? "2rem" : "0.75rem",
+                zIndex: 10
+              }}
             />
           </div>
           {errors.confirmPassword && (
-            <div className="invalid-feedback">{errors.confirmPassword}</div>
+            <div className="invalid-feedback d-block">{errors.confirmPassword}</div>
           )}
         </div>
 

@@ -968,6 +968,11 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                               const pointsRedeemed = orderToPrint.pointsRedeemed || 0;
                               const totalAmount = orderToPrint.totalAmount || 0;
 
+                              // Tính phần trăm chiết khấu và thuế
+                              const discountPercent = subtotal > 0 ? ((discountAmount / subtotal) * 100).toFixed(2) : 0;
+                              const afterDiscount = subtotal - discountAmount;
+                              const taxPercent = afterDiscount > 0 ? ((taxAmount / afterDiscount) * 100).toFixed(2) : 0;
+
                               return (
                                 <>
                                   <tr>
@@ -975,12 +980,12 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                                     <td className="text-end">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(subtotal)}</td>
                                   </tr>
                                   <tr>
-                                    <td className="fw-bold">Giảm giá:</td>
-                                    <td className="text-end">-{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(discountAmount)}</td>
+                                    <td className="fw-bold">Chiết khấu:</td>
+                                    <td className="text-end">{discountPercent > 0 ? `${discountPercent}%` : '0%'}</td>
                                   </tr>
                                   <tr>
                                     <td className="fw-bold">Thuế:</td>
-                                    <td className="text-end">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(taxAmount)}</td>
+                                    <td className="text-end">{taxPercent > 0 ? `${taxPercent}%` : '0%'}</td>
                                   </tr>
                                   {pointsRedeemed > 0 && (
                                     <tr>
@@ -2500,7 +2505,7 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                     <th>Sản phẩm</th>
                     <th>Số lượng</th>
                     <th>Đơn giá</th>
-                    <th>Giảm giá</th>
+                    <th>Chiết khấu</th>
                     <th className="text-end">Thành tiền</th>
                   </tr>
                 </thead>
@@ -2536,6 +2541,11 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                     const pointsRedeemed = selectedOrderDetail.pointsRedeemed || 0;
                     const totalAmount = selectedOrderDetail.totalAmount || 0;
 
+                    // Tính phần trăm chiết khấu và thuế
+                    const discountPercent = subtotal > 0 ? ((discountAmount / subtotal) * 100).toFixed(2) : 0;
+                    const afterDiscount = subtotal - discountAmount;
+                    const taxPercent = afterDiscount > 0 ? ((taxAmount / afterDiscount) * 100).toFixed(2) : 0;
+
                     return (
                       <>
                         <tr>
@@ -2543,12 +2553,12 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                           <td className="text-end">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(subtotal)}</td>
                         </tr>
                         <tr>
-                          <td colSpan={4} className="fw-bold text-end">Giảm giá:</td>
-                          <td className="text-end">-{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(discountAmount)}</td>
+                          <td colSpan={4} className="fw-bold text-end">Chiết khấu:</td>
+                          <td className="text-end">{discountPercent > 0 ? `${discountPercent}%` : '0%'}</td>
                         </tr>
                         <tr>
                           <td colSpan={4} className="fw-bold text-end">Thuế:</td>
-                          <td className="text-end">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(taxAmount)}</td>
+                          <td className="text-end">{taxPercent > 0 ? `${taxPercent}%` : '0%'}</td>
                         </tr>
                         {pointsRedeemed > 0 && (
                           <tr>

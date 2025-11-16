@@ -54,7 +54,6 @@ public class PaymentServiceImpl implements PaymentService {
                     payment.setNotes("PAYURL:" + momoResp.getPayUrl());
                 }
             } catch (Exception e) {
-                log.error("Tạo thanh toán MoMo thất bại: {}", e.getMessage(), e);
                 payment.setNotes("Lỗi MoMo: " + e.getMessage());
             }
         }
@@ -124,7 +123,6 @@ public class PaymentServiceImpl implements PaymentService {
         order.setUpdatedDate(LocalDateTime.now());
         orderRepository.save(order);
 
-        log.info("Xác nhận thanh toán MoMo cho đơn {}", order.getOrderNumber());
     }
 
     private PaymentResponse toResponse(Payment payment) {

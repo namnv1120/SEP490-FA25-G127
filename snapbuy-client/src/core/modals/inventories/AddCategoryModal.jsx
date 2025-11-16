@@ -156,22 +156,6 @@ const AddCategory = ({ isOpen, onClose, onSuccess }) => {
           )}
         </div>
 
-        {/* Trạng thái */}
-        <div className="mb-0">
-          <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-            <span className="status-label">Trạng thái</span>
-            <input
-              type="checkbox"
-              id="add-cat-status"
-              className="check"
-              checked={formData.active}
-              onChange={handleStatusChange}
-              disabled={loading}
-            />
-            <label htmlFor="add-cat-status" className="checktoggle" />
-          </div>
-        </div>
-
         {/* Nút hành động */}
         <div className="modal-footer-btn mt-4 d-flex justify-content-end">
           <button

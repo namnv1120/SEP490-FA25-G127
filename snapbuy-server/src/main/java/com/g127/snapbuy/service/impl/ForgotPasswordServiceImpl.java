@@ -95,7 +95,6 @@ public class ForgotPasswordServiceImpl implements ForgotPasswordService {
         accountRepository.save(acc);
 
         otpStore.remove(req.getEmail());
-        log.info("Đặt lại mật khẩu cho {}", req.getEmail());
     }
 
 }

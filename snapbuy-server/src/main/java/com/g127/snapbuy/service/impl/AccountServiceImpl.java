@@ -59,12 +59,10 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @PreAuthorize("hasRole('Quản trị viên')")
     public AccountResponse createAccount(AccountCreateRequest req) {
-        // Nếu có roles trong request, sử dụng role đầu tiên
         if (req.getRoles() != null && !req.getRoles().isEmpty()) {
             String roleName = req.getRoles().get(0);
             return createWithSingleRole(req, roleName);
         }
-        // Mặc định là "Chủ cửa hàng" nếu không có role
         return createWithSingleRole(req, "Chủ cửa hàng");
     }
 
@@ -96,7 +94,6 @@ public class AccountServiceImpl implements AccountService {
         Account acc = accountMapper.toEntity(req);
         acc.setUsername(req.getUsername().toLowerCase());
         acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
-        // Don't set email and phone to avoid UNIQUE constraint violation with NULL
         acc.setRoles(new LinkedHashSet<>());
 
         try {
@@ -119,7 +116,6 @@ public class AccountServiceImpl implements AccountService {
         Account account = accountMapper.toEntity(req);
         account.setUsername(req.getUsername().toLowerCase());
         account.setPasswordHash(passwordEncoder.encode(req.getPassword()));
-        // Don't set email and phone to avoid UNIQUE constraint violation with NULL
         account.setRoles(new LinkedHashSet<>());
 
         try {
@@ -247,7 +243,6 @@ public class AccountServiceImpl implements AccountService {
             }
             staff.setActive(req.getActive());
 
-
         return accountMapper.toResponse(accountRepository.save(staff));
     }
 
@@ -293,9 +288,7 @@ public class AccountServiceImpl implements AccountService {
             acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
         }
 
-        // Xử lý roles nếu có
         if (req.getRoles() != null && !req.getRoles().isEmpty()) {
-            // Chỉ cho phép chọn 1 role
             if (req.getRoles().size() > 1) {
                 throw new IllegalArgumentException("Chỉ được chọn 1 vai trò cho tài khoản");
             }
@@ -305,11 +298,9 @@ public class AccountServiceImpl implements AccountService {
                     .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò: " + roleName));
             ensureActive(role);
 
-            // Xóa tất cả roles cũ và thêm role mới
             acc.getRoles().clear();
             acc.getRoles().add(role);
         }
-
         return accountMapper.toResponse(accountRepository.save(acc));
     }
 
@@ -322,7 +313,6 @@ public class AccountServiceImpl implements AccountService {
         if (!Objects.equals(acc.getUsername(), currentUser) && !isAdmin())
             throw new IllegalStateException("Bạn chỉ có thể cập nhật tài khoản của chính mình");
 
-        // Nếu có roles trong request, chỉ admin mới được update roles
         if (req.getRoles() != null && !req.getRoles().isEmpty() && !isAdmin()) {
             throw new IllegalStateException("Chỉ quản trị viên mới được cập nhật vai trò");
         }
@@ -339,7 +329,6 @@ public class AccountServiceImpl implements AccountService {
         
         if (req.getRemoveAvatar() != null && req.getRemoveAvatar()) {
             acc.setAvatarUrl(null);
-            log.info("✅ Removed avatar for account: {}", acc.getAccountId());
         } else if (req.getAvatar() != null && !req.getAvatar().isEmpty()) {
             try {
                 String fileName = System.currentTimeMillis() + "_" + req.getAvatar().getOriginalFilename();
@@ -353,9 +342,7 @@ public class AccountServiceImpl implements AccountService {
                 req.getAvatar().transferTo(filePath.toFile());
                 
                 acc.setAvatarUrl("/uploads/avatars/" + fileName);
-                log.info("✅ Saved avatar: {}", acc.getAvatarUrl());
             } catch (Exception e) {
-                log.error("❌ Lỗi khi lưu avatar", e);
                 throw new com.g127.snapbuy.exception.AppException(com.g127.snapbuy.exception.ErrorCode.FILE_UPLOAD_FAILED);
             }
         } else if (req.getAvatarUrl() != null) {
@@ -366,9 +353,7 @@ public class AccountServiceImpl implements AccountService {
             acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
         }
 
-        // Xử lý roles nếu có (chỉ admin mới được update roles)
         if (req.getRoles() != null && !req.getRoles().isEmpty() && isAdmin()) {
-            // Chỉ cho phép chọn 1 role
             if (req.getRoles().size() > 1) {
                 throw new IllegalArgumentException("Chỉ được chọn 1 vai trò cho tài khoản");
             }
@@ -377,8 +362,6 @@ public class AccountServiceImpl implements AccountService {
             Role role = roleRepository.findByRoleNameIgnoreCase(roleName)
                     .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò: " + roleName));
             ensureActive(role);
-
-            // Xóa tất cả roles cũ và thêm role mới
             acc.getRoles().clear();
             acc.getRoles().add(role);
         }
@@ -417,7 +400,6 @@ public class AccountServiceImpl implements AccountService {
         account.setActive(currentActive == null || !currentActive);
         account.setUpdatedDate(LocalDateTime.now());
         Account savedAccount = accountRepository.save(account);
-        log.info("Toggling account {} status from {} to {}", accountId, currentActive, savedAccount.getActive());
         return accountMapper.toResponse(savedAccount);
     }
 
