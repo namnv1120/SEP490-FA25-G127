@@ -28,6 +28,7 @@ const routeNameMap = {
   "pos-orders": "Đơn hàng POS",
   pos: "POS",
   forgotpassword: "Quên mật khẩu",
+  verifyotp: "Nhập OTP",
   resetpassword: "Đặt lại mật khẩu",
   "transaction-history": "Lịch sử giao dịch",
   "order-history": "Lịch sử đơn hàng",

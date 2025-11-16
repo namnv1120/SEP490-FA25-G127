@@ -65,9 +65,21 @@ const PasswordSettings = () => {
       return;
     }
 
+    if (/\s/.test(formData.newPassword)) {
+      setPasswordErrors({ newPassword: "Mật khẩu không được chứa khoảng trắng" });
+      message.error("Mật khẩu không được chứa khoảng trắng");
+      return;
+    }
+
     if (formData.newPassword !== formData.confirmPassword) {
       setPasswordErrors({ confirmPassword: "Mật khẩu xác nhận không khớp" });
       message.error("Mật khẩu xác nhận không khớp");
+      return;
+    }
+
+    if (/\s/.test(formData.confirmPassword)) {
+      setPasswordErrors({ confirmPassword: "Mật khẩu không được chứa khoảng trắng" });
+      message.error("Mật khẩu không được chứa khoảng trắng");
       return;
     }
 
