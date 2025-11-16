@@ -96,7 +96,6 @@ public class PromotionServiceImpl implements PromotionService {
         }
         if (!expired.isEmpty()) {
             promotionRepository.saveAll(expired);
-            log.info("Đã vô hiệu hóa {} khuyến mãi hết hạn", expired.size());
         }
     }
 

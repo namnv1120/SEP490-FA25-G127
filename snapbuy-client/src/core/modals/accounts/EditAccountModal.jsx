@@ -8,9 +8,10 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [roles, setRoles] = useState([]);
   const [selectedRole, setSelectedRole] = useState(null);
+  const [selectedRoleValue, setSelectedRoleValue] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -34,7 +35,48 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose }) => {
     if (isOpen && accountId && roles.length > 0) {
       loadAccountData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, accountId, roles]);
+
+  // Map selectedRole sau khi formData.roles đã được set
+  useEffect(() => {
+    if (isOpen && formData.roles && formData.roles.length > 0 && roles.length > 0) {
+      const roleName = formData.roles[0];
+      const foundRole = roles.find(r => r.value === roleName || r.label === roleName);
+      if (foundRole) {
+        // Chỉ set nếu chưa được set hoặc đang khác với role hiện tại
+        if (!selectedRoleValue || selectedRoleValue !== roleName) {
+          setSelectedRoleValue(roleName);
+          setSelectedRole(foundRole);
+        }
+      } else {
+        // Vẫn set value để hiển thị
+        if (!selectedRoleValue || selectedRoleValue !== roleName) {
+          setSelectedRoleValue(roleName);
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, formData.roles, roles]);
+
+  // Reset form khi modal đóng
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        fullName: "",
+        email: "",
+        phone: "",
+        password: "",
+        confirmPassword: "",
+        roles: [],
+      });
+      setErrors({});
+      setSelectedRole(null);
+      setSelectedRoleValue(null);
+      setShowPassword(false);
+      setShowConfirmPassword(false);
+    }
+  }, [isOpen]);
 
   const loadRoles = async () => {
     try {
@@ -56,23 +98,31 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose }) => {
       setLoading(true);
       const account = await getAccountById(accountId);
       const accountData = account.result || account;
-      
-      // Lấy role đầu tiên nếu có
+
+      // Lấy role đầu tiên nếu có (roles là mảng string roleName)
       const accountRoles = accountData.roles || [];
-      const firstRole = accountRoles.length > 0 ? accountRoles[0] : null;
-      const selectedRoleOption = firstRole 
-        ? roles.find(r => r.value === firstRole.roleName) || null
-        : null;
-      
+      const firstRoleName = accountRoles.length > 0 ? accountRoles[0] : null;
+
       setFormData({
         fullName: accountData.fullName || "",
         email: accountData.email || "",
         phone: accountData.phone || "",
         password: "",
         confirmPassword: "",
-        roles: firstRole ? [firstRole.roleName] : [],
+        roles: firstRoleName ? [firstRoleName] : [],
       });
-      setSelectedRole(selectedRoleOption);
+
+      // Set selectedRole value (string) để Dropdown có thể hiển thị
+      if (firstRoleName) {
+        setSelectedRoleValue(firstRoleName);
+        // Tìm và set selectedRole object để giữ reference
+        if (roles.length > 0) {
+          const foundRole = roles.find(r => r.value === firstRoleName || r.label === firstRoleName);
+          if (foundRole) {
+            setSelectedRole(foundRole);
+          }
+        }
+      }
     } catch (error) {
       console.error("Không thể tải dữ liệu tài khoản", error);
       message.error("Không thể tải dữ liệu tài khoản");
@@ -131,9 +181,12 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose }) => {
 
   const handleRoleChange = (e) => {
     const selected = e.value;
-    setSelectedRole(selected);
-    // Đảm bảo lấy đúng roleName từ selected object
-    const roleName = selected?.value || selected?.label || selected;
+    // selected có thể là object hoặc string
+    const roleName = typeof selected === 'string' ? selected : (selected?.value || selected?.label || selected);
+    const roleObject = typeof selected === 'object' ? selected : roles.find(r => r.value === roleName || r.label === roleName);
+
+    setSelectedRole(roleObject || null);
+    setSelectedRoleValue(roleName);
     setFormData((prev) => ({
       ...prev,
       roles: roleName ? [roleName] : [],
@@ -152,7 +205,7 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose }) => {
       setLoading(true);
 
       const updateData = {};
-      
+
       if (formData.fullName.trim()) {
         updateData.fullName = formData.fullName.trim();
       }
@@ -262,7 +315,7 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose }) => {
           <div className="mb-3">
             <label className="form-label">Vai trò</label>
             <Dropdown
-              value={selectedRole}
+              value={selectedRoleValue}
               options={roles}
               onChange={handleRoleChange}
               placeholder="Chọn vai trò"
@@ -271,6 +324,8 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose }) => {
               filter
               appendTo={document.body}
               panelStyle={{ zIndex: 9999 }}
+              optionLabel="label"
+              optionValue="value"
             />
             {errors.roles && (
               <div className="invalid-feedback d-block">{errors.roles}</div>

@@ -159,21 +159,6 @@ const EditCategory = ({ isOpen, categoryId, onSuccess, onClose }) => {
             )}
           </div>
 
-          <div className="mb-0">
-            <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-              <span className="status-label">Trạng thái</span>
-              <input
-                type="checkbox"
-                id="edit-cat-status"
-                className="check"
-                checked={formData.active}
-                onChange={handleStatusChange}
-                disabled={loading}
-              />
-              <label htmlFor="edit-cat-status" className="checktoggle" />
-            </div>
-          </div>
-
           <div className="modal-footer-btn mt-4 d-flex justify-content-end">
             <button
               type="button"

@@ -183,8 +183,6 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                 int newPoints = Math.max(0, currentPoints - pointsRedeemed);
                 customer.setPoints(newPoints);
                 customerRepository.save(customer);
-                log.info("Tạo đơn {}: Đã trừ {} điểm từ tài khoản khách hàng (điểm còn lại: {})",
-                        orderNumber, pointsRedeemed, newPoints);
             }
         }
         
@@ -212,12 +210,11 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                     payment.setTransactionReference(momoResp.getRequestId());
                     payment.setNotes("PAYURL:" + momoResp.getPayUrl());
                     paymentRepository.save(payment);
-                    log.info("Tạo MoMo QR cho đơn {} - {}", orderNumber, momoResp.getPayUrl());
                 } else {
                     log.warn("Phản hồi MoMo rỗng hoặc thiếu payUrl cho đơn {}", orderNumber);
                 }
             } catch (Exception e) {
-                log.error("Tạo thanh toán MoMo thất bại cho đơn {}: {}", orderNumber, e.getMessage(), e);
+                throw new RuntimeException(e);
             }
         }
 
@@ -345,8 +342,6 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                     long next = (long) cur + pointsRedeemed;
                     c.setPoints((int) next);
                     customerRepository.save(c);
-                    log.info("Hủy đơn {} (chưa thanh toán): Đã trả lại {} điểm cho khách hàng",
-                            order.getOrderNumber(), pointsRedeemed);
                 }
             }
             

@@ -75,7 +75,6 @@ public class SupplierServiceImpl implements SupplierService {
         supplier.setActive(!supplier.isActive());
         supplier.setUpdatedDate(LocalDateTime.now());
         Supplier savedSupplier = supplierRepository.save(supplier);
-        log.info("Toggling supplier {} status from {} to {}", id, !savedSupplier.isActive(), savedSupplier.isActive());
         return supplierMapper.toResponse(savedSupplier);
     }
 }

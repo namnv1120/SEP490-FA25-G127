@@ -23,7 +23,6 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryRepository inventoryRepository;
     private final ProductRepository productRepository;
     private final InventoryTransactionRepository inventoryTransactionRepository;
-    private final AccountRepository accountRepository;
     private final InventoryMapper inventoryMapper;
 
     @Override

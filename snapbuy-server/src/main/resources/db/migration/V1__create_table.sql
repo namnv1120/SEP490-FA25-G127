@@ -101,6 +101,7 @@ CREATE TABLE products
     unit          NVARCHAR(20)                 DEFAULT N'Cái',
     dimensions    NVARCHAR(50),
     image_url     NVARCHAR(500),
+    barcode       NVARCHAR(100)                NULL,
     active        BIT                          DEFAULT 1,
     created_date  DATETIME2                    DEFAULT GETDATE(),
     updated_date  DATETIME2                    DEFAULT GETDATE(),
@@ -134,6 +135,7 @@ CREATE TABLE purchase_order
     total_amount          DECIMAL(18, 2)      NOT NULL DEFAULT 0,
     tax_amount            DECIMAL(18, 2)               DEFAULT 0,
     notes                 NVARCHAR(500),
+    email_sent_at         DATETIME2                    NULL,
     created_date          DATETIME2                    DEFAULT GETDATE(),
     updated_date          DATETIME2                    DEFAULT GETDATE(),
 
@@ -197,6 +199,8 @@ CREATE TABLE orders
     total_amount    DECIMAL(18, 2)      NOT NULL DEFAULT 0,
     discount_amount DECIMAL(18, 2)               DEFAULT 0,
     tax_amount      DECIMAL(18, 2)               DEFAULT 0,
+    points_redeemed INT                          NULL DEFAULT 0,
+    points_earned   INT                          NULL DEFAULT 0,
     notes           NVARCHAR(500),
     created_date    DATETIME2                    DEFAULT GETDATE(),
     updated_date    DATETIME2                    DEFAULT GETDATE(),
@@ -271,4 +275,6 @@ CREATE INDEX ix_account_username ON accounts (username);
 CREATE UNIQUE INDEX UX_accounts_email ON accounts(email) WHERE email IS NOT NULL;
 CREATE UNIQUE INDEX UX_accounts_phone ON accounts(phone) WHERE phone IS NOT NULL;
 CREATE INDEX ix_inventory_transaction_product_id ON inventory_transaction (product_id);
+CREATE UNIQUE INDEX UX_products_barcode ON products(barcode) WHERE barcode IS NOT NULL;
+CREATE INDEX IX_products_barcode_search ON products(barcode);
 

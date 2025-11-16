@@ -11,6 +11,7 @@ import {
 import { allRoutes } from "../../routes/AllRoutes";
 import { getMyInfo } from "../../services/AccountService";
 import { getImageUrl } from "../../utils/imageUtils";
+import { SidebarData1 } from "../../core/json/sidebarDataOne";
 import {
   avatar_02,
   avatar_03,
@@ -28,6 +29,8 @@ const Header = () => {
   const [toggle, SetToggle] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState({
     fullName: 'John Smilga',
@@ -99,6 +102,68 @@ const Header = () => {
   };
 
   const location = useLocation();
+
+  // Flatten all routes from SidebarData1
+  const flattenRoutes = (data, parentTitle = "") => {
+    const routes = [];
+    data.forEach((item) => {
+      if (item.subRoutes && item.subRoutes.length > 0) {
+        item.subRoutes.forEach((subItem) => {
+          if (subItem.route) {
+            routes.push({
+              title: subItem.tittle,
+              route: subItem.route,
+              parentTitle: item.tittle,
+              fullPath: parentTitle ? `${parentTitle} > ${item.tittle} > ${subItem.tittle}` : `${item.tittle} > ${subItem.tittle}`
+            });
+          }
+          // Handle nested subRoutes
+          if (subItem.subRoutes && subItem.subRoutes.length > 0) {
+            subItem.subRoutes.forEach((nestedItem) => {
+              if (nestedItem.route) {
+                routes.push({
+                  title: nestedItem.tittle,
+                  route: nestedItem.route,
+                  parentTitle: `${item.tittle} > ${subItem.tittle}`,
+                  fullPath: `${item.tittle} > ${subItem.tittle} > ${nestedItem.tittle}`
+                });
+              }
+            });
+          }
+        });
+      }
+    });
+    return routes;
+  };
+
+  // Search routes based on query
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const flattenedRoutes = flattenRoutes(SidebarData1);
+      const query = searchQuery.toLowerCase().trim();
+      const filtered = flattenedRoutes.filter((item) =>
+        item.title.toLowerCase().includes(query) ||
+        item.parentTitle.toLowerCase().includes(query) ||
+        item.route.toLowerCase().includes(query)
+      );
+      setSearchResults(filtered.slice(0, 10)); // Limit to 10 results
+      setShowSearchDropdown(filtered.length > 0);
+    } else {
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+    }
+  }, [searchQuery]);
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleRouteClick = (route) => {
+    navigate(route);
+    setSearchQuery("");
+    setSearchResults([]);
+    setShowSearchDropdown(false);
+  };
 
   const sidebarOverlay = () => {
     document?.querySelector(".main-wrapper")?.classList?.toggle("slide-nav");
@@ -274,8 +339,15 @@ const Header = () => {
                 <div className="searchinputs input-group">
                   <Form.Control
                     type="text"
-                    placeholder="Search"
+                    placeholder="Tìm kiếm menu..."
+                    value={searchQuery}
+                    onChange={handleSearchChange}
                     onClick={() => setShowSearchDropdown(true)}
+                    onFocus={() => {
+                      if (searchResults.length > 0) {
+                        setShowSearchDropdown(true);
+                      }
+                    }}
                   />
                   <div className="search-addon">
                     <span>
@@ -288,6 +360,50 @@ const Header = () => {
                     </kbd>
                   </span>
                 </div>
+                {showSearchDropdown && searchResults.length > 0 && (
+                  <Dropdown.Menu
+                    show
+                    className="w-100 search-results-dropdown"
+                    style={{
+                      maxHeight: "400px",
+                      overflowY: "auto",
+                      padding: 0
+                    }}
+                  >
+                    {searchResults.map((result, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleRouteClick(result.route)}
+                        className="search-result-item"
+                        style={{
+                          borderBottom: index < searchResults.length - 1 ? "1px solid #e9ecef" : "none"
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = "rgba(var(--bs-primary-rgb), 0.05)";
+                          e.target.style.color = "var(--bs-primary)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = "transparent";
+                          e.target.style.color = "inherit";
+                        }}
+                      >
+                        <div className="fw-bold" style={{ fontSize: "15px", marginBottom: "4px" }}>{result.title}</div>
+                        <div className="text-muted" style={{ fontSize: "13px", marginBottom: "4px" }}>{result.fullPath}</div>
+                        <div className="text-muted" style={{ fontSize: "12px", marginBottom: 0 }}>
+                          <i className="ti ti-route me-1" />
+                          {result.route}
+                        </div>
+                      </button>
+                    ))}
+                  </Dropdown.Menu>
+                )}
+                {showSearchDropdown && searchQuery.trim() && searchResults.length === 0 && (
+                  <Dropdown.Menu show className="w-100" style={{ marginTop: "5px" }}>
+                    <Dropdown.Item disabled className="text-center py-3">
+                      Không tìm thấy kết quả
+                    </Dropdown.Item>
+                  </Dropdown.Menu>
+                )}
               </Dropdown>
             </div>
           </Nav.Item>
@@ -454,7 +570,7 @@ const Header = () => {
               <i className="ti ti-user-circle me-2" />
               Thông tin cá nhân
             </NavDropdown.Item>
-            <NavDropdown.Item as={Link} to={route.generalsettings}>
+            <NavDropdown.Item as={Link} to={route.profile}>
               <i className="ti ti-settings-2 me-2" />
               Cài đặt
             </NavDropdown.Item>

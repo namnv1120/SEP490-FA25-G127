@@ -68,7 +68,6 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
                 + "Nếu không phải bạn yêu cầu, vui lòng bỏ qua email này.";
 
         mailService.send(newEmail, subject, content);
-        log.info("Đã gửi OTP xác nhận email đến {} cho tài khoản {}", newEmail, accountId);
     }
 
     @Override
@@ -98,7 +97,6 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         accountRepository.save(account);
         otpStore.remove(otpKey);
 
-        log.info("Đã xác nhận và cập nhật email cho tài khoản {}", accountId);
     }
 }
 

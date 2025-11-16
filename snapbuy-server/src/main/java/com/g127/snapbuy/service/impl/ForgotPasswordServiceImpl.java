@@ -57,7 +57,6 @@ public class ForgotPasswordServiceImpl implements ForgotPasswordService {
                 + "Nếu không phải bạn yêu cầu, vui lòng bỏ qua email này.";
 
         mailService.send(email, subject, content);
-        log.info("Cấp OTP cho {} hết hạn vào {}", email, expiresAt);
     }
 
     @Override
@@ -88,7 +87,6 @@ public class ForgotPasswordServiceImpl implements ForgotPasswordService {
         accountRepository.save(acc);
 
         otpStore.remove(req.getEmail());
-        log.info("Đặt lại mật khẩu cho {}", req.getEmail());
     }
 
 }

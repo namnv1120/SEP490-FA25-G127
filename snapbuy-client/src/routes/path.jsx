@@ -57,6 +57,9 @@ const TransactionHistory = lazy(() =>
 const OrderHistory = lazy(() =>
   import("../feature-module/sales/OrderHistory")
 );
+const PosSystemSettings = lazy(() =>
+  import("../feature-module/pos/PosSystemSettings")
+);
 
 
 const routes = allRoutes;
@@ -95,6 +98,13 @@ export const authRoutes = [
     path: routes.passwordsettings,
     name: "password-settings",
     element: <PasswordSettings />,
+    route: Route,
+  },
+  {
+    id: 3.3,
+    path: routes.possystemsettings,
+    name: "pos-system-settings",
+    element: <PosSystemSettings />,
     route: Route,
   },
   {

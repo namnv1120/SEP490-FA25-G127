@@ -86,27 +86,18 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
         
-        // Xóa tất cả category con trước (recursive)
         deleteChildCategories(id);
         
-        // Sau đó xóa category cha
         categoryRepository.delete(category);
-        log.info("Deleted category: {} ({})", category.getCategoryName(), category.getCategoryId());
     }
     
-    /**
-     * Xóa đệ quy tất cả category con
-     */
     private void deleteChildCategories(UUID parentId) {
         List<Category> childCategories = categoryRepository.findByParentCategoryId(parentId);
         
         for (Category child : childCategories) {
-            // Xóa đệ quy các category con của child trước
             deleteChildCategories(child.getCategoryId());
             
-            // Sau đó xóa child
             categoryRepository.delete(child);
-            log.info("Deleted child category: {} (parent: {})", child.getCategoryName(), parentId);
         }
     }
 
@@ -142,8 +133,7 @@ public class CategoryServiceImpl implements CategoryService {
                 child.setActive(false);
                 child.setUpdatedDate(LocalDateTime.now());
                 categoryRepository.save(child);
-                log.info("Disabled child category {} (parent: {})", child.getCategoryId(), parentId);
-                
+
                 disableChildCategories(child.getCategoryId());
             }
         }
@@ -157,8 +147,7 @@ public class CategoryServiceImpl implements CategoryService {
                 child.setActive(true);
                 child.setUpdatedDate(LocalDateTime.now());
                 categoryRepository.save(child);
-                log.info("Enabled child category {} (parent: {})", child.getCategoryId(), parentId);
-                
+
                 enableChildCategories(child.getCategoryId());
             }
         }
@@ -172,8 +161,7 @@ public class CategoryServiceImpl implements CategoryService {
                 parentCategory.setActive(true);
                 parentCategory.setUpdatedDate(LocalDateTime.now());
                 categoryRepository.save(parentCategory);
-                log.info("Enabled parent category {} (child triggered)", parentId);
-                
+
                 if (parentCategory.getParentCategoryId() != null) {
                     enableParentCategories(parentCategory.getParentCategoryId());
                 }
