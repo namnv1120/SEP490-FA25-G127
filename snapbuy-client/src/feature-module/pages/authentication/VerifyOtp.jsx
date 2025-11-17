@@ -116,7 +116,7 @@ export default function VerifyOtp() {
           >
             <Input
               prefix={<NumberOutlined />}
-              placeholder="Nhập mã OTP 6 chữ số"
+              placeholder="Nhập mã OTP"
               value={code}
               onChange={(e) => {
                 const raw = e.target.value || "";
