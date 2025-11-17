@@ -9,6 +9,7 @@ import SearchFromApi from "../../components/data-table/search";
 import { message } from "antd";
 import { exportToExcel } from "../../utils/excelUtils";
 import { getAllProductPrices } from "../../services/ProductPriceService";
+import ImportProductPrice from "./ImportProductPrice";
 
 const ProductPriceList = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -20,6 +21,7 @@ const ProductPriceList = () => {
   const [error, setError] = useState(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const route = allRoutes;
 
@@ -93,7 +95,7 @@ const ProductPriceList = () => {
     );
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (!productPrices || productPrices.length === 0) {
       message.warning("Không có dữ liệu để xuất.");
       return;
@@ -109,12 +111,21 @@ const ProductPriceList = () => {
       "Ngày tạo": p.createdDate,
     }));
 
-    exportToExcel(exportData, "Danh_sach_gia_san_pham");
+    try {
+      await exportToExcel(exportData, "Danh_sach_gia_san_pham");
+    } catch (error) {
+      message.error("Lỗi khi xuất file Excel!");
+    }
   };
 
   const handleRefresh = () => {
     fetchProductPrices();
     message.success("Làm mới danh sách thành công!");
+  };
+
+  const handleImportSuccess = () => {
+    fetchProductPrices();
+    setShowImportModal(false);
   };
 
   const handleSearch = (value) => {
@@ -221,12 +232,15 @@ const ProductPriceList = () => {
               onExportExcel={handleExportExcel}
               onRefresh={handleRefresh}
             />
-            {/* <div className="page-btn">
-              <Link to={route.addproductprice} className="btn btn-primary">
-                <i className="ti ti-circle-plus me-1"></i>
-                Thêm giá mới
-              </Link>
-            </div> */}
+            <div className="page-btn">
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowImportModal(true)}
+              >
+                <i className="ti ti-upload me-1"></i>
+                Nhập giá từ Excel
+              </button>
+            </div>
           </div>
 
           {/* Error Message */}
@@ -334,6 +348,11 @@ const ProductPriceList = () => {
           setSelectedProductId(null);
         }}
         productId={selectedProductId}
+      />
+      <ImportProductPrice
+        visible={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImportSuccess={handleImportSuccess}
       />
     </>
   );

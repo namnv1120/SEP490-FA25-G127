@@ -2,6 +2,7 @@ package com.g127.snapbuy.controller;
 
 import com.g127.snapbuy.dto.ApiResponse;
 import com.g127.snapbuy.dto.request.ProductPriceCreateRequest;
+import com.g127.snapbuy.dto.request.ProductPriceImportRequest;
 import com.g127.snapbuy.dto.request.ProductPriceUpdateRequest;
 import com.g127.snapbuy.dto.response.ProductPriceResponse;
 import com.g127.snapbuy.service.ProductPriceService;
@@ -55,6 +56,14 @@ public class ProductPriceController {
         productPriceService.deletePrice(id);
         ApiResponse<String> response = new ApiResponse<>();
         response.setResult("Giá sản phẩm đã được xoá");
+        return response;
+    }
+
+    @PostMapping("/import")
+    public ApiResponse<List<ProductPriceResponse>> importPrices(
+            @RequestBody @Valid List<ProductPriceImportRequest> requests) {
+        ApiResponse<List<ProductPriceResponse>> response = new ApiResponse<>();
+        response.setResult(productPriceService.importPrices(requests));
         return response;
     }
 }

@@ -82,7 +82,7 @@ const ProductList = () => {
     }
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (!products || products.length === 0) {
       message.warning("Không có sản phẩm để xuất!");
       return;
@@ -99,7 +99,11 @@ const ProductList = () => {
       "Ảnh": p.imageUrl
     }));
 
-    exportToExcel(exportData, "Danh_sach_san_pham");
+    try {
+      await exportToExcel(exportData, "Danh_sach_san_pham");
+    } catch (error) {
+      message.error("Lỗi khi xuất file Excel!");
+    }
   };
 
   const handleImport = async (data) => {

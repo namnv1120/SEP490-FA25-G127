@@ -1,6 +1,7 @@
 package com.g127.snapbuy.service.impl;
 
 import com.g127.snapbuy.dto.request.ProductPriceCreateRequest;
+import com.g127.snapbuy.dto.request.ProductPriceImportRequest;
 import com.g127.snapbuy.dto.request.ProductPriceUpdateRequest;
 import com.g127.snapbuy.dto.response.ProductPriceResponse;
 import com.g127.snapbuy.entity.Product;
@@ -13,8 +14,10 @@ import com.g127.snapbuy.repository.ProductRepository;
 import com.g127.snapbuy.service.ProductPriceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -84,5 +87,111 @@ public class ProductPriceServiceImpl implements ProductPriceService {
             throw new AppException(ErrorCode.PRICE_NOT_FOUND);
         }
         productPriceRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public List<ProductPriceResponse> importPrices(List<ProductPriceImportRequest> requests) {
+        List<ProductPriceResponse> importedPrices = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
+
+        for (int i = 0; i < requests.size(); i++) {
+            ProductPriceImportRequest request = requests.get(i);
+            int rowNumber = i + 1;
+
+            try {
+                String productCode = request.getProductCode() != null ? request.getProductCode().trim() : "";
+                if (productCode.isEmpty()) {
+                    String error = String.format("Row %d: Mã sản phẩm không được để trống", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+
+                Product product = productRepository.findAll()
+                        .stream()
+                        .filter(p -> p.getProductCode() != null &&
+                                p.getProductCode().trim().equalsIgnoreCase(productCode))
+                        .findFirst()
+                        .orElse(null);
+
+                if (product == null) {
+                    String error = String.format("Row %d: Không tìm thấy sản phẩm với mã '%s'. Vui lòng kiểm tra lại mã sản phẩm.", rowNumber, productCode);
+                    errors.add(error);
+                    continue;
+                }
+
+                if (request.getUnitPrice() == null) {
+                    String error = String.format("Row %d: Giá bán không được để trống", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+
+                if (request.getUnitPrice().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                    String error = String.format("Row %d: Giá bán phải lớn hơn 0", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+
+                if (request.getCostPrice() == null) {
+                    String error = String.format("Row %d: Giá nhập không được để trống", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+
+                if (request.getCostPrice().compareTo(java.math.BigDecimal.ZERO) < 0) {
+                    String error = String.format("Row %d: Giá nhập không được âm", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+
+                if (request.getUnitPrice().compareTo(request.getCostPrice()) < 0) {
+                    String error = String.format("Row %d: Giá bán không được thấp hơn giá nhập", rowNumber);
+                    errors.add(error);
+                    continue;
+                }
+
+                ProductPrice existingPrice = productPriceRepository
+                        .findTopByProduct_ProductIdOrderByValidFromDesc(product.getProductId())
+                        .orElse(null);
+
+                ProductPrice savedPrice;
+                if (existingPrice != null) {
+                    if (existingPrice.getValidTo() == null || existingPrice.getValidTo().isAfter(LocalDateTime.now())) {
+                        existingPrice.setUnitPrice(request.getUnitPrice());
+                        existingPrice.setCostPrice(request.getCostPrice());
+                        savedPrice = productPriceRepository.save(existingPrice);
+                    } else {
+                        ProductPrice newPrice = new ProductPrice();
+                        newPrice.setProduct(product);
+                        newPrice.setUnitPrice(request.getUnitPrice());
+                        newPrice.setCostPrice(request.getCostPrice());
+                        newPrice.setValidFrom(LocalDateTime.now());
+                        newPrice.setCreatedDate(LocalDateTime.now());
+                        savedPrice = productPriceRepository.save(newPrice);
+                    }
+                } else {
+                    ProductPrice newPrice = new ProductPrice();
+                    newPrice.setProduct(product);
+                    newPrice.setUnitPrice(request.getUnitPrice());
+                    newPrice.setCostPrice(request.getCostPrice());
+                    newPrice.setValidFrom(LocalDateTime.now());
+                    newPrice.setCreatedDate(LocalDateTime.now());
+                    savedPrice = productPriceRepository.save(newPrice);
+                }
+
+                importedPrices.add(productPriceMapper.toResponse(savedPrice));
+
+            } catch (Exception e) {
+                String error = String.format("Row %d: %s", rowNumber, e.getMessage());
+                errors.add(error);
+            }
+        }
+
+        if (!errors.isEmpty()) {
+            String errorMessage = String.join("; ", errors);
+            throw new RuntimeException("Import thất bại với các lỗi sau: " + errorMessage);
+        }
+
+        return importedPrices;
     }
 }

@@ -48,7 +48,7 @@ const Suppliers = () => {
     }
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (!listData || listData.length === 0) {
       message.warning("Không có dữ liệu để xuất!");
       return;
@@ -65,7 +65,11 @@ const Suppliers = () => {
 
     }));
 
-    exportToExcel(exportData, "Danh sách nhà cung cấp");
+    try {
+      await exportToExcel(exportData, "Danh sách nhà cung cấp");
+    } catch (error) {
+      message.error("Lỗi khi xuất file Excel!");
+    }
   };
 
   const handleRefresh = () => {

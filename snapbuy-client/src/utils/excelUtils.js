@@ -1,41 +1,79 @@
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
-export const exportToExcel = (data, filename = "export", sheetName = "Sheet1") => {
+export const exportToExcel = async (data, filename = "export", sheetName = "Sheet1") => {
   if (!Array.isArray(data) || data.length === 0) {
     return;
   }
 
-  const worksheet = XLSX.utils.json_to_sheet(data);
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet(sheetName);
 
-  const colWidths = Object.keys(data[0]).map((key) => ({
-    wch: Math.max(
+  // Thêm headers
+  const headers = Object.keys(data[0]);
+  const headerRow = worksheet.addRow(headers);
+  headerRow.font = { bold: true };
+  headerRow.alignment = { horizontal: "left", vertical: "middle" };
+
+  // Thêm dữ liệu
+  data.forEach((row) => {
+    const values = headers.map(key => row[key] || "");
+    const dataRow = worksheet.addRow(values);
+    dataRow.eachCell((cell) => {
+      cell.alignment = { horizontal: "left", vertical: "middle" };
+    });
+  });
+
+  // Set độ rộng cột
+  worksheet.columns = headers.map((key) => {
+    const maxLength = Math.max(
       key.length,
       ...data.map((row) => (row[key] ? row[key].toString().length : 0))
-    ) + 4,
-  }));
-  worksheet["!cols"] = colWidths;
+    );
+    return { width: maxLength + 4, alignment: { horizontal: "left", vertical: "middle" } };
+  });
 
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-
-  XLSX.writeFile(workbook, `${filename}.xlsx`);
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  saveAs(blob, `${filename}.xlsx`);
 };
 
-export const downloadExcelTemplate = (
+export const downloadExcelTemplate = async (
   headers,
   sampleData = [],
   filename = "template",
   sheetName = "Sheet1"
 ) => {
-  const headerObj = headers.reduce((acc, h) => ({ ...acc, [h]: "" }), {});
-  const data = sampleData.length > 0 ? sampleData : [headerObj];
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet(sheetName);
 
-  const worksheet = XLSX.utils.json_to_sheet(data);
+  // Thêm headers
+  const headerRow = worksheet.addRow(headers);
+  headerRow.font = { bold: true };
+  headerRow.alignment = { horizontal: "left", vertical: "middle" };
 
-  worksheet["!cols"] = headers.map((h) => ({ wch: h.length + 5 }));
+  // Thêm dữ liệu mẫu nếu có
+  if (sampleData.length > 0) {
+    sampleData.forEach((row) => {
+      const values = headers.map(key => row[key] || "");
+      const dataRow = worksheet.addRow(values);
+      dataRow.eachCell((cell) => {
+        cell.alignment = { horizontal: "left", vertical: "middle" };
+      });
+    });
+  }
 
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+  // Set độ rộng cột
+  worksheet.columns = headers.map((h) => ({
+    width: h.length + 5,
+    alignment: { horizontal: "left", vertical: "middle" }
+  }));
 
-  XLSX.writeFile(workbook, `${filename}.xlsx`);
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  saveAs(blob, `${filename}.xlsx`);
 };

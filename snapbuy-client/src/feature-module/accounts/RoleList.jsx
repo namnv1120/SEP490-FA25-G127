@@ -36,6 +36,13 @@ const RoleList = () => {
       setRoles(mappedData);
     } catch (error) {
       console.error("❌ Error fetching roles:", error);
+      if (error.response?.status === 403) {
+        message.error("Bạn không có quyền truy cập trang này. Chỉ Quản trị viên hoặc Chủ cửa hàng mới có thể truy cập.");
+      } else if (error.response?.status === 401) {
+        message.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
+      } else {
+        message.error(error.response?.data?.message || error.message || "Lỗi khi lấy danh sách vai trò");
+      }
     } finally {
       setLoading(false);
     }
