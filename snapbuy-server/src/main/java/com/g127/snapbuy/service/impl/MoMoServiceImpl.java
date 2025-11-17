@@ -95,9 +95,7 @@ public class MoMoServiceImpl implements MoMoService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-            log.info("Gửi yêu cầu MoMo: {}", body);
             MomoPaymentResponse resp = restTemplate.postForObject(url, entity, MomoPaymentResponse.class);
-            log.info("Phản hồi MoMo: {}", resp);
 
             return resp;
         } catch (Exception e) {

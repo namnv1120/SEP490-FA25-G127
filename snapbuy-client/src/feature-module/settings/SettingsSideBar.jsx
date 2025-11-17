@@ -18,48 +18,34 @@ const SettingsSideBar = () => {
     [route.profile, route.emailsettings, route.passwordsettings, route.notification, route.connectedapps]
   );
 
-  const websiteSettingPaths = useMemo(
+  const posSettingPaths = useMemo(
     () =>
       [
-        route.systemsettings,
-        route.companysettings,
-        route.localizationsettings,
-        route.prefixes,
-        route.preference,
-        route.appearance,
-        route.socialauthendication,
-        route.languagesettings,
+        route.possystemsettings,
       ].filter(Boolean),
     [
-      route.systemsettings,
-      route.companysettings,
-      route.localizationsettings,
-      route.prefixes,
-      route.preference,
-      route.appearance,
-      route.socialauthendication,
-      route.languagesettings,
+      route.possystemsettings,
     ]
   );
 
   const [isGeneralSettingsOpen, setIsGeneralSettingsOpen] = useState(() =>
     generalSettingPaths.includes(location.pathname)
   );
-  const [isWebsiteSettingsOpen, setIsWebsiteSettingsOpen] = useState(() =>
-    websiteSettingPaths.includes(location.pathname)
+  const [isPosSettingsOpen, setIsPosSettingsOpen] = useState(() =>
+    posSettingPaths.includes(location.pathname)
   );
 
   useEffect(() => {
     if (generalSettingPaths.includes(location.pathname)) {
       setIsGeneralSettingsOpen(true);
     }
-    if (websiteSettingPaths.includes(location.pathname)) {
-      setIsWebsiteSettingsOpen(true);
+    if (posSettingPaths.includes(location.pathname)) {
+      setIsPosSettingsOpen(true);
     }
-  }, [location.pathname, generalSettingPaths, websiteSettingPaths]);
+  }, [location.pathname, generalSettingPaths, posSettingPaths]);
 
   const toggleGeneralSettings = () => setIsGeneralSettingsOpen(!isGeneralSettingsOpen);
-  const toggleWebsiteSettings = () => setIsWebsiteSettingsOpen(!isWebsiteSettingsOpen);
+  const togglePosSettings = () => setIsPosSettingsOpen(!isPosSettingsOpen);
 
   const sidebarContent = (
     <div id="sidebar-menu5" className="sidebar-menu">
@@ -121,91 +107,28 @@ const SettingsSideBar = () => {
               </ul>
             </li>
 
-            {/* Website Settings */}
+            {/* POS Settings */}
             <li className="submenu">
               <Link
                 to="#"
-                onClick={toggleWebsiteSettings}
+                onClick={togglePosSettings}
                 className={
-                  location.pathname === route.systemsettings ||
-                    location.pathname === route.companysettings ||
-                    location.pathname === route.localizationsettings ||
-                    location.pathname === route.prefixes ||
-                    location.pathname === route.preference ||
-                    location.pathname === route.appearance ||
-                    location.pathname === route.socialauthendication ||
-                    location.pathname === route.languagesettings
+                  location.pathname === route.possystemsettings
                     ? "active subdrop"
                     : ""
                 }
               >
-                <i className="ti ti-world fs-18"></i>
+                <i className="ti ti-shopping-cart fs-18"></i>
                 <span className="fs-14 fw-medium ms-2">Cài đặt POS</span>
                 <span className="menu-arrow" />
               </Link>
-              <ul style={{ display: isWebsiteSettingsOpen ? "block" : "none" }}>
+              <ul style={{ display: isPosSettingsOpen ? "block" : "none" }}>
                 <li>
                   <Link
-                    to={route.systemsettings}
-                    className={location.pathname === route.systemsettings ? "active" : ""}
+                    to={route.possystemsettings}
+                    className={location.pathname === route.possystemsettings ? "active" : ""}
                   >
-                    System Settings
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to={route.companysettings}
-                    className={location.pathname === route.companysettings ? "active" : ""}
-                  >
-                    Company Settings
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to={route.localizationsettings}
-                    className={location.pathname === route.localizationsettings ? "active" : ""}
-                  >
-                    Localization
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to={route.prefixes}
-                    className={location.pathname === route.prefixes ? "active" : ""}
-                  >
-                    Prefixes
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to={route.preference}
-                    className={location.pathname === route.preference ? "active" : ""}
-                  >
-                    Preference
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to={route.appearance}
-                    className={location.pathname === route.appearance ? "active" : ""}
-                  >
-                    Appearance
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to={route.socialauthendication}
-                    className={location.pathname === route.socialauthendication ? "active" : ""}
-                  >
-                    Social Authentication
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to={route.languagesettings}
-                    className={location.pathname === route.languagesettings ? "active" : ""}
-                  >
-                    Language
+                    Cài đặt hệ thống
                   </Link>
                 </li>
               </ul>

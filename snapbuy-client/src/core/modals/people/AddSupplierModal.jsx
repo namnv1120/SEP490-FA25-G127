@@ -49,11 +49,9 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
       newErrors.supplierName = "Tên nhà cung cấp không được vượt quá 100 ký tự.";
     }
 
-    if (!formData.email.trim()) {
-      newErrors.email = "Vui lòng nhập email.";
-    } else if (formData.email.length > 100) {
+    if (formData.email && formData.email.length > 100) {
       newErrors.email = "Email không được vượt quá 100 ký tự.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    } else if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Email không đúng định dạng. Vui lòng kiểm tra lại.";
     }
 
@@ -209,7 +207,7 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
           <div className="col-lg-6">
             <div className="mb-3">
               <label className="form-label">
-                Email <span className="text-danger">*</span>
+                Email <span className="text-danger"></span>
               </label>
               <input
                 type="email"
@@ -231,7 +229,7 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
           <div className="col-lg-6">
             <div className="mb-3">
               <label className="form-label">
-                Số điện thoại <span className="text-danger">*</span>
+                Số điện thoại <span className="text-danger"></span>
               </label>
               <input
                 type="text"
@@ -253,7 +251,7 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
           <div className="col-lg-12">
             <div className="mb-3">
               <label className="form-label">
-                Địa chỉ <span className="text-danger">*</span>
+                Địa chỉ <span className="text-danger"></span>
               </label>
               <input
                 type="text"
@@ -312,22 +310,6 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
             </div>
           </div>
 
-          <div className="col-md-12">
-            <div className="mb-0">
-              <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                <span className="status-label">Trạng thái</span>
-                <input
-                  type="checkbox"
-                  id="add-supplier-status"
-                  className="check"
-                  checked={formData.active}
-                  onChange={handleStatusChange}
-                  disabled={loading}
-                />
-                <label htmlFor="add-supplier-status" className="checktoggle mb-0" />
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="modal-footer-btn mt-4 d-flex justify-content-end">

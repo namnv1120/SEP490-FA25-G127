@@ -321,7 +321,7 @@ const PosHeader = () => {
                   </Link>
                   <Link
                     className="dropdown-item d-flex align-items-center"
-                    to={allRoutes.generalsettings}
+                    to={allRoutes.possystemsettings}
                     onClick={() => setDropdownVisible(false)}
                   >
                     <Settings className="me-2" size={16} />

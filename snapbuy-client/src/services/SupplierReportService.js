@@ -1,6 +1,7 @@
 import axios from "axios";
+import { getApiUrl } from '../config/apiConfig';
 
-const REST_API_BASE_URL = "http://localhost:8080/api/reports/suppliers";
+const REST_API_BASE_URL = getApiUrl('/api/reports/suppliers');
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("authToken");

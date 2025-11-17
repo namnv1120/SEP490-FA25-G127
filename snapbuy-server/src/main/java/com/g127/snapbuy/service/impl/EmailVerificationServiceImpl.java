@@ -109,7 +109,6 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         accountRepository.save(account);
         otpStore.remove(otpKey);
 
-        log.info("Đã xác nhận và cập nhật email cho tài khoản {}", accountId);
     }
 }
 

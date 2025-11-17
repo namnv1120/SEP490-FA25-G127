@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode'; // ✅ Import thêm
+import { getApiUrl } from '../config/apiConfig';
 
-const REST_API_BASE_URL = 'http://localhost:8080/api/auth';
+const REST_API_BASE_URL = getApiUrl('/api/auth');
 
 // 🔐 API đăng nhập
 export const login = async (username, password) => {

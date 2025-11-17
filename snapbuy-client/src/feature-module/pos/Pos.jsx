@@ -11,6 +11,7 @@ import { getAllCategories } from "../../services/CategoryService";
 import { getAllProducts, getProductByBarcode } from "../../services/ProductService";
 import { getCustomerById, searchCustomers } from "../../services/CustomerService";
 import { createOrder, completeOrder, getOrderById } from "../../services/OrderService";
+import { getPosSettings } from "../../services/PosSettingsService";
 import { getImageUrl } from "../../utils/imageUtils";
 
 const Pos = () => {
@@ -28,9 +29,11 @@ const Pos = () => {
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [addCustomerModalOpen, setAddCustomerModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [selectedGST, setSelectedGST] = useState(null);
   const [selectedShipping, setSelectedShipping] = useState(null);
-  const [selectedDiscount, setSelectedDiscount] = useState(null);
+  const [posSettings, setPosSettings] = useState({
+    taxPercent: 0,
+    discountPercent: 0,
+  });
   const [categories, setCategories] = useState([]);
   const [allCategories, setAllCategories] = useState([]);
   const [products, setProducts] = useState([]);
@@ -125,9 +128,27 @@ const Pos = () => {
       await fetchCategories();
       await fetchProducts();
       await fetchGuestCustomer(); // Fetch guest customer
+      await fetchPosSettings(); // Fetch POS settings
     };
     loadData();
   }, []);
+
+  const fetchPosSettings = async () => {
+    try {
+      const settings = await getPosSettings();
+      setPosSettings({
+        taxPercent: settings.taxPercent || 0,
+        discountPercent: settings.discountPercent || 0,
+      });
+    } catch (error) {
+      console.error("Không thể tải cài đặt POS:", error);
+      // Sử dụng giá trị mặc định nếu không load được
+      setPosSettings({
+        taxPercent: 0,
+        discountPercent: 0,
+      });
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -774,16 +795,26 @@ const Pos = () => {
 
   const calculateTotals = () => {
     const subTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    // Calculate tax based on selected GST
-    const taxRate = selectedGST && selectedGST !== "choose"
-      ? parseFloat(selectedGST.replace('gst', '')) / 100
+    
+    // Lấy phần trăm chiết khấu và thuế từ settings
+    const discountPercent = posSettings.discountPercent || 0;
+    const taxPercent = posSettings.taxPercent || 0;
+    
+    // Tính chiết khấu trên subtotal (theo logic backend)
+    const discount = discountPercent > 0
+      ? (subTotal * discountPercent / 100)
       : 0;
-    const tax = subTotal * taxRate;
+    
+    // Tính afterDiscount (sau khi trừ chiết khấu)
+    const afterDiscount = subTotal - discount;
+    
+    // Tính thuế trên afterDiscount (theo logic backend)
+    const tax = taxPercent > 0
+      ? (afterDiscount * taxPercent / 100)
+      : 0;
+    
     const shipping = selectedShipping ? parseFloat(selectedShipping) : 0;
-    const discount = selectedDiscount && selectedDiscount !== "0%"
-      ? (subTotal * parseFloat(selectedDiscount.replace('%', '')) / 100)
-      : 0;
-    const totalBeforePoints = subTotal + tax + shipping - discount;
+    const totalBeforePoints = afterDiscount + tax + shipping;
 
     // Tính số điểm có thể sử dụng (không vượt quá số điểm hiện có và tổng tiền)
     const currentPoints = selectedCustomerData?.points ?? 0;
@@ -791,7 +822,17 @@ const Pos = () => {
     const actualUsePoints = Math.min(usePoints, maxUsablePoints);
 
     const total = Math.max(0, totalBeforePoints - actualUsePoints);
-    return { subTotal, tax, shipping, discount, total, pointsUsed: actualUsePoints, totalBeforePoints };
+    return { 
+      subTotal, 
+      tax, 
+      shipping, 
+      discount, 
+      total, 
+      pointsUsed: actualUsePoints, 
+      totalBeforePoints,
+      discountPercent,
+      taxPercent
+    };
   };
 
   const totals = calculateTotals();
@@ -847,6 +888,7 @@ const Pos = () => {
       }
 
       // Create order with selected payment method
+      // Backend mong đợi discountAmount và taxAmount là phần trăm (%)
       const orderData = {
         phone: customerPhone || "",
         items: cartItems.map(item => ({
@@ -855,8 +897,8 @@ const Pos = () => {
           unitPrice: item.price,
           discount: 0,
         })),
-        discountAmount: totals.discount || 0,
-        taxAmount: totals.tax || 0,
+        discountAmount: totals.discountPercent || 0, // Gửi phần trăm
+        taxAmount: totals.taxPercent || 0, // Gửi phần trăm
         paymentMethod: paymentMethod === "cash" ? null : "MOMO", // null defaults to "Tiền mặt", "MOMO" for MoMo
         notes: null,
         usePoints: totals.pointsUsed || 0,
@@ -1156,8 +1198,6 @@ const Pos = () => {
     setSelectedCustomer(GUEST_CUSTOMER_ID);
     setSelectedCustomerData(guestCustomer);
     setCustomerSearchVisible(false);
-    setSelectedDiscount(null);
-    setSelectedGST(null);
     setSelectedShipping(null);
     setCreatedOrder(null);
     setSelectedPaymentMethod(null);
@@ -1611,12 +1651,12 @@ const Pos = () => {
                               <td className="text-end">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totals.subTotal || 0)}</td>
                             </tr>
                             <tr>
-                              <td className="fw-bold">Giảm giá:</td>
-                              <td className="text-end">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totals.discount || 0)}</td>
+                              <td className="fw-bold">Chiết khấu:</td>
+                              <td className="text-end">{totals.discountPercent > 0 ? `${totals.discountPercent}%` : '0%'}</td>
                             </tr>
                             <tr>
                               <td className="fw-bold">Thuế:</td>
-                              <td className="text-end">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totals.tax || 0)}</td>
+                              <td className="text-end">{totals.taxPercent > 0 ? `${totals.taxPercent}%` : '0%'}</td>
                             </tr>
                             {totals.pointsUsed > 0 && (
                               <tr>

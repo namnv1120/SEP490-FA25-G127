@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { getApiUrl } from '../config/apiConfig';
 
-const REST_API_BASE_URL = 'http://localhost:8080/api/accounts';
+const REST_API_BASE_URL = getApiUrl('/api/accounts');
 
 
 const getAuthHeader = () => {

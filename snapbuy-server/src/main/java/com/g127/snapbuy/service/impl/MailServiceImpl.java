@@ -26,7 +26,7 @@ public class MailServiceImpl implements MailService {
             msg.setText(content);
             mailSender.send(msg);
         } catch (Exception e) {
-            log.warn("Gửi email thất bại; in ra nội dung dự phòng:\nTo: {}\nSubject: {}\n{}", to, subject, content, e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -39,9 +39,7 @@ public class MailServiceImpl implements MailService {
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
             mailSender.send(message);
-            log.info("Đã gửi email HTML thành công đến: {}", to);
         } catch (Exception e) {
-            log.error("Gửi email HTML thất bại đến: {}", to, e);
             throw new RuntimeException("Không thể gửi email: " + e.getMessage(), e);
         }
     }
