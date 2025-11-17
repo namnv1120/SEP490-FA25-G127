@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: snapbuy-backend
+    env: docker
+    buildCommand: ""
+    startCommand: ""
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: production
+      - key: FRONTEND_URL
+        sync: false
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: SPRING_MAIL_HOST
+        sync: false
+      - key: SPRING_MAIL_PORT
+        value: "587"
+      - key: SPRING_MAIL_USERNAME
+        sync: false
+      - key: SPRING_MAIL_PASSWORD
+        sync: false
+      - key: UPLOAD_DIR
+        value: uploads
+      - key: MOMO_TARGET
+        value: dev
+      - key: MOMO_DEV_ENDPOINT
+        value: https://test-payment.momo.vn/v2/gateway/api
+      - key: MOMO_DEV_ACCESS_KEY
+        sync: false
+      - key: MOMO_DEV_PARTNER_CODE
+        sync: false
+      - key: MOMO_DEV_SECRET_KEY
+        sync: false
+
