@@ -40,6 +40,7 @@ export const allRoutes = {
   // Authentication
   login: "/login",
   forgotpassword: "/forgot-password",
+  verifyotp: "/verify-otp",
   resetpassword: "/reset-password",
 
 };

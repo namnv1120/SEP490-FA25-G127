@@ -59,3 +59,41 @@ export const logout = () => {
   localStorage.removeItem('authTokenType');
   localStorage.removeItem('role');
 };
+
+// 📧 Gửi yêu cầu quên mật khẩu (gửi mã OTP về email)
+export const requestPasswordReset = async (email) => {
+  if (!email) throw new Error('Email is required.');
+  try {
+    const response = await axios.post(`${REST_API_BASE_URL}/forgot-password/request`, { email });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Không thể gửi yêu cầu đặt lại mật khẩu');
+  }
+};
+
+// ✅ Xác thực OTP trước khi đặt lại mật khẩu
+export const verifyOtp = async (email, code) => {
+  if (!email || !code) throw new Error('Thiếu thông tin bắt buộc.');
+  try {
+    const response = await axios.post(`${REST_API_BASE_URL}/forgot-password/verify`, { email, code });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Mã OTP không hợp lệ hoặc đã hết hạn');
+  }
+};
+
+// 🔒 Đặt lại mật khẩu bằng email + mã OTP
+export const resetPassword = async (email, code, newPassword, confirmNewPassword) => {
+  if (!email || !code || !newPassword || !confirmNewPassword) throw new Error('Thiếu thông tin bắt buộc.');
+  try {
+    const response = await axios.post(`${REST_API_BASE_URL}/forgot-password/reset`, {
+      email,
+      code,
+      newPassword,
+      confirmNewPassword,
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Không thể đổi mật khẩu');
+  }
+};

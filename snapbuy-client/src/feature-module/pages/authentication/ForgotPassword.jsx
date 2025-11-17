@@ -1,66 +1,81 @@
 import React, { useState } from "react";
 import { Form, Input, Button, Card, message } from "antd";
 import { MailOutlined } from "@ant-design/icons";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { requestPasswordReset } from "../../../services/AuthService";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async () => {
     if (!email) {
-      message.error("⚠️ Vui lòng nhập địa chỉ email của bạn!");
+      setEmailError("Vui lòng nhập email");
       return;
     }
-
+    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!emailValid) {
+      setEmailError("Email không hợp lệ");
+      return;
+    }
+    setEmailError("");
     setLoading(true);
-
-    // Giả lập gọi API gửi mail
-    setTimeout(() => {
+    try {
+      await requestPasswordReset(email);
+      message.success(`Mã OTP đã được gửi đến ${email}.`);
+      navigate("/verify-otp", { state: { email, otpExpiresAt: Date.now() + 2 * 60 * 1000 } });
+    } catch (error) {
+      setEmailError(error.message || "Không thể gửi yêu cầu đặt lại mật khẩu");
+    } finally {
       setLoading(false);
-      message.success(
-        `✅ Hướng dẫn đặt lại mật khẩu đã được gửi đến ${email}.`
-      );
-      setEmail("");
-    }, 1500);
+    }
   };
 
   return (
     <div
       style={{
-        height: "100vh",
-        backgroundColor: "#f9fafb",
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #f6f9fc 0%, #eef2f7 100%)",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        padding: 24,
       }}
     >
       <Card
         style={{
-          width: 400,
-          borderRadius: 12,
-          boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+          width: 440,
+          borderRadius: 16,
+          boxShadow: "0 12px 24px rgba(17, 24, 39, 0.08)",
+          border: "1px solid #e5e7eb",
+          padding: 8,
+          background: "#fff",
         }}
       >
-        <h2 style={{ marginBottom: 8 }}>Quên mật khẩu?</h2>
-        <p style={{ color: "#666", marginBottom: 24, fontSize: 15 }}>
-          Nhập email của bạn, chúng tôi sẽ gửi hướng dẫn giúp bạn đặt lại mật
-          khẩu.
+        <h2 style={{ marginBottom: 10, textAlign: "center", color: "#0f172a", fontWeight: 700 }}>Quên mật khẩu?</h2>
+        <p style={{ color: "#6b7280", marginBottom: 24, fontSize: 15, textAlign: "center" }}>
+          Nhập email để nhận mã OTP xác minh đặt lại mật khẩu.
         </p>
 
         <Form layout="vertical" onFinish={handleSubmit}>
           <Form.Item
             label="Email"
             required
-            rules={[{ required: true, message: "Vui lòng nhập email!" }]}
+            validateStatus={emailError ? "error" : undefined}
+            help={emailError || undefined}
           >
             <Input
               prefix={<MailOutlined />}
               placeholder="Nhập địa chỉ email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (emailError) setEmailError("");
+              }}
               disabled={loading}
-              style={{ borderRadius: 8 }}
+              style={{ borderRadius: 10, height: 44 }}
             />
           </Form.Item>
 
@@ -71,9 +86,11 @@ export default function ForgotPassword() {
               block
               loading={loading}
               style={{
-                backgroundColor: "#ff9b44",
-                borderColor: "#ff9b44",
-                borderRadius: 8,
+                background: "linear-gradient(90deg, #ff9b44 0%, #ff6a00 100%)",
+                border: "none",
+                borderRadius: 10,
+                height: 44,
+                boxShadow: "0 8px 16px rgba(255, 155, 68, 0.25)",
               }}
             >
               Gửi yêu cầu
@@ -82,8 +99,8 @@ export default function ForgotPassword() {
         </Form>
 
         <div style={{ textAlign: "center" }}>
-          <span style={{ color: "#888" }}>Quay lại </span>
-          <Link to="/auth/login" style={{ fontWeight: 600, color: "#000" }}>
+          <span style={{ color: "#9ca3af" }}>Quay lại </span>
+          <Link to="/login" style={{ fontWeight: 600, color: "#111827" }}>
             đăng nhập
           </Link>
         </div>

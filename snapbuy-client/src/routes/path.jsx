@@ -6,6 +6,8 @@ import FormHorizontal from "../feature-module/uiinterface/forms/formelements/lay
 const Pos = lazy(() => import("../feature-module/pos/Pos"));
 const Login = lazy(() => import("../feature-module/pages/authentication/Login"));
 const Forgotpassword = lazy(() => import("../feature-module/pages/authentication/ForgotPassword"));
+const VerifyOtp = lazy(() => import("../feature-module/pages/authentication/VerifyOtp"));
+const Resetpassword = lazy(() => import("../feature-module/pages/authentication/ResetPassword"));
 const Suppliers = lazy(() => import("../feature-module/people/SupplierList"));
 const Dashboard = lazy(() => import("../feature-module/dashboard/Dashboard"));
 const ProductList = lazy(() =>
@@ -294,6 +296,20 @@ export const unAuthRoutes = [
     path: routes.forgotpassword,
     name: "forgotpassword",
     element: <Forgotpassword />,
+    route: Route,
+  },
+  {
+    id: 3,
+    path: routes.verifyotp,
+    name: "verifyotp",
+    element: <VerifyOtp />,
+    route: Route,
+  },
+  {
+    id: 4,
+    path: routes.resetpassword,
+    name: "resetpassword",
+    element: <Resetpassword />,
     route: Route,
   },
 ];

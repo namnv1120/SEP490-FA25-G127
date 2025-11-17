@@ -18,6 +18,9 @@ const EmailSettings = () => {
   const [savingEmail, setSavingEmail] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [emailErrors, setEmailErrors] = useState({});
+  const [otpExpiresAt, setOtpExpiresAt] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [resendLoading, setResendLoading] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -41,6 +44,15 @@ const EmailSettings = () => {
 
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    if (!otpExpiresAt) return;
+    const id = setInterval(() => {
+      const left = Math.max(0, Math.floor((otpExpiresAt - Date.now()) / 1000));
+      setTimeLeft(left);
+    }, 500);
+    return () => clearInterval(id);
+  }, [otpExpiresAt]);
 
   const handleRequestOtp = async (e) => {
     e.preventDefault();
@@ -66,6 +78,7 @@ const EmailSettings = () => {
       await requestEmailVerification(newEmail.trim());
       message.success("Đã gửi mã xác nhận đến email! Vui lòng kiểm tra hộp thư.");
       setShowOtpForm(true);
+      setOtpExpiresAt(Date.now() + 2 * 60 * 1000);
       setEmailErrors({});
     } catch (error) {
       message.error(error.message || "Không thể gửi mã xác nhận");
@@ -104,6 +117,20 @@ const EmailSettings = () => {
       message.error(error.message || "Xác nhận email thất bại");
     } finally {
       setVerifying(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (timeLeft > 0 || resendLoading || verifying || savingEmail) return;
+    try {
+      setResendLoading(true);
+      await requestEmailVerification(newEmail.trim());
+      message.success("Đã gửi lại mã xác nhận đến email!");
+      setOtpExpiresAt(Date.now() + 2 * 60 * 1000);
+    } catch (error) {
+      message.error(error.message || "Không thể gửi lại OTP");
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -195,30 +222,46 @@ const EmailSettings = () => {
                                 <label className="form-label">
                                   Mã xác nhận (6 chữ số) <span className="text-danger">*</span>
                                 </label>
-                                <input
-                                  type="text"
-                                  className={`form-control ${emailErrors.otpCode ? "is-invalid" : ""}`}
-                                  value={otpCode}
-                                  onChange={(e) => {
-                                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                                    setOtpCode(value);
-                                    setEmailErrors((prev) => ({ ...prev, otpCode: "" }));
-                                  }}
-                                  disabled={verifying}
-                                  maxLength={6}
-                                  style={{
-                                    letterSpacing: '6px',
-                                    textAlign: 'center',
-                                    fontSize: '16px',
-                                    fontWeight: 'bold',
-                                    maxWidth: '200px',
-                                    width: '200px'
-                                  }}
-                                />
+                                <div style={{ position: 'relative', display: 'inline-block' }}>
+                                  <input
+                                    type="text"
+                                    className={`form-control ${emailErrors.otpCode ? "is-invalid" : ""}`}
+                                    value={otpCode}
+                                    onChange={(e) => {
+                                      const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                      setOtpCode(value);
+                                      setEmailErrors((prev) => ({ ...prev, otpCode: "" }));
+                                    }}
+                                    disabled={verifying}
+                                    maxLength={6}
+                                    style={{
+                                      letterSpacing: '6px',
+                                      textAlign: 'center',
+                                      fontSize: '16px',
+                                      fontWeight: 'bold',
+                                      maxWidth: '200px',
+                                      width: '200px',
+                                      paddingRight: '2rem'
+                                    }}
+                                  />
+                                  <span
+                                    onClick={handleResendOtp}
+                                    style={{
+                                      position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                                      color: timeLeft > 0 || resendLoading || verifying ? '#9ca3af' : '#ff6a00',
+                                      cursor: timeLeft > 0 || resendLoading || verifying ? 'not-allowed' : 'pointer'
+                                    }}
+                                    title="Gửi lại OTP"
+                                  >
+                                    <i className={`bi ${resendLoading ? 'bi-arrow-clockwise' : 'bi-arrow-clockwise'}`} />
+                                  </span>
+                                </div>
                                 {emailErrors.otpCode && (
                                   <div className="invalid-feedback">{emailErrors.otpCode}</div>
                                 )}
-                                <small className="text-muted d-block mt-1">Mã xác nhận đã được gửi đến {newEmail}</small>
+                                <small className="text-muted d-block mt-1">
+                                  Mã xác nhận đã được gửi đến {newEmail}. {timeLeft > 0 ? `Gửi lại sau ${String(Math.floor(timeLeft / 60)).padStart(2, '0')}:${String(timeLeft % 60).padStart(2, '0')}` : 'Bạn có thể gửi lại OTP'}
+                                </small>
                               </div>
                             </div>
                           </div>

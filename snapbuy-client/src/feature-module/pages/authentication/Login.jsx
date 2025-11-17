@@ -1,15 +1,20 @@
 import { useState } from "react";
-import { login } from "../../../services/authService";
+import { login } from "../../../services/AuthService";
 import { Link } from "react-router-dom";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
+    setPasswordError("");
+    if (/\s/.test(password)) {
+      setPasswordError("Mật khẩu không được chứa khoảng trắng");
+      return;
+    }
     try {
       await login(username, password);
       window.location.href = "/dashboard";
@@ -67,13 +72,16 @@ const Login = () => {
                   </label>
                   <input
                     type="password"
-                    className="form-control form-control-lg"
+                    className={`form-control form-control-lg ${passwordError ? "is-invalid" : ""}`}
                     id="password"
                     placeholder="Nhập mật khẩu"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => { setPassword(e.target.value); if (passwordError) setPasswordError(""); }}
                     required
                   />
+                  {passwordError && (
+                    <div className="invalid-feedback">{passwordError}</div>
+                  )}
                 </div>
 
                 {/* ✅ Quên mật khẩu và Đăng ký hiển thị cùng dòng */}
