@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Modal, Upload, Button, message, Table } from "antd";
 import { UploadOutlined, DownloadOutlined } from "@ant-design/icons";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 const ImportExcelModal = ({
   visible,
@@ -12,6 +13,7 @@ const ImportExcelModal = ({
   templateData,
   categoriesData = [],
   suppliersData = [],
+  guideData = null, // Custom guide data, nếu null thì dùng default
   validateData = null, // Hàm validate dữ liệu, trả về { errors: [], validatedData: [] }
   title = "Thêm dữ liệu từ excel",
 }) => {
@@ -20,74 +22,123 @@ const ImportExcelModal = ({
   const [fileList, setFileList] = useState([]);
   const [validationErrors, setValidationErrors] = useState({}); // { rowIndex: "error message" }
 
-  const handleFileUpload = (file) => {
-    const reader = new FileReader();
+  const handleFileUpload = async (file) => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(arrayBuffer);
 
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: "array" });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
+      // Tìm sheet "Sản phẩm" hoặc sheet đầu tiên không phải "Hướng dẫn"
+      let worksheet = workbook.worksheets.find(ws =>
+        ws.name === "Sản phẩm" || ws.name === "Giá sản phẩm" || ws.name.toLowerCase().includes("sản phẩm")
+      );
 
-        const jsonData = XLSX.utils.sheet_to_json(sheet, {
-          raw: false,  // Format dữ liệu
-          defval: ""   // Giá trị mặc định cho ô trống
+      // Nếu không tìm thấy, tìm sheet đầu tiên không phải "Hướng dẫn"
+      if (!worksheet) {
+        worksheet = workbook.worksheets.find(ws =>
+          ws.name !== "Hướng dẫn" && !ws.name.toLowerCase().includes("hướng dẫn")
+        ) || workbook.worksheets[0];
+      }
+
+      if (!worksheet) {
+        message.warning("File Excel không có sheet dữ liệu!");
+        return;
+      }
+
+      // Đọc headers từ row đầu tiên
+      const headerRow = worksheet.getRow(1);
+      const headers = [];
+      headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        headers[colNumber - 1] = cell.value ? String(cell.value).trim() : "";
+      });
+
+      // Đọc dữ liệu từ row 2 trở đi, bỏ qua header row
+      const jsonData = [];
+      worksheet.eachRow({ includeEmpty: false, firstRow: 2 }, (row, rowNumber) => {
+        // Kiểm tra xem row này có phải là header row không (so sánh với headers)
+        const rowValues = [];
+        row.eachCell({ includeEmpty: true }, (cell) => {
+          rowValues.push(cell.value ? String(cell.value).trim() : "");
         });
 
-        if (jsonData.length === 0) {
-          message.warning("File Excel không có dữ liệu!");
-          return;
+        // Bỏ qua nếu row này giống với header row
+        const isHeaderRow = rowValues.length === headers.length &&
+          rowValues.every((val, idx) => val === headers[idx] || (val === "" && headers[idx] === ""));
+        if (isHeaderRow) {
+          return; // Bỏ qua header row nếu bị lặp lại
         }
 
-        const mapped = jsonData.map((row, i) => mapExcelRow(row, i));
-
-        setFileList([{
-          uid: file.uid,
-          name: file.name,
-          status: 'done',
-        }]);
-
-        // Validate dữ liệu nếu có hàm validate
-        if (validateData) {
-          const validationResult = validateData(mapped);
-          if (validationResult && validationResult.errors) {
-            const errorMap = {};
-            validationResult.errors.forEach((error, index) => {
-              if (error) {
-                errorMap[index] = error;
-              }
-            });
-            setValidationErrors(errorMap);
-            const errorCount = Object.keys(errorMap).length;
-            if (errorCount > 0) {
-              message.warning(`Đã tải ${mapped.length} dòng dữ liệu. Có ${errorCount} dòng có lỗi.`);
+        const rowData = {};
+        let hasData = false;
+        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+          const headerName = headers[colNumber - 1];
+          if (headerName && headerName !== "") {
+            if (cell.value === null || cell.value === undefined) {
+              rowData[headerName] = "";
+            } else if (cell.type === ExcelJS.ValueType.Number) {
+              rowData[headerName] = cell.value;
+              hasData = true;
             } else {
-              message.success(`Đã tải ${mapped.length} dòng dữ liệu`);
+              const value = String(cell.value).trim();
+              rowData[headerName] = value;
+              if (value !== "") {
+                hasData = true;
+              }
             }
+          }
+        });
+
+        // Chỉ thêm row nếu có ít nhất một giá trị không rỗng
+        if (hasData && Object.keys(rowData).length > 0) {
+          jsonData.push(rowData);
+        }
+      });
+
+      if (jsonData.length === 0) {
+        message.warning("File Excel không có dữ liệu!");
+        return;
+      }
+
+      const mapped = jsonData.map((row, i) => mapExcelRow(row, i));
+
+      setFileList([{
+        uid: file.uid,
+        name: file.name,
+        status: 'done',
+      }]);
+
+      // Validate dữ liệu nếu có hàm validate
+      if (validateData) {
+        const validationResult = validateData(mapped);
+        if (validationResult && validationResult.errors) {
+          const errorMap = {};
+          validationResult.errors.forEach((error, index) => {
+            if (error) {
+              errorMap[index] = error;
+            }
+          });
+          setValidationErrors(errorMap);
+          const errorCount = Object.keys(errorMap).length;
+          if (errorCount > 0) {
+            message.warning(`Đã tải ${mapped.length} dòng dữ liệu. Có ${errorCount} dòng có lỗi.`);
           } else {
-            setValidationErrors({});
             message.success(`Đã tải ${mapped.length} dòng dữ liệu`);
           }
         } else {
           setValidationErrors({});
           message.success(`Đã tải ${mapped.length} dòng dữ liệu`);
         }
-
-        setFileData(mapped);
-
-      } catch (err) {
-        message.error("Lỗi khi đọc dữ liệu Excel. Vui lòng kiểm tra file!");
-        setFileData([]);
-        setFileList([]);
+      } else {
+        setValidationErrors({});
+        message.success(`Đã tải ${mapped.length} dòng dữ liệu`);
       }
-    };
 
-    reader.onerror = () => {
-      message.error("Không thể đọc file!");
-    };
-
-    reader.readAsArrayBuffer(file);
+      setFileData(mapped);
+    } catch (err) {
+      message.error("Lỗi khi đọc dữ liệu Excel. Vui lòng kiểm tra file!");
+      setFileData([]);
+      setFileList([]);
+    }
     return false; // Ngăn auto upload
   };
 
@@ -121,69 +172,161 @@ const ImportExcelModal = ({
     onClose();
   };
 
-  const downloadTemplate = () => {
-    const wb = XLSX.utils.book_new();
+  const downloadTemplate = async () => {
+    const workbook = new ExcelJS.Workbook();
+
+    // Trang 0: Hướng dẫn (đặt đầu tiên)
+    if (guideData) {
+      const wsGuide = workbook.addWorksheet("Hướng dẫn");
+      const guideHeaders = Object.keys(guideData[0] || {});
+      const guideHeaderRow = wsGuide.addRow(guideHeaders);
+      guideHeaderRow.font = { bold: true };
+      guideHeaderRow.alignment = { horizontal: "left", vertical: "middle" };
+      guideHeaderRow.eachCell((cell) => {
+        cell.alignment = { horizontal: "left", vertical: "middle" };
+      });
+
+      guideData.forEach(row => {
+        const values = guideHeaders.map(key => row[key] || "");
+        const dataRow = wsGuide.addRow(values);
+        dataRow.eachCell((cell) => {
+          cell.alignment = { horizontal: "left", vertical: "middle" };
+        });
+      });
+
+      wsGuide.columns = guideHeaders.map(() => ({
+        width: 25,
+        alignment: { horizontal: "left", vertical: "middle" }
+      }));
+      // Set cột thứ 2 (Quy tắc) rộng hơn
+      if (guideHeaders.length >= 2) {
+        wsGuide.getColumn(2).width = 80;
+      }
+    }
 
     // Trang 1: Products template
-    const wsProducts = XLSX.utils.json_to_sheet(templateData);
-    // Set độ rộng cột cho sheet Sản phẩm
-    wsProducts["!cols"] = [
-      { wch: 15 }, // Mã sản phẩm
-      { wch: 30 }, // Tên sản phẩm
-      { wch: 40 }, // Mô tả
-      { wch: 20 }, // Danh mục
-      { wch: 25 }, // Danh mục con
-      { wch: 18 }, // Mã nhà cung cấp
-      { wch: 30 }, // Tên nhà cung cấp
-      { wch: 12 }, // Đơn vị
-      { wch: 18 }, // Kích thước
-      { wch: 20 }, // Barcode
-    ];
-    XLSX.utils.book_append_sheet(wb, wsProducts, "Sản phẩm");
+    const headers = Object.keys(templateData[0] || {});
+    const isProductPriceTemplate = headers.includes("Giá bán") && headers.includes("Giá nhập");
+
+    const wsProducts = workbook.addWorksheet(isProductPriceTemplate ? "Giá sản phẩm" : "Sản phẩm");
+    const headerRow = wsProducts.addRow(headers);
+    headerRow.font = { bold: true };
+    headerRow.alignment = { horizontal: "left", vertical: "middle" };
+    headerRow.eachCell((cell) => {
+      cell.alignment = { horizontal: "left", vertical: "middle" };
+    });
+
+    // Thêm dữ liệu
+    templateData.forEach((row) => {
+      const values = headers.map(key => {
+        let value = row[key] || "";
+        // Format Barcode thành text nếu có
+        if (key === "Barcode" && value !== "") {
+          value = String(value);
+        }
+        return value;
+      });
+      const dataRow = wsProducts.addRow(values);
+      dataRow.eachCell((cell) => {
+        cell.alignment = { horizontal: "left", vertical: "middle" };
+      });
+    });
+
+    // Set độ rộng cột và alignment - tất cả căn trái
+    if (isProductPriceTemplate) {
+      wsProducts.columns = [
+        { width: 18, alignment: { horizontal: "left", vertical: "middle" } }, // Mã sản phẩm
+        { width: 40, alignment: { horizontal: "left", vertical: "middle" } }, // Tên sản phẩm
+        { width: 12, alignment: { horizontal: "left", vertical: "middle" } }, // Giá bán
+        { width: 12, alignment: { horizontal: "left", vertical: "middle" } }, // Giá nhập
+      ];
+    } else {
+      wsProducts.columns = [
+        { width: 18, alignment: { horizontal: "left", vertical: "middle" } }, // Mã
+        { width: 40, alignment: { horizontal: "left", vertical: "middle" } }, // Tên sản phẩm
+        { width: 40, alignment: { horizontal: "left", vertical: "middle" } }, // Mô tả
+        { width: 20, alignment: { horizontal: "left", vertical: "middle" } }, // Danh mục
+        { width: 25, alignment: { horizontal: "left", vertical: "middle" } }, // Danh mục con
+        { width: 18, alignment: { horizontal: "left", vertical: "middle" } }, // Mã ncc
+        { width: 40, alignment: { horizontal: "left", vertical: "middle" } }, // Tên ncc
+        { width: 10, alignment: { horizontal: "left", vertical: "middle" } }, // Đơn vị
+        { width: 15, alignment: { horizontal: "left", vertical: "middle" } }, // Kích thước
+        { width: 20, alignment: { horizontal: "left", vertical: "middle" } }, // Barcode
+      ];
+    }
 
     // Trang 2: Categories (nếu có)
     if (categoriesData && categoriesData.length > 0) {
-      const categoriesSheet = categoriesData.map(cat => ({
-        "Tên danh mục": cat.categoryName || "",
-        "Mô tả": cat.description || "",
-        "Danh mục cha": cat.parentCategoryName || "",
-      }));
-      const wsCategories = XLSX.utils.json_to_sheet(categoriesSheet);
-      // Set độ rộng cột cho sheet Danh mục
-      wsCategories["!cols"] = [
-        { wch: 25 }, // Tên danh mục
-        { wch: 40 }, // Mô tả
-        { wch: 25 }, // Danh mục cha
+      const wsCategories = workbook.addWorksheet("Danh mục");
+      const categoryHeaders = ["Tên danh mục", "Mô tả", "Danh mục cha"];
+      const categoryHeaderRow = wsCategories.addRow(categoryHeaders);
+      categoryHeaderRow.font = { bold: true };
+      categoryHeaderRow.alignment = { horizontal: "left", vertical: "middle" };
+      categoryHeaderRow.eachCell((cell) => {
+        cell.alignment = { horizontal: "left", vertical: "middle" };
+      });
+
+      categoriesData.forEach(cat => {
+        const row = wsCategories.addRow([
+          cat.categoryName || "",
+          cat.description || "",
+          cat.parentCategoryName || "",
+        ]);
+        row.eachCell((cell) => {
+          cell.alignment = { horizontal: "left", vertical: "middle" };
+        });
+      });
+
+      wsCategories.columns = [
+        { width: 25, alignment: { horizontal: "left", vertical: "middle" } },
+        { width: 40, alignment: { horizontal: "left", vertical: "middle" } },
+        { width: 25, alignment: { horizontal: "left", vertical: "middle" } },
       ];
-      XLSX.utils.book_append_sheet(wb, wsCategories, "Danh mục");
     }
 
     // Trang 3: Suppliers (nếu có)
     if (suppliersData && suppliersData.length > 0) {
-      const suppliersSheet = suppliersData.map(sup => ({
-        "Mã nhà cung cấp": sup.supplierCode || "",
-        "Tên nhà cung cấp": sup.supplierName || "",
-        "Số điện thoại": sup.phone || "",
-        "Email": sup.email || "",
-        "Địa chỉ": sup.address || "",
-        "Thành phố": sup.city || "",
-        "Phường/Xã": sup.ward || "",
-      }));
-      const wsSuppliers = XLSX.utils.json_to_sheet(suppliersSheet);
-      // Set độ rộng cột cho sheet Nhà cung cấp
-      wsSuppliers["!cols"] = [
-        { wch: 18 }, // Mã nhà cung cấp
-        { wch: 30 }, // Tên nhà cung cấp
-        { wch: 15 }, // Số điện thoại
-        { wch: 30 }, // Email
-        { wch: 40 }, // Địa chỉ
-        { wch: 20 }, // Thành phố
-        { wch: 20 }, // Phường/Xã
+      const wsSuppliers = workbook.addWorksheet("Nhà cung cấp");
+      const supplierHeaders = ["Mã nhà cung cấp", "Tên nhà cung cấp", "Số điện thoại", "Email", "Địa chỉ", "Thành phố", "Phường/Xã"];
+      const supplierHeaderRow = wsSuppliers.addRow(supplierHeaders);
+      supplierHeaderRow.font = { bold: true };
+      supplierHeaderRow.alignment = { horizontal: "left", vertical: "middle" };
+      supplierHeaderRow.eachCell((cell) => {
+        cell.alignment = { horizontal: "left", vertical: "middle" };
+      });
+
+      suppliersData.forEach(sup => {
+        const row = wsSuppliers.addRow([
+          sup.supplierCode || "",
+          sup.supplierName || "",
+          sup.phone || "",
+          sup.email || "",
+          sup.address || "",
+          sup.city || "",
+          sup.ward || "",
+        ]);
+        row.eachCell((cell) => {
+          cell.alignment = { horizontal: "left", vertical: "middle" };
+        });
+      });
+
+      wsSuppliers.columns = [
+        { width: 18, alignment: { horizontal: "left", vertical: "middle" } },
+        { width: 40, alignment: { horizontal: "left", vertical: "middle" } },
+        { width: 15, alignment: { horizontal: "left", vertical: "middle" } },
+        { width: 30, alignment: { horizontal: "left", vertical: "middle" } },
+        { width: 40, alignment: { horizontal: "left", vertical: "middle" } },
+        { width: 20, alignment: { horizontal: "left", vertical: "middle" } },
+        { width: 20, alignment: { horizontal: "left", vertical: "middle" } },
       ];
-      XLSX.utils.book_append_sheet(wb, wsSuppliers, "Nhà cung cấp");
     }
 
-    XLSX.writeFile(wb, `${title.replace(/\s+/g, "_").toLowerCase()}_template.xlsx`);
+    // Xuất file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    saveAs(blob, `${title.replace(/\s+/g, "_").toLowerCase()}_template.xlsx`);
     message.success("Tải về mẫu thành công!");
   };
 

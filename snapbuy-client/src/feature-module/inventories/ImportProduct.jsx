@@ -301,6 +301,24 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
     }
   ];
 
+  const guideData = [
+    { "Cột": "Mã sản phẩm", "Quy tắc": "BẮT BUỘC. Từ 3-10 ký tự. Chỉ chứa chữ, số, gạch dưới (_) hoặc gạch ngang (-). Không được trùng với mã đã có trong hệ thống." },
+    { "Cột": "Tên sản phẩm", "Quy tắc": "BẮT BUỘC. Từ 3-100 ký tự. Không được trùng với tên đã có trong hệ thống." },
+    { "Cột": "Mô tả", "Quy tắc": "Tùy chọn. Mô tả về sản phẩm." },
+    { "Cột": "Danh mục", "Quy tắc": "BẮT BUỘC. Tên danh mục chính. Nếu danh mục đã có danh mục con, BẮT BUỘC phải nhập 'Danh mục con'." },
+    { "Cột": "Danh mục con", "Quy tắc": "Tùy chọn. BẮT BUỘC nếu 'Danh mục' đã có danh mục con. Phải thuộc về 'Danh mục' đã nhập." },
+    { "Cột": "Mã nhà cung cấp", "Quy tắc": "BẮT BUỘC. Từ 3-10 ký tự. Chỉ chứa chữ, số, gạch dưới (_) hoặc gạch ngang (-). Mỗi mã chỉ được dùng với 1 tên duy nhất trong file." },
+    { "Cột": "Tên nhà cung cấp", "Quy tắc": "BẮT BUỘC. Từ 3-100 ký tự. Phải khớp với 'Mã nhà cung cấp' (nếu mã đã có trong hệ thống)." },
+    { "Cột": "Đơn vị", "Quy tắc": "Tùy chọn. Tối đa 10 ký tự. Ví dụ: Cái, Chiếc, Kg, Lít..." },
+    { "Cột": "Kích thước", "Quy tắc": "Tùy chọn. Tối đa 30 ký tự. Ví dụ: 15x7x0.8" },
+    { "Cột": "Barcode", "Quy tắc": "Tùy chọn. Tối đa 50 ký tự. Chỉ chứa chữ và số. Không được trùng với barcode đã có trong hệ thống." },
+    { "Cột": "", "Quy tắc": "" },
+    { "Cột": "LƯU Ý:", "Quy tắc": "1. Không được trùng mã sản phẩm hoặc tên sản phẩm trong cùng file Excel." },
+    { "Cột": "", "Quy tắc": "2. Mã nhà cung cấp và tên nhà cung cấp phải khớp với nhau (nếu đã có trong hệ thống)." },
+    { "Cột": "", "Quy tắc": "3. Mỗi mã nhà cung cấp chỉ được dùng với 1 tên duy nhất trong file." },
+    { "Cột": "", "Quy tắc": "4. Nếu danh mục đã có danh mục con, bắt buộc phải nhập danh mục con, không được dùng danh mục cha." },
+  ];
+
   return (
     <ImportExcelModal
       visible={visible}
@@ -311,6 +329,7 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       templateData={templateData}
       categoriesData={categoriesData}
       suppliersData={suppliersData}
+      guideData={guideData}
       validateData={validateSupplierData}
       title="Thêm sản phẩm từ Excel"
     />

@@ -1,7 +1,6 @@
 import axios from "axios";
-import { getApiUrl } from '../config/apiConfig';
 
-const REST_API_BASE_URL = getApiUrl('/api/pos-settings');
+const REST_API_BASE_URL = "http://localhost:8080/api/pos-settings";
 
 // Helper function để lấy headers với token
 const getAuthHeaders = () => {

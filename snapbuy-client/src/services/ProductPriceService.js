@@ -74,3 +74,16 @@ export const getProductPriceById = async (id) => {
     throw error;
   }
 };
+
+export const importProductPrices = async (prices) => {
+  try {
+    const response = await axios.post(
+      `${REST_API_BASE_URL}/import`,
+      prices,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    throw error;
+  }
+};

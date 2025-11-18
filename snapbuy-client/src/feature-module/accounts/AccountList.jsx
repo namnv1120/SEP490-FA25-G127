@@ -35,7 +35,13 @@ const AccountList = () => {
       setDataSource(mappedData);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách tài khoản:", error);
-      message.error("Lỗi khi lấy danh sách tài khoản:");
+      if (error.response?.status === 403) {
+        message.error("Bạn không có quyền truy cập trang này. Chỉ Quản trị viên mới có thể truy cập.");
+      } else if (error.response?.status === 401) {
+        message.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
+      } else {
+        message.error(error.response?.data?.message || error.message || "Lỗi khi lấy danh sách tài khoản");
+      }
     } finally {
       setLoading(false);
     }
