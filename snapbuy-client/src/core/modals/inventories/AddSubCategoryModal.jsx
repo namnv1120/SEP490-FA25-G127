@@ -34,6 +34,8 @@ const AddSubCategory = ({ isOpen, onClose, parentCategories, onSuccess }) => {
       newErrors.categoryName = "Tên danh mục phải có ít nhất 3 ký tự.";
     } else if (formData.categoryName.length > 100) {
       newErrors.categoryName = "Tên danh mục không được vượt quá 100 ký tự.";
+    } else if (!/^[\p{L}\d ]+$/u.test(formData.categoryName)) {
+      newErrors.categoryName = "Tên danh mục chỉ cho phép chữ, số và khoảng trắng.";
     }
     if (!formData.parentCategoryId) newErrors.parentCategoryId = "Vui lòng chọn danh mục cha.";
     if (formData.description && formData.description.length > 255) {

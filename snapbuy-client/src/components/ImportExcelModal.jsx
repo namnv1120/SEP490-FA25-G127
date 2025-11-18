@@ -4,6 +4,32 @@ import { UploadOutlined, DownloadOutlined } from "@ant-design/icons";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
+const normalizeBarcode = (input) => {
+  if (input == null) return "";
+  let raw = String(input).trim();
+  if (raw === "") return "";
+  const sci = /^\s*([+-])?(\d+)(?:[\.,](\d+))?e([+-]?\d+)\s*$/i;
+  const m = raw.match(sci);
+  if (m) {
+    const sign = m[1] || "";
+    const intPart = m[2] || "";
+    const fracPart = m[3] || "";
+    const exp = parseInt(m[4], 10) || 0;
+    let digits = intPart + fracPart;
+    if (exp >= 0) {
+      const move = exp - fracPart.length;
+      if (move > 0) digits = digits + "0".repeat(move);
+    } else {
+      const moveLeft = -exp;
+      digits = digits.padStart(digits.length + moveLeft, "0");
+    }
+    raw = (sign === "-" ? "-" : "") + digits;
+  }
+  // Chỉ giữ chữ số để tránh giữ ký tự 'E', '+', ','...
+  raw = raw.replace(/[^0-9]/g, "");
+  return raw;
+};
+
 const ImportExcelModal = ({
   visible,
   onClose,
@@ -73,7 +99,14 @@ const ImportExcelModal = ({
         row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
           const headerName = headers[colNumber - 1];
           if (headerName && headerName !== "") {
-            if (cell.value === null || cell.value === undefined) {
+            if (headerName === "Barcode") {
+              const preferred = typeof cell.text === "string" ? cell.text : cell.value;
+              const value = normalizeBarcode(preferred);
+              rowData[headerName] = value;
+              if (value !== "") {
+                hasData = true;
+              }
+            } else if (cell.value === null || cell.value === undefined) {
               rowData[headerName] = "";
             } else if (cell.type === ExcelJS.ValueType.Number) {
               rowData[headerName] = cell.value;
@@ -205,8 +238,8 @@ const ImportExcelModal = ({
     }
 
     // Trang 1: Products template
-    const headers = Object.keys(templateData[0] || {});
-    const isProductPriceTemplate = headers.includes("Giá bán") && headers.includes("Giá nhập");
+      const headers = Object.keys(templateData[0] || {});
+      const isProductPriceTemplate = headers.includes("Giá bán") && headers.includes("Giá nhập");
 
     const wsProducts = workbook.addWorksheet(isProductPriceTemplate ? "Giá sản phẩm" : "Sản phẩm");
     const headerRow = wsProducts.addRow(headers);

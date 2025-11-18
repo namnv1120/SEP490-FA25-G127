@@ -55,7 +55,7 @@ CREATE TABLE customers
     customer_id   UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     customer_code NVARCHAR(20) UNIQUE,
     full_name     NVARCHAR(50),
-    phone         NVARCHAR(20) UNIQUE,
+    phone         NVARCHAR(20),
     gender        NVARCHAR(6),
     created_date  DATETIME2                    DEFAULT GETDATE(),
     updated_date  DATETIME2                    DEFAULT GETDATE(),
@@ -80,8 +80,8 @@ CREATE TABLE suppliers
     supplier_id   UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     supplier_code NVARCHAR(20) UNIQUE,
     supplier_name NVARCHAR(100) NOT NULL,
-    phone         NVARCHAR(20) UNIQUE,
-    email         NVARCHAR(100) UNIQUE,
+    phone         NVARCHAR(20),
+    email         NVARCHAR(100),
     [address]     NVARCHAR(100),
     city          NVARCHAR(50),
     ward          NVARCHAR(50),
@@ -94,14 +94,14 @@ CREATE TABLE products
 (
     product_id    UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     product_name  NVARCHAR(200)       NOT NULL,
-    product_code  NVARCHAR(50) UNIQUE NOT NULL,
+    product_code  NVARCHAR(20) UNIQUE NOT NULL,
     [description] NVARCHAR(MAX),
     category_id   UNIQUEIDENTIFIER    NOT NULL,
     supplier_id   UNIQUEIDENTIFIER,
     unit          NVARCHAR(20)                 DEFAULT N'Cái',
     dimensions    NVARCHAR(50),
     image_url     NVARCHAR(500),
-    barcode       NVARCHAR(100)                NULL,
+    barcode       NVARCHAR(20)                NULL,
     active        BIT                          DEFAULT 1,
     created_date  DATETIME2                    DEFAULT GETDATE(),
     updated_date  DATETIME2                    DEFAULT GETDATE(),
@@ -126,7 +126,7 @@ CREATE TABLE product_price
 CREATE TABLE purchase_order
 (
     purchase_order_id     UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    purchase_order_number NVARCHAR(20) UNIQUE NOT NULL,
+    purchase_order_number NVARCHAR(10) UNIQUE NOT NULL,
     supplier_id           UNIQUEIDENTIFIER    NOT NULL,
     account_id            UNIQUEIDENTIFIER    NOT NULL,
     order_date            DATETIME2                    DEFAULT GETDATE(),
@@ -277,4 +277,7 @@ CREATE UNIQUE INDEX UX_accounts_phone ON accounts(phone) WHERE phone IS NOT NULL
 CREATE INDEX ix_inventory_transaction_product_id ON inventory_transaction (product_id);
 CREATE UNIQUE INDEX UX_products_barcode ON products(barcode) WHERE barcode IS NOT NULL;
 CREATE INDEX IX_products_barcode_search ON products(barcode);
+CREATE UNIQUE INDEX UX_customers_phone ON customers(phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX UX_suppliers_phone ON suppliers(phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX UX_suppliers_email ON suppliers(email) WHERE email IS NOT NULL;
 

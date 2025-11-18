@@ -13,6 +13,7 @@ import java.util.UUID;
 public class ProductUpdateRequest {
 
     @Size(max = 200, message = "Tên sản phẩm không được vượt quá 200 ký tự.")
+    @Pattern(regexp = "^[\\p{L}\\d ]+$", message = "Tên sản phẩm chỉ cho phép chữ, số và khoảng trắng")
     private String productName;
 
     @Size(max = 50, message = "Mã sản phẩm không được vượt quá 50 ký tự.")

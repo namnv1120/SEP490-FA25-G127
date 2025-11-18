@@ -62,7 +62,7 @@ export const updateAccount = async (id, updatedData) => {
         'Content-Type': 'application/json',
       },
     });
-    return response.data;
+    return response.data.result || response.data;
   } catch (error) {
     throw new Error(error.response?.data?.message || 'Failed to update account!');
   }

@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
-import { Modal, message, Spin } from "antd";
+import { Modal as AntdModal, message, Spin } from "antd";
+import { Modal as BootstrapModal } from "bootstrap";
 import PrimeDataTable from "../../components/data-table";
 import SearchFromApi from "../../components/data-table/search";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import CommonFooter from "../../components/footer/CommonFooter";
+
 import {
   getAllCustomers,
   getCustomerById,
@@ -12,6 +14,7 @@ import {
 } from "../../services/CustomerService";
 
 const Customers = () => {
+  const [customerToDelete, setCustomerToDelete] = useState(null);
   const [listData, setListData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -169,7 +172,16 @@ const Customers = () => {
           </button>
           <button
             className="p-2 border rounded bg-transparent"
-            onClick={() => message.info("Tính năng xoá sẽ thêm sau")}
+          onClick={() => {
+            setCustomerToDelete(row);
+            setTimeout(() => {
+              const modalElement = document.getElementById("delete-modal");
+              if (modalElement) {
+                const modal = new BootstrapModal(modalElement);
+                modal.show();
+              }
+            }, 0);
+          }}
           >
             <i className="feather icon-trash-2"></i>
           </button>
@@ -218,9 +230,33 @@ const Customers = () => {
       </div>
 
       <CommonFooter />
-      <DeleteModal />
+      <DeleteModal
+        itemId={customerToDelete?.customerId}
+        itemName={customerToDelete?.fullName}
+        onDelete={async (id) => {
+          try {
+            await import("../../services/CustomerService").then(({ deleteCustomer }) => deleteCustomer(id));
+            const modalElement = document.getElementById("delete-modal");
+            const modal = BootstrapModal.getInstance(modalElement);
+            if (modal) modal.hide();
+            setTimeout(() => {
+              document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+              document.body.classList.remove("modal-open");
+              document.body.style.removeProperty("overflow");
+              document.body.style.removeProperty("padding-right");
+            }, 0);
+            await fetchCustomers();
+            message.success("Xoá khách hàng thành công!");
+          } catch (err) {
+            message.error("Lỗi khi xoá khách hàng. Vui lòng thử lại.");
+          } finally {
+            setCustomerToDelete(null);
+          }
+        }}
+        onCancel={() => setCustomerToDelete(null)}
+      />
 
-      <Modal
+      <AntdModal
         open={editModalOpen}
         onCancel={handleModalClose}
         onOk={handleSubmit}
@@ -303,7 +339,7 @@ const Customers = () => {
             </div>
           </form>
         )}
-      </Modal>
+      </AntdModal>
     </div>
   );
 };

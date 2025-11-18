@@ -7,11 +7,12 @@ import java.util.UUID;
 @Data
 public class CategoryCreateRequest {
 
-    @NotBlank(message = "Vui lòng nhập tên danh mục.")
     @Size(min = 3, max = 100, message = "Tên danh mục phải từ 3 đến 100 ký tự.")
+    @Pattern(regexp = "^[\\p{L}\\d ]+$",
+    message = "Tên danh mục chỉ cho phép chữ, số và khoảng trắng")
     private String categoryName;
 
-    @Size(max = 1000, message = "Mô tả không được vượt quá 1000 ký tự.")
+    @Size(max = 500, message = "Mô tả không được vượt quá 500 ký tự.")
     private String description;
 
     private UUID parentCategoryId;

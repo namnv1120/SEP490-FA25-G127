@@ -8,6 +8,7 @@ import java.util.UUID;
 public class CategoryUpdateRequest {
 
     @Size(min = 3, max = 100, message = "Tên danh mục phải từ 3 đến 100 ký tự.")
+    @Pattern(regexp = "^[\\p{L}\\d ]+$", message = "Tên danh mục chỉ cho phép chữ, số và khoảng trắng")
     private String categoryName;
 
     @Size(max = 1000, message = "Mô tả không được vượt quá 1000 ký tự.")

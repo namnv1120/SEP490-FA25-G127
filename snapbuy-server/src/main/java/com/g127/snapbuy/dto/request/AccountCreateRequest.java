@@ -7,11 +7,13 @@ import java.util.List;
 
 @Data
 public class AccountCreateRequest {
-    @NotBlank(message = "Vui lòng nhập họ và tên.")
-    @Size(max = 100, message = "Họ và tên không được vượt quá 100 ký tự.")
+    @Size(min = 2, max = 100, message = "Họ và tên phải từ 2 đến 100 ký tự.")
+    @Pattern(
+            regexp = "^[\\p{L}\\d ]+$",
+            message = "Họ và tên chỉ cho phép chữ, số và khoảng trắng"
+    )
     private String fullName;
 
-    @NotBlank(message = "Vui lòng nhập tên đăng nhập.")
     @Size(min = 3, max = 50, message = "Tên đăng nhập phải từ 3 đến 50 ký tự.")
     @Pattern(
             regexp = "^[A-Za-z0-9._-]+$",
@@ -27,8 +29,6 @@ public class AccountCreateRequest {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @NotBlank(message = "Vui lòng xác nhận mật khẩu.")
     private String confirmPassword;
-
-    private String avatarUrl;
 
     @NotNull(message = "Trạng thái hoạt động không được để trống.")
     private Boolean active = true;

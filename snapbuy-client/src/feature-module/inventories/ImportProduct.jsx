@@ -1,16 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import ImportExcelModal from "../../components/ImportExcelModal";
 import { getAllCategories } from "../../services/CategoryService";
 import { getAllSuppliers } from "../../services/SupplierService";
+import { getAllProducts } from "../../services/ProductService";
 
 const ImportProduct = ({ visible, onClose, onImport }) => {
   const [categoriesData, setCategoriesData] = useState([]);
   const [suppliersData, setSuppliersData] = useState([]);
+  const [productsData, setProductsData] = useState([]);
 
   useEffect(() => {
     if (visible) {
       fetchCategories();
       fetchSuppliers();
+      fetchProducts();
     }
   }, [visible]);
 
@@ -39,9 +42,49 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       console.error("Lỗi khi lấy nhà cung cấp:", error);
     }
   };
+
+  const fetchProducts = async () => {
+    try {
+      const data = await getAllProducts();
+      setProductsData(data);
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách sản phẩm:", error);
+    }
+  };
+
+  const productCodeMap = useMemo(() => {
+    const map = new Map();
+    productsData.forEach(product => {
+      const code = product.productCode?.trim().toLowerCase();
+      if (code) {
+        map.set(code, product);
+      }
+    });
+    return map;
+  }, [productsData]);
+
+  const productNameMap = useMemo(() => {
+    const map = new Map();
+    productsData.forEach(product => {
+      const name = product.productName?.trim().toLowerCase();
+      if (name) {
+        map.set(name, product);
+      }
+    });
+    return map;
+  }, [productsData]);
   // Hàm validate dữ liệu đầy đủ
   const validateSupplierData = (data) => {
     const errors = new Array(data.length).fill(null);
+
+    const codeCount = {};
+    const nameCount = {};
+    data.forEach((row) => {
+      const code = (row.productCode || "").trim().toLowerCase();
+      const name = (row.productName || "").trim().toLowerCase();
+      if (code) codeCount[code] = (codeCount[code] || 0) + 1;
+      if (name) nameCount[name] = (nameCount[name] || 0) + 1;
+    });
 
     data.forEach((row, index) => {
       const rowErrors = [];
@@ -58,6 +101,26 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
         if (!/^[a-zA-Z0-9_-]+$/.test(productCode)) {
           rowErrors.push("Mã sản phẩm chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang");
         }
+
+        const normalizedCode = productCode.toLowerCase();
+        const existingProductByCode = productCodeMap.get(normalizedCode);
+        const normalizedName = (row.productName || "").trim().toLowerCase();
+
+        if (existingProductByCode) {
+          if (normalizedName &&
+            existingProductByCode.productName &&
+            existingProductByCode.productName.trim().toLowerCase() !== normalizedName) {
+            rowErrors.push(
+              `Mã sản phẩm '${productCode}' đã tồn tại và thuộc về sản phẩm '${existingProductByCode.productName}'. ` +
+              `Tên bạn nhập '${row.productName || ""}' không khớp`
+            );
+          } else {
+            rowErrors.push(`Mã sản phẩm '${productCode}' đã tồn tại trong hệ thống`);
+          }
+        }
+        if (codeCount[normalizedCode] > 1) {
+          rowErrors.push(`Mã sản phẩm '${productCode}' bị trùng trong file`);
+        }
       }
 
       // Validate Product Name
@@ -66,6 +129,33 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
         rowErrors.push("Tên sản phẩm không được để trống");
       } else if (productName.length < 3 || productName.length > 100) {
         rowErrors.push("Tên sản phẩm phải từ 3 đến 100 ký tự");
+      } else {
+        const normalizedName = productName.toLowerCase();
+        const existingProductByName = productNameMap.get(normalizedName);
+        const normalizedCode = (row.productCode || "").trim().toLowerCase();
+        const existingProductByCode = normalizedCode ? productCodeMap.get(normalizedCode) : null;
+        const isSameProduct =
+          existingProductByCode &&
+          existingProductByName &&
+          existingProductByCode.productId === existingProductByName.productId;
+
+        if (existingProductByName) {
+          if (
+            normalizedCode &&
+            existingProductByName.productCode &&
+            existingProductByName.productCode.trim().toLowerCase() !== normalizedCode
+          ) {
+            rowErrors.push(
+              `Tên sản phẩm '${productName}' đã tồn tại với mã '${existingProductByName.productCode}', ` +
+              `nhưng bạn nhập mã '${row.productCode || ""}'`
+            );
+          } else if (!isSameProduct) {
+            rowErrors.push(`Tên sản phẩm '${productName}' đã tồn tại trong hệ thống`);
+          }
+        }
+        if (nameCount[normalizedName] > 1) {
+          rowErrors.push(`Tên sản phẩm '${productName}' bị trùng trong file`);
+        }
       }
 
       // Validate Category Name

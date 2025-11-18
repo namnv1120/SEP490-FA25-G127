@@ -136,22 +136,23 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    // Họ và tên
-    if (formData.fullName && formData.fullName.length > 100) {
-      newErrors.fullName = "Họ và tên không được vượt quá 100 ký tự.";
+    const name = (formData.fullName || "").trim();
+    if (!name) {
+      newErrors.fullName = "Vui lòng nhập họ và tên.";
+    } else if (name.length < 2 || name.length > 100) {
+      newErrors.fullName = "Họ và tên phải từ 2 đến 100 ký tự.";
+    } else if (!/^[\p{L}][\p{L}\s'.-]*$/u.test(name)) {
+      newErrors.fullName = "Họ và tên chỉ gồm chữ, khoảng trắng, ', -, .";
     }
 
-    // Email
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Email không hợp lệ. Vui lòng kiểm tra lại.";
     }
 
-    // Số điện thoại
     if (formData.phone && !/^$|^\d{10}$/.test(formData.phone)) {
       newErrors.phone = "Số điện thoại phải gồm đúng 10 chữ số.";
     }
 
-    // Mật khẩu (chỉ validate nếu có nhập)
     if (formData.password) {
       if (formData.password.length < 6) {
         newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự.";
@@ -160,7 +161,6 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose }) => {
       }
     }
 
-    // Xác nhận mật khẩu (chỉ validate nếu có nhập password)
     if (formData.password && !formData.confirmPassword) {
       newErrors.confirmPassword = "Vui lòng xác nhận mật khẩu.";
     }
