@@ -219,9 +219,9 @@ const EmailSettings = () => {
                           <div className="row mb-4">
                             <div className="col-md-6">
                               <div className="mb-3">
-                                <label className="form-label">
-                                  Mã xác nhận (6 chữ số) <span className="text-danger">*</span>
-                                </label>
+                              <label className="form-label d-block mb-1">
+                                Mã xác nhận (6 chữ số) <span className="text-danger">*</span>
+                              </label>
                                 <div style={{ position: 'relative', display: 'inline-block' }}>
                                   <input
                                     type="text"

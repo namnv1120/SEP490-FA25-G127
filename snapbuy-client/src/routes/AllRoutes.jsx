@@ -9,6 +9,8 @@ export const allRoutes = {
   subcategories: "/sub-categories",
   productprices: "/product-prices",
   editproductprice: "/product-prices/edit/:id",
+  accounts: "/accounts",
+  rolespermission: "/roles-permissions",
 
   orderhistory: "/order-history",
   pos: "/pos",
