@@ -279,7 +279,7 @@ const AccountList = () => {
                   setCurrentPage={setCurrentPage}
                   totalRecords={dataSource.length}
                   dataKey="id"
-                  loading={loading}
+                  loading={false}
                   serverSidePagination={false}
                 />
               </div>

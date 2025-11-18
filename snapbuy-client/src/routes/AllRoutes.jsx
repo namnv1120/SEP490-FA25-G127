@@ -10,34 +10,29 @@ export const allRoutes = {
   productprices: "/product-prices",
   editproductprice: "/product-prices/edit/:id",
 
-
-  // Orders
   orderhistory: "/order-history",
   pos: "/pos",
   transactionhistory: "/transaction-history",
 
-  // Purchase
   purchaseorders: "/purchase-orders",
   addpurchaseorder: "/purchase-orders/add",
   editpurchaseorder: "/purchase-orders/edit/:id",
 
-  // Customers & Suppliers
+  accounts: "/accounts",
+  rolespermission: "/roles-permissions",
   customers: "/customers",
   suppliers: "/suppliers",
 
-  // Reports
   revenuereport: "/revenue-report",
   productreport: "/product-report",
   customerreport: "/customer-report",
   supplierreport: "/supplier-report",
 
-  // Settings
   profile: "/settings/profile",
   emailsettings: "/settings/email",
   passwordsettings: "/settings/password",
   possystemsettings: "/settings/pos-system",
 
-  // Authentication
   login: "/login",
   forgotpassword: "/forgot-password",
   verifyotp: "/verify-otp",
