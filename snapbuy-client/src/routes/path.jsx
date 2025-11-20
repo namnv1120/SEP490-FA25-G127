@@ -63,6 +63,9 @@ const PosSystemSettings = lazy(() =>
   import("../feature-module/pos/PosSystemSettings")
 );
 
+const PromotionList = lazy(() =>
+  import("../feature-module/promotions/PromotionList")
+);
 
 const routes = allRoutes;
 
@@ -248,6 +251,13 @@ export const authRoutes = [
     path: routes.supplierreport,
     name: "supplier-report",
     element: <SupplierReport />,
+    route: Route,
+  },
+  {
+    id: 24,
+    path: routes.promotions,
+    name: "promotions",
+    element: <PromotionList />,
     route: Route,
   },
   {

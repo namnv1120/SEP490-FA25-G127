@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import "../../assets/css/pos-promotion.css";
 import PosModals from "../../core/modals/pos/PosModals";
 import AddCustomerModal from "../../core/modals/pos/AddCustomerModal";
 import CounterTwo from "../../components/counter/CounterTwo";
@@ -12,6 +13,7 @@ import { getAllProducts, getProductByBarcode } from "../../services/ProductServi
 import { getCustomerById, searchCustomers } from "../../services/CustomerService";
 import { createOrder, completeOrder, getOrderById } from "../../services/OrderService";
 import { getPosSettings } from "../../services/PosSettingsService";
+import { getBestDiscountForProduct } from "../../services/PromotionService";
 import { getImageUrl } from "../../utils/imageUtils";
 
 const Pos = () => {
@@ -178,24 +180,40 @@ const Pos = () => {
     try {
       setLoading(true);
       const data = await getAllProducts();
-      // Map products data
-      const mappedProducts = data
+
+      // Map products data và load khuyến mãi
+      const mappedProductsPromises = data
         .filter(product => product.active)
-        .map(product => ({
-          id: product.productId,
-          productId: product.productId,
-          name: product.productName,
-          productName: product.productName,
-          code: product.productCode,
-          productCode: product.productCode,
-          barcode: product.barcode || null,
-          price: product.unitPrice,
-          stock: product.quantityInStock,
-          quantityInStock: product.quantityInStock, // Thêm field này để dùng cho validation
-          categoryId: product.categoryId,
-          categoryName: product.categoryName || "",
-          image: getImageUrl(product.imageUrl || product.image || null),
-        }));
+        .map(async (product) => {
+          const originalPrice = product.unitPrice || 0;
+          // Lấy % giảm giá tốt nhất cho sản phẩm (truyền unitPrice để tính cho FIXED discount)
+          const discountPercent = await getBestDiscountForProduct(product.productId, originalPrice);
+          const discountedPrice = discountPercent > 0
+            ? originalPrice * (1 - discountPercent / 100)
+            : originalPrice;
+
+          console.log(`[POS] Product: ${product.productName}, Original: ${originalPrice}, Discount: ${discountPercent}%, Final: ${discountedPrice}`);
+
+          return {
+            id: product.productId,
+            productId: product.productId,
+            name: product.productName,
+            productName: product.productName,
+            code: product.productCode,
+            productCode: product.productCode,
+            barcode: product.barcode || null,
+            price: discountedPrice, // Giá sau khuyến mãi
+            originalPrice: originalPrice, // Giá gốc
+            discountPercent: discountPercent, // % giảm giá
+            stock: product.quantityInStock,
+            quantityInStock: product.quantityInStock,
+            categoryId: product.categoryId,
+            categoryName: product.categoryName || "",
+            image: getImageUrl(product.imageUrl || product.image || null),
+          };
+        });
+
+      const mappedProducts = await Promise.all(mappedProductsPromises);
 
       setProducts(mappedProducts);
 
@@ -470,6 +488,8 @@ const Pos = () => {
           name: product.name,
           code: product.code,
           price: product.price,
+          originalPrice: product.originalPrice,
+          discountPercent: product.discountPercent || 0,
           quantity: 1,
           stock: availableStock,
           image: product.image,
@@ -894,8 +914,8 @@ const Pos = () => {
         items: cartItems.map(item => ({
           productId: item.productId,
           quantity: item.quantity,
-          unitPrice: item.price,
-          discount: 0,
+          unitPrice: item.originalPrice || item.price, // Gửi giá gốc
+          discount: item.discountPercent || 0, // Gửi % giảm giá của sản phẩm
         })),
         discountAmount: totals.discountPercent || 0, // Gửi phần trăm
         taxAmount: totals.taxPercent || 0, // Gửi phần trăm
@@ -1365,7 +1385,7 @@ const Pos = () => {
                             </div>
                           ) : (
                             filteredProducts.map((product) => (
-                              <div key={product.id} className="col-sm-6 col-md-6 col-lg-4 col-xl-3">
+                              <div key={product.id} className="col-sm-6 col-md-6 col-lg-4 col-xl-3 mb-3">
                                 <div
                                   className="product-info card"
                                   onClick={(e) => handleAddToCart(product, e)}
@@ -1389,9 +1409,41 @@ const Pos = () => {
                                       {product.name}
                                     </Link>
                                   </h6>
-                                  <div className="d-flex align-items-center justify-content-between price">
-                                    <span>{product.stock || 0} Cái</span>
-                                    <p>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price || 0)}</p>
+                                  <div className="d-flex align-items-start justify-content-between price">
+                                    <span style={{ fontSize: '13px', color: '#6c757d', lineHeight: '1.5' }}>{product.stock || 0} Cái</span>
+                                    <div className="text-end" style={{ minWidth: '140px' }}>
+                                      {product.discountPercent > 0 ? (
+                                        <div className="d-flex flex-column align-items-end">
+                                          <div className="d-flex align-items-center gap-1 mb-1">
+                                            <small className="text-muted text-decoration-line-through" style={{ fontSize: '12px' }}>
+                                              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.originalPrice || 0)}
+                                            </small>
+                                            <span className="badge" style={{
+                                              fontSize: '10px',
+                                              padding: '2px 6px',
+                                              backgroundColor: '#ff4d4f',
+                                              color: 'white',
+                                              fontWeight: '600'
+                                            }}>
+                                              -{product.discountPercent}%
+                                            </span>
+                                          </div>
+                                          <p className="mb-0 fw-bold" style={{
+                                            fontSize: '15px',
+                                            color: '#ff4d4f'
+                                          }}>
+                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price || 0)}
+                                          </p>
+                                        </div>
+                                      ) : (
+                                        <div className="d-flex flex-column align-items-end">
+                                          <div style={{ height: '20px', marginBottom: '4px' }}></div>
+                                          <p className="mb-0 fw-semibold" style={{ fontSize: '15px', color: '#1f1f1f' }}>
+                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price || 0)}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
@@ -1608,9 +1660,23 @@ const Pos = () => {
                               <h6>
                                 <Link to="#" onClick={(e) => e.preventDefault()}>{item.name}</Link>
                               </h6>
-                              <p className="fw-bold text-teal">
-                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
-                              </p>
+                              {item.discountPercent > 0 ? (
+                                <div>
+                                  <p className="fw-bold text-danger mb-0">
+                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
+                                    <span className="badge bg-danger ms-1" style={{ fontSize: '10px' }}>
+                                      -{item.discountPercent}%
+                                    </span>
+                                  </p>
+                                  <small className="text-muted text-decoration-line-through">
+                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.originalPrice)}
+                                  </small>
+                                </div>
+                              ) : (
+                                <p className="fw-bold text-teal">
+                                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
+                                </p>
+                              )}
                             </div>
                           </div>
                           <div className="qty-item text-center" style={{ flexShrink: 0 }}>
