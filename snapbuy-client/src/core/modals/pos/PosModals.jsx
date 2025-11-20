@@ -8,7 +8,7 @@ import { getCustomerById } from "../../../services/CustomerService";
 import { logoPng, barcodeImg3 } from "../../../utils/imagepath";
 import "../../../assets/css/pos-sidebar.css";
 
-const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onClosePaymentMethodModal, onPaymentCompleted, onSelectPaymentMethod, showCashPaymentModal, showMomoModal, showOrderSuccessModal, onCloseOrderSuccessModal, completedOrderForPrint, onCashPaymentConfirm, onMomoModalClose, onCompleteOrder, onCashPaymentCompleted, onHandleOrderPayment, onSelectOrder }) => {
+const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onClosePaymentMethodModal, onPaymentCompleted, onSelectPaymentMethod, showCashPaymentModal, showMomoModal, showOrderSuccessModal, onCloseOrderSuccessModal, completedOrderForPrint, onCashPaymentConfirm, onMomoModalClose, onCompleteOrder, onCashPaymentCompleted, onHandleOrderPayment, onSelectOrder, showShiftModal, onCloseShiftModal, currentShift, shiftLoading, onOpenShift, onCloseShift }) => {
   const [selectedTaxType, setSelectedTaxType] = useState(null);
   const [selectedDiscountType, setSelectedDiscountType] = useState(null);
   const [selectedWeightUnit, setSelectedWeightUnit] = useState(null);
@@ -24,6 +24,7 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
   const [ordersFetched, setOrdersFetched] = useState(false);
   const [cashReceived, setCashReceived] = useState("");
   const [momoPayUrl, setMomoPayUrl] = useState(null);
+  const [shiftAmount, setShiftAmount] = useState("");
   const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
   const [orderDetailLoading, setOrderDetailLoading] = useState(false);
   const [showOrderDetailModal, setShowOrderDetailModal] = useState(false);
@@ -64,6 +65,7 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
       handleClear();
     }
   };
+  useEffect(() => { setShiftAmount(""); }, [showShiftModal, currentShift?.status]);
 
   const options = {
     taxType: [
@@ -2586,9 +2588,55 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
         )}
       </Modal>
       {/* /Order Detail Modal */}
+
+      <Modal
+        open={!!showShiftModal}
+        onCancel={onCloseShiftModal}
+        footer={null}
+        title="Đóng/Mở ca"
+        centered
+      >
+        <div className="modal-body">
+          {shiftLoading ? (
+            <div className="text-center py-4">
+              <Spin size="large" />
+            </div>
+          ) : currentShift && currentShift.status === "Mở" ? (
+            <div>
+              <div className="mb-2">Trạng thái: <span className="badge badge-success">Đang mở</span></div>
+              <div className="mb-2">Bắt đầu: {currentShift?.openedAt ? new Date(currentShift.openedAt).toLocaleString("vi-VN") : ""}</div>
+              <div className="mb-3">Tiền mặt ban đầu: {Number(currentShift?.initialCash || 0).toLocaleString("vi-VN")} VND</div>
+              <label className="form-label fw-bold">Tiền mặt hiện tại</label>
+              <div className="input-icon-start position-relative">
+                <input type="number" className="form-control" placeholder="Nhập số tiền hiện tại" value={shiftAmount} onChange={(e) => { const v = e.target.value; if (v === "" || (!isNaN(v) && parseFloat(v) >= 0)) setShiftAmount(v); }} min="0" step="1000" style={{ paddingLeft: '40px' }} />
+                <span className="input-icon-addon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }}>
+                  <i className="ti ti-currency-dollar text-gray-9" />
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="mb-2">Trạng thái: <span className="badge badge-secondary">Đang đóng</span></div>
+              <label className="form-label fw-bold">Tiền mặt ban đầu</label>
+              <div className="input-icon-start position-relative">
+                <input type="number" className="form-control" placeholder="Nhập tiền mặt ban đầu" value={shiftAmount} onChange={(e) => { const v = e.target.value; if (v === "" || (!isNaN(v) && parseFloat(v) >= 0)) setShiftAmount(v); }} min="0" step="1000" style={{ paddingLeft: '40px' }} />
+                <span className="input-icon-addon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }}>
+                  <i className="ti ti-currency-dollar text-gray-9" />
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="modal-footer d-flex justify-content-end gap-2 flex-wrap">
+          {currentShift && currentShift.status === "Mở" ? (
+            <button className="btn btn-purple" onClick={() => onCloseShift(shiftAmount)}>Đóng ca</button>
+          ) : (
+            <button className="btn btn-teal" onClick={() => onOpenShift(shiftAmount)}>Mở ca</button>
+          )}
+        </div>
+      </Modal>
     </>
   );
 };
 
 export default PosModals;
-

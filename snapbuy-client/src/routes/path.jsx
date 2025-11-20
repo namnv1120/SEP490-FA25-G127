@@ -202,6 +202,20 @@ export const authRoutes = [
     name: "order-history",
     componentKey: "OrderHistory",
     protected: true,
+  },
+  {
+    id: 27,
+    path: routes.salesoverview,
+    name: "sales-overview",
+    componentKey: "SalesOverview",
+    protected: true,
+  },
+  {
+    id: 28,
+    path: routes.posshift,
+    name: "pos-shift",
+    componentKey: "PosShift",
+    protected: true,
   }
 ];
 

@@ -1,0 +1,107 @@
+export const SidebarDataWarehouse = [
+  {
+    tittle: "Tổng quan",
+    hasSubRoute: true,
+    icon: "layout-grid",
+    showSubRoute: false,
+    subRoutes: [
+      {
+        tittle: "Thống kê phần mềm",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/dashboard",
+        subRoutes: [],
+      },
+    ],
+  },
+  {
+    tittle: "Hàng hoá",
+    hasSubRoute: true,
+    icon: "brand-unity",
+    showSubRoute: false,
+    activeRoute: "product",
+    subRoutes: [
+      {
+        tittle: "Sản phẩm",
+        hasSubRoute: false,
+        showSubRoute: true,
+        route: "/products",
+        subRoutes: [],
+      },
+      {
+        tittle: "Giá sản phẩm",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/product-prices",
+        subRoutes: [],
+      },
+      {
+        tittle: "Tồn kho",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/inventories",
+        subRoutes: [],
+      },
+      {
+        tittle: "Danh mục",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/categories",
+        subRoutes: [],
+      },
+      {
+        tittle: "Danh mục con",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/sub-categories",
+        subRoutes: [],
+      },
+    ],
+  },
+  {
+    tittle: "Giao dịch",
+    hasSubRoute: true,
+    icon: "layout-grid",
+    showSubRoute: false,
+    activeRoute: "sales",
+    subRoutes: [
+      {
+        tittle: "Đơn đặt hàng",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/purchase-orders",
+        subRoutes: [],
+      },
+      {
+        tittle: "Lịch sử đơn hàng",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/order-history",
+        subRoutes: [],
+      },
+      {
+        tittle: "Lịch sử giao dịch",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/transaction-history",
+        subRoutes: [],
+      },
+    ],
+  },
+  {
+    tittle: "Đối tác",
+    hasSubRoute: true,
+    icon: "users",
+    showSubRoute: false,
+    activeRoute: "partners",
+    subRoutes: [
+      {
+        tittle: "Nhà cung cấp",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/suppliers",
+        subRoutes: [],
+      },
+    ],
+  },
+];

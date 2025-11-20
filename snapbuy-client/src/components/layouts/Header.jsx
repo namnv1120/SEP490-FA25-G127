@@ -11,7 +11,11 @@ import {
 import { allRoutes } from "../../routes/AllRoutes";
 import { getMyInfo } from "../../services/AccountService";
 import { getImageUrl } from "../../utils/imageUtils";
-import { SidebarData1 } from "../../core/json/sidebarDataOne";
+import usePermission from "../../hooks/usePermission";
+import { SidebarDataAdmin } from "../../core/json/sidebarDataAdmin";
+import { SidebarDataOwner } from "../../core/json/sidebarDataOwner";
+import { SidebarDataWarehouse } from "../../core/json/sidebarDataWarehouse";
+import { SidebarDataSales } from "../../core/json/sidebarDataSales";
 import {
   avatar_02,
   avatar_03,
@@ -38,9 +42,7 @@ const Header = () => {
     avatarUrl: null
   });
 
-  const { expandMenus } = useSelector(
-    (state) => state.themeSetting.expandMenus
-  );
+  const expandMenus = useSelector((state) => state.themeSetting.expandMenus);
   const dataLayout = useSelector((state) => state.themeSetting.dataLayout);
 
   const isElementVisible = (element) => {
@@ -102,6 +104,24 @@ const Header = () => {
   };
 
   const location = useLocation();
+  const { userRole } = usePermission();
+  let sidebarData;
+  switch (userRole) {
+    case "Quản trị viên":
+      sidebarData = SidebarDataAdmin;
+      break;
+    case "Chủ cửa hàng":
+      sidebarData = SidebarDataOwner;
+      break;
+    case "Nhân viên kho":
+      sidebarData = SidebarDataWarehouse;
+      break;
+    case "Nhân viên bán hàng":
+      sidebarData = SidebarDataSales;
+      break;
+    default:
+      sidebarData = [];
+  }
 
   // Flatten all routes from SidebarData1
   const flattenRoutes = (data, parentTitle = "") => {
@@ -139,7 +159,7 @@ const Header = () => {
   // Search routes based on query
   useEffect(() => {
     if (searchQuery.trim()) {
-      const flattenedRoutes = flattenRoutes(SidebarData1);
+      const flattenedRoutes = flattenRoutes(sidebarData);
       const query = searchQuery.toLowerCase().trim();
       const filtered = flattenedRoutes.filter((item) =>
         item.title.toLowerCase().includes(query) ||
@@ -152,7 +172,7 @@ const Header = () => {
       setSearchResults([]);
       setShowSearchDropdown(false);
     }
-  }, [searchQuery]);
+  }, [searchQuery, userRole]);
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -285,13 +305,13 @@ const Header = () => {
           onMouseLeave={expandMenu}
           onMouseOver={expandMenuOpen}
         >
-          <Link to="/dashboard" className="logo logo-normal">
+          <Link to={userRole === 'Nhân viên bán hàng' ? route.salesoverview : route.dashboard} className="logo logo-normal">
             <img src={logoPng} alt="img" />
           </Link>
-          <Link to="/dashboard" className="logo logo-white">
+          <Link to={userRole === 'Nhân viên bán hàng' ? route.salesoverview : route.dashboard} className="logo logo-white">
             <img src={logoWhitePng} alt="img" />
           </Link>
-          <Link to="/dashboard" className="logo-small">
+          <Link to={userRole === 'Nhân viên bán hàng' ? route.salesoverview : route.dashboard} className="logo-small">
             <img src={logoSmallPng} alt="img" />
           </Link>
           <Link

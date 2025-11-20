@@ -37,6 +37,19 @@ export const getOrderById = async (id) => {
   }
 };
 
+export const getMyTodayOrderCount = async (paymentStatus = 'Đã thanh toán') => {
+  try {
+    const params = paymentStatus ? { paymentStatus } : {};
+    const response = await axios.get(`${REST_API_BASE_URL}/my/today-count`, {
+      ...getAuthHeaders(),
+      params,
+    });
+    return response.data?.result ?? response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const createOrder = async (orderData) => {
   try {
     const response = await axios.post(REST_API_BASE_URL, orderData, getAuthHeaders());

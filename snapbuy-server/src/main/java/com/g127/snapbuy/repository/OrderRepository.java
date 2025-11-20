@@ -33,6 +33,26 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
             @Param("endDate") LocalDateTime endDate,
             @Param("paymentStatus") String paymentStatus);
 
+    @Query("SELECT COUNT(o) FROM Order o " +
+            "WHERE o.account.accountId = :accountId " +
+            "AND o.createdDate BETWEEN :startDate AND :endDate " +
+            "AND (:paymentStatus IS NULL OR o.paymentStatus = :paymentStatus)")
+    Long countOrdersByAccountAndDateRange(
+            @Param("accountId") UUID accountId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("paymentStatus") String paymentStatus);
+
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o " +
+            "WHERE o.account.accountId = :accountId " +
+            "AND o.createdDate BETWEEN :startDate AND :endDate " +
+            "AND (:paymentStatus IS NULL OR o.paymentStatus = :paymentStatus)")
+    BigDecimal sumRevenueByAccountAndDateRange(
+            @Param("accountId") UUID accountId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("paymentStatus") String paymentStatus);
+
     @Query("""
         SELECT DISTINCT o FROM Order o
         LEFT JOIN o.customer c

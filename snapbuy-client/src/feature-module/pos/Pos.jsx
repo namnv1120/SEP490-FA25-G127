@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -13,6 +13,8 @@ import { getCustomerById, searchCustomers } from "../../services/CustomerService
 import { createOrder, completeOrder, getOrderById } from "../../services/OrderService";
 import { getPosSettings } from "../../services/PosSettingsService";
 import { getImageUrl } from "../../utils/imageUtils";
+import usePermission from "../../hooks/usePermission";
+import { isShiftOpen, getCurrentShift, openShift, closeShift } from "../../services/ShiftService";
 
 const Pos = () => {
   const [activeTab, setActiveTab] = useState("all");
@@ -47,10 +49,13 @@ const Pos = () => {
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [showCashPaymentModal, setShowCashPaymentModal] = useState(false);
   const [showMomoModal, setShowMomoModal] = useState(false);
+  const [showShiftModal, setShowShiftModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null); // "cash" or "momo"
   const [usePoints, setUsePoints] = useState(0); // Số điểm muốn sử dụng
   const [showOrderSuccessModal, setShowOrderSuccessModal] = useState(false);
   const [completedOrderForPrint, setCompletedOrderForPrint] = useState(null); // Lưu order đã thanh toán để in
+  const [currentShift, setCurrentShift] = useState(null);
+  const [shiftLoading, setShiftLoading] = useState(false);
   const momoPollingIntervalRef = useRef(null);
   const barcodeBufferRef = useRef("");
   const barcodeTimerRef = useRef(null);
@@ -101,6 +106,12 @@ const Pos = () => {
     });
   }, []);
 
+  useEffect(() => {
+    const handler = () => setShowShiftModal(true);
+    window.addEventListener('openShiftModal', handler);
+    return () => window.removeEventListener('openShiftModal', handler);
+  }, []);
+
   // Helper function để hiển thị message và tránh duplicate
   const showMessage = useCallback((type, content) => {
     const now = Date.now();
@@ -132,6 +143,47 @@ const Pos = () => {
     };
     loadData();
   }, []);
+
+  useEffect(() => {
+    const loadShift = async () => {
+      try {
+        setShiftLoading(true);
+        const s = await getCurrentShift();
+        setCurrentShift(s);
+      } finally {
+        setShiftLoading(false);
+      }
+    };
+    loadShift();
+  }, []);
+
+  const navigate = useNavigate();
+  const { userRole } = usePermission();
+  const checkedRef = useRef(false);
+  useEffect(() => {
+    const gate = async () => {
+      if (checkedRef.current) return;
+      checkedRef.current = true;
+      if (userRole === "Nhân viên bán hàng") {
+        // Ưu tiên localStorage
+        const openLocal = await isShiftOpen();
+        if (openLocal) return;
+
+        // Thử gọi API lần nữa
+        try {
+          const current = await getCurrentShift();
+          if (current && current.status === "Mở") return;
+        } catch {}
+
+        // Không mở, điều hướng về trang ca
+        if (Location?.state?.from !== "pos-shift-open") {
+          message.warning("Vui lòng mở ca trước khi vào POS");
+        }
+        navigate("/pos-shift");
+      }
+    };
+    gate();
+  }, [userRole, Location?.state?.from]);
 
   const fetchPosSettings = async () => {
     try {
@@ -1775,6 +1827,34 @@ const Pos = () => {
         }}
         onHandleOrderPayment={handleOrderPayment}
         onSelectOrder={handleSelectOrder}
+        showShiftModal={showShiftModal}
+        onCloseShiftModal={() => setShowShiftModal(false)}
+        currentShift={currentShift}
+        shiftLoading={shiftLoading}
+        onOpenShift={async (amount) => {
+          if (!amount || Number(amount) < 0) { message.error("Nhập số tiền mặt hợp lệ"); return; }
+          try {
+            const res = await openShift(Number(amount));
+            setCurrentShift(res);
+            setShowShiftModal(false);
+            window.dispatchEvent(new CustomEvent('shiftUpdated', { detail: res }));
+            message.success("Đã mở ca");
+          } catch {
+            message.error("Không thể mở ca");
+          }
+        }}
+        onCloseShift={async (amount) => {
+          if (amount === undefined || Number(amount) < 0) { message.error("Nhập số tiền mặt hiện tại hợp lệ"); return; }
+          try {
+            const res = await closeShift(Number(amount));
+            setCurrentShift(res);
+            setShowShiftModal(false);
+            window.dispatchEvent(new CustomEvent('shiftUpdated', { detail: res }));
+            message.success("Đã đóng ca");
+          } catch {
+            message.error("Không thể đóng ca");
+          }
+        }}
       />
       <AddCustomerModal
         isOpen={addCustomerModalOpen}
@@ -1787,4 +1867,3 @@ const Pos = () => {
 };
 
 export default Pos;
-

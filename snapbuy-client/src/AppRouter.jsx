@@ -18,6 +18,8 @@ const AddProduct = lazy(() => import("./feature-module/inventories/AddProduct"))
 const EditProduct = lazy(() => import("./feature-module/inventories/EditProduct"));
 const ProductPriceList = lazy(() => import("./feature-module/inventories/ProductPriceList"));
 const EditProductPrice = lazy(() => import("./feature-module/inventories/EditProductPrice"));
+const PosShift = lazy(() => import("./feature-module/pos/PosShift"));
+const SalesOverview = lazy(() => import("./feature-module/sales/SalesOverview"));
 const InventoryList = lazy(() => import("./feature-module/inventories/InventoryList"));
 const CategoryList = lazy(() => import("./feature-module/inventories/CategoryList"));
 const SubCategoryList = lazy(() => import("./feature-module/inventories/SubCategoryList"));
@@ -41,6 +43,7 @@ const FormHorizontal = lazy(() => import("./feature-module/uiinterface/forms/for
 
 const componentsMap = {
   Pos,
+  PosShift,
   Login,
   ForgotPassword,
   VerifyOtp,
@@ -72,6 +75,7 @@ const componentsMap = {
   OrderHistory,
   PosSystemSettings,
   FormHorizontal,
+  SalesOverview,
 };
 
 const AppRouter = () => {

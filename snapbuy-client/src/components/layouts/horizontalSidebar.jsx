@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { SidebarData1 } from "../../core/json/sidebarDataOne";
+import usePermission from "../../hooks/usePermission";
+import { SidebarDataAdmin } from "../../core/json/sidebarDataAdmin";
+import { SidebarDataOwner } from "../../core/json/sidebarDataOwner";
+import { SidebarDataWarehouse } from "../../core/json/sidebarDataWarehouse";
+import { SidebarDataSales } from "../../core/json/sidebarDataSales";
 
 const HorizontalSidebar = () => {
   const [opendSubMenu, setOpendSubMenu] = useState([null, null]);
@@ -58,6 +62,25 @@ const HorizontalSidebar = () => {
     );
   };
 
+  const { userRole } = usePermission();
+  let sidebarData;
+  switch (userRole) {
+    case "Quản trị viên":
+      sidebarData = SidebarDataAdmin;
+      break;
+    case "Chủ cửa hàng":
+      sidebarData = SidebarDataOwner;
+      break;
+    case "Nhân viên kho":
+      sidebarData = SidebarDataWarehouse;
+      break;
+    case "Nhân viên bán hàng":
+      sidebarData = SidebarDataSales;
+      break;
+    default:
+      sidebarData = [];
+  }
+
   return (
     <div
       className="sidebar sidebar-horizontal"
@@ -67,7 +90,7 @@ const HorizontalSidebar = () => {
       <div className="sidebar-menu" id="sidebar-menu-3">
         <div className="main-menu">
           <ul className="nav">
-            {SidebarData1.map((mainTittle, mainIndex) => (
+            {sidebarData.map((mainTittle, mainIndex) => (
               <li className="submenu" key={mainIndex}>
                 <a
                   className={`${

@@ -73,6 +73,24 @@ public class OrderController {
         return response;
     }
 
+    @GetMapping("/my/today-count")
+    public ApiResponse<Long> getMyTodayOrderCount(@RequestParam(required = false) String paymentStatus) {
+        ApiResponse<Long> res = new ApiResponse<>();
+        Long count = orderService.getMyTodayOrderCount(paymentStatus == null || paymentStatus.isBlank() ? null : paymentStatus.trim());
+        res.setResult(count);
+        res.setMessage("Lấy số đơn đã bán hôm nay thành công.");
+        return res;
+    }
+
+    @GetMapping("/my/today-revenue")
+    public ApiResponse<java.math.BigDecimal> getMyTodayRevenue(@RequestParam(required = false) String paymentStatus) {
+        ApiResponse<java.math.BigDecimal> res = new ApiResponse<>();
+        java.math.BigDecimal revenue = orderService.getMyTodayRevenue(paymentStatus == null || paymentStatus.isBlank() ? null : paymentStatus.trim());
+        res.setResult(revenue);
+        res.setMessage("Lấy doanh thu hôm nay thành công.");
+        return res;
+    }
+
     @PostMapping("/{id}/hold")
     public ApiResponse<OrderResponse> holdOrder(@PathVariable UUID id) {
         ApiResponse<OrderResponse> response = new ApiResponse<>();

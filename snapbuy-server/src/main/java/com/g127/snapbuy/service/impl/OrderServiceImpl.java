@@ -538,6 +538,20 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         return "ORD" + datePart + String.format("%03d", nextNumber);
     }
 
+    public Long getMyTodayOrderCount(String paymentStatus) {
+        UUID accountId = resolveCurrentAccountId();
+        LocalDateTime start = LocalDate.now().atStartOfDay();
+        LocalDateTime end = LocalDate.now().atTime(23, 59, 59);
+        return orderRepository.countOrdersByAccountAndDateRange(accountId, start, end, paymentStatus);
+    }
+
+    public BigDecimal getMyTodayRevenue(String paymentStatus) {
+        UUID accountId = resolveCurrentAccountId();
+        LocalDateTime start = LocalDate.now().atStartOfDay();
+        LocalDateTime end = LocalDate.now().atTime(23, 59, 59);
+        return orderRepository.sumRevenueByAccountAndDateRange(accountId, start, end, paymentStatus);
+    }
+
 
     private void subtractInventoryOnly(Product product, int quantity) {
         Inventory inv = inventoryRepository.findByProduct(product)
