@@ -280,7 +280,19 @@ public class AccountServiceImpl implements AccountService {
         }
 
         if (req.getFullName() != null) acc.setFullName(req.getFullName());
-        if (req.getEmail() != null) acc.setEmail(req.getEmail());
+        if (req.getEmail() != null) {
+            String newEmail = req.getEmail().trim();
+            String currentEmail = acc.getEmail() != null ? acc.getEmail().trim() : "";
+            
+            // Chỉ cập nhật nếu email mới khác email hiện tại
+            if (!newEmail.equalsIgnoreCase(currentEmail)) {
+                // Kiểm tra email đã được sử dụng bởi tài khoản khác chưa
+                if (accountRepository.existsByEmailIgnoreCase(newEmail)) {
+                    throw new IllegalArgumentException("Email này đã được sử dụng bởi tài khoản khác");
+                }
+                acc.setEmail(newEmail);
+            }
+        }
         if (req.getPhone() != null) acc.setPhone(req.getPhone());
         if (req.getAvatarUrl() != null) acc.setAvatarUrl(req.getAvatarUrl());
         if (req.getActive() != null) acc.setActive(req.getActive());
@@ -318,12 +330,18 @@ public class AccountServiceImpl implements AccountService {
         }
 
         if (req.getFullName() != null) acc.setFullName(req.getFullName());
-        if (req.getEmail() != null && (acc.getEmail() == null || acc.getEmail().trim().isEmpty())) {
+        if (req.getEmail() != null) {
             String newEmail = req.getEmail().trim();
-            if (accountRepository.existsByEmailIgnoreCase(newEmail)) {
-                throw new IllegalArgumentException("Email này đã được sử dụng bởi tài khoản khác");
+            String currentEmail = acc.getEmail() != null ? acc.getEmail().trim() : "";
+            
+            // Chỉ cập nhật nếu email mới khác email hiện tại
+            if (!newEmail.equalsIgnoreCase(currentEmail)) {
+                // Kiểm tra email đã được sử dụng bởi tài khoản khác chưa
+                if (accountRepository.existsByEmailIgnoreCase(newEmail)) {
+                    throw new IllegalArgumentException("Email này đã được sử dụng bởi tài khoản khác");
+                }
+                acc.setEmail(newEmail);
             }
-            acc.setEmail(newEmail);
         }
         if (req.getPhone() != null) acc.setPhone(req.getPhone());
         

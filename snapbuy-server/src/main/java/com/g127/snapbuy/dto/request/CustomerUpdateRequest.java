@@ -13,6 +13,7 @@ public class CustomerUpdateRequest {
 
     @NotBlank(message = "Họ và tên không được để trống.")
     @Size(min = 2, max = 50, message = "Họ và tên phải từ 2 đến 50 ký tự.")
+    @Pattern(regexp = "^[\\p{L}\\d ]+$", message = "Họ và tên chỉ cho phép chữ, số và khoảng trắng")
     private String fullName;
 
     private Customer.Gender gender;

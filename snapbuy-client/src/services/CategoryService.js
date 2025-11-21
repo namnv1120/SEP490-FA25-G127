@@ -1,8 +1,7 @@
 /* eslint-disable no-useless-catch */
 import axios from "axios";
-import { getApiUrl } from '../config/apiConfig';
 
-const REST_API_BASE_URL = getApiUrl('/api/categories');
+const REST_API_BASE_URL = "http://localhost:8080/api/categories";
 
 // Helper function để lấy headers với token
 const getAuthHeaders = () => {

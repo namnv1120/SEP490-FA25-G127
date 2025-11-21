@@ -27,25 +27,6 @@ const FeatureModule = () => {
     (state) => state.themeSetting.dataTopbarAll
   );
 
-  // useEffect(() => {
-  //   // Hiện loader khi chuyển route
-  //   setShowLoader(true);
-
-  //   // Ẩn loader sau 2 giây
-  //   const timeoutId = setTimeout(() => {
-  //     setShowLoader(false);
-  //   }, 2000);
-
-  //   window.scrollTo(0, 0);
-  //   return () => clearTimeout(timeoutId);
-  // }, [location.pathname]);
-
-  // const Preloader = () => (
-  //   <div id="global-loader">
-  //     <div className="whirly-loader"></div>
-  //   </div>
-  // );
-
   const safeMatch = (routeList) =>
     routeList.some((route) => {
       const path = typeof route === "string" ? route : route?.path;

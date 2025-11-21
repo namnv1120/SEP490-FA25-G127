@@ -15,6 +15,7 @@ public class SupplierCreateRequest {
 
     @NotBlank(message = "Vui lòng nhập tên nhà cung cấp.")
     @Size(max = 100, message = "Tên nhà cung cấp không được vượt quá 100 ký tự.")
+    @Pattern(regexp = "^[\\p{L}\\d ]+$", message = "Tên nhà cung cấp chỉ cho phép chữ, số và khoảng trắng")
     private String supplierName;
 
     @Size(max = 20, message = "Số điện thoại không được vượt quá 20 ký tự.")

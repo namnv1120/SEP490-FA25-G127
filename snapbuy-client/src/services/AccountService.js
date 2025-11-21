@@ -1,7 +1,6 @@
 import axios from 'axios';
-import { getApiUrl } from '../config/apiConfig';
 
-const REST_API_BASE_URL = getApiUrl('/api/accounts');
+const REST_API_BASE_URL = 'http://localhost:8080/api/accounts';
 
 
 const getAuthHeader = () => {
@@ -63,7 +62,7 @@ export const updateAccount = async (id, updatedData) => {
         'Content-Type': 'application/json',
       },
     });
-    return response.data;
+    return response.data.result || response.data;
   } catch (error) {
     throw new Error(error.response?.data?.message || 'Failed to update account!');
   }

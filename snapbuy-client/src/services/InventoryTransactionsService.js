@@ -1,8 +1,7 @@
 // src/services/InventoryTransactionsService.js
 import axios from "axios";
-import { getApiUrl } from '../config/apiConfig';
 
-const API_BASE_URL = getApiUrl('/api/inventory-transactions');
+const API_BASE_URL = "http://localhost:8080/api/inventory-transactions";
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("authToken");

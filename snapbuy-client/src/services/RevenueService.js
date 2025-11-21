@@ -1,7 +1,6 @@
 import axios from "axios";
-import { getApiUrl } from '../config/apiConfig';
 
-const REST_API_BASE_URL = getApiUrl('/api/revenue');
+const REST_API_BASE_URL = "http://localhost:8080/api/revenue";
 
 // Hàm lấy header có token
 const getAuthHeaders = () => {
@@ -74,7 +73,7 @@ export const getProductRevenue = async (fromDate, toDate, accountId = null) => {
     // Encode datetime để tránh lỗi với ký tự đặc biệt trong URL
     const encodedFrom = encodeURIComponent(fromDate);
     const encodedTo = encodeURIComponent(toDate);
-    let url = `${getApiUrl('/api/reports/products-revenue')}?from=${encodedFrom}&to=${encodedTo}`;
+    let url = `http://localhost:8080/api/reports/products-revenue?from=${encodedFrom}&to=${encodedTo}`;
     if (accountId) {
       url += `&accountId=${accountId}`;
     }

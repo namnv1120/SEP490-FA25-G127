@@ -16,6 +16,7 @@ import java.util.UUID;
 public class PromotionCreateRequest {
 
     @NotBlank
+    @Pattern(regexp = "^[\\p{L}\\d ]+$", message = "Tên khuyến mãi chỉ cho phép chữ, số và khoảng trắng")
     private String promotionName;
 
     private String description;

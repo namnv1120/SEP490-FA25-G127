@@ -7,6 +7,7 @@ import lombok.*;
 public class RoleCreateRequest {
     @NotBlank(message = "Vui lòng nhập tên vai trò.")
     @Size(max = 50, message = "Tên vai trò không được vượt quá 50 ký tự.")
+    @Pattern(regexp = "^[\\p{L}\\d ]+$", message = "Tên vai trò chỉ cho phép chữ, số và khoảng trắng")
     private String roleName;
 
     @Size(max = 4000, message = "Mô tả quá dài (tối đa 4000 ký tự).")

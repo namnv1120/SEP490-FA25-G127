@@ -241,7 +241,7 @@ const RoleList = () => {
                   setCurrentPage={setCurrentPage}
                   totalRecords={roles.length}
                   dataKey="id"
-                  loading={loading}
+                  loading={false}
                   serverSidePagination={false}
                 />
               </div>

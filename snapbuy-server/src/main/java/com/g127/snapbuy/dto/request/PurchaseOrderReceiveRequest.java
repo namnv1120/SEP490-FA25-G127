@@ -1,5 +1,6 @@
 package com.g127.snapbuy.dto.request;
 
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
@@ -14,7 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PurchaseOrderReceiveRequest {
-
+    @NotEmpty
     private List<Item> items = new ArrayList<>();
     private String notes;
 

@@ -163,8 +163,12 @@ const EditProduct = () => {
 
     if (!product?.productName?.trim()) {
       newErrors.productName = "Vui lòng nhập tên sản phẩm.";
-    } else if (product.productName.length > 200) {
-      newErrors.productName = "Tên sản phẩm không được vượt quá 200 ký tự.";
+    } else if (product.productName.length < 3) {
+      newErrors.productName = "Tên sản phẩm phải có ít nhất 3 ký tự.";
+    } else if (product.productName.length > 100) {
+      newErrors.productName = "Tên sản phẩm không được vượt quá 100 ký tự.";
+    } else if (!/^[\p{L}\d ]+$/u.test(product.productName)) {
+      newErrors.productName = "Tên sản phẩm chỉ cho phép chữ, số và khoảng trắng.";
     }
 
     if (!selectedCategory && !selectedSubCategory) {

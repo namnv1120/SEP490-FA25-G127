@@ -108,8 +108,31 @@ const ProductList = () => {
 
   const handleImport = async (data) => {
     try {
-      await importProducts(data);
+      const result = await importProducts(data);
+      const imported = Array.isArray(result) ? result : [];
+      const importedCodes = new Set(
+        imported
+          .map((p) => (p.productCode || "").trim().toLowerCase())
+          .filter((c) => c)
+      );
+      const failed = data.filter(
+        (row) => !importedCodes.has((row.productCode || "").trim().toLowerCase())
+      );
+
       await fetchProducts();
+
+      if (failed.length > 0) {
+        const okCount = imported.length;
+        const total = data.length;
+        const failedCodes = failed
+          .map((r) => r.productCode)
+          .filter(Boolean)
+          .join(", ");
+        const msg = `Nhập ${okCount}/${total} dòng. Các mã bị bỏ qua: ${failedCodes}`;
+        const err = new Error(msg);
+        return Promise.reject(err);
+      }
+
       return Promise.resolve();
     } catch (error) {
       return Promise.reject(error);

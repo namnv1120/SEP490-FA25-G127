@@ -12,6 +12,7 @@ public class ProductCreateRequest {
 
     @NotBlank(message = "Vui lòng nhập tên sản phẩm.")
     @Size(max = 200, message = "Tên sản phẩm không được vượt quá 200 ký tự.")
+    @Pattern(regexp = "^[\\p{L}\\d ]+$", message = "Tên sản phẩm chỉ cho phép chữ, số và khoảng trắng")
     private String productName;
 
     @NotBlank(message = "Vui lòng nhập mã sản phẩm.")
