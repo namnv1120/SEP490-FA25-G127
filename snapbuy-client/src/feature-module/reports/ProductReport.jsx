@@ -20,7 +20,6 @@ const { RangePicker } = DatePicker;
 const ProductReport = () => {
   const [loading, setLoading] = useState(false);
   const [productData, setProductData] = useState(null);
-  const [detailedData, setDetailedData] = useState([]);
   const [periodType, setPeriodType] = useState("daily");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -36,23 +35,26 @@ const ProductReport = () => {
     try {
       setLoading(true);
       let data = null;
-      let detailed = [];
+      
 
       switch (periodType) {
-        case "daily":
+        case "daily": {
           const year = selectedDate.getFullYear();
           const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
           const day = String(selectedDate.getDate()).padStart(2, "0");
           const dateStr = `${year}-${month}-${day}`;
           data = await getDailyProductReport(dateStr);
           break;
-        case "monthly":
+        }
+        case "monthly": {
           data = await getMonthlyProductReport(selectedYear, selectedMonth);
           break;
-        case "yearly":
+        }
+        case "yearly": {
           data = await getYearlyProductReport(selectedYear);
           break;
-        case "custom":
+        }
+        case "custom": {
           if (!dateRange || !dateRange[0] || !dateRange[1]) {
             message.warning("Vui lòng chọn khoảng thời gian");
             setLoading(false);
@@ -62,12 +64,13 @@ const ProductReport = () => {
           const endStr = dateRange[1].format("YYYY-MM-DD");
           data = await getCustomProductReport(startStr, endStr);
           break;
-        default:
+        }
+        default: {
           break;
+        }
       }
 
       setProductData(data);
-      setDetailedData([]);
       setCurrentPage(1);
     } catch (error) {
       message.error(
@@ -75,7 +78,6 @@ const ProductReport = () => {
         "Lỗi khi tải dữ liệu báo cáo sản phẩm. Vui lòng thử lại."
       );
       setProductData(null);
-      setDetailedData([]);
     } finally {
       setLoading(false);
     }
@@ -89,23 +91,16 @@ const ProductReport = () => {
     }).format(amount);
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-  };
+  
 
   const getPeriodLabel = () => {
     switch (periodType) {
-      case "daily":
+      case "daily": {
         const day = String(selectedDate.getDate()).padStart(2, "0");
         const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
         const year = selectedDate.getFullYear();
         return `Ngày ${day}/${month}/${year}`;
+      }
       case "monthly":
         return `Tháng ${selectedMonth}/${selectedYear}`;
       case "yearly":
@@ -115,9 +110,9 @@ const ProductReport = () => {
           return "Chưa chọn khoảng thời gian";
         }
         return `Từ ${dateRange[0].format("DD/MM/YYYY")} đến ${dateRange[1].format("DD/MM/YYYY")}`;
-      default:
-
+      default: {
         return "";
+      }
     }
   };
 
@@ -144,7 +139,7 @@ const ProductReport = () => {
                       onChange={(e) => {
                         setPeriodType(e.target.value);
                         setProductData(null);
-                        setDetailedData([]);
+                        
                       }}
                     >
                       <option value="daily">Theo ngày</option>
@@ -166,7 +161,7 @@ const ProductReport = () => {
                         onChange={(date) => {
                           setSelectedDate(date);
                           setProductData(null);
-                          setDetailedData([]);
+                          
                         }}
                         dateFormat="dd/mm/yyyy"
                       />
@@ -185,7 +180,7 @@ const ProductReport = () => {
                           onChange={(e) => {
                             setSelectedMonth(parseInt(e.target.value));
                             setProductData(null);
-                            setDetailedData([]);
+                            
                           }}
                         >
                           {Array.from({ length: 12 }, (_, i) => i + 1).map(
@@ -207,7 +202,7 @@ const ProductReport = () => {
                           onChange={(e) => {
                             setSelectedYear(parseInt(e.target.value));
                             setProductData(null);
-                            setDetailedData([]);
+                            
                           }}
                         >
                           {Array.from(
@@ -258,7 +253,7 @@ const ProductReport = () => {
                         onChange={(dates) => {
                           setDateRange(dates);
                           setProductData(null);
-                          setDetailedData([]);
+                          
                         }}
                         format="DD/MM/YYYY"
                         style={{ width: "100%" }}

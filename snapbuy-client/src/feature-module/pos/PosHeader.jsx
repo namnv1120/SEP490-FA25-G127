@@ -9,7 +9,7 @@ import { avator1 } from '../../utils/imagepath';
 import { getCurrentShift } from '../../services/ShiftService';
 
 const PosHeader = () => {
-  const [isFullscreen] = useState(false);
+  
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentShift, setCurrentShift] = useState(null);
   const [shiftTimeText, setShiftTimeText] = useState('');

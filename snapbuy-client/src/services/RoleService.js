@@ -11,7 +11,6 @@ const getAuthHeader = () => {
 
 export const getAllRoles = async (active) => {
   try {
-    // Giống như getAllAccounts, không cần tham số active, trả về tất cả roles
     const response = await axios.get(REST_API_BASE_URL, {
       headers: getAuthHeader(),
     });

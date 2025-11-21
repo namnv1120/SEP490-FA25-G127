@@ -38,6 +38,7 @@ public class PosShiftServiceImpl implements PosShiftService {
                 .openedAt(s.getOpenedAt())
                 .closedAt(s.getClosedAt())
                 .status(s.getStatus())
+                .note(s.getClosingNote())
                 .build();
     }
 
@@ -71,13 +72,24 @@ public class PosShiftServiceImpl implements PosShiftService {
 
     @Override
     @Transactional
-    public PosShiftResponse close(String username, BigDecimal closingCash) {
+    public PosShiftResponse close(String username, BigDecimal closingCash, String note) {
         UUID accountId = resolveAccountId(username);
         PosShift s = posShiftRepository.findFirstByAccount_AccountIdAndStatusOrderByOpenedAtDesc(accountId, "Mở")
                 .orElseThrow(() -> new IllegalStateException("Không có ca đang mở"));
         s.setClosingCash(closingCash == null ? BigDecimal.ZERO : closingCash);
         s.setClosedAt(LocalDateTime.now());
         s.setStatus("Đóng");
+        s.setClosingNote(note);
         return toResponse(posShiftRepository.save(s));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<PosShiftResponse> getMyShifts(String username, String status) {
+        UUID accountId = resolveAccountId(username);
+        java.util.List<PosShift> shifts = (status == null || status.isBlank())
+                ? posShiftRepository.findByAccount_AccountIdOrderByOpenedAtDesc(accountId)
+                : posShiftRepository.findByAccount_AccountIdAndStatusOrderByOpenedAtDesc(accountId, status);
+        return shifts.stream().map(this::toResponse).toList();
     }
 }

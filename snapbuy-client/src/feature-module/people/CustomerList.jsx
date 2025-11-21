@@ -16,7 +16,7 @@ import {
 const Customers = () => {
   const [customerToDelete, setCustomerToDelete] = useState(null);
   const [listData, setListData] = useState([]);
-  const [loading, setLoading] = useState(false);
+  
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
@@ -33,14 +33,13 @@ const Customers = () => {
 
   const fetchCustomers = async () => {
     try {
-      setLoading(true);
       const data = await getAllCustomers();
       setListData(data);
       setTotalRecords(data.length || 0);
     } catch (error) {
       console.error("Error fetching customers:", error);
     } finally {
-      setLoading(false);
+      void 0;
     }
   };
 
@@ -60,7 +59,7 @@ const Customers = () => {
         phone: customerData.phone || "",
         gender: customerData.gender || "",
       });
-    } catch (error) {
+    } catch {
       message.error("Không thể tải dữ liệu khách hàng");
       setEditModalOpen(false);
       setSelectedCustomerId(null);
@@ -247,7 +246,7 @@ const Customers = () => {
             }, 0);
             await fetchCustomers();
             message.success("Xoá khách hàng thành công!");
-          } catch (err) {
+          } catch {
             message.error("Lỗi khi xoá khách hàng. Vui lòng thử lại.");
           } finally {
             setCustomerToDelete(null);

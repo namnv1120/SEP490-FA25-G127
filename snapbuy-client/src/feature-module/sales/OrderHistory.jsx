@@ -14,7 +14,6 @@ import OrderDetailModal from "../../core/modals/sales/OrderDetailModal";
 const OrderHistory = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
   const [selectedStatus, setSelectedStatus] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -153,7 +152,7 @@ const OrderHistory = () => {
 
       setAccountNamesMap(accountNames);
       setFilteredData(sortedData);
-      setTotalRecords(sortedData.length);
+      
       setIsInitialLoad(false);
     } catch (err) {
       console.error("=== Lỗi khi gọi API ===", err);
@@ -163,7 +162,7 @@ const OrderHistory = () => {
         "Không thể tải dữ liệu đơn hàng."
       );
       setFilteredData([]);
-      setTotalRecords(0);
+      
       setIsInitialLoad(false);
     } finally {
       setLoading(false);

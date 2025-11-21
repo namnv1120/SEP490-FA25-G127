@@ -5,6 +5,7 @@ import CommonFooter from "../../components/footer/CommonFooter";
 import { message } from "antd";
 import { getProductPriceById, updateProductPrice } from "../../services/ProductPriceService";
 import { getAllProducts } from "../../services/ProductService";
+import PageLoader from "../../components/loading/PageLoader.jsx";
 
 const EditProductPrice = () => {
   const { id } = useParams();
@@ -165,18 +166,7 @@ const EditProductPrice = () => {
   // const selectedProduct = products.find((p) => p.productId === formData.productId);
 
   if (initialLoading) {
-    return (
-      <div className="page-wrapper">
-        <div className="content">
-          <div className="text-center my-5">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Đang tải ...</span>
-            </div>
-            <p className="mt-2">Đang tải giá sản phẩm ...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (
@@ -218,26 +208,20 @@ const EditProductPrice = () => {
                         <label className="form-label">
                           Sản phẩm <span className="text-danger">*</span>
                         </label>
-                        {loadingProducts ? (
-                          <div className="spinner-border spinner-border-sm" role="status">
-                            <span className="visually-hidden">Loading...</span>
-                          </div>
-                        ) : (
-                          <select
-                            className={`form-control ${errors.productId ? "is-invalid" : ""}`}
-                            name="productId"
-                            value={formData.productId}
-                            onChange={handleChange}
-                            disabled
-                          >
-                            <option value="">Chọn sản phẩm</option>
-                            {products.map((product) => (
-                              <option key={product.productId} value={product.productId}>
-                                {product.productCode} - {product.productName}
-                              </option>
-                            ))}
-                          </select>
-                        )}
+                        <select
+                          className={`form-control ${errors.productId ? "is-invalid" : ""}`}
+                          name="productId"
+                          value={formData.productId}
+                          onChange={handleChange}
+                          disabled
+                        >
+                          <option value="">{loadingProducts ? "Đang tải dữ liệu..." : "Chọn sản phẩm"}</option>
+                          {!loadingProducts && products.map((product) => (
+                            <option key={product.productId} value={product.productId}>
+                              {product.productCode} - {product.productName}
+                            </option>
+                          ))}
+                        </select>
                         {errors.productId && (
                           <div className="invalid-feedback d-block">{errors.productId}</div>
                         )}

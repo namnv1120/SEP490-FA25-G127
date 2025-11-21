@@ -13,7 +13,6 @@ import {
   getProductRevenue,
 } from "../../services/RevenueService";
 import { getAccountsByRoleName } from "../../services/AccountService";
-import { exportToExcel } from "../../utils/excelUtils";
 import ExcelJS from "exceljs";
 import CommonFooter from "../../components/footer/CommonFooter";
 import PrimeDataTable from "../../components/data-table";
@@ -59,9 +58,7 @@ const RevenueReport = () => {
     try {
       const fromDateStr = startDateTime.toISOString();
       const toDateStr = endDateTime.toISOString();
-      console.log("Fetching product revenue from:", fromDateStr, "to:", toDateStr, "accountId:", accountId);
       const productRevenue = await getProductRevenue(fromDateStr, toDateStr, accountId);
-      console.log("Product revenue data received:", productRevenue);
       setProductRevenueData(productRevenue || []);
     } catch (productError) {
       console.error("Lỗi khi tải dữ liệu doanh thu sản phẩm:", productError);
@@ -91,7 +88,7 @@ const RevenueReport = () => {
       let endDateTime = null;
 
       switch (periodType) {
-        case "daily":
+        case "daily": {
           const year = selectedDate.getFullYear();
           const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
           const day = String(selectedDate.getDate()).padStart(2, "0");
@@ -102,7 +99,8 @@ const RevenueReport = () => {
           endDateTime = new Date(selectedDate);
           endDateTime.setHours(23, 59, 59, 999);
           break;
-        case "monthly":
+        }
+        case "monthly": {
           data = await getMonthlyRevenue(selectedYear, selectedMonth);
           startDateTime = new Date(selectedYear, selectedMonth - 1, 1);
           startDateTime.setHours(0, 0, 0, 0);
@@ -112,12 +110,12 @@ const RevenueReport = () => {
           const dailyPromises = [];
           for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(selectedYear, selectedMonth - 1, day);
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, "0");
-            const dayStr = String(date.getDate()).padStart(2, "0");
-            const dateStr = `${year}-${month}-${dayStr}`;
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, "0");
+            const dStr = String(date.getDate()).padStart(2, "0");
+            const ds = `${y}-${m}-${dStr}`;
             dailyPromises.push(
-              getDailyRevenue(dateStr).catch(() => ({
+              getDailyRevenue(ds).catch(() => ({
                 totalRevenue: 0,
                 orderCount: 0,
                 startDate: date.toISOString(),
@@ -132,7 +130,8 @@ const RevenueReport = () => {
             label: `${index + 1}`,
           }));
           break;
-        case "yearly":
+        }
+        case "yearly": {
           data = await getYearlyRevenue(selectedYear);
           startDateTime = new Date(selectedYear, 0, 1);
           startDateTime.setHours(0, 0, 0, 0);
@@ -169,7 +168,8 @@ const RevenueReport = () => {
             label: monthNames[index],
           }));
           break;
-        case "custom":
+        }
+        case "custom": {
           if (!dateRange || !dateRange[0] || !dateRange[1]) {
             message.warning("Vui lòng chọn khoảng thời gian");
             setLoading(false);
@@ -189,12 +189,12 @@ const RevenueReport = () => {
           const currentDate = new Date(startDate);
 
           while (currentDate <= endDate) {
-            const year = currentDate.getFullYear();
-            const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-            const day = String(currentDate.getDate()).padStart(2, "0");
-            const dateStr = `${year}-${month}-${day}`;
+            const y = currentDate.getFullYear();
+            const m = String(currentDate.getMonth() + 1).padStart(2, "0");
+            const d = String(currentDate.getDate()).padStart(2, "0");
+            const ds = `${y}-${m}-${d}`;
             customDailyPromises.push(
-              getDailyRevenue(dateStr).catch(() => ({
+              getDailyRevenue(ds).catch(() => ({
                 totalRevenue: 0,
                 orderCount: 0,
                 startDate: currentDate.toISOString(),
@@ -218,8 +218,10 @@ const RevenueReport = () => {
             };
           });
           break;
-        default:
+        }
+        default: {
           break;
+        }
       }
 
       setRevenueData(data);
@@ -276,7 +278,6 @@ const RevenueReport = () => {
 
       // Định nghĩa headers
       const headers = ["STT", "Tên sản phẩm", "Giá bán (VNĐ)", "Số lượng", "Tổng tiền (VNĐ)"];
-      const centerColumns = ["STT", "Giá bán (VNĐ)", "Số lượng", "Tổng tiền (VNĐ)"];
 
       // Thêm header row
       const headerRow = worksheet.addRow(headers);
@@ -360,35 +361,31 @@ const RevenueReport = () => {
     }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-  };
+  
 
   const getPeriodLabel = () => {
     switch (periodType) {
-      case "daily":
+      case "daily": {
         const day = String(selectedDate.getDate()).padStart(2, "0");
         const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
         const year = selectedDate.getFullYear();
         return `Ngày ${day}/${month}/${year}`;
-      case "monthly":
+      }
+      case "monthly": {
         return `Tháng ${selectedMonth}/${selectedYear}`;
-      case "yearly":
+      }
+      case "yearly": {
         return `Năm ${selectedYear}`;
-      case "custom":
+      }
+      case "custom": {
         if (!dateRange || !dateRange[0] || !dateRange[1]) {
           return "Chưa chọn khoảng thời gian";
         }
         return `Từ ${dateRange[0].format("DD/MM/YYYY")} đến ${dateRange[1].format("DD/MM/YYYY")}`;
-      default:
-
+      }
+      default: {
         return "";
+      }
     }
   };
 

@@ -13,6 +13,8 @@ import java.util.*;
 public class JwtUtil {
 
     private static final String SECRET_KEY = "6vD1vT4FQ2a3gU9+WvJNhfR7i9j1+5sZrZT1T8iQ3xY=";
+    @org.springframework.beans.factory.annotation.Value("${jwt.expiration.ms:-1}")
+    private long expirationMs;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -45,21 +47,51 @@ public class JwtUtil {
     }
 
     private Boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        Date exp = extractExpiration(token);
+        return exp != null && exp.before(new Date());
     }
 
     public String generateToken(UserDetails userDetails) {
         String jti = UUID.randomUUID().toString();
         Date now = new Date(System.currentTimeMillis());
-        Date exp = new Date(System.currentTimeMillis() + 1000 * 60 * 60); // 1h
-        return Jwts.builder()
+        JwtBuilder builder = Jwts.builder()
                 .setId(jti)
                 .setSubject(userDetails.getUsername())
                 .claim("roles", userDetails.getAuthorities())
                 .setIssuedAt(now)
-                .setExpiration(exp)
-                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
-                .compact();
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256);
+        if (expirationMs > 0) {
+            builder.setExpiration(new Date(System.currentTimeMillis() + expirationMs));
+        }
+        return builder.compact();
+    }
+
+    public String generateToken(UserDetails userDetails, Map<String, Object> extraClaims) {
+        String jti = UUID.randomUUID().toString();
+        Date now = new Date(System.currentTimeMillis());
+        JwtBuilder builder = Jwts.builder()
+                .setId(jti)
+                .setSubject(userDetails.getUsername())
+                .claim("roles", userDetails.getAuthorities())
+                .addClaims(extraClaims == null ? Collections.emptyMap() : extraClaims)
+                .setIssuedAt(now)
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256);
+        if (expirationMs > 0) {
+            builder.setExpiration(new Date(System.currentTimeMillis() + expirationMs));
+        }
+        return builder.compact();
+    }
+
+    public Integer extractVersion(String token) {
+        try {
+            Claims c = extractAllClaims(token);
+            Object v = c.get("ver");
+            if (v instanceof Integer) return (Integer) v;
+            if (v instanceof Number) return ((Number) v).intValue();
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public Boolean validateToken(String token, UserDetails userDetails) {

@@ -12,7 +12,7 @@ const DeleteModal = ({ itemId, itemName, onDelete, onCancel }) => {
         if (modal) {
           modal.hide();
         }
-      } catch (error) {
+      } catch {
         message.error("Lỗi khi xoá mục. Vui lòng thử lại.");
       }
     }

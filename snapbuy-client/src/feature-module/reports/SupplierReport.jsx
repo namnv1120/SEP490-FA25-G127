@@ -20,7 +20,6 @@ const { RangePicker } = DatePicker;
 const SupplierReport = () => {
   const [loading, setLoading] = useState(false);
   const [supplierData, setSupplierData] = useState(null);
-  const [detailedData, setDetailedData] = useState([]);
   const [periodType, setPeriodType] = useState("daily");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -36,23 +35,26 @@ const SupplierReport = () => {
     try {
       setLoading(true);
       let data = null;
-      let detailed = [];
+      
 
       switch (periodType) {
-        case "daily":
+        case "daily": {
           const year = selectedDate.getFullYear();
           const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
           const day = String(selectedDate.getDate()).padStart(2, "0");
           const dateStr = `${year}-${month}-${day}`;
           data = await getDailySupplierReport(dateStr);
           break;
-        case "monthly":
+        }
+        case "monthly": {
           data = await getMonthlySupplierReport(selectedYear, selectedMonth);
           break;
-        case "yearly":
+        }
+        case "yearly": {
           data = await getYearlySupplierReport(selectedYear);
           break;
-        case "custom":
+        }
+        case "custom": {
           if (!dateRange || !dateRange[0] || !dateRange[1]) {
             message.warning("Vui lòng chọn khoảng thời gian");
             setLoading(false);
@@ -62,12 +64,13 @@ const SupplierReport = () => {
           const endStr = dateRange[1].format("YYYY-MM-DD");
           data = await getCustomSupplierReport(startStr, endStr);
           break;
-        default:
+        }
+        default: {
           break;
+        }
       }
 
       setSupplierData(data);
-      setDetailedData([]);
       setCurrentPage(1);
     } catch (error) {
       message.error(
@@ -75,7 +78,6 @@ const SupplierReport = () => {
         "Lỗi khi tải dữ liệu báo cáo nhà cung cấp. Vui lòng thử lại."
       );
       setSupplierData(null);
-      setDetailedData([]);
     } finally {
       setLoading(false);
     }
@@ -89,35 +91,31 @@ const SupplierReport = () => {
     }).format(amount);
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-  };
+  
 
   const getPeriodLabel = () => {
     switch (periodType) {
-      case "daily":
+      case "daily": {
         const day = String(selectedDate.getDate()).padStart(2, "0");
         const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
         const year = selectedDate.getFullYear();
         return `Ngày ${day}/${month}/${year}`;
-      case "monthly":
+      }
+      case "monthly": {
         return `Tháng ${selectedMonth}/${selectedYear}`;
-      case "yearly":
+      }
+      case "yearly": {
         return `Năm ${selectedYear}`;
-      case "custom":
+      }
+      case "custom": {
         if (!dateRange || !dateRange[0] || !dateRange[1]) {
           return "Chưa chọn khoảng thời gian";
         }
         return `Từ ${dateRange[0].format("DD/MM/YYYY")} đến ${dateRange[1].format("DD/MM/YYYY")}`;
-      default:
-
+      }
+      default: {
         return "";
+      }
     }
   };
 
@@ -143,7 +141,7 @@ const SupplierReport = () => {
                       onChange={(e) => {
                         setPeriodType(e.target.value);
                         setSupplierData(null);
-                        setDetailedData([]);
+                        
                       }}
                     >
                       <option value="daily">Theo ngày</option>
@@ -165,7 +163,7 @@ const SupplierReport = () => {
                         onChange={(date) => {
                           setSelectedDate(date);
                           setSupplierData(null);
-                          setDetailedData([]);
+                          
                         }}
                         dateFormat="dd/mm/yyyy"
                       />
@@ -184,7 +182,7 @@ const SupplierReport = () => {
                           onChange={(e) => {
                             setSelectedMonth(parseInt(e.target.value));
                             setSupplierData(null);
-                            setDetailedData([]);
+                            
                           }}
                         >
                           {Array.from({ length: 12 }, (_, i) => i + 1).map(
@@ -206,7 +204,7 @@ const SupplierReport = () => {
                           onChange={(e) => {
                             setSelectedYear(parseInt(e.target.value));
                             setSupplierData(null);
-                            setDetailedData([]);
+                            
                           }}
                         >
                           {Array.from(
@@ -257,7 +255,7 @@ const SupplierReport = () => {
                         onChange={(dates) => {
                           setDateRange(dates);
                           setSupplierData(null);
-                          setDetailedData([]);
+                          
                         }}
                         format="DD/MM/YYYY"
                         style={{ width: "100%" }}

@@ -72,12 +72,7 @@ const EditSubCategory = ({ isOpen, categoryId, parentCategories, onSuccess, onCl
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const handleStatusChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      active: e.target.checked,
-    }));
-  };
+  
 
   const handleSubmit = async () => {
     if (!validateForm()) {

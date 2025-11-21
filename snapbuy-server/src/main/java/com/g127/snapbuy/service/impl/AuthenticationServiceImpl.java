@@ -24,6 +24,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
+    private final com.g127.snapbuy.repository.AccountRepository accountRepository;
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest req) {
@@ -34,8 +35,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 new UsernamePasswordAuthenticationToken(uname, req.getPassword()));
 
         UserDetails user = userDetailsService.loadUserByUsername(uname);
-        String token = jwtUtil.generateToken(user);
-        long exp = new Date().getTime() + 60L * 60 * 1000;
+        Integer ver = accountRepository.findByUsername(uname).map(a -> a.getTokenVersion()).orElse(0);
+        String token = jwtUtil.generateToken(user, java.util.Map.of("ver", ver));
+        Date expDate = null;
+        try { expDate = jwtUtil.extractExpiration(token); } catch (Exception ignored) {}
+        long exp = expDate != null ? expDate.getTime() : 0L;
         return AuthenticationResponse.builder().token(token).tokenType("Bearer").expiresAt(exp).build();
     }
 
@@ -45,7 +49,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             String username = jwtUtil.extractUsername(req.getToken());
             UserDetails user = userDetailsService.loadUserByUsername(username);
             boolean valid = jwtUtil.validateToken(req.getToken(), user);
-            Long exp = jwtUtil.extractExpiration(req.getToken()).getTime();
+            Date expDate = null;
+            try { expDate = jwtUtil.extractExpiration(req.getToken()); } catch (Exception ignored) {}
+            Long exp = expDate != null ? expDate.getTime() : 0L;
             List<String> roles = user.getAuthorities().stream().map(a -> a.getAuthority()).toList();
             return IntrospectResponse.builder().valid(valid).username(username).exp(exp).roles(roles).build();
         } catch (Exception e) {
@@ -61,8 +67,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             if (!jwtUtil.validateToken(req.getToken(), user)) {
                 throw new BadCredentialsException("Token không hợp lệ");
             }
-            String newToken = jwtUtil.generateToken(user);
-            long exp = new Date().getTime() + 60L * 60 * 1000;
+            Integer ver = accountRepository.findByUsername(username).map(a -> a.getTokenVersion()).orElse(0);
+            String newToken = jwtUtil.generateToken(user, java.util.Map.of("ver", ver));
+            Date expDate = null;
+            try { expDate = jwtUtil.extractExpiration(newToken); } catch (Exception ignored) {}
+            long exp = expDate != null ? expDate.getTime() : 0L;
             return AuthenticationResponse.builder().token(newToken).tokenType("Bearer").expiresAt(exp).build();
         } catch (Exception e) {
             throw new BadCredentialsException("Token không hợp lệ");
@@ -84,7 +93,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new IllegalArgumentException("Token đã bị thu hồi");
         }
 
-        long expMs = jwtUtil.extractExpiration(token).getTime();
+        Date expDate = null;
+        try { expDate = jwtUtil.extractExpiration(token); } catch (Exception ignored) {}
+        long expMs = expDate != null ? expDate.getTime() : Long.MAX_VALUE;
         tokenBlacklistService.blacklist(jti, expMs);
     }
 }

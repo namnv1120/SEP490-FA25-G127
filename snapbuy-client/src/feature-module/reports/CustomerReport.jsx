@@ -20,7 +20,6 @@ const { RangePicker } = DatePicker;
 const CustomerReport = () => {
   const [loading, setLoading] = useState(false);
   const [customerData, setCustomerData] = useState(null);
-  const [detailedData, setDetailedData] = useState([]);
   const [periodType, setPeriodType] = useState("daily");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -36,23 +35,26 @@ const CustomerReport = () => {
     try {
       setLoading(true);
       let data = null;
-      let detailed = [];
+      
 
       switch (periodType) {
-        case "daily":
+        case "daily": {
           const year = selectedDate.getFullYear();
           const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
           const day = String(selectedDate.getDate()).padStart(2, "0");
           const dateStr = `${year}-${month}-${day}`;
           data = await getDailyCustomerReport(dateStr);
           break;
-        case "monthly":
+        }
+        case "monthly": {
           data = await getMonthlyCustomerReport(selectedYear, selectedMonth);
           break;
-        case "yearly":
+        }
+        case "yearly": {
           data = await getYearlyCustomerReport(selectedYear);
           break;
-        case "custom":
+        }
+        case "custom": {
           if (!dateRange || !dateRange[0] || !dateRange[1]) {
             message.warning("Vui lòng chọn khoảng thời gian");
             setLoading(false);
@@ -62,12 +64,13 @@ const CustomerReport = () => {
           const endStr = dateRange[1].format("YYYY-MM-DD");
           data = await getCustomCustomerReport(startStr, endStr);
           break;
-        default:
+        }
+        default: {
           break;
+        }
       }
 
       setCustomerData(data);
-      setDetailedData([]);
       setCurrentPage(1);
     } catch (error) {
       message.error(
@@ -75,49 +78,36 @@ const CustomerReport = () => {
         "Lỗi khi tải dữ liệu báo cáo khách hàng. Vui lòng thử lại."
       );
       setCustomerData(null);
-      setDetailedData([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const formatCurrency = (amount) => {
-    if (!amount) return "0 đ";
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount);
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-  };
+  
 
   const getPeriodLabel = () => {
     switch (periodType) {
-      case "daily":
+      case "daily": {
         const day = String(selectedDate.getDate()).padStart(2, "0");
         const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
         const year = selectedDate.getFullYear();
         return `Ngày ${day}/${month}/${year}`;
-      case "monthly":
+      }
+      case "monthly": {
         return `Tháng ${selectedMonth}/${selectedYear}`;
-      case "yearly":
+      }
+      case "yearly": {
         return `Năm ${selectedYear}`;
-      case "custom":
+      }
+      case "custom": {
         if (!dateRange || !dateRange[0] || !dateRange[1]) {
           return "Chưa chọn khoảng thời gian";
         }
         return `Từ ${dateRange[0].format("DD/MM/YYYY")} đến ${dateRange[1].format("DD/MM/YYYY")}`;
-      default:
-
+      }
+      default: {
         return "";
+      }
     }
   };
 
@@ -143,7 +133,7 @@ const CustomerReport = () => {
                       onChange={(e) => {
                         setPeriodType(e.target.value);
                         setCustomerData(null);
-                        setDetailedData([]);
+                        
                       }}
                     >
                       <option value="daily">Theo ngày</option>
@@ -165,7 +155,7 @@ const CustomerReport = () => {
                         onChange={(date) => {
                           setSelectedDate(date);
                           setCustomerData(null);
-                          setDetailedData([]);
+                          
                         }}
                         dateFormat="dd/mm/yyyy"
                       />
@@ -184,7 +174,7 @@ const CustomerReport = () => {
                           onChange={(e) => {
                             setSelectedMonth(parseInt(e.target.value));
                             setCustomerData(null);
-                            setDetailedData([]);
+                            
                           }}
                         >
                           {Array.from({ length: 12 }, (_, i) => i + 1).map(
@@ -206,7 +196,7 @@ const CustomerReport = () => {
                           onChange={(e) => {
                             setSelectedYear(parseInt(e.target.value));
                             setCustomerData(null);
-                            setDetailedData([]);
+                            
                           }}
                         >
                           {Array.from(
@@ -257,7 +247,7 @@ const CustomerReport = () => {
                         onChange={(dates) => {
                           setDateRange(dates);
                           setCustomerData(null);
-                          setDetailedData([]);
+                          
                         }}
                         format="DD/MM/YYYY"
                         style={{ width: "100%" }}

@@ -35,7 +35,7 @@ const AddPurchaseOrder = () => {
             label: s.supplierName,
           }));
         setSuppliers(options);
-      } catch (err) {
+      } catch {
         message.error("Không thể tải danh sách nhà cung cấp.");
       }
     };
@@ -59,7 +59,7 @@ const AddPurchaseOrder = () => {
             unitPrice: p.costPrice || 0, // Sử dụng giá nhập (costPrice) thay vì giá bán (unitPrice)
           }));
         setProducts(options);
-      } catch (err) {
+      } catch {
         message.error("Không thể tải sản phẩm của nhà cung cấp này.");
       }
     };

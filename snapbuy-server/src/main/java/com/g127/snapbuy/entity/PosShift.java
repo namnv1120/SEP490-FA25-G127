@@ -40,6 +40,9 @@ public class PosShift {
     @Column(name = "status", length = 10)
     private String status;
 
+    @Column(name = "closing_note")
+    private String closingNote;
+
     @Column(name = "created_date")
     private LocalDateTime createdDate;
 

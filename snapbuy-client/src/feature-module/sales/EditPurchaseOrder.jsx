@@ -41,7 +41,7 @@ const EditPurchaseOrder = () => {
             label: s.supplierName,
           }));
         setSuppliers(options);
-      } catch (err) {
+      } catch {
         message.error("Không thể tải danh sách nhà cung cấp.");
       }
     };
@@ -106,17 +106,9 @@ const EditPurchaseOrder = () => {
 
       setNotes(data.notes || "");
       setTaxAmount(data.taxAmount || 0);
-    } catch (err) {
-      const errorMessage = err.message || "Không thể tải chi tiết đơn hàng.";
-      message.error(errorMessage);
-
-      if (err.message?.includes("Status: 404") || err.message?.includes("Status: 500")) {
-        setTimeout(() => {
-          navigate(route.purchaseorders);
-        }, 2000);
-      } else {
-        navigate(route.purchaseorders);
-      }
+    } catch {
+      message.error("Không thể tải chi tiết đơn hàng.");
+      navigate(route.purchaseorders);
     } finally {
       setLoading(false);
     }
@@ -177,7 +169,7 @@ const EditPurchaseOrder = () => {
               : [{ product: null, quantity: 1, unitPrice: 0, total: 0, receiveQuantity: 0 }]
           );
         }
-      } catch (err) {
+      } catch {
         message.error("Không thể tải sản phẩm của nhà cung cấp này.");
       }
     };
@@ -570,4 +562,3 @@ const EditPurchaseOrder = () => {
 };
 
 export default EditPurchaseOrder;
-

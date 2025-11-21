@@ -41,8 +41,17 @@ public class PosShiftController {
     public ApiResponse<PosShiftResponse> close(@Valid @RequestBody PosShiftCloseRequest req,
                                                @AuthenticationPrincipal User principal) {
         ApiResponse<PosShiftResponse> res = new ApiResponse<>();
-        res.setResult(posShiftService.close(principal.getUsername(), req.getClosingCash()));
+        PosShiftResponse result = posShiftService.close(principal.getUsername(), req.getClosingCash(), req.getNote());
+        res.setResult(result);
+        return res;
+    }
+
+    @GetMapping("/my")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
+    public ApiResponse<java.util.List<PosShiftResponse>> myShifts(@AuthenticationPrincipal User principal,
+                                                                  @RequestParam(required = false) String status) {
+        ApiResponse<java.util.List<PosShiftResponse>> res = new ApiResponse<>();
+        res.setResult(posShiftService.getMyShifts(principal.getUsername(), status));
         return res;
     }
 }
-

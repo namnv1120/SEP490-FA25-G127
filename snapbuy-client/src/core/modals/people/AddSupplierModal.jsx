@@ -86,12 +86,7 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const handleStatusChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      active: e.target.checked,
-    }));
-  };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();

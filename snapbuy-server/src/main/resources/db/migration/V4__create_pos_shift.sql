@@ -8,7 +8,7 @@ CREATE TABLE pos_shift (
     status        NVARCHAR(10)    NOT NULL DEFAULT N'Mở',
     created_date  DATETIME2       NOT NULL DEFAULT GETDATE(),
     updated_date  DATETIME2       NOT NULL DEFAULT GETDATE(),
-
+    closing_note NVARCHAR(255)    NULL,
     FOREIGN KEY (account_id) REFERENCES accounts (account_id)
 );
 

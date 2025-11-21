@@ -171,6 +171,7 @@ public class AccountServiceImpl implements AccountService {
             throw new IllegalArgumentException("Mật khẩu cũ không đúng");
 
         acc.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
+        acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         return accountMapper.toResponse(accountRepository.save(acc));
     }
 
@@ -187,6 +188,7 @@ public class AccountServiceImpl implements AccountService {
             throw new IllegalArgumentException("Mật khẩu cũ không đúng");
 
         acc.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
+        acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         accountRepository.save(acc);
     }
 
@@ -199,6 +201,7 @@ public class AccountServiceImpl implements AccountService {
         ensureActive(role);
 
         acc.getRoles().add(role);
+        acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         accountRepository.save(acc);
         return accountMapper.toResponse(acc);
     }
@@ -220,6 +223,7 @@ public class AccountServiceImpl implements AccountService {
             throw new IllegalStateException("Bạn không thể tự gỡ vai trò của chính mình");
 
         acc.getRoles().remove(role);
+        acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         accountRepository.save(acc);
     }
 
@@ -298,6 +302,7 @@ public class AccountServiceImpl implements AccountService {
         if (req.getActive() != null) acc.setActive(req.getActive());
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
             acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+            acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         }
 
         if (req.getRoles() != null && !req.getRoles().isEmpty()) {
@@ -312,6 +317,7 @@ public class AccountServiceImpl implements AccountService {
 
             acc.getRoles().clear();
             acc.getRoles().add(role);
+            acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         }
         return accountMapper.toResponse(accountRepository.save(acc));
     }
@@ -369,6 +375,7 @@ public class AccountServiceImpl implements AccountService {
         
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
             acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+            acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         }
 
         if (req.getRoles() != null && !req.getRoles().isEmpty() && isAdmin()) {
@@ -382,6 +389,7 @@ public class AccountServiceImpl implements AccountService {
             ensureActive(role);
             acc.getRoles().clear();
             acc.getRoles().add(role);
+            acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         }
 
         return accountMapper.toResponse(accountRepository.save(acc));
@@ -417,6 +425,7 @@ public class AccountServiceImpl implements AccountService {
         Boolean currentActive = account.getActive();
         account.setActive(currentActive == null || !currentActive);
         account.setUpdatedDate(LocalDateTime.now());
+        account.setTokenVersion((account.getTokenVersion() == null ? 0 : account.getTokenVersion()) + 1);
         Account savedAccount = accountRepository.save(account);
         return accountMapper.toResponse(savedAccount);
     }

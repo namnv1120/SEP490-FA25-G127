@@ -7,7 +7,7 @@ import { stockImg1 } from "../../utils/imagepath";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
-import { getAllProducts, deleteProduct, importProducts, toggleProductStatus, searchProducts } from "../../services/ProductService";
+import { deleteProduct, importProducts, toggleProductStatus, searchProducts } from "../../services/ProductService";
 import ImportProductModal from "./ImportProduct";
 import ProductDetailModal from "../../core/modals/inventories/ProductDetailModal";
 import { message } from "antd";
@@ -21,7 +21,7 @@ const ProductList = () => {
   const [rows, setRows] = useState(10);
   const [searchQuery, setSearchQuery] = useState(undefined);
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  
   const [error, setError] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -36,7 +36,6 @@ const ProductList = () => {
 
   const fetchProducts = async () => {
     try {
-      setLoading(true);
       setError(null);
 
       const backendPage = currentPage - 1;
@@ -75,10 +74,10 @@ const ProductList = () => {
 
       setProducts(mappedProducts);
       setTotalRecords(result.totalElements || 0);
-    } catch (err) {
+    } catch {
       setError("Lỗi khi tải danh sách sản phẩm. Vui lòng thử lại.");
     } finally {
-      setLoading(false);
+      void 0;
     }
   };
 
@@ -101,7 +100,7 @@ const ProductList = () => {
 
     try {
       await exportToExcel(exportData, "Danh_sach_san_pham");
-    } catch (error) {
+    } catch {
       message.error("Lỗi khi xuất file Excel!");
     }
   };
@@ -134,7 +133,7 @@ const ProductList = () => {
       }
 
       return Promise.resolve();
-    } catch (error) {
+    } catch {
       return Promise.reject(error);
     }
   };
@@ -175,7 +174,7 @@ const ProductList = () => {
       }
 
       message.success("Sản phẩm đã được xoá thành công!");
-    } catch (error) {
+    } catch {
       message.error("Lỗi khi xoá sản phẩm. Vui lòng thử lại.");
     }
   };
@@ -190,7 +189,7 @@ const ProductList = () => {
       await toggleProductStatus(product.productId);
       await fetchProducts();
       message.success("Đã cập nhật trạng thái sản phẩm thành công!");
-    } catch (err) {
+    } catch {
       message.error("Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại.");
     }
   };

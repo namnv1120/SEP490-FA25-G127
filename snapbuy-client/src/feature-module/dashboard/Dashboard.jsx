@@ -22,6 +22,7 @@ import { getAllProducts } from "../../services/ProductService";
 import { getAllCustomers } from "../../services/CustomerService";
 import { getAllCategories } from "../../services/CategoryService";
 import { getAllInventories } from "../../services/InventoryService";
+import PageLoader from "../../components/loading/PageLoader.jsx";
 
 ChartJS.register(
   CategoryScale,
@@ -81,8 +82,8 @@ const Dashboard = () => {
 
         // Calculate statistics
         calculateStats(purchaseOrders, products, customers, categories);
-      } catch (error) {
-        // Silent error handling
+      } catch {
+        void 0;
       } finally {
         setLoading(false);
       }
@@ -90,6 +91,8 @@ const Dashboard = () => {
 
     fetchDashboardData();
   }, []);
+
+  
 
   // Calculate dashboard statistics
   const calculateStats = (purchaseOrders, products, customers, categories) => {
@@ -143,28 +146,7 @@ const Dashboard = () => {
   };
 
   // Get recent products - memoized
-  const recentProducts = useMemo(() => {
-    const prods = dashboardData.products || [];
-    return prods
-      .sort((a, b) => {
-        const dateA = new Date(a.createdAt || a.createdDate || 0);
-        const dateB = new Date(b.createdAt || b.createdDate || 0);
-        return dateB - dateA;
-      })
-      .slice(0, 10);
-  }, [dashboardData.products]);
-
-  // Get recent purchase orders - memoized
-  const recentPurchaseOrders = useMemo(() => {
-    const orders = dashboardData.purchaseOrders || [];
-    return orders
-      .sort((a, b) => {
-        const dateA = new Date(a.orderDate || a.createdAt || a.createdDate || 0);
-        const dateB = new Date(b.orderDate || b.createdAt || b.createdDate || 0);
-        return dateB - dateA;
-      })
-      .slice(0, 10);
-  }, [dashboardData.purchaseOrders]);
+  
 
   // Get top categories - memoized
   const topCategories = useMemo(() => {
@@ -600,6 +582,9 @@ const Dashboard = () => {
 
 
   return (
+    loading ? (
+      <PageLoader />
+    ) : (
     <div className="page-wrapper">
       <div className="content">
         <div className="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-2">
@@ -658,11 +643,7 @@ const Dashboard = () => {
                   <p className="text-white mb-1">Tổng doanh thu</p>
                   <div className="d-inline-flex align-items-center flex-wrap gap-2">
                     <h4 className="text-white">
-                      {loading ? (
-                        <span className="spinner-border spinner-border-sm text-white" />
-                      ) : (
-                        formatCurrency(stats.totalSales)
-                      )}
+                      {formatCurrency(stats.totalSales)}
                     </h4>
                     <span className="badge badge-soft-primary">
                       <i className="ti ti-arrow-up me-1" />
@@ -683,11 +664,7 @@ const Dashboard = () => {
                   <p className="text-white mb-1">Trả hàng bán</p>
                   <div className="d-inline-flex align-items-center flex-wrap gap-2">
                     <h4 className="text-white">
-                      {loading ? (
-                        <span className="spinner-border spinner-border-sm text-white" />
-                      ) : (
-                        formatCurrency(stats.totalSalesReturn)
-                      )}
+                      {formatCurrency(stats.totalSalesReturn)}
                     </h4>
                     <span className="badge badge-soft-danger">
                       <i className="ti ti-arrow-down me-1" />
@@ -708,11 +685,7 @@ const Dashboard = () => {
                   <p className="text-white mb-1">Tổng mua hàng</p>
                   <div className="d-inline-flex align-items-center flex-wrap gap-2">
                     <h4 className="text-white">
-                      {loading ? (
-                        <span className="spinner-border spinner-border-sm text-white" />
-                      ) : (
-                        formatCurrency(stats.totalPurchase)
-                      )}
+                      {formatCurrency(stats.totalPurchase)}
                     </h4>
                     <span className="badge badge-soft-success">
                       <i className="ti ti-arrow-up me-1" />
@@ -733,11 +706,7 @@ const Dashboard = () => {
                   <p className="text-white mb-1">Trả hàng mua</p>
                   <div className="d-inline-flex align-items-center flex-wrap gap-2">
                     <h4 className="text-white">
-                      {loading ? (
-                        <span className="spinner-border spinner-border-sm text-white" />
-                      ) : (
-                        formatCurrency(stats.totalPurchaseReturn)
-                      )}
+                      {formatCurrency(stats.totalPurchaseReturn)}
                     </h4>
                     <span className="badge badge-soft-success">
                       <i className="ti ti-arrow-up me-1" />
@@ -756,13 +725,7 @@ const Dashboard = () => {
               <div className="card-body">
                 <div className="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
                   <div>
-                    <h4 className="mb-1">
-                      {loading ? (
-                        <span className="spinner-border spinner-border-sm" />
-                      ) : (
-                        formatCurrency(stats.profit)
-                      )}
-                    </h4>
+                    <h4 className="mb-1">{formatCurrency(stats.profit)}</h4>
                     <p>Lợi nhuận</p>
                   </div>
                   <span className="revenue-icon bg-cyan-transparent text-cyan">
@@ -2292,7 +2255,6 @@ const Dashboard = () => {
                 ) : (
                   dashboardData.customers.slice(0, 5).map((customer, index) => {
                     const customerName = customer.name || customer.fullName || customer.customerName || 'Không xác định';
-                    const customerAddress = customer.address || customer.location || 'Không có';
                     const customerPhone = customer.phone || customer.phoneNumber || '';
 
                     // Calculate total orders for this customer from purchase orders
@@ -2514,6 +2476,7 @@ const Dashboard = () => {
         </p>
       </div>
     </div>
+    )
   );
 };
 

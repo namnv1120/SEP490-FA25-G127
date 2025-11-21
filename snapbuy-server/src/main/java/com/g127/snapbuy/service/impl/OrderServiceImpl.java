@@ -8,7 +8,7 @@ import com.g127.snapbuy.mapper.OrderMapper;
 import com.g127.snapbuy.repository.*;
 import com.g127.snapbuy.service.MoMoService;
 import com.g127.snapbuy.service.PromotionService;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -471,7 +471,6 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
 
         if ("Đã thanh toán".equalsIgnoreCase(order.getPaymentStatus())) {
-            log.info("Đơn {} đã được thanh toán trước đó, bỏ qua", order.getOrderNumber());
             return;
         }
 
@@ -552,12 +551,26 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         return orderRepository.sumRevenueByAccountAndDateRange(accountId, start, end, paymentStatus);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<OrderResponse> getMyOrdersByDateTimeRange(LocalDateTime from, LocalDateTime to) {
+        UUID accountId = resolveCurrentAccountId();
+        List<Order> orders = orderRepository.findByAccountAndOrderDateBetween(accountId, from, to);
+        if (orders == null || orders.isEmpty()) {
+            orders = orderRepository.findByAccountAndCreatedDateBetween(accountId, from, to);
+        }
+        return orders.stream().map(order -> {
+            List<OrderDetail> details = orderDetailRepository.findByOrder(order);
+            Payment payment = paymentRepository.findByOrder(order);
+            return orderMapper.toResponse(order, details, payment);
+        }).toList();
+    }
+
 
     private void subtractInventoryOnly(Product product, int quantity) {
         Inventory inv = inventoryRepository.findByProduct(product)
                 .orElseThrow(() -> new NoSuchElementException(
                         "Không tìm thấy tồn kho cho sản phẩm: " + product.getProductName()));
-
         int newQty = inv.getQuantityInStock() - quantity;
         if (newQty < 0) throw new IllegalArgumentException("Không đủ tồn kho");
 

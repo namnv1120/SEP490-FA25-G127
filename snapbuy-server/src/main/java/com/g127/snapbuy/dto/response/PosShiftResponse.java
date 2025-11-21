@@ -16,5 +16,5 @@ public class PosShiftResponse {
     private LocalDateTime openedAt;
     private LocalDateTime closedAt;
     private String status;
+    private String note;
 }
-

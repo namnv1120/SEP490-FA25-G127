@@ -37,7 +37,7 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
         city: supplier.city || "",
         active: supplier.active === 1 || supplier.active === true,
       });
-    } catch (error) {
+    } catch {
       message.error("Không thể tải dữ liệu nhà cung cấp");
       if (onClose) onClose();
     } finally {
@@ -98,12 +98,7 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const handleStatusChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      active: e.target.checked,
-    }));
-  };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -5,8 +5,6 @@ import { getPurchaseOrderById } from "../../../services/PurchaseOrderService";
 const SendEmailModal = ({ isOpen, onClose, purchaseOrderIds, onSend }) => {
     const [subject, setSubject] = useState("");
     const [htmlContent, setHtmlContent] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [ordersData, setOrdersData] = useState([]);
     const previewRef = useRef(null);
 
     useEffect(() => {
@@ -22,7 +20,7 @@ const SendEmailModal = ({ isOpen, onClose, purchaseOrderIds, onSend }) => {
         } else {
             setSubject("");
             setHtmlContent("");
-            setOrdersData([]);
+            
         }
     }, [isOpen, purchaseOrderIds]);
 
@@ -33,19 +31,6 @@ const SendEmailModal = ({ isOpen, onClose, purchaseOrderIds, onSend }) => {
         }
     }, [htmlContent]);
 
-    const fetchOrdersData = async () => {
-        try {
-            setLoading(true);
-            const orders = await Promise.all(
-                purchaseOrderIds.map(id => getPurchaseOrderById(id))
-            );
-            setOrdersData(orders);
-        } catch (error) {
-            message.error("Không thể tải thông tin đơn hàng");
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const generateDefaultTemplate = async () => {
         try {
@@ -170,8 +155,8 @@ tr:hover { background-color: #f5f5f5; }
 </html>`;
 
             setHtmlContent(html);
-        } catch (error) {
-            console.error("Error generating template:", error);
+        } catch {
+            message.error("Không thể tạo template email");
         }
     };
 
@@ -228,7 +213,7 @@ tr:hover { background-color: #f5f5f5; }
             cancelText="Hủy"
             title="Gửi email phiếu nhập kho đến nhà cung cấp"
             width={900}
-            confirmLoading={loading}
+            confirmLoading={false}
         >
             <div style={{ marginBottom: 16 }}>
                 <label style={{ display: "block", marginBottom: 8, fontWeight: 500 }}>
@@ -280,4 +265,3 @@ tr:hover { background-color: #f5f5f5; }
 };
 
 export default SendEmailModal;
-

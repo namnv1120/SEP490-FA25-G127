@@ -15,10 +15,8 @@ const SubCategoryList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
-  const [searchQuery, setSearchQuery] = useState(undefined);
   const [subCategories, setSubCategories] = useState([]);
   const [parentCategories, setParentCategories] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
   const [editSubCategoryId, setEditSubCategoryId] = useState(null);
@@ -32,7 +30,6 @@ const SubCategoryList = () => {
 
   const fetchSubCategories = async () => {
     try {
-      setLoading(true);
       setError(null);
       const data = await getAllCategories();
       const parents = data.filter(
@@ -83,13 +80,11 @@ const SubCategoryList = () => {
       console.error("❌ Lỗi khi tải danh sách danh mục con:", err);
       setError("Lỗi khi tải danh sách danh mục con. Vui lòng thử lại.");
     } finally {
-      setLoading(false);
+      void 0;
     }
   };
 
-  const handleSearch = (value) => {
-    setSearchQuery(value);
-  };
+  const handleSearch = () => {};
 
   const handleEditClick = (subCategory) => {
     setEditSubCategoryId(subCategory.categoryId);

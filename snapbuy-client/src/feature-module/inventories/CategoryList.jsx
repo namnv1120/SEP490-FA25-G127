@@ -16,9 +16,7 @@ const CategoryList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
-  const [searchQuery, setSearchQuery] = useState(undefined);
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [editCategoryId, setEditCategoryId] = useState(null);
@@ -31,7 +29,6 @@ const CategoryList = () => {
 
   const fetchCategories = async () => {
     try {
-      setLoading(true);
       setError(null);
       const data = await getAllCategories();
 
@@ -71,13 +68,11 @@ const CategoryList = () => {
       console.error("❌ Lỗi khi tải danh sách danh mục:", err);
       setError("Không thể tải danh sách danh mục. Vui lòng thử lại.");
     } finally {
-      setLoading(false);
+      void 0;
     }
   };
 
-  const handleSearch = (value) => {
-    setSearchQuery(value);
-  };
+  const handleSearch = () => {};
 
   const handleEditClick = (category) => {
     setEditCategoryId(category.categoryId);

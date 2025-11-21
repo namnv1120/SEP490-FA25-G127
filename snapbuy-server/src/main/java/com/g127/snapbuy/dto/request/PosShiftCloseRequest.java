@@ -7,5 +7,5 @@ import java.math.BigDecimal;
 @Data
 public class PosShiftCloseRequest {
     private BigDecimal closingCash;
+    private String note;
 }
-

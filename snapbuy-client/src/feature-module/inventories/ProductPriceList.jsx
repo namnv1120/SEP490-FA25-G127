@@ -15,9 +15,7 @@ const ProductPriceList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
-  const [searchQuery, setSearchQuery] = useState(undefined);
   const [productPrices, setProductPrices] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
@@ -31,7 +29,6 @@ const ProductPriceList = () => {
 
   const fetchProductPrices = async () => {
     try {
-      setLoading(true);
       setError(null);
       const data = await getAllProductPrices();
 
@@ -65,7 +62,7 @@ const ProductPriceList = () => {
       console.error("❌ Lỗi khi tải danh sách giá sản phẩm:", err);
       setError("Không thể tải danh sách giá sản phẩm. Vui lòng thử lại sau.");
     } finally {
-      setLoading(false);
+      void 0;
     }
   };
 
@@ -84,16 +81,7 @@ const ProductPriceList = () => {
   };
 
 
-  const getStatusBadge = (status) => {
-    return (
-      <span
-        className={`badge fw-medium fs-10 ${status === "Hoạt động" ? "bg-success" : "bg-danger"
-          }`}
-      >
-        {status}
-      </span>
-    );
-  };
+  
 
   const handleExportExcel = async () => {
     if (!productPrices || productPrices.length === 0) {
@@ -113,7 +101,7 @@ const ProductPriceList = () => {
 
     try {
       await exportToExcel(exportData, "Danh_sach_gia_san_pham");
-    } catch (error) {
+    } catch {
       message.error("Lỗi khi xuất file Excel!");
     }
   };
@@ -128,9 +116,7 @@ const ProductPriceList = () => {
     setShowImportModal(false);
   };
 
-  const handleSearch = (value) => {
-    setSearchQuery(value);
-  };
+  const handleSearch = () => {};
 
   const columns = [
     {

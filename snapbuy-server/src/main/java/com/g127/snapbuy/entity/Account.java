@@ -45,6 +45,9 @@ public class Account {
     @Column(name = "updated_date")
     private LocalDateTime updatedDate = LocalDateTime.now();
 
+    @Column(name = "token_version")
+    private Integer tokenVersion = 0;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "account_roles",
@@ -65,4 +68,3 @@ public class Account {
         updatedDate = LocalDateTime.now();
     }
 }
-

@@ -7,7 +7,6 @@ import { getAllRoles } from "../../../services/RoleService";
 const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [roles, setRoles] = useState([]);
-  const [selectedRole, setSelectedRole] = useState(null);
   const [selectedRoleValue, setSelectedRoleValue] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -47,7 +46,7 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose }) => {
         // Chỉ set nếu chưa được set hoặc đang khác với role hiện tại
         if (!selectedRoleValue || selectedRoleValue !== roleName) {
           setSelectedRoleValue(roleName);
-          setSelectedRole(foundRole);
+          
         }
       } else {
         // Vẫn set value để hiển thị
@@ -71,7 +70,6 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose }) => {
         roles: [],
       });
       setErrors({});
-      setSelectedRole(null);
       setSelectedRoleValue(null);
       setShowPassword(false);
       setShowConfirmPassword(false);
@@ -117,10 +115,7 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose }) => {
         setSelectedRoleValue(firstRoleName);
         // Tìm và set selectedRole object để giữ reference
         if (roles.length > 0) {
-          const foundRole = roles.find(r => r.value === firstRoleName || r.label === firstRoleName);
-          if (foundRole) {
-            setSelectedRole(foundRole);
-          }
+          void 0;
         }
       }
     } catch (error) {
@@ -183,9 +178,6 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose }) => {
     const selected = e.value;
     // selected có thể là object hoặc string
     const roleName = typeof selected === 'string' ? selected : (selected?.value || selected?.label || selected);
-    const roleObject = typeof selected === 'object' ? selected : roles.find(r => r.value === roleName || r.label === roleName);
-
-    setSelectedRole(roleObject || null);
     setSelectedRoleValue(roleName);
     setFormData((prev) => ({
       ...prev,

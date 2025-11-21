@@ -11,9 +11,8 @@ import { Modal } from "bootstrap";
 
 const AccountList = () => {
   const [dataSource, setDataSource] = useState([]);
-  const [loading, setLoading] = useState(false);
+  
   const [selectedAccountId, setSelectedAccountId] = useState(null);
-  const [selectedAccount, setSelectedAccount] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
@@ -25,7 +24,7 @@ const AccountList = () => {
   }, []);
 
   const fetchAccounts = async () => {
-    setLoading(true);
+    
     try {
       const accountsData = await getAllAccounts();
       const mappedData = accountsData.map((account) => ({
@@ -43,7 +42,7 @@ const AccountList = () => {
         message.error(error.response?.data?.message || error.message || "Lỗi khi lấy danh sách tài khoản");
       }
     } finally {
-      setLoading(false);
+      void 0;
     }
   };
 
@@ -192,7 +191,6 @@ const AccountList = () => {
               to="#"
               onClick={(e) => {
                 e.preventDefault();
-                setSelectedAccount(data);
                 setSelectedAccountId(data.id);
                 setEditModalOpen(true);
               }}
@@ -300,7 +298,6 @@ const AccountList = () => {
         onUpdated={fetchAccounts}
         onClose={() => {
           setEditModalOpen(false);
-          setSelectedAccount(null);
           setSelectedAccountId(null);
         }}
       />

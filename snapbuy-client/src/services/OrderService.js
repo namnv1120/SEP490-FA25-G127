@@ -15,64 +15,62 @@ const getAuthHeaders = () => {
   };
 };
 
-
 export const getAllOrders = async (params = {}) => {
-  try {
-    const response = await axios.get(REST_API_BASE_URL, {
-      ...getAuthHeaders(),
-      params: params,
-    });
-    return response.data?.result || response.data || [];
-  } catch (error) {
-    throw error;
-  }
+  const response = await axios.get(REST_API_BASE_URL, {
+    ...getAuthHeaders(),
+    params: params,
+  });
+  return response.data?.result || response.data || [];
 };
 
 export const getOrderById = async (id) => {
-  try {
-    const response = await axios.get(`${REST_API_BASE_URL}/${id}`, getAuthHeaders());
-    return response.data?.result || response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axios.get(
+    `${REST_API_BASE_URL}/${id}`,
+    getAuthHeaders()
+  );
+  return response.data?.result || response.data;
 };
 
-export const getMyTodayOrderCount = async (paymentStatus = 'Đã thanh toán') => {
-  try {
-    const params = paymentStatus ? { paymentStatus } : {};
-    const response = await axios.get(`${REST_API_BASE_URL}/my/today-count`, {
-      ...getAuthHeaders(),
-      params,
-    });
-    return response.data?.result ?? response.data;
-  } catch (error) {
-    throw error;
-  }
+export const getMyTodayOrderCount = async (paymentStatus = "Đã thanh toán") => {
+  const params = paymentStatus ? { paymentStatus } : {};
+  const response = await axios.get(`${REST_API_BASE_URL}/my/today-count`, {
+    ...getAuthHeaders(),
+    params,
+  });
+  return response.data?.result ?? response.data;
 };
 
 export const createOrder = async (orderData) => {
-  try {
-    const response = await axios.post(REST_API_BASE_URL, orderData, getAuthHeaders());
-    return response.data?.result || response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axios.post(
+    REST_API_BASE_URL,
+    orderData,
+    getAuthHeaders()
+  );
+  return response.data?.result || response.data;
 };
 
 export const completeOrder = async (orderId) => {
-  try {
-    const response = await axios.post(`${REST_API_BASE_URL}/${orderId}/complete`, {}, getAuthHeaders());
-    return response.data?.result || response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axios.post(
+    `${REST_API_BASE_URL}/${orderId}/complete`,
+    {},
+    getAuthHeaders()
+  );
+  return response.data?.result || response.data;
 };
 
 export const cancelOrder = async (orderId) => {
-  try {
-    const response = await axios.post(`${REST_API_BASE_URL}/${orderId}/cancel`, {}, getAuthHeaders());
-    return response.data?.result || response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axios.post(
+    `${REST_API_BASE_URL}/${orderId}/cancel`,
+    {},
+    getAuthHeaders()
+  );
+  return response.data?.result || response.data;
+};
+
+export const getMyOrdersByDateTimeRange = async (fromISO, toISO) => {
+  const response = await axios.get(`${REST_API_BASE_URL}/my/by-range`, {
+    ...getAuthHeaders(),
+    params: { from: fromISO, to: toISO },
+  });
+  return response.data?.result || response.data || [];
 };

@@ -7,6 +7,7 @@ CREATE TABLE accounts
     email         NVARCHAR(100)        NULL,
     phone         NVARCHAR(15)         NULL,
     avatar_url    NVARCHAR(500)        NULL,
+    token_version INT                  NOT NULL DEFAULT 0,
     active        BIT                          DEFAULT 1,
     created_date  DATETIME2                    DEFAULT GETDATE(),
     updated_date  DATETIME2                    DEFAULT GETDATE(),
