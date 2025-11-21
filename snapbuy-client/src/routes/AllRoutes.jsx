@@ -13,6 +13,7 @@ export const allRoutes = {
   orderhistory: "/order-history",
   pos: "/pos",
   transactionhistory: "/transaction-history",
+  promotions: "/promotions",
 
   purchaseorders: "/purchase-orders",
   addpurchaseorder: "/purchase-orders/add",

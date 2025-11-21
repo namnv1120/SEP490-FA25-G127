@@ -1,0 +1,130 @@
+/* Custom styles for Ant Design DatePicker to match Bootstrap form-control */
+
+/* DatePicker container - giống form-control */
+.ant-picker {
+  font-family: 'Nunito', sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+  color: #5b6670 !important;
+  background-color: #fff !important;
+  border: 1px solid #dbe0e6 !important;
+  border-radius: 0.35rem !important;
+  padding: 0.45rem 0.85rem !important;
+  height: auto !important;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+}
+
+/* Input text - giống form-control */
+.ant-picker input,
+.ant-picker-input > input {
+  font-family: 'Nunito', sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+  color: #5b6670 !important;
+}
+
+/* Placeholder - giống form-control */
+.ant-picker input::placeholder,
+.ant-picker-input > input::placeholder {
+  font-family: 'Nunito', sans-serif !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  color: #A6AAAF !important;
+  opacity: 0.7 !important;
+  padding-inline-start: 0px !important;
+}
+
+.ant-picker input::-webkit-input-placeholder,
+.ant-picker-input > input::-webkit-input-placeholder,
+.ant-picker .ant-picker-input input::-webkit-input-placeholder {
+  font-family: 'Nunito', sans-serif !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  color: #A6AAAF !important;
+  opacity: 0.7 !important;
+  padding-inline-start: 0px !important;
+}
+
+.ant-picker input::-moz-placeholder,
+.ant-picker-input > input::-moz-placeholder {
+  font-family: 'Nunito', sans-serif !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  color: #A6AAAF !important;
+  opacity: 0.4 !important;
+}
+
+.ant-picker input:-moz-placeholder,
+.ant-picker-input > input:-moz-placeholder {
+  font-family: 'Nunito', sans-serif !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  color: #A6AAAF !important;
+  opacity: 0.4 !important;
+}
+
+.ant-picker input:-ms-input-placeholder,
+.ant-picker input::-ms-input-placeholder,
+.ant-picker-input > input:-ms-input-placeholder,
+.ant-picker-input > input::-ms-input-placeholder {
+  font-family: 'Nunito', sans-serif !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  color: #A6AAAF !important;
+  opacity: 0.4 !important;
+}
+
+/* DatePicker focus state */
+.ant-picker-focused {
+  border-color: #80bdff !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
+/* DatePicker error state */
+.ant-picker-status-error {
+  border-color: #dc3545 !important;
+}
+
+.ant-picker-status-error:focus,
+.ant-picker-status-error.ant-picker-focused {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+/* DatePicker icon */
+.ant-picker-suffix {
+  color: #6c757d !important;
+}
+
+/* Dropdown panel */
+.ant-picker-dropdown {
+  font-family: inherit !important;
+}
+
+/* Calendar cells */
+.ant-picker-cell-inner {
+  font-family: inherit !important;
+}
+
+/* Time panel */
+.ant-picker-time-panel-column > li {
+  font-family: inherit !important;
+}
+
+/* Header */
+.ant-picker-header {
+  font-family: inherit !important;
+}
+
+/* Footer buttons */
+.ant-picker-footer {
+  font-family: inherit !important;
+}
+
+.ant-picker-now-btn,
+.ant-picker-ok > button {
+  font-family: inherit !important;
+}
+

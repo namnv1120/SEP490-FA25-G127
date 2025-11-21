@@ -2,6 +2,9 @@ import { allRoutes } from "./AllRoutes";
 
 // Chỉ giữ cấu hình route, không import component để tránh cảnh báo Fast Refresh
 
+const PromotionList = lazy(() =>
+  import("../feature-module/promotions/PromotionList")
+);
 
 const routes = allRoutes;
 
@@ -186,8 +189,22 @@ export const authRoutes = [
     id: 23,
     path: routes.supplierreport,
     name: "supplier-report",
-    componentKey: "SupplierReport",
-    protected: true,
+    element: <SupplierReport />,
+    route: Route,
+  },
+  {
+    id: 24,
+    path: routes.promotions,
+    name: "promotions",
+    element: <PromotionList />,
+    route: Route,
+  },
+  {
+    id: 24,
+    path: routes.permissions,
+    name: "permissions",
+    element: <Permissions />,
+    route: Route,
   },
   {
     id: 25,
