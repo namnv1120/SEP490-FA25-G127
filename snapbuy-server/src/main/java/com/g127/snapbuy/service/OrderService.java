@@ -22,4 +22,5 @@ public interface OrderService {
     Long getMyTodayOrderCount(String paymentStatus);
     BigDecimal getMyTodayRevenue(String paymentStatus);
     java.util.List<OrderResponse> getMyOrdersByDateTimeRange(java.time.LocalDateTime from, java.time.LocalDateTime to);
+    java.util.List<OrderResponse> getOrdersByAccountAndDateTimeRange(java.util.UUID accountId, java.time.LocalDateTime from, java.time.LocalDateTime to);
 }

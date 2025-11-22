@@ -1,45 +1,100 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import AddAccount from "../../core/modals/accounts/AddAccountModal";
 import EditAccount from "../../core/modals/accounts/EditAccountModal";
 import TableTopHead from "../../components/table-top-head";
+import SearchFromApi from "../../components/data-table/search";
 import PrimeDataTable from "../../components/data-table";
+import CommonSelect from "../../components/select/common-select";
 import DeleteModal from "../../components/delete-modal";
-import { getAllAccounts, toggleAccountStatus, deleteAccount } from "../../services/AccountService";
+import {
+  getAllAccounts,
+  toggleAccountStatus,
+  deleteAccount,
+  searchAccounts,
+  searchAccountsPaged,
+} from "../../services/AccountService";
+import { getAllRoles } from "../../services/RoleService";
 import { message } from "antd";
 import { Modal } from "bootstrap";
 
 const AccountList = () => {
   const [dataSource, setDataSource] = useState([]);
-  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState(null); // true=Hoạt động, false=Không hoạt động, null=Tất cả
+  const [roleFilter, setRoleFilter] = useState("");
+  const [roleOptions, setRoleOptions] = useState([]);
+  const StatusOptions = useMemo(() => ([
+    { value: null, label: "Tất cả" },
+    { value: true, label: "Hoạt động" },
+    { value: false, label: "Ngừng hoạt động" },
+  ]), []);
+
   const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [rows, setRows] = useState(10);
+  const [totalRecords, setTotalRecords] = useState(0);
 
   useEffect(() => {
     fetchAccounts();
+  }, [searchQuery, statusFilter, roleFilter, currentPage, rows]);
+
+  useEffect(() => {
+    const loadRoles = async () => {
+      try {
+        const roles = await getAllRoles();
+        const opts = (roles || [])
+          .filter((r) => r && (r.active === true || r.active === 1))
+          .map((r) => ({ label: r.roleName, value: r.roleName }));
+        setRoleOptions(opts);
+      } catch {
+        void 0;
+      }
+    };
+    loadRoles();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, roleFilter]);
+
   const fetchAccounts = async () => {
-    
     try {
-      const accountsData = await getAllAccounts();
-      const mappedData = accountsData.map((account) => ({
+      const backendPage = Math.max(0, (currentPage || 1) - 1);
+      const sortBy = 'fullName';
+      const sortDir = 'ASC';
+      const params = {
+        keyword: searchQuery,
+        active: statusFilter,
+        role: roleFilter,
+        page: backendPage,
+        size: rows,
+        sortBy,
+        sortDir,
+      };
+      const result = await searchAccountsPaged(params);
+      const rawList = result?.content || result || [];
+      const mappedData = (rawList || []).map((account) => ({
         ...account,
-        active: account.active === true || account.active === 1,
+        active: account.active === true || account.active === 1 || account.active === "1",
       }));
       setDataSource(mappedData);
+      setTotalRecords(result?.totalElements ?? mappedData.length);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách tài khoản:", error);
       if (error.response?.status === 403) {
-        message.error("Bạn không có quyền truy cập trang này. Chỉ Quản trị viên mới có thể truy cập.");
+        message.error(
+          "Bạn không có quyền truy cập trang này. Chỉ Quản trị viên mới có thể truy cập."
+        );
       } else if (error.response?.status === 401) {
         message.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
       } else {
-        message.error(error.response?.data?.message || error.message || "Lỗi khi lấy danh sách tài khoản");
+        message.error(
+          error.response?.data?.message || error.message || "Lỗi khi lấy danh sách tài khoản"
+        );
       }
     } finally {
       void 0;
@@ -53,7 +108,10 @@ const AccountList = () => {
       message.success("Đã cập nhật trạng thái tài khoản thành công!");
     } catch (err) {
       console.error("❌ Lỗi khi chuyển đổi trạng thái tài khoản:", err);
-      message.error(err.response?.data?.message || "Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại.");
+      message.error(
+        err.response?.data?.message ||
+          "Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại."
+      );
     }
   };
 
@@ -82,7 +140,9 @@ const AccountList = () => {
       }
 
       setTimeout(() => {
-        document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+        document
+          .querySelectorAll(".modal-backdrop")
+          .forEach((el) => el.remove());
         document.body.classList.remove("modal-open");
         document.body.style.removeProperty("overflow");
         document.body.style.removeProperty("padding-right");
@@ -92,7 +152,10 @@ const AccountList = () => {
       message.success("Tài khoản đã được xoá thành công!");
     } catch (err) {
       console.error("❌ Lỗi khi xoá tài khoản:", err);
-      message.error(err.response?.data?.message || "Lỗi khi xoá tài khoản. Vui lòng thử lại.");
+      message.error(
+        err.response?.data?.message ||
+          "Lỗi khi xoá tài khoản. Vui lòng thử lại."
+      );
     } finally {
       setAccountToDelete(null);
     }
@@ -156,11 +219,14 @@ const AccountList = () => {
       key: "active",
       sortable: true,
       body: (data) => {
-        const active = data.active === true || data.active === 1 || data.active === "1";
+        const active =
+          data.active === true || data.active === 1 || data.active === "1";
         return (
           <div className="d-flex align-items-center gap-2">
             <span
-              className={`badge fw-medium fs-10 ${active ? "bg-success" : "bg-danger"}`}
+              className={`badge fw-medium fs-10 ${
+                active ? "bg-success" : "bg-danger"
+              }`}
             >
               {active ? "Hoạt động" : "Không hoạt động"}
             </span>
@@ -240,28 +306,34 @@ const AccountList = () => {
 
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <div className="search-set"></div>
+              <div className="search-set">
+                <SearchFromApi callback={(value) => { setSearchQuery(value || ""); }} />
+              </div>
               <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                <div className="dropdown me-2">
-                  <Link
-                    to="#"
-                    className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                    data-bs-toggle="dropdown"
-                  >
-                    Trạng thái
-                  </Link>
-                  <ul className="dropdown-menu dropdown-menu-end p-3">
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Hoạt động
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Ngừng hoạt động
-                      </Link>
-                    </li>
-                  </ul>
+                <div className="me-2">
+                  <CommonSelect
+                    options={StatusOptions}
+                    value={StatusOptions.find((o) => o.value === statusFilter) || StatusOptions[0]}
+                    onChange={(s) => {
+                      const v = s?.value;
+                      setStatusFilter(v === true || v === false ? v : null);
+                    }}
+                    placeholder="Trạng thái"
+                    width={220}
+                    className=""
+                  />
+                </div>
+                <div>
+                  <CommonSelect
+                    options={[{ value: "", label: "Tất cả" }, ...roleOptions]}
+                    value={[{ value: "", label: "Tất cả" }, ...roleOptions].find((o) => o.value === (roleFilter || "")) || { value: "", label: "Tất cả" }}
+                    onChange={(s) => {
+                      setRoleFilter(s?.value || "");
+                    }}
+                    placeholder="Vai trò"
+                    width={220}
+                    className=""
+                  />
                 </div>
               </div>
             </div>
@@ -275,7 +347,7 @@ const AccountList = () => {
                   setRows={setRows}
                   currentPage={currentPage}
                   setCurrentPage={setCurrentPage}
-                  totalRecords={dataSource.length}
+                  totalRecords={totalRecords}
                   dataKey="id"
                   loading={false}
                   serverSidePagination={false}
@@ -286,7 +358,6 @@ const AccountList = () => {
         </div>
       </div>
 
-      {/* Modal thêm và chỉnh sửa */}
       <AddAccount
         isOpen={addModalOpen}
         onClose={() => setAddModalOpen(false)}

@@ -566,6 +566,20 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         }).toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<OrderResponse> getOrdersByAccountAndDateTimeRange(UUID accountId, LocalDateTime from, LocalDateTime to) {
+        List<Order> orders = orderRepository.findByAccountAndOrderDateBetween(accountId, from, to);
+        if (orders == null || orders.isEmpty()) {
+            orders = orderRepository.findByAccountAndCreatedDateBetween(accountId, from, to);
+        }
+        return orders.stream().map(order -> {
+            List<OrderDetail> details = orderDetailRepository.findByOrder(order);
+            Payment payment = paymentRepository.findByOrder(order);
+            return orderMapper.toResponse(order, details, payment);
+        }).toList();
+    }
+
 
     private void subtractInventoryOnly(Product product, int quantity) {
         Inventory inv = inventoryRepository.findByProduct(product)

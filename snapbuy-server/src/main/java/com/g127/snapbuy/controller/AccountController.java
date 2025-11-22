@@ -204,4 +204,59 @@ public class AccountController {
         response.setMessage("Lấy danh sách tài khoản theo vai trò thành công.");
         return response;
     }
+
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('Quản trị viên')")
+    public ApiResponse<List<AccountResponse>> searchAccounts(@RequestParam(required = false) String keyword,
+                                                             @RequestParam(required = false) Boolean active,
+                                                             @RequestParam(required = false) String role) {
+        ApiResponse<List<AccountResponse>> response = new ApiResponse<>();
+        response.setResult(accountService.searchAccounts(keyword, active, role));
+        response.setMessage("Tìm kiếm tài khoản thành công.");
+        return response;
+    }
+
+    @GetMapping("/search-paged")
+    @PreAuthorize("hasRole('Quản trị viên')")
+    public ApiResponse<com.g127.snapbuy.dto.response.PageResponse<AccountResponse>> searchAccountsPaged(@RequestParam(required = false) String keyword,
+                                                                                                        @RequestParam(required = false) Boolean active,
+                                                                                                        @RequestParam(required = false) String role,
+                                                                                                        @RequestParam(defaultValue = "0") int page,
+                                                                                                        @RequestParam(defaultValue = "10") int size,
+                                                                                                        @RequestParam(defaultValue = "fullName") String sortBy,
+                                                                                                        @RequestParam(defaultValue = "ASC") String sortDir) {
+        var direction = "DESC".equalsIgnoreCase(sortDir)
+                ? org.springframework.data.domain.Sort.Direction.DESC
+                : org.springframework.data.domain.Sort.Direction.ASC;
+        var pageable = org.springframework.data.domain.PageRequest.of(
+                Math.max(page, 0), Math.min(Math.max(size, 1), 200),
+                org.springframework.data.domain.Sort.by(direction, sortBy)
+        );
+        ApiResponse<com.g127.snapbuy.dto.response.PageResponse<AccountResponse>> response = new ApiResponse<>();
+        response.setResult(accountService.searchAccountsPaged(keyword, active, role, pageable));
+        response.setMessage("Tìm kiếm tài khoản (phân trang) thành công.");
+        return response;
+    }
+
+    @GetMapping("/staff/search-paged")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    public ApiResponse<com.g127.snapbuy.dto.response.PageResponse<AccountResponse>> searchStaffAccountsPaged(@RequestParam(required = false) String keyword,
+                                                                                                             @RequestParam(required = false) Boolean active,
+                                                                                                             @RequestParam(required = false) String role,
+                                                                                                             @RequestParam(defaultValue = "0") int page,
+                                                                                                             @RequestParam(defaultValue = "10") int size,
+                                                                                                             @RequestParam(defaultValue = "fullName") String sortBy,
+                                                                                                             @RequestParam(defaultValue = "ASC") String sortDir) {
+        var direction = "DESC".equalsIgnoreCase(sortDir)
+                ? org.springframework.data.domain.Sort.Direction.DESC
+                : org.springframework.data.domain.Sort.Direction.ASC;
+        var pageable = org.springframework.data.domain.PageRequest.of(
+                Math.max(page, 0), Math.min(Math.max(size, 1), 200),
+                org.springframework.data.domain.Sort.by(direction, sortBy)
+        );
+        ApiResponse<com.g127.snapbuy.dto.response.PageResponse<AccountResponse>> response = new ApiResponse<>();
+        response.setResult(accountService.searchStaffAccountsPaged(keyword, active, role, pageable));
+        response.setMessage("Tìm kiếm tài khoản nhân viên (phân trang) thành công.");
+        return response;
+    }
 }

@@ -21,6 +21,54 @@ export const getAllAccounts = async () => {
   }
 };
 
+export const searchAccounts = async ({ keyword, active, role }) => {
+  try {
+    const params = {};
+    if (keyword && keyword.trim()) params.keyword = keyword.trim();
+    if (typeof active === 'boolean') params.active = active;
+    if (role && role.trim()) params.role = role.trim();
+    const response = await axios.get(`${REST_API_BASE_URL}/search`, {
+      headers: getAuthHeader(),
+      params,
+    });
+    return response.data.result || response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to search accounts!');
+  }
+};
+
+export const searchAccountsPaged = async ({ keyword, active, role, page = 0, size = 10, sortBy = 'fullName', sortDir = 'ASC' }) => {
+  try {
+    const params = { page, size, sortBy, sortDir };
+    if (keyword && keyword.trim()) params.keyword = keyword.trim();
+    if (typeof active === 'boolean') params.active = active;
+    if (role && role.trim()) params.role = role.trim();
+    const response = await axios.get(`${REST_API_BASE_URL}/search-paged`, {
+      headers: getAuthHeader(),
+      params,
+    });
+    return response.data.result || response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to search accounts (paged)!');
+  }
+};
+
+export const searchStaffAccountsPaged = async ({ keyword, active, role, page = 0, size = 10, sortBy = 'fullName', sortDir = 'ASC' }) => {
+  try {
+    const params = { page, size, sortBy, sortDir };
+    if (keyword && keyword.trim()) params.keyword = keyword.trim();
+    if (typeof active === 'boolean') params.active = active;
+    if (role && role.trim()) params.role = role.trim();
+    const response = await axios.get(`${REST_API_BASE_URL}/staff/search-paged`, {
+      headers: getAuthHeader(),
+      params,
+    });
+    return response.data.result || response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to search staff accounts (paged)!');
+  }
+};
+
 export const createAccount = async (userData) => {
   try {
     const response = await axios.post(REST_API_BASE_URL, userData, {
@@ -128,5 +176,48 @@ export const getAccountsByRoleName = async (roleName) => {
     return response.data.result || response.data;
   } catch (error) {
     throw new Error(error.response?.data?.message || 'Failed to fetch accounts by role!');
+  }
+};
+
+export const createStaff = async (userData) => {
+  try {
+    const response = await axios.post(`${REST_API_BASE_URL}/staff`, userData, {
+      headers: getAuthHeader(),
+    });
+    return response.data.result || response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to create staff account!');
+  }
+};
+
+export const updateStaffByOwner = async (staffId, updatedData) => {
+  try {
+    const response = await axios.put(`${REST_API_BASE_URL}/staff/${staffId}`, updatedData, {
+      headers: {
+        ...getAuthHeader(),
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data.result || response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to update staff!');
+  }
+};
+
+export const updateStaffRolesByOwner = async (staffId, roles) => {
+  try {
+    const response = await axios.put(
+      `${REST_API_BASE_URL}/staff/${staffId}/roles`,
+      { roles },
+      {
+        headers: {
+          ...getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return response.data.result || response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to update staff roles!');
   }
 };

@@ -145,4 +145,22 @@ public class OrderController {
         response.setMessage("Hủy đơn hàng thành công.");
         return response;
     }
+
+    @GetMapping("/by-account/{accountId}/by-range")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    public ApiResponse<java.util.List<OrderResponse>> getOrdersByAccountAndRange(@PathVariable UUID accountId,
+                                                                                @RequestParam String from,
+                                                                                @RequestParam String to) {
+        ApiResponse<java.util.List<OrderResponse>> res = new ApiResponse<>();
+        java.time.LocalDateTime fromDt = parseFlexible(from);
+        java.time.LocalDateTime toDt = parseFlexible(to);
+        if (fromDt == null || toDt == null) {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            fromDt = today.atStartOfDay();
+            toDt = today.atTime(java.time.LocalTime.MAX);
+        }
+        res.setResult(orderService.getOrdersByAccountAndDateTimeRange(accountId, fromDt, toDt));
+        res.setMessage("Lấy đơn theo khoảng thời gian thành công.");
+        return res;
+    }
 }

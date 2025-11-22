@@ -190,6 +190,20 @@ export const authRoutes = [
     protected: true,
   },
   {
+    id: 23.1,
+    path: routes.ownerstaffaccounts,
+    name: "owner-staff-accounts",
+    componentKey: "OwnerStaffAccountList",
+    protected: true,
+  },
+  {
+    id: 23.2,
+    path: routes.staffshiftreport,
+    name: "staff-shift-report",
+    componentKey: "StaffShiftReport",
+    protected: true,
+  },
+  {
     id: 25,
     path: routes.transactionhistory,
     name: "transaction-history",

@@ -109,6 +109,7 @@ export const SidebarDataOwner = [
       },
     ],
   },
+  
   {
     tittle: "Đối tác",
     hasSubRoute: true,
@@ -128,6 +129,28 @@ export const SidebarDataOwner = [
         hasSubRoute: false,
         showSubRoute: false,
         route: "/suppliers",
+        subRoutes: [],
+      },
+    ],
+  },
+  {
+    tittle: "Nhân viên",
+    hasSubRoute: true,
+    icon: "user-cog",
+    showSubRoute: false,
+    subRoutes: [
+      {
+        tittle: "Tài khoản",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/staff-accounts",
+        subRoutes: [],
+      },
+      {
+        tittle: "Báo cáo nhân viên",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/staff-shifts",
         subRoutes: [],
       },
     ],

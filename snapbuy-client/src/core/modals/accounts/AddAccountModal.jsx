@@ -4,7 +4,7 @@ import { Dropdown } from "primereact/dropdown";
 import { createAccount } from "../../../services/AccountService";
 import { getAllRoles } from "../../../services/RoleService";
 
-const AddAccount = ({ isOpen, onClose, onSuccess }) => {
+const AddAccount = ({ isOpen, onClose, onSuccess, allowedRoles, onCreate }) => {
   const [loading, setLoading] = useState(false);
   const [roles, setRoles] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
@@ -46,12 +46,14 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
   const loadRoles = async () => {
     try {
       const rolesData = await getAllRoles();
-      const roleOptions = rolesData
-        .filter((role) => role.active === true || role.active === 1)
-        .map((role) => ({
-          value: role.roleName,
-          label: role.roleName,
-        }));
+      let filtered = rolesData.filter((role) => role.active === true || role.active === 1);
+      if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
+        filtered = filtered.filter((role) => allowedRoles.includes(role.roleName));
+      }
+      const roleOptions = filtered.map((role) => ({
+        value: role.roleName,
+        label: role.roleName,
+      }));
       setRoles(roleOptions);
     } catch (error) {
       console.error("Lỗi khi tải danh sách vai trò:", error);
@@ -146,7 +148,11 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
         active: true,
       };
 
-      await createAccount(newAccount);
+      if (typeof onCreate === 'function') {
+        await onCreate(newAccount);
+      } else {
+        await createAccount(newAccount);
+      }
       message.success("Thêm tài khoản thành công!");
 
       // Reset form

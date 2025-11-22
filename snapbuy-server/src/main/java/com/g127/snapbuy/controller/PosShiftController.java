@@ -54,4 +54,13 @@ public class PosShiftController {
         res.setResult(posShiftService.getMyShifts(principal.getUsername(), status));
         return res;
     }
+
+    @GetMapping("/by-account/{accountId}")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    public ApiResponse<java.util.List<PosShiftResponse>> getByAccount(@PathVariable java.util.UUID accountId,
+                                                                      @RequestParam(required = false) String status) {
+        ApiResponse<java.util.List<PosShiftResponse>> res = new ApiResponse<>();
+        res.setResult(posShiftService.getShiftsByAccount(accountId, status));
+        return res;
+    }
 }

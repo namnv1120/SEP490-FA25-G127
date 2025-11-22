@@ -4,7 +4,7 @@ import { Dropdown } from "primereact/dropdown";
 import { getAccountById, updateAccount } from "../../../services/AccountService";
 import { getAllRoles } from "../../../services/RoleService";
 
-const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose }) => {
+const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose, allowedRoles, onUpdate, onUpdateRole }) => {
   const [loading, setLoading] = useState(false);
   const [roles, setRoles] = useState([]);
   const [selectedRoleValue, setSelectedRoleValue] = useState(null);
@@ -79,12 +79,14 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose }) => {
   const loadRoles = async () => {
     try {
       const rolesData = await getAllRoles();
-      const roleOptions = rolesData
-        .filter((role) => role.active === true || role.active === 1)
-        .map((role) => ({
-          value: role.roleName,
-          label: role.roleName,
-        }));
+      let filtered = rolesData.filter((role) => role.active === true || role.active === 1);
+      if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
+        filtered = filtered.filter((role) => allowedRoles.includes(role.roleName));
+      }
+      const roleOptions = filtered.map((role) => ({
+        value: role.roleName,
+        label: role.roleName,
+      }));
       setRoles(roleOptions);
     } catch (error) {
       console.error("Lỗi khi tải danh sách vai trò:", error);
@@ -210,11 +212,19 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose }) => {
       if (formData.password) {
         updateData.password = formData.password;
       }
-      if (formData.roles && formData.roles.length > 0) {
-        updateData.roles = formData.roles;
+      const hasRoles = formData.roles && formData.roles.length > 0;
+      if (onUpdateRole && onUpdate) {
+        await onUpdate(accountId, updateData);
+        if (hasRoles) {
+          await onUpdateRole(accountId, formData.roles);
+        }
+      } else if (onUpdate) {
+        if (hasRoles) updateData.roles = formData.roles;
+        await onUpdate(accountId, updateData);
+      } else {
+        if (hasRoles) updateData.roles = formData.roles;
+        await updateAccount(accountId, updateData);
       }
-
-      await updateAccount(accountId, updateData);
       message.success("Cập nhật tài khoản thành công!");
 
       if (onUpdated) onUpdated();

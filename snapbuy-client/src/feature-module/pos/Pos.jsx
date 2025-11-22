@@ -1428,7 +1428,6 @@ const Pos = () => {
                         to="#"
                         onClick={async (e) => {
                           e.preventDefault();
-                          // Reset POS về trạng thái chưa tạo đơn
                           await handlePaymentCompleted();
                         }}
                       >

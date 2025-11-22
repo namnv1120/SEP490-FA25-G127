@@ -92,4 +92,13 @@ public class PosShiftServiceImpl implements PosShiftService {
                 : posShiftRepository.findByAccount_AccountIdAndStatusOrderByOpenedAtDesc(accountId, status);
         return shifts.stream().map(this::toResponse).toList();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<PosShiftResponse> getShiftsByAccount(UUID accountId, String status) {
+        java.util.List<PosShift> shifts = (status == null || status.isBlank())
+                ? posShiftRepository.findByAccount_AccountIdOrderByOpenedAtDesc(accountId)
+                : posShiftRepository.findByAccount_AccountIdAndStatusOrderByOpenedAtDesc(accountId, status);
+        return shifts.stream().map(this::toResponse).toList();
+    }
 }

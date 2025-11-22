@@ -58,3 +58,15 @@ export const getMyShifts = async (status) => {
     throw error;
   }
 };
+
+export const getShiftsByAccountId = async (accountId, status) => {
+  try {
+    const response = await axios.get(`${REST_API_BASE_URL}/by-account/${accountId}`, {
+      ...getAuthHeaders(),
+      params: status ? { status } : {},
+    });
+    return response.data?.result || response.data || [];
+  } catch (error) {
+    throw error;
+  }
+};

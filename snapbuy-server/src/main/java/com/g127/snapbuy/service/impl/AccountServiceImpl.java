@@ -437,4 +437,68 @@ public class AccountServiceImpl implements AccountService {
                 .map(accountMapper::toResponse)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('Quản trị viên')")
+    public List<AccountResponse> searchAccounts(String keyword, Boolean active, String roleName) {
+        List<Account> accounts = accountRepository.searchAccounts(
+                keyword == null || keyword.isBlank() ? null : keyword.trim(),
+                active,
+                roleName == null || roleName.isBlank() ? null : roleName.trim()
+        );
+        return accounts.stream().map(accountMapper::toResponse).toList();
+    }
+
+    @Override
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('Quản trị viên')")
+    public com.g127.snapbuy.dto.response.PageResponse<AccountResponse> searchAccountsPaged(String keyword, Boolean active, String roleName,
+                                                                                            org.springframework.data.domain.Pageable pageable) {
+        var page = accountRepository.searchAccountsPage(
+                keyword == null || keyword.isBlank() ? null : keyword.trim(),
+                active,
+                roleName == null || roleName.isBlank() ? null : roleName.trim(),
+                pageable
+        );
+        var content = page.getContent().stream().map(accountMapper::toResponse).toList();
+        return com.g127.snapbuy.dto.response.PageResponse.<AccountResponse>builder()
+                .content(content)
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .size(page.getSize())
+                .number(page.getNumber())
+                .first(page.isFirst())
+                .last(page.isLast())
+                .empty(page.isEmpty())
+                .build();
+    }
+
+    @Override
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    public com.g127.snapbuy.dto.response.PageResponse<AccountResponse> searchStaffAccountsPaged(String keyword, Boolean active, String roleName,
+                                                                                                org.springframework.data.domain.Pageable pageable) {
+        java.util.List<String> allowedRoles = java.util.List.of("Nhân viên bán hàng", "Nhân viên kho");
+        java.util.List<String> roleFilterList;
+        if (roleName != null && !roleName.isBlank() && allowedRoles.contains(roleName.trim())) {
+            roleFilterList = java.util.List.of(roleName.trim());
+        } else {
+            roleFilterList = allowedRoles;
+        }
+        var page = accountRepository.searchStaffAccountsPage(
+                keyword == null || keyword.isBlank() ? null : keyword.trim(),
+                active,
+                roleFilterList,
+                pageable
+        );
+        var content = page.getContent().stream().map(accountMapper::toResponse).toList();
+        return com.g127.snapbuy.dto.response.PageResponse.<AccountResponse>builder()
+                .content(content)
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .size(page.getSize())
+                .number(page.getNumber())
+                .first(page.isFirst())
+                .last(page.isLast())
+                .empty(page.isEmpty())
+                .build();
+    }
 }

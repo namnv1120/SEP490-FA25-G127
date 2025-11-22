@@ -74,3 +74,11 @@ export const getMyOrdersByDateTimeRange = async (fromISO, toISO) => {
   });
   return response.data?.result || response.data || [];
 };
+
+export const getOrdersByAccountAndRange = async (accountId, fromISO, toISO) => {
+  const response = await axios.get(`${REST_API_BASE_URL}/by-account/${accountId}/by-range`, {
+    ...getAuthHeaders(),
+    params: { from: fromISO, to: toISO },
+  });
+  return response.data?.result || response.data || [];
+};

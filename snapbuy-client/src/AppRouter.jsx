@@ -40,6 +40,8 @@ const TransactionHistory = lazy(() => import("./feature-module/sales/Transaction
 const OrderHistory = lazy(() => import("./feature-module/sales/OrderHistory"));
 const PosSystemSettings = lazy(() => import("./feature-module/pos/PosSystemSettings"));
 const FormHorizontal = lazy(() => import("./feature-module/uiinterface/forms/formelements/layouts/form-horizontal"));
+const OwnerStaffAccountList = lazy(() => import("./feature-module/owner/StaffAccountList"));
+const StaffShiftReport = lazy(() => import("./feature-module/owner/StaffShiftReport"));
 
 const componentsMap = {
   Pos,
@@ -76,6 +78,8 @@ const componentsMap = {
   PosSystemSettings,
   FormHorizontal,
   SalesOverview,
+  OwnerStaffAccountList,
+  StaffShiftReport,
 };
 
 const AppRouter = () => {

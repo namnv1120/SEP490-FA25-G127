@@ -238,7 +238,7 @@ const PosShift = () => {
                   ) : currentShift && currentShift.status === "Mở" ? (
                     <div className="">
                       <div className="mb-2">
-                        Trạng thái:{" "}
+                        {" "}
                         <span className="badge badge-success">Đang mở</span>
                       </div>
                       <div className="mb-2">
@@ -282,7 +282,7 @@ const PosShift = () => {
                   ) : (
                     <div className="">
                       <div className="mb-2">
-                        Trạng thái:{" "}
+                        {" "}
                         <span className="badge badge-secondary">Đang đóng</span>
                       </div>
                       <div className="mb-3">

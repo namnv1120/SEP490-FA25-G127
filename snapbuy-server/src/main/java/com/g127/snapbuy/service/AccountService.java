@@ -32,4 +32,12 @@ public interface AccountService {
     AccountResponse toggleAccountStatus(UUID accountId);
 
     List<AccountResponse> getAccountsByRoleName(String roleName);
+
+    List<AccountResponse> searchAccounts(String keyword, Boolean active, String roleName);
+
+    com.g127.snapbuy.dto.response.PageResponse<AccountResponse> searchAccountsPaged(String keyword, Boolean active, String roleName,
+                                                                                    org.springframework.data.domain.Pageable pageable);
+
+    com.g127.snapbuy.dto.response.PageResponse<AccountResponse> searchStaffAccountsPaged(String keyword, Boolean active, String roleName,
+                                                                                        org.springframework.data.domain.Pageable pageable);
 }

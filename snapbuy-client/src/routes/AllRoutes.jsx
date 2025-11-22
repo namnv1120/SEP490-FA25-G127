@@ -30,6 +30,9 @@ export const allRoutes = {
   customerreport: "/customer-report",
   supplierreport: "/supplier-report",
 
+  ownerstaffaccounts: "/staff-accounts",
+  staffshiftreport: "/staff-shifts",
+
   profile: "/settings/profile",
   emailsettings: "/settings/email",
   passwordsettings: "/settings/password",

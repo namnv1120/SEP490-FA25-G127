@@ -1901,7 +1901,7 @@ const PosModals = ({
           ) : currentShift && currentShift.status === "Mở" ? (
             <div>
               <div className="mb-2">
-                Trạng thái: <span className="badge badge-success">Đang mở</span>
+                <span className="badge badge-success">Đang mở</span>
               </div>
               <div className="mb-2">
                 Bắt đầu:{" "}
@@ -1968,7 +1968,7 @@ const PosModals = ({
           ) : (
             <div>
               <div className="mb-2">
-                Trạng thái:{" "}
+                {" "}
                 <span className="badge badge-secondary">Đang đóng</span>
               </div>
               <label className="form-label fw-bold">

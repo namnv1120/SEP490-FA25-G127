@@ -445,6 +445,16 @@ export const SidebarData = [
         showSubRoute: false,
         submenu: false,
       },
+      {
+        label: "Nhân viên",
+        icon: 'user-cog',
+        submenu: true,
+        showSubRoute: false,
+        submenuItems: [
+          { label: "Tài khoản", link: "/owner/staff-accounts" },
+          { label: "Báo cáo nhân viên", link: "/owner/staff-shifts" }
+        ],
+      },
     ],
   },
 

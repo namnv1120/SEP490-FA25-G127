@@ -8,6 +8,7 @@ const CommonSelect = ({
   className = "",
   disabled = false,
   filter = true,
+  width = 170,
 }) => {
   return (
     <Dropdown
@@ -21,9 +22,10 @@ const CommonSelect = ({
       className={className}
       disabled={disabled}
       appendTo={document.body}
-      panelStyle={{ zIndex: 9999 }}
+      panelStyle={{ zIndex: 9999, width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` }}
       filter={filter}
       scrollHeight="250px"
+      style={{ width: `${width}px` }}
     />
   );
 };
