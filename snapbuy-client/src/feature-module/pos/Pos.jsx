@@ -262,10 +262,6 @@ const Pos = () => {
               ? originalPrice * (1 - discountPercent / 100)
               : originalPrice;
 
-          console.log(
-            `[POS] Product: ${product.productName}, Original: ${originalPrice}, Discount: ${discountPercent}%, Final: ${discountedPrice}`
-          );
-
           return {
             id: product.productId,
             productId: product.productId,

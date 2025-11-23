@@ -23,19 +23,30 @@ export const getAllPromotions = async () => {
 
 // Lấy chi tiết khuyến mãi theo ID
 export const getPromotionById = async (id) => {
-  const response = await axios.get(`${REST_API_BASE_URL}/${id}`, getAuthHeaders());
+  const response = await axios.get(
+    `${REST_API_BASE_URL}/${id}`,
+    getAuthHeaders()
+  );
   return response.data?.result || response.data;
 };
 
 // Tạo khuyến mãi mới
 export const createPromotion = async (promotionData) => {
-  const response = await axios.post(REST_API_BASE_URL, promotionData, getAuthHeaders());
+  const response = await axios.post(
+    REST_API_BASE_URL,
+    promotionData,
+    getAuthHeaders()
+  );
   return response.data?.result || response.data;
 };
 
 // Cập nhật khuyến mãi
 export const updatePromotion = async (id, promotionData) => {
-  const response = await axios.put(`${REST_API_BASE_URL}/${id}`, promotionData, getAuthHeaders());
+  const response = await axios.put(
+    `${REST_API_BASE_URL}/${id}`,
+    promotionData,
+    getAuthHeaders()
+  );
   return response.data?.result || response.data;
 };
 
@@ -47,7 +58,6 @@ export const getBestDiscountForProduct = async (productId, unitPrice) => {
       : `${REST_API_BASE_URL}/product/${productId}/discount`;
     const response = await axios.get(url, getAuthHeaders());
     const discount = response.data?.result || 0;
-    console.log(`[PromotionService] Product ${productId} (price: ${unitPrice}) discount: ${discount}%`);
     return discount;
   } catch (error) {
     console.error("Error getting discount for product:", error);
@@ -57,7 +67,9 @@ export const getBestDiscountForProduct = async (productId, unitPrice) => {
 
 // Xóa khuyến mãi (nếu backend có API này)
 export const deletePromotion = async (id) => {
-  const response = await axios.delete(`${REST_API_BASE_URL}/${id}`, getAuthHeaders());
+  const response = await axios.delete(
+    `${REST_API_BASE_URL}/${id}`,
+    getAuthHeaders()
+  );
   return response.data;
 };
-

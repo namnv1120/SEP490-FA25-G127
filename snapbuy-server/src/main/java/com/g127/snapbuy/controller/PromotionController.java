@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/promotions")
@@ -52,6 +54,13 @@ public class PromotionController {
     public ApiResponse<PromotionResponse> getById(@PathVariable UUID id) {
         ApiResponse<PromotionResponse> response = new ApiResponse<>();
         response.setResult(promotionService.getById(id));
+        return response;
+    }
+    @GetMapping("/product/{productId}/discount")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
+    public ApiResponse<BigDecimal> getBestDiscount(@PathVariable UUID productId, @RequestParam BigDecimal unitPrice) {
+        ApiResponse<BigDecimal> response = new ApiResponse<>();
+        response.setResult(promotionService.computeBestDiscountPercent(productId, unitPrice, LocalDateTime.now()));
         return response;
     }
 }

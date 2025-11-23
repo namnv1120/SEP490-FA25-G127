@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import ImportExcelModal from "../../components/ImportExcelModal";
+import ImportExcelModal from "../../components/modals/ImportExcelModal";
 import { getAllCategories } from "../../services/CategoryService";
 import { getAllSuppliers } from "../../services/SupplierService";
 import { getAllProducts } from "../../services/ProductService";
@@ -21,11 +21,11 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
     try {
       const data = await getAllCategories();
       // Map để có parentCategoryName
-      const mapped = data.map(cat => {
-        const parent = data.find(p => p.categoryId === cat.parentCategoryId);
+      const mapped = data.map((cat) => {
+        const parent = data.find((p) => p.categoryId === cat.parentCategoryId);
         return {
           ...cat,
-          parentCategoryName: parent ? parent.categoryName : ""
+          parentCategoryName: parent ? parent.categoryName : "",
         };
       });
       setCategoriesData(mapped);
@@ -54,7 +54,7 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
 
   const productCodeMap = useMemo(() => {
     const map = new Map();
-    productsData.forEach(product => {
+    productsData.forEach((product) => {
       const code = product.productCode?.trim().toLowerCase();
       if (code) {
         map.set(code, product);
@@ -65,7 +65,7 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
 
   const productNameMap = useMemo(() => {
     const map = new Map();
-    productsData.forEach(product => {
+    productsData.forEach((product) => {
       const name = product.productName?.trim().toLowerCase();
       if (name) {
         map.set(name, product);
@@ -99,7 +99,9 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
           rowErrors.push("Mã sản phẩm phải từ 3 đến 10 ký tự");
         }
         if (!/^[a-zA-Z0-9_-]+$/.test(productCode)) {
-          rowErrors.push("Mã sản phẩm chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang");
+          rowErrors.push(
+            "Mã sản phẩm chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang"
+          );
         }
 
         const normalizedCode = productCode.toLowerCase();
@@ -107,15 +109,20 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
         const normalizedName = (row.productName || "").trim().toLowerCase();
 
         if (existingProductByCode) {
-          if (normalizedName &&
+          if (
+            normalizedName &&
             existingProductByCode.productName &&
-            existingProductByCode.productName.trim().toLowerCase() !== normalizedName) {
+            existingProductByCode.productName.trim().toLowerCase() !==
+              normalizedName
+          ) {
             rowErrors.push(
               `Mã sản phẩm '${productCode}' đã tồn tại và thuộc về sản phẩm '${existingProductByCode.productName}'. ` +
-              `Tên bạn nhập '${row.productName || ""}' không khớp`
+                `Tên bạn nhập '${row.productName || ""}' không khớp`
             );
           } else {
-            rowErrors.push(`Mã sản phẩm '${productCode}' đã tồn tại trong hệ thống`);
+            rowErrors.push(
+              `Mã sản phẩm '${productCode}' đã tồn tại trong hệ thống`
+            );
           }
         }
         if (codeCount[normalizedCode] > 1) {
@@ -133,7 +140,9 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
         const normalizedName = productName.toLowerCase();
         const existingProductByName = productNameMap.get(normalizedName);
         const normalizedCode = (row.productCode || "").trim().toLowerCase();
-        const existingProductByCode = normalizedCode ? productCodeMap.get(normalizedCode) : null;
+        const existingProductByCode = normalizedCode
+          ? productCodeMap.get(normalizedCode)
+          : null;
         const isSameProduct =
           existingProductByCode &&
           existingProductByName &&
@@ -143,14 +152,17 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
           if (
             normalizedCode &&
             existingProductByName.productCode &&
-            existingProductByName.productCode.trim().toLowerCase() !== normalizedCode
+            existingProductByName.productCode.trim().toLowerCase() !==
+              normalizedCode
           ) {
             rowErrors.push(
               `Tên sản phẩm '${productName}' đã tồn tại với mã '${existingProductByName.productCode}', ` +
-              `nhưng bạn nhập mã '${row.productCode || ""}'`
+                `nhưng bạn nhập mã '${row.productCode || ""}'`
             );
           } else if (!isSameProduct) {
-            rowErrors.push(`Tên sản phẩm '${productName}' đã tồn tại trong hệ thống`);
+            rowErrors.push(
+              `Tên sản phẩm '${productName}' đã tồn tại trong hệ thống`
+            );
           }
         }
         if (nameCount[normalizedName] > 1) {
@@ -173,7 +185,9 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
           rowErrors.push("Mã nhà cung cấp phải từ 3 đến 10 ký tự");
         }
         if (!/^[a-zA-Z0-9_-]+$/.test(supplierCode)) {
-          rowErrors.push("Mã nhà cung cấp chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang");
+          rowErrors.push(
+            "Mã nhà cung cấp chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang"
+          );
         }
       }
 
@@ -211,10 +225,14 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       // Validate Supplier matching
       if (supplierCode && supplierName) {
         const supplierByCode = suppliersData.find(
-          s => s.supplierCode && s.supplierCode.trim().toLowerCase() === supplierCode.toLowerCase()
+          (s) =>
+            s.supplierCode &&
+            s.supplierCode.trim().toLowerCase() === supplierCode.toLowerCase()
         );
         const supplierByName = suppliersData.find(
-          s => s.supplierName && s.supplierName.trim().toLowerCase() === supplierName.toLowerCase()
+          (s) =>
+            s.supplierName &&
+            s.supplierName.trim().toLowerCase() === supplierName.toLowerCase()
         );
 
         const codeExists = supplierByCode != null;
@@ -222,39 +240,54 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
 
         if (codeExists && nameExists) {
           if (supplierByCode.supplierId !== supplierByName.supplierId) {
-            rowErrors.push(`Mã nhà cung cấp '${supplierCode}' và tên nhà cung cấp '${supplierName}' không khớp`);
+            rowErrors.push(
+              `Mã nhà cung cấp '${supplierCode}' và tên nhà cung cấp '${supplierName}' không khớp`
+            );
           }
         } else if (codeExists && !nameExists) {
-          rowErrors.push(`Mã nhà cung cấp '${supplierCode}' đã tồn tại nhưng tên '${supplierName}' không khớp`);
+          rowErrors.push(
+            `Mã nhà cung cấp '${supplierCode}' đã tồn tại nhưng tên '${supplierName}' không khớp`
+          );
         } else if (!codeExists && nameExists) {
-          rowErrors.push(`Tên nhà cung cấp '${supplierName}' đã tồn tại nhưng mã '${supplierCode}' không khớp`);
+          rowErrors.push(
+            `Tên nhà cung cấp '${supplierName}' đã tồn tại nhưng mã '${supplierCode}' không khớp`
+          );
         }
       }
 
       // Validate Category - kiểm tra category có con hay không
       if (categoryName) {
         const category = categoriesData.find(
-          c => c.categoryName && c.categoryName.trim().toLowerCase() === categoryName.toLowerCase()
+          (c) =>
+            c.categoryName &&
+            c.categoryName.trim().toLowerCase() === categoryName.toLowerCase()
         );
         if (category) {
           // Kiểm tra category có con hay không
           const hasChildren = categoriesData.some(
-            c => c.parentCategoryId === category.categoryId
+            (c) => c.parentCategoryId === category.categoryId
           );
 
           if (hasChildren) {
             // Category có con, bắt buộc phải nhập subCategoryName
             const subCategoryName = (row.subCategoryName || "").trim();
             if (!subCategoryName) {
-              rowErrors.push(`Danh mục '${categoryName}' đã có danh mục con. Bắt buộc phải nhập danh mục con`);
+              rowErrors.push(
+                `Danh mục '${categoryName}' đã có danh mục con. Bắt buộc phải nhập danh mục con`
+              );
             } else {
               // Kiểm tra subCategory có thuộc về category này không
               const subCategory = categoriesData.find(
-                c => c.categoryName && c.categoryName.trim().toLowerCase() === subCategoryName.toLowerCase()
+                (c) =>
+                  c.categoryName &&
+                  c.categoryName.trim().toLowerCase() ===
+                    subCategoryName.toLowerCase()
               );
               if (subCategory) {
                 if (subCategory.parentCategoryId !== category.categoryId) {
-                  rowErrors.push(`Danh mục con '${subCategoryName}' không thuộc về danh mục '${categoryName}'`);
+                  rowErrors.push(
+                    `Danh mục con '${subCategoryName}' không thuộc về danh mục '${categoryName}'`
+                  );
                 }
               }
             }
@@ -276,61 +309,61 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       dataIndex: "productCode",
       key: "productCode",
       width: 120,
-      fixed: 'left'
+      fixed: "left",
     },
     {
       title: "Tên sản phẩm",
       dataIndex: "productName",
       key: "productName",
-      width: 200
+      width: 200,
     },
     {
       title: "Mô tả",
       dataIndex: "description",
       key: "description",
-      width: 200
+      width: 200,
     },
     {
       title: "Danh mục",
       dataIndex: "categoryName",
       key: "categoryName",
-      width: 150
+      width: 150,
     },
     {
       title: "Danh mục con(Tuỳ chọn)",
       dataIndex: "subCategoryName",
       key: "subCategoryName",
-      width: 150
+      width: 150,
     },
     {
       title: "Mã nhà cung cấp",
       dataIndex: "supplierCode",
       key: "supplierCode",
-      width: 120
+      width: 120,
     },
     {
       title: "Tên nhà cung cấp",
       dataIndex: "supplierName",
       key: "supplierName",
-      width: 200
+      width: 200,
     },
     {
       title: "Đơn vị",
       dataIndex: "unit",
       key: "unit",
-      width: 100
+      width: 100,
     },
     {
       title: "Kích thước",
       dataIndex: "dimensions",
       key: "dimensions",
-      width: 150
+      width: 150,
     },
     {
       title: "Barcode",
       dataIndex: "barcode",
       key: "barcode",
-      width: 150
+      width: 150,
     },
     {
       title: "Lỗi",
@@ -340,11 +373,9 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       render: (text) => {
         if (!text) return null;
         return (
-          <span style={{ color: '#ff4d4f', fontSize: '12px' }}>
-            {text}
-          </span>
+          <span style={{ color: "#ff4d4f", fontSize: "12px" }}>{text}</span>
         );
-      }
+      },
     },
   ];
 
@@ -375,7 +406,7 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       "Tên nhà cung cấp": "Samsung Vietnam",
       "Đơn vị": "Cái",
       "Kích thước": "15x7x0.8",
-      "Barcode": "1234567890123",
+      Barcode: "1234567890123",
     },
     {
       "Mã sản phẩm": "PRD002",
@@ -387,26 +418,76 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       "Tên nhà cung cấp": "Apple",
       "Đơn vị": "Cái",
       "Kích thước": "15x7x0.8",
-      "Barcode": "9876543210987",
-    }
+      Barcode: "9876543210987",
+    },
   ];
 
   const guideData = [
-    { "Cột": "Mã sản phẩm", "Quy tắc": "BẮT BUỘC. Từ 3-10 ký tự. Chỉ chứa chữ, số, gạch dưới (_) hoặc gạch ngang (-). Không được trùng với mã đã có trong hệ thống." },
-    { "Cột": "Tên sản phẩm", "Quy tắc": "BẮT BUỘC. Từ 3-100 ký tự. Không được trùng với tên đã có trong hệ thống." },
-    { "Cột": "Mô tả", "Quy tắc": "Tùy chọn. Mô tả về sản phẩm." },
-    { "Cột": "Danh mục", "Quy tắc": "BẮT BUỘC. Tên danh mục chính. Nếu danh mục đã có danh mục con, BẮT BUỘC phải nhập 'Danh mục con'." },
-    { "Cột": "Danh mục con", "Quy tắc": "Tùy chọn. BẮT BUỘC nếu 'Danh mục' đã có danh mục con. Phải thuộc về 'Danh mục' đã nhập." },
-    { "Cột": "Mã nhà cung cấp", "Quy tắc": "BẮT BUỘC. Từ 3-10 ký tự. Chỉ chứa chữ, số, gạch dưới (_) hoặc gạch ngang (-). Mỗi mã chỉ được dùng với 1 tên duy nhất trong file." },
-    { "Cột": "Tên nhà cung cấp", "Quy tắc": "BẮT BUỘC. Từ 3-100 ký tự. Phải khớp với 'Mã nhà cung cấp' (nếu mã đã có trong hệ thống)." },
-    { "Cột": "Đơn vị", "Quy tắc": "Tùy chọn. Tối đa 10 ký tự. Ví dụ: Cái, Chiếc, Kg, Lít..." },
-    { "Cột": "Kích thước", "Quy tắc": "Tùy chọn. Tối đa 30 ký tự. Ví dụ: 15x7x0.8" },
-    { "Cột": "Barcode", "Quy tắc": "Tùy chọn. Tối đa 50 ký tự. Chỉ chứa chữ và số. Không được trùng với barcode đã có trong hệ thống." },
-    { "Cột": "", "Quy tắc": "" },
-    { "Cột": "LƯU Ý:", "Quy tắc": "1. Không được trùng mã sản phẩm hoặc tên sản phẩm trong cùng file Excel." },
-    { "Cột": "", "Quy tắc": "2. Mã nhà cung cấp và tên nhà cung cấp phải khớp với nhau (nếu đã có trong hệ thống)." },
-    { "Cột": "", "Quy tắc": "3. Mỗi mã nhà cung cấp chỉ được dùng với 1 tên duy nhất trong file." },
-    { "Cột": "", "Quy tắc": "4. Nếu danh mục đã có danh mục con, bắt buộc phải nhập danh mục con, không được dùng danh mục cha." },
+    {
+      Cột: "Mã sản phẩm",
+      "Quy tắc":
+        "BẮT BUỘC. Từ 3-10 ký tự. Chỉ chứa chữ, số, gạch dưới (_) hoặc gạch ngang (-). Không được trùng với mã đã có trong hệ thống.",
+    },
+    {
+      Cột: "Tên sản phẩm",
+      "Quy tắc":
+        "BẮT BUỘC. Từ 3-100 ký tự. Không được trùng với tên đã có trong hệ thống.",
+    },
+    { Cột: "Mô tả", "Quy tắc": "Tùy chọn. Mô tả về sản phẩm." },
+    {
+      Cột: "Danh mục",
+      "Quy tắc":
+        "BẮT BUỘC. Tên danh mục chính. Nếu danh mục đã có danh mục con, BẮT BUỘC phải nhập 'Danh mục con'.",
+    },
+    {
+      Cột: "Danh mục con",
+      "Quy tắc":
+        "Tùy chọn. BẮT BUỘC nếu 'Danh mục' đã có danh mục con. Phải thuộc về 'Danh mục' đã nhập.",
+    },
+    {
+      Cột: "Mã nhà cung cấp",
+      "Quy tắc":
+        "BẮT BUỘC. Từ 3-10 ký tự. Chỉ chứa chữ, số, gạch dưới (_) hoặc gạch ngang (-). Mỗi mã chỉ được dùng với 1 tên duy nhất trong file.",
+    },
+    {
+      Cột: "Tên nhà cung cấp",
+      "Quy tắc":
+        "BẮT BUỘC. Từ 3-100 ký tự. Phải khớp với 'Mã nhà cung cấp' (nếu mã đã có trong hệ thống).",
+    },
+    {
+      Cột: "Đơn vị",
+      "Quy tắc": "Tùy chọn. Tối đa 10 ký tự. Ví dụ: Cái, Chiếc, Kg, Lít...",
+    },
+    {
+      Cột: "Kích thước",
+      "Quy tắc": "Tùy chọn. Tối đa 30 ký tự. Ví dụ: 15x7x0.8",
+    },
+    {
+      Cột: "Barcode",
+      "Quy tắc":
+        "Tùy chọn. Tối đa 50 ký tự. Chỉ chứa chữ và số. Không được trùng với barcode đã có trong hệ thống.",
+    },
+    { Cột: "", "Quy tắc": "" },
+    {
+      Cột: "LƯU Ý:",
+      "Quy tắc":
+        "1. Không được trùng mã sản phẩm hoặc tên sản phẩm trong cùng file Excel.",
+    },
+    {
+      Cột: "",
+      "Quy tắc":
+        "2. Mã nhà cung cấp và tên nhà cung cấp phải khớp với nhau (nếu đã có trong hệ thống).",
+    },
+    {
+      Cột: "",
+      "Quy tắc":
+        "3. Mỗi mã nhà cung cấp chỉ được dùng với 1 tên duy nhất trong file.",
+    },
+    {
+      Cột: "",
+      "Quy tắc":
+        "4. Nếu danh mục đã có danh mục con, bắt buộc phải nhập danh mục con, không được dùng danh mục cha.",
+    },
   ];
 
   return (

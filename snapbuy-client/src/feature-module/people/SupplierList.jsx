@@ -4,7 +4,11 @@ import DeleteModal from "../../components/delete-modal";
 import TableTopHead from "../../components/table-top-head";
 import CommonFooter from "../../components/footer/CommonFooter";
 import { useState, useEffect } from "react";
-import { getAllSuppliers, deleteSupplier, toggleSupplierStatus } from "../../services/SupplierService";
+import {
+  getAllSuppliers,
+  deleteSupplier,
+  toggleSupplierStatus,
+} from "../../services/SupplierService";
 import { message } from "antd";
 import { Modal } from "bootstrap";
 import { exportToExcel } from "../../utils/excelUtils";
@@ -33,7 +37,10 @@ const Suppliers = () => {
       const data = await getAllSuppliers();
       const mappedData = data.map((supplier) => ({
         ...supplier,
-        status: supplier.active === true || supplier.active === 1 ? "Hoạt động" : "Không hoạt động",
+        status:
+          supplier.active === true || supplier.active === 1
+            ? "Hoạt động"
+            : "Không hoạt động",
         active: supplier.active === true || supplier.active === 1,
       }));
       setListData(mappedData);
@@ -51,7 +58,7 @@ const Suppliers = () => {
       return;
     }
 
-    const exportData = listData.map(row => ({
+    const exportData = listData.map((row) => ({
       Mã: row.supplierCode,
       "Nhà cung cấp": row.supplierName,
       "Số điện thoại": row.phone,
@@ -59,7 +66,6 @@ const Suppliers = () => {
       "Quận, phường": row.ward,
       Tỉnh: row.city,
       "Địa chỉ": row.address,
-
     }));
 
     try {
@@ -72,7 +78,7 @@ const Suppliers = () => {
   const handleRefresh = () => {
     fetchSuppliers();
     message.success("Làm mới danh sách thành công!");
-  }
+  };
 
   const handleSearch = () => {};
 
@@ -104,7 +110,9 @@ const Suppliers = () => {
       }
 
       setTimeout(() => {
-        document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+        document
+          .querySelectorAll(".modal-backdrop")
+          .forEach((el) => el.remove());
         document.body.classList.remove("modal-open");
         document.body.style.removeProperty("overflow");
         document.body.style.removeProperty("padding-right");
@@ -134,6 +142,30 @@ const Suppliers = () => {
     }
   };
 
+  // Handle select-all checkbox
+  useEffect(() => {
+    const selectAllCheckbox = document.getElementById("select-all");
+
+    const handleSelectAll = (e) => {
+      const checkboxes = document.querySelectorAll(
+        '.table-list-card input[type="checkbox"][data-id]'
+      );
+      checkboxes.forEach((cb) => {
+        cb.checked = e.target.checked;
+      });
+    };
+
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener("change", handleSelectAll);
+    }
+
+    return () => {
+      if (selectAllCheckbox) {
+        selectAllCheckbox.removeEventListener("change", handleSelectAll);
+      }
+    };
+  }, [listData]);
+
   const columns = [
     {
       header: (
@@ -142,9 +174,9 @@ const Suppliers = () => {
           <span className="checkmarks" />
         </label>
       ),
-      body: () => (
+      body: (data) => (
         <label className="checkboxs">
-          <input type="checkbox" />
+          <input type="checkbox" data-id={data.supplierId} />
           <span className="checkmarks" />
         </label>
       ),
@@ -156,7 +188,6 @@ const Suppliers = () => {
       header: "Nhà cung cấp",
       field: "supplierName",
       key: "supplierName",
-
     },
     { header: "Email", field: "email", key: "email" },
     { header: "Số điện thoại", field: "phone", key: "phone" },
@@ -169,8 +200,9 @@ const Suppliers = () => {
       body: (data) => (
         <div className="d-flex align-items-center gap-2">
           <span
-            className={`badge fw-medium fs-10 ${data.status === "Hoạt động" ? "bg-success" : "bg-danger"
-              }`}
+            className={`badge fw-medium fs-10 ${
+              data.status === "Hoạt động" ? "bg-success" : "bg-danger"
+            }`}
           >
             {data.status}
           </span>
@@ -244,29 +276,29 @@ const Suppliers = () => {
             </div>
           )}
 
-          <div className="card">
-              <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-                <SearchFromApi
-                  callback={handleSearch}
+          <div className="card table-list-card">
+            <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+              <SearchFromApi
+                callback={handleSearch}
+                rows={rows}
+                setRows={setRows}
+              />
+            </div>
+            <div className="card-body p-0">
+              <div className="table-responsive">
+                <PrimeDataTable
+                  column={columns}
+                  data={listData}
                   rows={rows}
                   setRows={setRows}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  totalRecords={totalRecords}
+                  dataKey="supplierId"
                 />
               </div>
-              <div className="card-body p-0">
-                <div className="table-responsive">
-                  <PrimeDataTable
-                    column={columns}
-                    data={listData}
-                    rows={rows}
-                    setRows={setRows}
-                    currentPage={currentPage}
-                    setCurrentPage={setCurrentPage}
-                    totalRecords={totalRecords}
-                    dataKey="supplierId"
-                  />
-                </div>
-              </div>
             </div>
+          </div>
         </div>
         <CommonFooter />
       </div>

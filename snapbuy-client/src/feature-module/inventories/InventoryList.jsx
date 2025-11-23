@@ -10,7 +10,6 @@ import { message } from "antd";
 import EditInventory from "../../core/modals/inventories/EditInventoryModal";
 import ProductDetailModal from "../../core/modals/inventories/ProductDetailModal";
 
-
 const InventoryList = () => {
   const [inventoryList, setInventoryList] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -75,9 +74,36 @@ const InventoryList = () => {
     if (!searchQuery) return true;
     return (
       item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.productId?.toString().toLowerCase().includes(searchQuery.toLowerCase())
+      item.productId
+        ?.toString()
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
     );
   });
+
+  // Handle select-all checkbox
+  useEffect(() => {
+    const selectAllCheckbox = document.getElementById("select-all");
+
+    const handleSelectAll = (e) => {
+      const checkboxes = document.querySelectorAll(
+        '.table-list-card input[type="checkbox"][data-id]'
+      );
+      checkboxes.forEach((cb) => {
+        cb.checked = e.target.checked;
+      });
+    };
+
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener("change", handleSelectAll);
+    }
+
+    return () => {
+      if (selectAllCheckbox) {
+        selectAllCheckbox.removeEventListener("change", handleSelectAll);
+      }
+    };
+  }, [inventoryList]);
 
   // ✅ Cấu hình cột bảng
   const columns = [
@@ -88,9 +114,9 @@ const InventoryList = () => {
           <span className="checkmarks" />
         </label>
       ),
-      body: () => (
+      body: (data) => (
         <label className="checkboxs">
-          <input type="checkbox" />
+          <input type="checkbox" data-id={data.inventoryId} />
           <span className="checkmarks" />
         </label>
       ),
@@ -127,8 +153,10 @@ const InventoryList = () => {
         const min = Number(rowData.minimumStock);
         const max = Number(rowData.maximumStock);
 
-        if (qty < min) return <span className="badge bg-danger">Thiếu hàng</span>;
-        if (qty > max) return <span className="badge bg-warning text-dark">Quá tồn</span>;
+        if (qty < min)
+          return <span className="badge bg-danger">Thiếu hàng</span>;
+        if (qty > max)
+          return <span className="badge bg-warning text-dark">Quá tồn</span>;
         return <span className="badge bg-success">Ổn định</span>;
       },
     },
@@ -155,7 +183,6 @@ const InventoryList = () => {
         </div>
       ),
     },
-
   ];
 
   // ✅ Xử lý tìm kiếm
@@ -185,7 +212,11 @@ const InventoryList = () => {
         {/* 🔹 Danh sách tồn kho */}
         <div className="card table-list-card">
           <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-            <SearchFromApi callback={handleSearch} rows={rows} setRows={setRows} />
+            <SearchFromApi
+              callback={handleSearch}
+              rows={rows}
+              setRows={setRows}
+            />
             <div className="d-flex align-items-center flex-wrap row-gap-3">
               <CommonDatePicker value={dateFilter} onChange={setDateFilter} />
             </div>

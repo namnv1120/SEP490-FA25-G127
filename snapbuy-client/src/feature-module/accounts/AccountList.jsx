@@ -39,29 +39,6 @@ const AccountList = () => {
   const [rows, setRows] = useState(10);
   const [totalRecords, setTotalRecords] = useState(0);
 
-  useEffect(() => {
-    fetchAccounts();
-  }, [fetchAccounts]);
-
-  useEffect(() => {
-    const loadRoles = async () => {
-      try {
-        const roles = await getAllRoles();
-        const opts = (roles || [])
-          .filter((r) => r && (r.active === true || r.active === 1))
-          .map((r) => ({ label: r.roleName, value: r.roleName }));
-        setRoleOptions(opts);
-      } catch {
-        void 0;
-      }
-    };
-    loadRoles();
-  }, []);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, statusFilter, roleFilter]);
-
   const fetchAccounts = useCallback(async () => {
     try {
       const backendPage = Math.max(0, (currentPage || 1) - 1);
@@ -106,6 +83,29 @@ const AccountList = () => {
       void 0;
     }
   }, [currentPage, rows, searchQuery, statusFilter, roleFilter]);
+
+  useEffect(() => {
+    fetchAccounts();
+  }, [fetchAccounts]);
+
+  useEffect(() => {
+    const loadRoles = async () => {
+      try {
+        const roles = await getAllRoles();
+        const opts = (roles || [])
+          .filter((r) => r && (r.active === true || r.active === 1))
+          .map((r) => ({ label: r.roleName, value: r.roleName }));
+        setRoleOptions(opts);
+      } catch {
+        void 0;
+      }
+    };
+    loadRoles();
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, roleFilter]);
 
   const handleToggleStatus = async (account) => {
     try {
@@ -171,6 +171,31 @@ const AccountList = () => {
     setAccountToDelete(null);
   };
 
+  // Handle select-all checkbox
+  useEffect(() => {
+    const selectAllCheckbox = document.getElementById("select-all");
+
+    const handleSelectAll = (e) => {
+      const checkboxes = document.querySelectorAll(
+        '.table-list-card input[type="checkbox"][data-id]'
+      );
+      checkboxes.forEach((cb) => {
+        cb.checked = e.target.checked;
+      });
+    };
+
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener("change", handleSelectAll);
+    }
+
+    // Cleanup function to remove event listener
+    return () => {
+      if (selectAllCheckbox) {
+        selectAllCheckbox.removeEventListener("change", handleSelectAll);
+      }
+    };
+  }, [dataSource]);
+
   const columns = [
     {
       header: (
@@ -179,9 +204,9 @@ const AccountList = () => {
           <span className="checkmarks" />
         </label>
       ),
-      body: () => (
+      body: (data) => (
         <label className="checkboxs">
-          <input type="checkbox" />
+          <input type="checkbox" data-id={data.id} />
           <span className="checkmarks" />
         </label>
       ),

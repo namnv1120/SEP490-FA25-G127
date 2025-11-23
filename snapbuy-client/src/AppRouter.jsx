@@ -96,9 +96,6 @@ const OwnerStaffAccountList = lazy(() =>
 const StaffShiftManagement = lazy(() =>
   import("./feature-module/owner/StaffShiftManagement")
 );
-const StaffShiftReport = lazy(() =>
-  import("./feature-module/owner/StaffShiftReport")
-);
 const PromotionList = lazy(() =>
   import("./feature-module/promotions/PromotionList.jsx")
 );
@@ -140,7 +137,6 @@ const componentsMap = {
   SalesDashboard,
   OwnerStaffAccountList,
   StaffShiftManagement,
-  StaffShiftReport,
   PromotionList,
 };
 

@@ -43,7 +43,7 @@ public class AccountController {
     }
 
     @GetMapping("/{accountId}")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
     public ApiResponse<AccountResponse> getAccount(@PathVariable UUID accountId) {
         ApiResponse<AccountResponse> response = new ApiResponse<>();
         response.setResult(accountService.getAccount(accountId));

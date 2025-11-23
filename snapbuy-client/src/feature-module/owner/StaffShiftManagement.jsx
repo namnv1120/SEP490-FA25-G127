@@ -24,14 +24,45 @@ const StaffShiftManagement = () => {
     workingStaff: [],
   });
 
+  // Fetch all shifts
+  const fetchAllShifts = useCallback(async (staff) => {
+    try {
+      const allShifts = [];
+
+      for (const s of staff) {
+        try {
+          const shifts = await getShiftsByAccountId(s.id, null); // Get all statuses
+
+          const shiftsWithStaffInfo = (shifts || []).map((shift) => ({
+            ...shift,
+            accountName: s.fullName,
+            accountEmail: s.email,
+          }));
+          allShifts.push(...shiftsWithStaffInfo);
+        } catch (err) {
+          console.error(`Error fetching shifts for ${s.fullName}:`, err);
+        }
+      }
+
+      // Sort by openedAt desc
+      allShifts.sort((a, b) => new Date(b.openedAt) - new Date(a.openedAt));
+
+      setShiftsData(allShifts);
+      setFilteredData(allShifts);
+      calculateStats(allShifts);
+    } catch (error) {
+      message.error(
+        "Không thể tải dữ liệu ca làm việc: " + (error.message || "")
+      );
+    }
+  }, []);
+
   // Fetch staff list
   useEffect(() => {
     const fetchStaff = async () => {
       try {
         setLoading(true);
-        console.log("Fetching sales staff...");
 
-        // Only fetch sales staff (Nhân viên bán hàng)
         const response = await searchStaffAccountsPaged({
           keyword: "",
           active: true,
@@ -44,7 +75,6 @@ const StaffShiftManagement = () => {
 
         const allStaff = response?.content || [];
 
-        // CLIENT-SIDE FILTER: Only keep staff with "Nhân viên bán hàng" role
         const staff = allStaff.filter(
           (s) => s.roles && s.roles.includes("Nhân viên bán hàng")
         );
@@ -57,10 +87,8 @@ const StaffShiftManagement = () => {
           return;
         }
 
-        // Fetch shifts for each staff
         await fetchAllShifts(staff);
       } catch (error) {
-        console.error("Error fetching staff:", error);
         message.error(
           "Không thể tải danh sách nhân viên: " + (error.message || "")
         );
@@ -93,13 +121,10 @@ const StaffShiftManagement = () => {
 
         const allOrders = resp?.content || resp || [];
 
-        // Get list of sales staff IDs
         const staffIds = staffList.map((s) => s.id);
 
-        // Filter orders by sales staff
         const salesOrders = allOrders.filter((o) => {
           const uid = o.accountId || o.account?.id || o.account?.accountId;
-          // Loose comparison for ID
           return staffIds.some((id) => String(id) === String(uid));
         });
 
@@ -113,48 +138,13 @@ const StaffShiftManagement = () => {
           todayRevenue: revenue,
         }));
       } catch (err) {
-        console.error("Error fetching daily revenue:", err);
+        message.error("Không thể tải doanh thu: " + (err.message || ""));
       }
     };
 
     fetchDailyRevenue();
   }, [staffList]);
 
-  // Fetch all shifts
-  const fetchAllShifts = useCallback(async (staff) => {
-    try {
-      const allShifts = [];
-
-      for (const s of staff) {
-        try {
-          const shifts = await getShiftsByAccountId(s.id, null); // Get all statuses
-
-          const shiftsWithStaffInfo = (shifts || []).map((shift) => ({
-            ...shift,
-            accountName: s.fullName,
-            accountEmail: s.email,
-          }));
-          allShifts.push(...shiftsWithStaffInfo);
-        } catch (err) {
-          console.error(`Error fetching shifts for ${s.fullName}:`, err);
-        }
-      }
-
-      // Sort by openedAt desc
-      allShifts.sort((a, b) => new Date(b.openedAt) - new Date(a.openedAt));
-
-      setShiftsData(allShifts);
-      setFilteredData(allShifts);
-      calculateStats(allShifts);
-    } catch (error) {
-      console.error("Error fetching shifts:", error);
-      message.error(
-        "Không thể tải dữ liệu ca làm việc: " + (error.message || "")
-      );
-    }
-  }, []);
-
-  // Calculate summary stats (shifts only)
   const calculateStats = (shifts) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -177,18 +167,15 @@ const StaffShiftManagement = () => {
     }));
   };
 
-  // Apply filters
   useEffect(() => {
     let filtered = [...shiftsData];
 
-    // Search filter
     if (searchTerm) {
       filtered = filtered.filter((s) =>
         s.accountName?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    // Status filter
     if (statusFilter !== "all") {
       filtered = filtered.filter((s) => s.status === statusFilter);
     }
@@ -196,19 +183,15 @@ const StaffShiftManagement = () => {
     setFilteredData(filtered);
   }, [searchTerm, statusFilter, shiftsData]);
 
-  // View shift details
   const viewShiftDetails = async (shift) => {
     setSelectedShift(shift);
     setDetailModalOpen(true);
-    setOrders([]); // Reset orders
-
-    // Fetch orders for this shift
+    setOrders([]);
     if (shift.openedAt) {
       try {
         const fromISO = shift.openedAt;
         const toISO = shift.closedAt || new Date().toISOString();
 
-        // Use getAllOrders with a slightly wider range
         const fromDate = new Date(fromISO);
         const toDate = new Date(toISO);
 
@@ -227,7 +210,6 @@ const StaffShiftManagement = () => {
 
         const allOrders = resp?.content || resp || [];
 
-        // Strict filtering
         const fromTime = new Date(fromISO).getTime();
         const toTime = new Date(toISO).getTime();
 
@@ -247,13 +229,11 @@ const StaffShiftManagement = () => {
 
         setOrders(shiftOrders);
       } catch (error) {
-        console.error("Error fetching orders:", error);
         message.error("Không thể tải đơn hàng: " + (error.message || ""));
       }
     }
   };
 
-  // Format currency
   const formatCurrency = (value) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -261,13 +241,11 @@ const StaffShiftManagement = () => {
     }).format(value || 0);
   };
 
-  // Format datetime
   const formatDateTime = (isoString) => {
     if (!isoString) return "-";
     return new Date(isoString).toLocaleString("vi-VN");
   };
 
-  // Table columns
   const columns = [
     {
       header: "Nhân viên",
@@ -593,7 +571,7 @@ const StaffShiftManagement = () => {
             <PrimeDataTable
               data={filteredData}
               column={columns}
-              loading={loading}
+              loading={false}
               emptyMessage="Không có dữ liệu ca làm việc"
               dataKey="shiftId"
             />

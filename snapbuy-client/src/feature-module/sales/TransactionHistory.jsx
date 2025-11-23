@@ -43,7 +43,7 @@ const TransactionHistory = () => {
 
   const dateRangeKey = useMemo(() => {
     if (!dateRange[0] || !dateRange[1]) return "null";
-    return `${dateRange[0]?.getTime() || ''}-${dateRange[1]?.getTime() || ''}`;
+    return `${dateRange[0]?.getTime() || ""}-${dateRange[1]?.getTime() || ""}`;
   }, [dateRange]);
 
   const loadTransactions = useCallback(async () => {
@@ -62,11 +62,11 @@ const TransactionHistory = () => {
         // Format theo local timezone thay vì UTC
         const formatDate = (date) => {
           const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          const hours = String(date.getHours()).padStart(2, '0');
-          const minutes = String(date.getMinutes()).padStart(2, '0');
-          const seconds = String(date.getSeconds()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+          const hours = String(date.getHours()).padStart(2, "0");
+          const minutes = String(date.getMinutes()).padStart(2, "0");
+          const seconds = String(date.getSeconds()).padStart(2, "0");
           return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
         };
         from = formatDate(startDate);
@@ -82,7 +82,9 @@ const TransactionHistory = () => {
         sort: "transactionDate",
         dir: "DESC",
         ...(searchProduct.trim() && { productName: searchProduct.trim() }),
-        ...(selectedTransactionType && { transactionType: selectedTransactionType }),
+        ...(selectedTransactionType && {
+          transactionType: selectedTransactionType,
+        }),
         ...(selectedReferenceType && { referenceType: selectedReferenceType }),
         ...(from && { from }),
         ...(to && { to }),
@@ -106,7 +108,8 @@ const TransactionHistory = () => {
           transactionType: item.transactionType || "UNKNOWN",
           productName: item.productName || "Không xác định",
           quantity: Number(item.quantity) || 0,
-          transactionDate: parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : null,
+          transactionDate:
+            parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : null,
           referenceType: item.referenceType || "-",
           note: item.notes || "-",
         };
@@ -139,12 +142,42 @@ const TransactionHistory = () => {
       setCurrentPage(1);
     }, 500);
     return () => clearTimeout(timer);
-  }, [searchProduct, selectedTransactionType, selectedReferenceType, dateRangeKey, rows]);
+  }, [
+    searchProduct,
+    selectedTransactionType,
+    selectedReferenceType,
+    dateRangeKey,
+    rows,
+  ]);
 
   // Load data khi currentPage hoặc các filter thay đổi
   useEffect(() => {
     loadTransactions();
   }, [loadTransactions]);
+
+  // Handle select-all checkbox
+  useEffect(() => {
+    const selectAllCheckbox = document.getElementById("select-all");
+
+    const handleSelectAll = (e) => {
+      const checkboxes = document.querySelectorAll(
+        '.table-list-card input[type="checkbox"][data-id]'
+      );
+      checkboxes.forEach((cb) => {
+        cb.checked = e.target.checked;
+      });
+    };
+
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener("change", handleSelectAll);
+    }
+
+    return () => {
+      if (selectAllCheckbox) {
+        selectAllCheckbox.removeEventListener("change", handleSelectAll);
+      }
+    };
+  }, [listData]);
 
   const columns = [
     {
@@ -154,9 +187,9 @@ const TransactionHistory = () => {
           <span className="checkmarks" />
         </label>
       ),
-      body: () => (
+      body: (data) => (
         <label className="checkboxs">
-          <input type="checkbox" />
+          <input type="checkbox" data-id={data.key} />
           <span className="checkmarks" />
         </label>
       ),
@@ -169,13 +202,17 @@ const TransactionHistory = () => {
       key: "transactionType",
       sortable: true,
       body: (data) => {
-        const badge =
-          {
-            "Nhập kho": { class: "bg-success text-white", text: "Nhập kho" },
-            "Bán ra": { class: "bg-danger text-white", text: "Bán ra" },
-            "Trả hàng": { class: "bg-info text-white", text: "Trả hàng" },
-          }[data.transactionType] || { class: "bg-secondary text-white", text: data.transactionType || "Không xác định" };
-        return <span className={`badge ${badge.class} small`}>{badge.text}</span>;
+        const badge = {
+          "Nhập kho": { class: "bg-success text-white", text: "Nhập kho" },
+          "Bán ra": { class: "bg-danger text-white", text: "Bán ra" },
+          "Trả hàng": { class: "bg-info text-white", text: "Trả hàng" },
+        }[data.transactionType] || {
+          class: "bg-secondary text-white",
+          text: data.transactionType || "Không xác định",
+        };
+        return (
+          <span className={`badge ${badge.class} small`}>{badge.text}</span>
+        );
       },
     },
     {
@@ -183,9 +220,7 @@ const TransactionHistory = () => {
       field: "productName",
       key: "productName",
       sortable: true,
-      body: (data) => (
-        <span className="fw-medium">{data.productName}</span>
-      ),
+      body: (data) => <span className="fw-medium">{data.productName}</span>,
     },
     {
       header: "Số lượng",
@@ -198,7 +233,10 @@ const TransactionHistory = () => {
         let sign = "";
         let textColor = "";
 
-        if (data.transactionType === "Nhập kho" || data.transactionType === "Trả hàng") {
+        if (
+          data.transactionType === "Nhập kho" ||
+          data.transactionType === "Trả hàng"
+        ) {
           sign = "+";
           textColor = "text-success";
         } else if (data.transactionType === "Bán ra") {
@@ -228,12 +266,12 @@ const TransactionHistory = () => {
       body: (data) =>
         data.transactionDate && !isNaN(new Date(data.transactionDate).getTime())
           ? new Date(data.transactionDate).toLocaleString("vi-VN", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
           : "-",
     },
     {
@@ -249,11 +287,7 @@ const TransactionHistory = () => {
         } else if (data.referenceType === "Phiếu nhập hàng") {
           className = "text-success fw-bold";
         }
-        return (
-          <small className={className}>
-            {text}
-          </small>
-        );
+        return <small className={className}>{text}</small>;
       },
     },
     {
@@ -261,9 +295,7 @@ const TransactionHistory = () => {
       field: "note",
       key: "note",
       sortable: true,
-      body: (data) => (
-        <small className="text-muted">{data.note}</small>
-      ),
+      body: (data) => <small className="text-muted">{data.note}</small>,
     },
   ];
 
@@ -307,9 +339,9 @@ const TransactionHistory = () => {
                 <CommonSelect
                   options={TransactionTypes}
                   value={TransactionTypes.find(
-                    i => i.value === selectedTransactionType
+                    (i) => i.value === selectedTransactionType
                   )}
-                  onChange={s => {
+                  onChange={(s) => {
                     setSelectedTransactionType(s?.value || "");
                     setCurrentPage(1);
                   }}
@@ -325,9 +357,9 @@ const TransactionHistory = () => {
                 <CommonSelect
                   options={ReferenceTypes}
                   value={ReferenceTypes.find(
-                    i => i.value === selectedReferenceType
+                    (i) => i.value === selectedReferenceType
                   )}
-                  onChange={s => {
+                  onChange={(s) => {
                     setSelectedReferenceType(s?.value || "");
                     setCurrentPage(1);
                   }}
@@ -345,7 +377,7 @@ const TransactionHistory = () => {
                   className="form-control"
                   placeholder="Tên hoặc mã sản phẩm"
                   value={searchProduct}
-                  onChange={e => {
+                  onChange={(e) => {
                     setSearchProduct(e.target.value);
                     setCurrentPage(1);
                   }}

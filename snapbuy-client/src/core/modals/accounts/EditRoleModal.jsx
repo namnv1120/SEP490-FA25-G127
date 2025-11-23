@@ -10,12 +10,6 @@ const EditRole = ({ isOpen, roleId, onSuccess, onUpdated, onClose }) => {
   });
   const [errors, setErrors] = useState({});
 
-  useEffect(() => {
-    if (isOpen && roleId) {
-      loadRoleData();
-    }
-  }, [isOpen, roleId, loadRoleData]);
-
   const loadRoleData = useCallback(async () => {
     try {
       setLoading(true);
@@ -34,6 +28,12 @@ const EditRole = ({ isOpen, roleId, onSuccess, onUpdated, onClose }) => {
       setLoading(false);
     }
   }, [roleId, onClose]);
+
+  useEffect(() => {
+    if (isOpen && roleId) {
+      loadRoleData();
+    }
+  }, [isOpen, roleId, loadRoleData]);
 
   // Hàm kiểm tra hợp lệ dữ liệu dựa trên backend validation
   const validateForm = () => {

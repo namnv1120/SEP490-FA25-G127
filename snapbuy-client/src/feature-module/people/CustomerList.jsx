@@ -16,7 +16,7 @@ import {
 const Customers = () => {
   const [customerToDelete, setCustomerToDelete] = useState(null);
   const [listData, setListData] = useState([]);
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
@@ -86,7 +86,11 @@ const Customers = () => {
 
     const trimmedFullName = formData.fullName.trim();
 
-    if (!trimmedFullName || trimmedFullName.length < 2 || trimmedFullName.length > 50) {
+    if (
+      !trimmedFullName ||
+      trimmedFullName.length < 2 ||
+      trimmedFullName.length > 50
+    ) {
       message.error("Họ và tên phải từ 2 đến 50 ký tự");
       return;
     }
@@ -113,6 +117,30 @@ const Customers = () => {
     }
   };
 
+  // Handle select-all checkbox
+  useEffect(() => {
+    const selectAllCheckbox = document.getElementById("select-all");
+
+    const handleSelectAll = (e) => {
+      const checkboxes = document.querySelectorAll(
+        '.table-list-card input[type="checkbox"][data-id]'
+      );
+      checkboxes.forEach((cb) => {
+        cb.checked = e.target.checked;
+      });
+    };
+
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener("change", handleSelectAll);
+    }
+
+    return () => {
+      if (selectAllCheckbox) {
+        selectAllCheckbox.removeEventListener("change", handleSelectAll);
+      }
+    };
+  }, [listData]);
+
   const columns = [
     {
       header: (
@@ -121,9 +149,9 @@ const Customers = () => {
           <span className="checkmarks" />
         </label>
       ),
-      body: () => (
+      body: (data) => (
         <label className="checkboxs">
-          <input type="checkbox" />
+          <input type="checkbox" data-id={data.customerId} />
           <span className="checkmarks" />
         </label>
       ),
@@ -152,7 +180,7 @@ const Customers = () => {
         const points = data.points ?? 0;
         return (
           <span className="fw-bold text-primary">
-            {new Intl.NumberFormat('vi-VN').format(points)} điểm
+            {new Intl.NumberFormat("vi-VN").format(points)} điểm
           </span>
         );
       },
@@ -171,16 +199,16 @@ const Customers = () => {
           </button>
           <button
             className="p-2 border rounded bg-transparent"
-          onClick={() => {
-            setCustomerToDelete(row);
-            setTimeout(() => {
-              const modalElement = document.getElementById("delete-modal");
-              if (modalElement) {
-                const modal = new BootstrapModal(modalElement);
-                modal.show();
-              }
-            }, 0);
-          }}
+            onClick={() => {
+              setCustomerToDelete(row);
+              setTimeout(() => {
+                const modalElement = document.getElementById("delete-modal");
+                if (modalElement) {
+                  const modal = new BootstrapModal(modalElement);
+                  modal.show();
+                }
+              }, 0);
+            }}
           >
             <i className="feather icon-trash-2"></i>
           </button>
@@ -202,7 +230,7 @@ const Customers = () => {
           <TableTopHead />
         </div>
 
-        <div className="card">
+        <div className="card table-list-card">
           <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
             <SearchFromApi
               callback={setSearchQuery}
@@ -234,12 +262,16 @@ const Customers = () => {
         itemName={customerToDelete?.fullName}
         onDelete={async (id) => {
           try {
-            await import("../../services/CustomerService").then(({ deleteCustomer }) => deleteCustomer(id));
+            await import("../../services/CustomerService").then(
+              ({ deleteCustomer }) => deleteCustomer(id)
+            );
             const modalElement = document.getElementById("delete-modal");
             const modal = BootstrapModal.getInstance(modalElement);
             if (modal) modal.hide();
             setTimeout(() => {
-              document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+              document
+                .querySelectorAll(".modal-backdrop")
+                .forEach((el) => el.remove());
               document.body.classList.remove("modal-open");
               document.body.style.removeProperty("overflow");
               document.body.style.removeProperty("padding-right");
@@ -289,9 +321,7 @@ const Customers = () => {
             </div>
 
             <div className="mb-3">
-              <label className="form-label">
-                Số điện thoại
-              </label>
+              <label className="form-label">Số điện thoại</label>
               <input
                 type="text"
                 name="phone"
@@ -299,9 +329,11 @@ const Customers = () => {
                 value={formData.phone}
                 disabled={true}
                 readOnly
-                style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
               />
-              <small className="text-muted">Số điện thoại không thể thay đổi</small>
+              <small className="text-muted">
+                Số điện thoại không thể thay đổi
+              </small>
             </div>
 
             <div className="mb-3">

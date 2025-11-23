@@ -12,6 +12,36 @@ const ProductDetailModal = ({ isOpen, onClose, productId }) => {
   const [loading, setLoading] = useState(false);
   const [product, setProduct] = useState(null);
 
+  const fetchProductDetail = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await getProductById(productId);
+
+      if (!data) {
+        message.warning("Không tìm thấy dữ liệu sản phẩm!");
+        onClose();
+        return;
+      }
+
+      setProduct(data);
+    } catch (error) {
+      console.error("❌ Lỗi chi tiết:", error);
+      const errorMessage = error.message || "Không thể tải chi tiết sản phẩm!";
+      message.error(errorMessage);
+
+      if (
+        error.message?.includes("Status: 404") ||
+        error.message?.includes("Status: 500")
+      ) {
+        setTimeout(() => {
+          onClose();
+        }, 2000);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [productId, onClose]);
+
   useEffect(() => {
     if (isOpen && productId) {
       fetchProductDetail();
@@ -54,36 +84,6 @@ const ProductDetailModal = ({ isOpen, onClose, productId }) => {
 
     updateBarcodePreview();
   }, [product?.barcode]);
-
-  const fetchProductDetail = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await getProductById(productId);
-
-      if (!data) {
-        message.warning("Không tìm thấy dữ liệu sản phẩm!");
-        onClose();
-        return;
-      }
-
-      setProduct(data);
-    } catch (error) {
-      console.error("❌ Lỗi chi tiết:", error);
-      const errorMessage = error.message || "Không thể tải chi tiết sản phẩm!";
-      message.error(errorMessage);
-
-      if (
-        error.message?.includes("Status: 404") ||
-        error.message?.includes("Status: 500")
-      ) {
-        setTimeout(() => {
-          onClose();
-        }, 2000);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [productId, onClose]);
 
   const formatDateTime = (dateString) => {
     if (!dateString) return "—";

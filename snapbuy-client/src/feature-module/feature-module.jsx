@@ -6,7 +6,7 @@ import ThemeSettings from "../components/layouts/themeSettings";
 import { authRoutes, posPage, unAuthRoutes } from "../routes/path";
 import HorizontalSidebar from "../components/layouts/horizontalSidebar";
 import PosHeader from "./pos/PosHeader";
-import PageTitle from "../components/PageTitle";
+import PageTitle from "../components/page-title/PageTitle";
 
 const FeatureModule = () => {
   const location = useLocation();
@@ -78,18 +78,20 @@ const FeatureModule = () => {
 
           <div
             className={`
-              ${dataLayout === "mini" ||
+              ${
+                dataLayout === "mini" ||
                 dataLayout === "layout-hovered" ||
                 dataWidth === "box"
-                ? "mini-sidebar"
-                : ""
+                  ? "mini-sidebar"
+                  : ""
               }
-              ${dataLayout === "horizontal" ||
+              ${
+                dataLayout === "horizontal" ||
                 dataLayout === "horizontal-single" ||
                 dataLayout === "horizontal-overlay" ||
                 dataLayout === "horizontal-box"
-                ? "menu-horizontal"
-                : ""
+                  ? "menu-horizontal"
+                  : ""
               }
               ${dataWidth === "box" ? "layout-box-mode" : ""}
             `}
@@ -102,7 +104,6 @@ const FeatureModule = () => {
               <div style={{ display: "none" }}>
                 <ThemeSettings />
               </div>
-
             </div>
           </div>
         </>

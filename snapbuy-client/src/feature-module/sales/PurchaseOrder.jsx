@@ -390,16 +390,26 @@ const PurchaseOrder = () => {
 
   useEffect(() => {
     const selectAllCheckbox = document.getElementById("select-all");
-    if (selectAllCheckbox) {
-      selectAllCheckbox.addEventListener("change", (e) => {
-        const checkboxes = document.querySelectorAll(
-          '.table-list-card input[type="checkbox"][data-id]'
-        );
-        checkboxes.forEach((cb) => {
-          cb.checked = e.target.checked;
-        });
+
+    const handleSelectAll = (e) => {
+      const checkboxes = document.querySelectorAll(
+        '.table-list-card input[type="checkbox"][data-id]'
+      );
+      checkboxes.forEach((cb) => {
+        cb.checked = e.target.checked;
       });
+    };
+
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener("change", handleSelectAll);
     }
+
+    // Cleanup function to remove event listener
+    return () => {
+      if (selectAllCheckbox) {
+        selectAllCheckbox.removeEventListener("change", handleSelectAll);
+      }
+    };
   }, [listData]);
 
   const generateEmailTemplate = async (orderIds) => {

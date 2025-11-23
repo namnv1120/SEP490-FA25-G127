@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { matchPath } from "react-router";
-import { authRoutes, posPage, unAuthRoutes } from "../routes/path";
+import { authRoutes, posPage, unAuthRoutes } from "../../routes/path";
 
 // Map tên route sang tên tiếng Việt hiển thị
 const routeNameMap = {
@@ -80,4 +80,3 @@ const formatRouteName = (name) => {
 };
 
 export default PageTitle;
-

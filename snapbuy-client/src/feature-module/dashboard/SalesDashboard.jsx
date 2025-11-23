@@ -46,36 +46,6 @@ const SalesDashboard = () => {
     Legend
   );
 
-  useEffect(() => {
-    const init = async () => {
-      let accountIdLocal = null;
-      try {
-        const info = await getMyInfo();
-        const u = info.result || info;
-        accountIdLocal = u?.id || null;
-        setUser(u);
-      } catch {
-        message.error("Không lấy được thông tin nhân viên");
-      }
-      try {
-        setShiftLoading(true);
-        const s = await getCurrentShift();
-        setShift(s);
-      } finally {
-        setShiftLoading(false);
-      }
-      try {
-        const count = await getMyTodayOrderCount("Đã thanh toán");
-        setMyTodayCount(Number(count || 0));
-      } catch {
-        void 0;
-      }
-      await fetchOrdersToday(accountIdLocal);
-      await fetchOrdersLast7Days(accountIdLocal);
-    };
-    init();
-  }, [fetchOrdersToday, fetchOrdersLast7Days]);
-
   const fetchOrdersToday = useCallback(
     async (accountIdLocal = null) => {
       try {
@@ -214,6 +184,36 @@ const SalesDashboard = () => {
     },
     [user?.id]
   );
+
+  useEffect(() => {
+    const init = async () => {
+      let accountIdLocal = null;
+      try {
+        const info = await getMyInfo();
+        const u = info.result || info;
+        accountIdLocal = u?.id || null;
+        setUser(u);
+      } catch {
+        message.error("Không lấy được thông tin nhân viên");
+      }
+      try {
+        setShiftLoading(true);
+        const s = await getCurrentShift();
+        setShift(s);
+      } finally {
+        setShiftLoading(false);
+      }
+      try {
+        const count = await getMyTodayOrderCount("Đã thanh toán");
+        setMyTodayCount(Number(count || 0));
+      } catch {
+        void 0;
+      }
+      await fetchOrdersToday(accountIdLocal);
+      await fetchOrdersLast7Days(accountIdLocal);
+    };
+    init();
+  }, [fetchOrdersToday, fetchOrdersLast7Days]);
 
   const formatCurrency = (v) =>
     new Intl.NumberFormat("vi-VN", {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import ImportExcelModal from "../../components/ImportExcelModal";
+import ImportExcelModal from "../../components/modals/ImportExcelModal";
 import { getAllProductPrices } from "../../services/ProductPriceService";
 import { getAllProducts } from "../../services/ProductService";
 import { importProductPrices } from "../../services/ProductPriceService";
@@ -36,69 +36,74 @@ const ImportProductPrice = ({ visible, onClose, onImportSuccess }) => {
   // Hàm parse giá từ Excel (có thể có dấu phẩy, dấu chấm, ký tự tiền tệ)
   const parsePrice = (priceStr) => {
     if (!priceStr || priceStr === "") return null;
-    
+
     // Loại bỏ ký tự tiền tệ và khoảng trắng
     let cleaned = String(priceStr).replace(/[₫đ,.\s]/g, "");
-    
+
     // Nếu có dấu phẩy làm phân cách hàng nghìn, loại bỏ
     if (cleaned.includes(",") && cleaned.split(",").length > 2) {
       cleaned = cleaned.replace(/,/g, "");
     }
-    
+
     const num = parseFloat(cleaned);
     return isNaN(num) ? null : num;
   };
 
   // Hàm validate dữ liệu
-  const validatePriceData = useCallback((data) => {
-    const errors = new Array(data.length).fill(null);
+  const validatePriceData = useCallback(
+    (data) => {
+      const errors = new Array(data.length).fill(null);
 
-    data.forEach((row, index) => {
-      const rowErrors = [];
-      const rowNum = index + 1;
+      data.forEach((row, index) => {
+        const rowErrors = [];
+        const rowNum = index + 1;
 
-      // Validate Product Code
-      const productCode = (row.productCode || "").trim();
-      if (!productCode) {
-        rowErrors.push("Mã sản phẩm không được để trống");
-      } else {
-        // Kiểm tra sản phẩm có tồn tại không
-        const productExists = productsData.some(
-          p => p.productCode && p.productCode.trim().toLowerCase() === productCode.toLowerCase()
-        );
-        if (!productExists) {
-          rowErrors.push(`Không tìm thấy sản phẩm với mã '${productCode}'`);
+        // Validate Product Code
+        const productCode = (row.productCode || "").trim();
+        if (!productCode) {
+          rowErrors.push("Mã sản phẩm không được để trống");
+        } else {
+          // Kiểm tra sản phẩm có tồn tại không
+          const productExists = productsData.some(
+            (p) =>
+              p.productCode &&
+              p.productCode.trim().toLowerCase() === productCode.toLowerCase()
+          );
+          if (!productExists) {
+            rowErrors.push(`Không tìm thấy sản phẩm với mã '${productCode}'`);
+          }
         }
-      }
 
-      // Validate Unit Price
-      const unitPrice = parsePrice(row.unitPrice);
-      if (unitPrice === null || unitPrice === undefined) {
-        rowErrors.push("Giá bán không được để trống");
-      } else if (unitPrice <= 0) {
-        rowErrors.push("Giá bán phải lớn hơn 0");
-      }
+        // Validate Unit Price
+        const unitPrice = parsePrice(row.unitPrice);
+        if (unitPrice === null || unitPrice === undefined) {
+          rowErrors.push("Giá bán không được để trống");
+        } else if (unitPrice <= 0) {
+          rowErrors.push("Giá bán phải lớn hơn 0");
+        }
 
-      // Validate Cost Price
-      const costPrice = parsePrice(row.costPrice);
-      if (costPrice === null || costPrice === undefined) {
-        rowErrors.push("Giá nhập không được để trống");
-      } else if (costPrice < 0) {
-        rowErrors.push("Giá nhập không được âm");
-      }
+        // Validate Cost Price
+        const costPrice = parsePrice(row.costPrice);
+        if (costPrice === null || costPrice === undefined) {
+          rowErrors.push("Giá nhập không được để trống");
+        } else if (costPrice < 0) {
+          rowErrors.push("Giá nhập không được âm");
+        }
 
-      // Validate Unit Price >= Cost Price
-      if (unitPrice !== null && costPrice !== null && unitPrice < costPrice) {
-        rowErrors.push("Giá bán không được thấp hơn giá nhập");
-      }
+        // Validate Unit Price >= Cost Price
+        if (unitPrice !== null && costPrice !== null && unitPrice < costPrice) {
+          rowErrors.push("Giá bán không được thấp hơn giá nhập");
+        }
 
-      if (rowErrors.length > 0) {
-        errors[index] = `Dòng ${rowNum}: ${rowErrors.join("; ")}`;
-      }
-    });
+        if (rowErrors.length > 0) {
+          errors[index] = `Dòng ${rowNum}: ${rowErrors.join("; ")}`;
+        }
+      });
 
-    return { errors, validatedData: data };
-  }, [productsData]);
+      return { errors, validatedData: data };
+    },
+    [productsData]
+  );
 
   const columns = [
     {
@@ -106,15 +111,15 @@ const ImportProductPrice = ({ visible, onClose, onImportSuccess }) => {
       dataIndex: "productCode",
       key: "productCode",
       width: 150,
-      fixed: 'left',
-      render: (text) => <span style={{ color: '#666' }}>{text}</span>
+      fixed: "left",
+      render: (text) => <span style={{ color: "#666" }}>{text}</span>,
     },
     {
       title: "Tên sản phẩm",
       dataIndex: "productName",
       key: "productName",
       width: 250,
-      render: (text) => <span style={{ color: '#666' }}>{text}</span>
+      render: (text) => <span style={{ color: "#666" }}>{text}</span>,
     },
     {
       title: "Giá bán",
@@ -136,21 +141,22 @@ const ImportProductPrice = ({ visible, onClose, onImportSuccess }) => {
       render: (text) => {
         if (!text) return null;
         return (
-          <span style={{ color: '#ff4d4f', fontSize: '12px' }}>
-            {text}
-          </span>
+          <span style={{ color: "#ff4d4f", fontSize: "12px" }}>{text}</span>
         );
-      }
+      },
     },
   ];
 
   const mapExcelRow = (row, index) => {
     const unitPrice = parsePrice(row["Giá bán"]);
     const costPrice = parsePrice(row["Giá nhập"]);
-    
+
     // Tìm tên sản phẩm từ mã
     const product = productsData.find(
-      p => p.productCode && p.productCode.trim().toLowerCase() === (row["Mã sản phẩm"] || "").trim().toLowerCase()
+      (p) =>
+        p.productCode &&
+        p.productCode.trim().toLowerCase() ===
+          (row["Mã sản phẩm"] || "").trim().toLowerCase()
     );
 
     return {
@@ -164,10 +170,10 @@ const ImportProductPrice = ({ visible, onClose, onImportSuccess }) => {
 
   // Tạo template data với tất cả sản phẩm và giá hiện tại
   const getTemplateData = () => {
-    return productsData.map(product => {
+    return productsData.map((product) => {
       // Tìm giá hiện tại của sản phẩm
       const currentPrice = productPricesData.find(
-        pp => pp.productId === product.productId
+        (pp) => pp.productId === product.productId
       );
 
       return {
@@ -182,34 +188,74 @@ const ImportProductPrice = ({ visible, onClose, onImportSuccess }) => {
   const handleImport = async (data) => {
     try {
       // Chuyển đổi dữ liệu sang format API
-      const importData = data.map(row => ({
+      const importData = data.map((row) => ({
         productCode: row.productCode,
-        unitPrice: typeof row.unitPrice === 'number' ? row.unitPrice : parsePrice(row.unitPrice),
-        costPrice: typeof row.costPrice === 'number' ? row.costPrice : parsePrice(row.costPrice),
+        unitPrice:
+          typeof row.unitPrice === "number"
+            ? row.unitPrice
+            : parsePrice(row.unitPrice),
+        costPrice:
+          typeof row.costPrice === "number"
+            ? row.costPrice
+            : parsePrice(row.costPrice),
       }));
 
       await importProductPrices(importData);
-      
+
       if (onImportSuccess) {
         onImportSuccess();
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || "Nhập dữ liệu thất bại!";
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Nhập dữ liệu thất bại!";
       throw new Error(errorMessage);
     }
   };
 
   const guideData = [
-    { "Cột": "Mã sản phẩm", "Quy tắc": "BẮT BUỘC. Mã sản phẩm phải tồn tại trong hệ thống. Không được để trống." },
-    { "Cột": "Tên sản phẩm", "Quy tắc": "CHỈ ĐỌC. Tên sản phẩm tự động hiển thị theo mã sản phẩm. Không được chỉnh sửa." },
-    { "Cột": "Giá bán", "Quy tắc": "BẮT BUỘC. Phải lớn hơn 0. Phải lớn hơn hoặc bằng giá nhập. Có thể nhập số nguyên hoặc số thập phân." },
-    { "Cột": "Giá nhập", "Quy tắc": "BẮT BUỘC. Phải lớn hơn hoặc bằng 0. Phải nhỏ hơn hoặc bằng giá bán. Có thể nhập số nguyên hoặc số thập phân." },
-    { "Cột": "", "Quy tắc": "" },
-    { "Cột": "LƯU Ý:", "Quy tắc": "1. Chức năng này là CẬP NHẬT giá, không phải tạo mới. Giá sẽ được cập nhật cho sản phẩm tương ứng." },
-    { "Cột": "", "Quy tắc": "2. Nếu sản phẩm chưa có giá, hệ thống sẽ tạo giá mới." },
-    { "Cột": "", "Quy tắc": "3. Nếu sản phẩm đã có giá, hệ thống sẽ cập nhật giá hiện tại." },
-    { "Cột": "", "Quy tắc": "4. Giá bán phải luôn lớn hơn hoặc bằng giá nhập." },
-    { "Cột": "", "Quy tắc": "5. Có thể bỏ qua các dòng không cần cập nhật, chỉ cập nhật những sản phẩm cần thiết." },
+    {
+      Cột: "Mã sản phẩm",
+      "Quy tắc":
+        "BẮT BUỘC. Mã sản phẩm phải tồn tại trong hệ thống. Không được để trống.",
+    },
+    {
+      Cột: "Tên sản phẩm",
+      "Quy tắc":
+        "CHỈ ĐỌC. Tên sản phẩm tự động hiển thị theo mã sản phẩm. Không được chỉnh sửa.",
+    },
+    {
+      Cột: "Giá bán",
+      "Quy tắc":
+        "BẮT BUỘC. Phải lớn hơn 0. Phải lớn hơn hoặc bằng giá nhập. Có thể nhập số nguyên hoặc số thập phân.",
+    },
+    {
+      Cột: "Giá nhập",
+      "Quy tắc":
+        "BẮT BUỘC. Phải lớn hơn hoặc bằng 0. Phải nhỏ hơn hoặc bằng giá bán. Có thể nhập số nguyên hoặc số thập phân.",
+    },
+    { Cột: "", "Quy tắc": "" },
+    {
+      Cột: "LƯU Ý:",
+      "Quy tắc":
+        "1. Chức năng này là CẬP NHẬT giá, không phải tạo mới. Giá sẽ được cập nhật cho sản phẩm tương ứng.",
+    },
+    {
+      Cột: "",
+      "Quy tắc": "2. Nếu sản phẩm chưa có giá, hệ thống sẽ tạo giá mới.",
+    },
+    {
+      Cột: "",
+      "Quy tắc":
+        "3. Nếu sản phẩm đã có giá, hệ thống sẽ cập nhật giá hiện tại.",
+    },
+    { Cột: "", "Quy tắc": "4. Giá bán phải luôn lớn hơn hoặc bằng giá nhập." },
+    {
+      Cột: "",
+      "Quy tắc":
+        "5. Có thể bỏ qua các dòng không cần cập nhật, chỉ cập nhật những sản phẩm cần thiết.",
+    },
   ];
 
   return (
@@ -228,4 +274,3 @@ const ImportProductPrice = ({ visible, onClose, onImportSuccess }) => {
 };
 
 export default ImportProductPrice;
-

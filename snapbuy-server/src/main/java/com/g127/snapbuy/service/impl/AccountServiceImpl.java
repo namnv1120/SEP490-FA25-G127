@@ -158,7 +158,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    @PreAuthorize("hasRole('Quản trị viên')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
     public AccountResponse getAccount(UUID id) {
         Account acc = accountRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));

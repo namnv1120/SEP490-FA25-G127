@@ -16,7 +16,7 @@ import { message } from "antd";
 
 const RoleList = () => {
   const [roles, setRoles] = useState([]);
-  
+
   const [selectedRole, setSelectedRole] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -27,7 +27,9 @@ const RoleList = () => {
     try {
       // Giống như Account, gọi getAllRoles không cần tham số, trả về tất cả roles
       const response = await getAllRoles();
-      const data = Array.isArray(response) ? response : response.data || response.result || [];
+      const data = Array.isArray(response)
+        ? response
+        : response.data || response.result || [];
       const mappedData = data.map((role) => ({
         ...role,
         active: role.active === true || role.active === 1,
@@ -36,11 +38,17 @@ const RoleList = () => {
     } catch (error) {
       console.error("❌ Error fetching roles:", error);
       if (error.response?.status === 403) {
-        message.error("Bạn không có quyền truy cập trang này. Chỉ Quản trị viên hoặc Chủ cửa hàng mới có thể truy cập.");
+        message.error(
+          "Bạn không có quyền truy cập trang này. Chỉ Quản trị viên hoặc Chủ cửa hàng mới có thể truy cập."
+        );
       } else if (error.response?.status === 401) {
         message.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
       } else {
-        message.error(error.response?.data?.message || error.message || "Lỗi khi lấy danh sách vai trò");
+        message.error(
+          error.response?.data?.message ||
+            error.message ||
+            "Lỗi khi lấy danh sách vai trò"
+        );
       }
     } finally {
       void 0;
@@ -54,7 +62,10 @@ const RoleList = () => {
       message.success("Đã cập nhật trạng thái vai trò thành công!");
     } catch (err) {
       console.error("❌ Lỗi khi chuyển đổi trạng thái vai trò:", err);
-      message.error(err.response?.data?.message || "Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại.");
+      message.error(
+        err.response?.data?.message ||
+          "Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại."
+      );
     }
   };
 
@@ -89,6 +100,30 @@ const RoleList = () => {
     }
   };
 
+  // Handle select-all checkbox
+  useEffect(() => {
+    const selectAllCheckbox = document.getElementById("select-all");
+
+    const handleSelectAll = (e) => {
+      const checkboxes = document.querySelectorAll(
+        '.table-list-card input[type="checkbox"][data-id]'
+      );
+      checkboxes.forEach((cb) => {
+        cb.checked = e.target.checked;
+      });
+    };
+
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener("change", handleSelectAll);
+    }
+
+    return () => {
+      if (selectAllCheckbox) {
+        selectAllCheckbox.removeEventListener("change", handleSelectAll);
+      }
+    };
+  }, [roles]);
+
   const columns = [
     {
       header: (
@@ -97,9 +132,9 @@ const RoleList = () => {
           <span className="checkmarks" />
         </label>
       ),
-      body: () => (
+      body: (data) => (
         <label className="checkboxs">
-          <input type="checkbox" />
+          <input type="checkbox" data-id={data.id} />
           <span className="checkmarks" />
         </label>
       ),
@@ -124,11 +159,14 @@ const RoleList = () => {
       key: "active",
       sortable: true,
       body: (data) => {
-        const active = data.active === true || data.active === 1 || data.active === "1";
+        const active =
+          data.active === true || data.active === 1 || data.active === "1";
         return (
           <div className="d-flex align-items-center gap-2">
             <span
-              className={`badge fw-medium fs-10 ${active ? "bg-success" : "bg-danger"}`}
+              className={`badge fw-medium fs-10 ${
+                active ? "bg-success" : "bg-danger"
+              }`}
             >
               {active ? "Hoạt động" : "Không hoạt động"}
             </span>

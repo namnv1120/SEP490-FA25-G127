@@ -18,4 +18,8 @@ public class CustomerUpdateRequest {
 
     private Customer.Gender gender;
 
+    @NotBlank(message = "Số điện thoại không được để trống.")
+    @Pattern(regexp = "^[0-9]{10,15}$", message = "Số điện thoại phải gồm 10-15 chữ số.")
+    private String phone;
+
 }

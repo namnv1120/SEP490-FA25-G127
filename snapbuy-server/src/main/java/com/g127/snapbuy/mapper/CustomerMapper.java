@@ -17,7 +17,7 @@ public interface CustomerMapper {
 
     @Mapping(target = "customerId", ignore = true)
     @Mapping(target = "customerCode", ignore = true)
-    @Mapping(target = "phone", ignore = true)
+    @Mapping(target = "phone", source = "phone")
     @Mapping(target = "createdDate", ignore = true)
     @Mapping(target = "updatedDate", ignore = true)
     void updateFromDto(CustomerUpdateRequest request, @MappingTarget Customer customer);

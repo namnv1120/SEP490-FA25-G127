@@ -6,12 +6,6 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
   const [loading, setLoading] = useState(false);
   const [orderData, setOrderData] = useState(null);
 
-  useEffect(() => {
-    if (isOpen && purchaseOrderId) {
-      fetchOrderDetail();
-    }
-  }, [isOpen, purchaseOrderId, fetchOrderDetail]);
-
   const fetchOrderDetail = useCallback(async () => {
     try {
       setLoading(true);
@@ -40,6 +34,12 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
       setLoading(false);
     }
   }, [purchaseOrderId, onClose]);
+
+  useEffect(() => {
+    if (isOpen && purchaseOrderId) {
+      fetchOrderDetail();
+    }
+  }, [isOpen, purchaseOrderId, fetchOrderDetail]);
 
   const formatDateTime = (dateString) => {
     if (!dateString) return "—";

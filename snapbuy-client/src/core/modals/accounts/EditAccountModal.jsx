@@ -34,6 +34,63 @@ const EditAccount = ({
 
   const [errors, setErrors] = useState({});
 
+  const loadRoles = useCallback(async () => {
+    try {
+      const rolesData = await getAllRoles();
+      let filtered = rolesData.filter(
+        (role) => role.active === true || role.active === 1
+      );
+      if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
+        filtered = filtered.filter((role) =>
+          allowedRoles.includes(role.roleName)
+        );
+      }
+      const roleOptions = filtered.map((role) => ({
+        value: role.roleName,
+        label: role.roleName,
+      }));
+      setRoles(roleOptions);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách vai trò:", error);
+    }
+  }, [allowedRoles]);
+
+  const loadAccountData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const account = await getStaffAccountByIdForOwner(accountId);
+      const accountData = account.result || account;
+
+      // Lấy role đầu tiên nếu có (roles là mảng string roleName)
+      const accountRoles = accountData.roles || [];
+      const firstRoleName = accountRoles.length > 0 ? accountRoles[0] : null;
+
+      setFormData({
+        fullName: accountData.fullName || "",
+        email: accountData.email || "",
+        phone: accountData.phone || "",
+        password: "",
+        confirmPassword: "",
+        roles: firstRoleName ? [firstRoleName] : [],
+      });
+
+      // Set selectedRole value (string) để Dropdown có thể hiển thị
+      if (firstRoleName) {
+        setSelectedRoleValue(firstRoleName);
+        // Tìm và set selectedRole object để giữ reference
+        if (roles.length > 0) {
+          void 0;
+        }
+      }
+    } catch (error) {
+      console.error("Không thể tải dữ liệu tài khoản", error);
+      message.error("Không thể tải dữ liệu tài khoản");
+      if (onClose) onClose();
+    } finally {
+      setLoading(false);
+    }
+  }, [accountId, roles, onClose]);
+
   // Load roles khi modal mở
   useEffect(() => {
     if (isOpen) {
@@ -91,63 +148,6 @@ const EditAccount = ({
       setShowConfirmPassword(false);
     }
   }, [isOpen]);
-
-  const loadRoles = useCallback(async () => {
-    try {
-      const rolesData = await getAllRoles();
-      let filtered = rolesData.filter(
-        (role) => role.active === true || role.active === 1
-      );
-      if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
-        filtered = filtered.filter((role) =>
-          allowedRoles.includes(role.roleName)
-        );
-      }
-      const roleOptions = filtered.map((role) => ({
-        value: role.roleName,
-        label: role.roleName,
-      }));
-      setRoles(roleOptions);
-    } catch (error) {
-      console.error("Lỗi khi tải danh sách vai trò:", error);
-    }
-  }, [allowedRoles]);
-
-  const loadAccountData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const account = await getStaffAccountByIdForOwner(accountId);
-      const accountData = account.result || account;
-
-      // Lấy role đầu tiên nếu có (roles là mảng string roleName)
-      const accountRoles = accountData.roles || [];
-      const firstRoleName = accountRoles.length > 0 ? accountRoles[0] : null;
-
-      setFormData({
-        fullName: accountData.fullName || "",
-        email: accountData.email || "",
-        phone: accountData.phone || "",
-        password: "",
-        confirmPassword: "",
-        roles: firstRoleName ? [firstRoleName] : [],
-      });
-
-      // Set selectedRole value (string) để Dropdown có thể hiển thị
-      if (firstRoleName) {
-        setSelectedRoleValue(firstRoleName);
-        // Tìm và set selectedRole object để giữ reference
-        if (roles.length > 0) {
-          void 0;
-        }
-      }
-    } catch (error) {
-      console.error("Không thể tải dữ liệu tài khoản", error);
-      message.error("Không thể tải dữ liệu tài khoản");
-      if (onClose) onClose();
-    } finally {
-      setLoading(false);
-    }
-  }, [accountId, roles, onClose]);
 
   // Hàm kiểm tra hợp lệ dữ liệu dựa trên backend validation
   const validateForm = () => {

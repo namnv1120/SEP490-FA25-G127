@@ -21,6 +21,27 @@ const AddAccount = ({ isOpen, onClose, onSuccess, allowedRoles, onCreate }) => {
   const [errors, setErrors] = useState({});
   const [selectedRole, setSelectedRole] = useState(null);
 
+  const loadRoles = useCallback(async () => {
+    try {
+      const rolesData = await getAllRoles();
+      let filtered = rolesData.filter(
+        (role) => role.active === true || role.active === 1
+      );
+      if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
+        filtered = filtered.filter((role) =>
+          allowedRoles.includes(role.roleName)
+        );
+      }
+      const roleOptions = filtered.map((role) => ({
+        value: role.roleName,
+        label: role.roleName,
+      }));
+      setRoles(roleOptions);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách vai trò:", error);
+    }
+  }, [allowedRoles]);
+
   // Load roles khi modal mở
   useEffect(() => {
     if (isOpen) {
@@ -42,27 +63,6 @@ const AddAccount = ({ isOpen, onClose, onSuccess, allowedRoles, onCreate }) => {
       setSelectedRole(null);
     }
   }, [isOpen]);
-
-  const loadRoles = useCallback(async () => {
-    try {
-      const rolesData = await getAllRoles();
-      let filtered = rolesData.filter(
-        (role) => role.active === true || role.active === 1
-      );
-      if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
-        filtered = filtered.filter((role) =>
-          allowedRoles.includes(role.roleName)
-        );
-      }
-      const roleOptions = filtered.map((role) => ({
-        value: role.roleName,
-        label: role.roleName,
-      }));
-      setRoles(roleOptions);
-    } catch (error) {
-      console.error("Lỗi khi tải danh sách vai trò:", error);
-    }
-  }, [allowedRoles]);
 
   // Hàm kiểm tra hợp lệ dữ liệu dựa trên backend validation
   const validateForm = () => {

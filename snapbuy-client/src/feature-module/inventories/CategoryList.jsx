@@ -5,7 +5,11 @@ import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
-import { getAllCategories, deleteCategory, toggleCategoryStatus } from "../../services/CategoryService";
+import {
+  getAllCategories,
+  deleteCategory,
+  toggleCategoryStatus,
+} from "../../services/CategoryService";
 import { message } from "antd";
 import { Modal } from "bootstrap";
 
@@ -42,23 +46,26 @@ const CategoryList = () => {
         description: cat.description || "Không có",
         createddate: cat.createdDate
           ? new Date(cat.createdDate).toLocaleDateString("vi-VN", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
           : "Không có",
         updateddate: cat.updatedDate
           ? new Date(cat.updatedDate).toLocaleDateString("vi-VN", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
           : "Không có",
-        status: cat.active === 1 || cat.active === true ? "Hoạt động" : "Không hoạt động",
+        status:
+          cat.active === 1 || cat.active === true
+            ? "Hoạt động"
+            : "Không hoạt động",
         active: cat.active === 1 || cat.active === true,
       }));
 
@@ -105,7 +112,9 @@ const CategoryList = () => {
       }
 
       setTimeout(() => {
-        document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+        document
+          .querySelectorAll(".modal-backdrop")
+          .forEach((el) => el.remove());
         document.body.classList.remove("modal-open");
         document.body.style.removeProperty("overflow");
         document.body.style.removeProperty("padding-right");
@@ -136,6 +145,30 @@ const CategoryList = () => {
     }
   };
 
+  // Handle select-all checkbox
+  useEffect(() => {
+    const selectAllCheckbox = document.getElementById("select-all");
+
+    const handleSelectAll = (e) => {
+      const checkboxes = document.querySelectorAll(
+        '.table-list-card input[type="checkbox"][data-id]'
+      );
+      checkboxes.forEach((cb) => {
+        cb.checked = e.target.checked;
+      });
+    };
+
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener("change", handleSelectAll);
+    }
+
+    return () => {
+      if (selectAllCheckbox) {
+        selectAllCheckbox.removeEventListener("change", handleSelectAll);
+      }
+    };
+  }, [categories]);
+
   const columns = [
     {
       header: (
@@ -144,9 +177,9 @@ const CategoryList = () => {
           <span className="checkmarks" />
         </label>
       ),
-      body: () => (
+      body: (data) => (
         <label className="checkboxs">
-          <input type="checkbox" />
+          <input type="checkbox" data-id={data.categoryId} />
           <span className="checkmarks" />
         </label>
       ),
@@ -173,8 +206,9 @@ const CategoryList = () => {
       body: (data) => (
         <div className="d-flex align-items-center gap-2">
           <span
-            className={`badge fw-medium fs-10 ${data.status === "Hoạt động" ? "bg-success" : "bg-danger"
-              }`}
+            className={`badge fw-medium fs-10 ${
+              data.status === "Hoạt động" ? "bg-success" : "bg-danger"
+            }`}
           >
             {data.status}
           </span>
@@ -245,29 +279,28 @@ const CategoryList = () => {
           )}
 
           <div className="card table-list-card">
-              <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-                <SearchFromApi
-                  callback={handleSearch}
+            <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+              <SearchFromApi
+                callback={handleSearch}
+                rows={rows}
+                setRows={setRows}
+              />
+            </div>
+            <div className="card-body">
+              <div className="table-responsive category-table">
+                <PrimeDataTable
+                  column={columns}
+                  data={categories}
                   rows={rows}
                   setRows={setRows}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  totalRecords={totalRecords}
+                  dataKey="categoryId"
                 />
               </div>
-              <div className="card-body">
-                <div className="table-responsive category-table">
-                  <PrimeDataTable
-                    column={columns}
-                    data={categories}
-                    rows={rows}
-                    setRows={setRows}
-                    currentPage={currentPage}
-                    setCurrentPage={setCurrentPage}
-                    totalRecords={totalRecords}
-                    dataKey="categoryId"
-                  />
-                </div>
-              </div>
             </div>
-
+          </div>
         </div>
         <CommonFooter />
       </div>

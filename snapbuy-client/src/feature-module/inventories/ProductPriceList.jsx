@@ -23,10 +23,6 @@ const ProductPriceList = () => {
 
   const route = allRoutes;
 
-  useEffect(() => {
-    fetchProductPrices();
-  }, [fetchProductPrices]);
-
   const fetchProductPrices = useCallback(async () => {
     try {
       setError(null);
@@ -65,6 +61,10 @@ const ProductPriceList = () => {
       void 0;
     }
   }, []);
+
+  useEffect(() => {
+    fetchProductPrices();
+  }, [fetchProductPrices]);
 
   const getStatus = (validFrom, validTo) => {
     const now = new Date();
@@ -115,6 +115,30 @@ const ProductPriceList = () => {
 
   const handleSearch = () => {};
 
+  // Handle select-all checkbox
+  useEffect(() => {
+    const selectAllCheckbox = document.getElementById("select-all");
+
+    const handleSelectAll = (e) => {
+      const checkboxes = document.querySelectorAll(
+        '.table-list-card input[type="checkbox"][data-id]'
+      );
+      checkboxes.forEach((cb) => {
+        cb.checked = e.target.checked;
+      });
+    };
+
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener("change", handleSelectAll);
+    }
+
+    return () => {
+      if (selectAllCheckbox) {
+        selectAllCheckbox.removeEventListener("change", handleSelectAll);
+      }
+    };
+  }, [productPrices]);
+
   const columns = [
     {
       header: (
@@ -123,9 +147,9 @@ const ProductPriceList = () => {
           <span className="checkmarks" />
         </label>
       ),
-      body: () => (
+      body: (data) => (
         <label className="checkboxs">
-          <input type="checkbox" />
+          <input type="checkbox" data-id={data.productId} />
           <span className="checkmarks" />
         </label>
       ),

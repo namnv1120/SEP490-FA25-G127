@@ -5,7 +5,7 @@ import "dayjs/locale/vi";
 import { createPromotion } from "../../../services/PromotionService";
 import { getAllProducts } from "../../../services/ProductService";
 import ProductSelectionModal from "./ProductSelectionModal";
-import SmartDateTimePicker from "../../../components/SmartDateTimePicker";
+import SmartDateTimePicker from "../../../components/date-time-picker/SmartDateTimePicker";
 
 // Set locale mặc định cho dayjs
 dayjs.locale("vi");

@@ -8,7 +8,7 @@ import {
 } from "../../../services/PromotionService";
 import { getAllProducts } from "../../../services/ProductService";
 import ProductSelectionModal from "./ProductSelectionModal";
-import SmartDateTimePicker from "../../../components/SmartDateTimePicker";
+import SmartDateTimePicker from "../../../components/date-time-picker/SmartDateTimePicker";
 
 // Set locale mặc định cho dayjs
 dayjs.locale("vi");
@@ -28,14 +28,6 @@ const EditPromotionModal = ({ isOpen, onClose, onSuccess, promotionId }) => {
     active: true,
   });
   const [errors, setErrors] = useState({});
-
-  // Load dữ liệu khuyến mãi và sản phẩm
-  useEffect(() => {
-    if (isOpen && promotionId) {
-      fetchPromotionData();
-      fetchProducts();
-    }
-  }, [isOpen, promotionId, fetchPromotionData, fetchProducts]);
 
   const fetchPromotionData = useCallback(async () => {
     try {
@@ -68,6 +60,14 @@ const EditPromotionModal = ({ isOpen, onClose, onSuccess, promotionId }) => {
       message.error("Không thể tải danh sách sản phẩm");
     }
   }, []);
+
+  // Load dữ liệu khuyến mãi và sản phẩm
+  useEffect(() => {
+    if (isOpen && promotionId) {
+      fetchPromotionData();
+      fetchProducts();
+    }
+  }, [isOpen, promotionId, fetchPromotionData, fetchProducts]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;

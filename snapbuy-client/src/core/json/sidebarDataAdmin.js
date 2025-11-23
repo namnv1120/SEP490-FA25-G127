@@ -170,25 +170,18 @@ export const SidebarDataAdmin = [
     activeRoute: "More",
     subRoutes: [
       {
-        tittle: "Tài khoản",
-        hasSubRoute: true,
+        tittle: "Danh sách tài khoản",
+        hasSubRoute: false,
         showSubRoute: false,
-        subRoutes: [
-          {
-            tittle: "Danh sách tài khoản",
-            hasSubRoute: false,
-            showSubRoute: false,
-            route: "/accounts",
-            subRoutes: [],
-          },
-          {
-            tittle: "Vai trò",
-            hasSubRoute: false,
-            showSubRoute: false,
-            route: "/roles-permissions",
-            subRoutes: [],
-          },
-        ],
+        route: "/accounts",
+        subRoutes: [],
+      },
+      {
+        tittle: "Vai trò",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/roles-permissions",
+        subRoutes: [],
       },
     ],
   },

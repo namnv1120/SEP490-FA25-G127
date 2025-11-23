@@ -137,7 +137,47 @@ const PromotionList = () => {
     setEditModalOpen(true);
   };
 
+  // Handle select-all checkbox
+  useEffect(() => {
+    const selectAllCheckbox = document.getElementById("select-all");
+
+    const handleSelectAll = (e) => {
+      const checkboxes = document.querySelectorAll(
+        '.table-list-card input[type="checkbox"][data-id]'
+      );
+      checkboxes.forEach((cb) => {
+        cb.checked = e.target.checked;
+      });
+    };
+
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener("change", handleSelectAll);
+    }
+
+    return () => {
+      if (selectAllCheckbox) {
+        selectAllCheckbox.removeEventListener("change", handleSelectAll);
+      }
+    };
+  }, [filteredPromotions]);
+
   const columns = [
+    {
+      header: (
+        <label className="checkboxs">
+          <input type="checkbox" id="select-all" />
+          <span className="checkmarks" />
+        </label>
+      ),
+      body: (data) => (
+        <label className="checkboxs">
+          <input type="checkbox" data-id={data.promotionId} />
+          <span className="checkmarks" />
+        </label>
+      ),
+      sortable: false,
+      key: "checked",
+    },
     {
       header: "Tên khuyến mãi",
       field: "promotionName",
@@ -242,7 +282,7 @@ const PromotionList = () => {
             </div>
           )}
 
-          <div className="card">
+          <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
               <SearchFromApi
                 callback={handleSearch}
@@ -261,7 +301,7 @@ const PromotionList = () => {
                   setCurrentPage={setCurrentPage}
                   totalRecords={totalRecords}
                   dataKey="promotionId"
-                  loading={loading}
+                  loading={false}
                 />
               </div>
             </div>

@@ -2,9 +2,15 @@ import { useRef, useEffect } from "react";
 import { DatePicker } from "antd";
 import dayjs from "dayjs";
 import locale from "antd/es/date-picker/locale/vi_VN";
-import "../assets/css/datepicker-custom.css";
+import "../../assets/css/datepicker-custom.css";
 
-const CustomDateTimePicker = ({ value, onChange, placeholder, disabled, status }) => {
+const CustomDateTimePicker = ({
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  status,
+}) => {
   const inputRef = useRef(null);
 
   // Format input tự động thêm /
@@ -55,7 +61,7 @@ const CustomDateTimePicker = ({ value, onChange, placeholder, disabled, status }
 
   // Intercept input events
   useEffect(() => {
-    const input = inputRef.current?.querySelector('input');
+    const input = inputRef.current?.querySelector("input");
     if (!input) return;
 
     const handleInput = (e) => {
@@ -78,16 +84,16 @@ const CustomDateTimePicker = ({ value, onChange, placeholder, disabled, status }
       }
     };
 
-    input.addEventListener('input', handleInput);
-    return () => input.removeEventListener('input', handleInput);
+    input.addEventListener("input", handleInput);
+    return () => input.removeEventListener("input", handleInput);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <DatePicker
       ref={inputRef}
       showTime={{
-        format: 'HH:mm',
-        defaultValue: dayjs('00:00', 'HH:mm')
+        format: "HH:mm",
+        defaultValue: dayjs("00:00", "HH:mm"),
       }}
       format="DD/MM/YYYY HH:mm"
       placeholder={placeholder}
@@ -96,7 +102,7 @@ const CustomDateTimePicker = ({ value, onChange, placeholder, disabled, status }
       disabled={disabled}
       status={status}
       locale={locale}
-      style={{ width: '100%' }}
+      style={{ width: "100%" }}
       inputReadOnly={false}
       allowClear
     />
@@ -104,4 +110,3 @@ const CustomDateTimePicker = ({ value, onChange, placeholder, disabled, status }
 };
 
 export default CustomDateTimePicker;
-
