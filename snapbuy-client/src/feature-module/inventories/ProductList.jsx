@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { allRoutes } from "../../routes/AllRoutes";
 import CommonFooter from "../../components/footer/CommonFooter";
@@ -7,7 +7,12 @@ import { stockImg1 } from "../../utils/imagepath";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
-import { deleteProduct, importProducts, toggleProductStatus, searchProducts } from "../../services/ProductService";
+import {
+  deleteProduct,
+  importProducts,
+  toggleProductStatus,
+  searchProducts,
+} from "../../services/ProductService";
 import ImportProductModal from "./ImportProduct";
 import ProductDetailModal from "../../core/modals/inventories/ProductDetailModal";
 import { message } from "antd";
@@ -21,7 +26,7 @@ const ProductList = () => {
   const [rows, setRows] = useState(10);
   const [searchQuery, setSearchQuery] = useState(undefined);
   const [products, setProducts] = useState([]);
-  
+
   const [error, setError] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -32,20 +37,20 @@ const ProductList = () => {
 
   useEffect(() => {
     fetchProducts();
-  }, [currentPage, rows, searchQuery]);
+  }, [fetchProducts]);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setError(null);
 
       const backendPage = currentPage - 1;
 
       const result = await searchProducts(
-        searchQuery || '',
+        searchQuery || "",
         backendPage,
         rows,
-        'createdDate',
-        'DESC'
+        "createdDate",
+        "DESC"
       );
 
       const mappedProducts = (result.content || [])
@@ -68,7 +73,10 @@ const ProductList = () => {
             rawUnitPrice: product.unitPrice || 0,
             unit: product.unit || "Không có",
             qty: product.quantityInStock?.toString() || "0",
-            status: product.active === 1 || product.active === true ? "Hoạt động" : "Không hoạt động",
+            status:
+              product.active === 1 || product.active === true
+                ? "Hoạt động"
+                : "Không hoạt động",
             active: product.active === 1 || product.active === true,
           };
         });
@@ -80,7 +88,7 @@ const ProductList = () => {
     } finally {
       void 0;
     }
-  };
+  }, [currentPage, rows, searchQuery]);
 
   const handleExportExcel = async () => {
     if (!products || products.length === 0) {
@@ -88,7 +96,7 @@ const ProductList = () => {
       return;
     }
 
-    const exportData = products.map(p => ({
+    const exportData = products.map((p) => ({
       "Mã sản phẩm": p.productCode,
       "Tên sản phẩm": p.productName,
       "Mô tả": p.description || "",
@@ -96,7 +104,7 @@ const ProductList = () => {
       "Nhà cung cấp": p.supplier || "",
       "Đơn vị": p.unit,
       "Kích thước": p.dimensions || "",
-      "Ảnh": p.imageUrl
+      Ảnh: p.imageUrl,
     }));
 
     try {
@@ -116,7 +124,8 @@ const ProductList = () => {
           .filter((c) => c)
       );
       const failed = data.filter(
-        (row) => !importedCodes.has((row.productCode || "").trim().toLowerCase())
+        (row) =>
+          !importedCodes.has((row.productCode || "").trim().toLowerCase())
       );
 
       await fetchProducts();
@@ -153,14 +162,13 @@ const ProductList = () => {
   const handleDeleteClick = (product) => {
     setSelectedProduct(product);
     setTimeout(() => {
-      const modalElement = document.getElementById('delete-modal');
+      const modalElement = document.getElementById("delete-modal");
       if (modalElement) {
         const modal = new Modal(modalElement);
         modal.show();
       }
     }, 0);
   };
-
 
   const handleDeleteConfirm = async (productId) => {
     try {
@@ -179,7 +187,6 @@ const ProductList = () => {
       message.error("Lỗi khi xoá sản phẩm. Vui lòng thử lại.");
     }
   };
-
 
   const handleDeleteCancel = () => {
     setSelectedProduct(null);
@@ -232,7 +239,6 @@ const ProductList = () => {
               onError={(e) => {
                 e.target.src = stockImg1; // Fallback to default image
               }}
-
             />
           </Link>
           <button
@@ -282,8 +288,9 @@ const ProductList = () => {
       body: (data) => (
         <div className="d-flex align-items-center gap-2">
           <span
-            className={`badge fw-medium fs-10 ${data.status === "Hoạt động" ? "bg-success" : "bg-danger"
-              }`}
+            className={`badge fw-medium fs-10 ${
+              data.status === "Hoạt động" ? "bg-success" : "bg-danger"
+            }`}
           >
             {data.status}
           </span>

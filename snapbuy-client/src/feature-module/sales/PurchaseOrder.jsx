@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import CommonFooter from "../../components/footer/CommonFooter";
 import TableTopHead from "../../components/table-top-head";
@@ -100,7 +100,7 @@ const PurchaseOrder = () => {
     setCurrentPage(1);
   };
 
-  const fetchPurchaseOrders = async () => {
+  const fetchPurchaseOrders = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -131,11 +131,11 @@ const PurchaseOrder = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, rows, searchQuery, sortField, sortOrder]);
 
   useEffect(() => {
     fetchPurchaseOrders();
-  }, [currentPage, rows, searchQuery, sortField, sortOrder]);
+  }, [fetchPurchaseOrders]);
 
   const handleSort = (field) => {
     if (sortField === field) {

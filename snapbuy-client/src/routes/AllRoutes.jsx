@@ -15,6 +15,7 @@ export const allRoutes = {
   posshift: "/pos-shift",
   transactionhistory: "/transaction-history",
   salesdashboard: "/sales-dashboard",
+  promotions: "/promotions",
 
   purchaseorders: "/purchase-orders",
   addpurchaseorder: "/purchase-orders/add",
@@ -42,5 +43,4 @@ export const allRoutes = {
   forgotpassword: "/forgot-password",
   verifyotp: "/verify-otp",
   resetpassword: "/reset-password",
-
 };

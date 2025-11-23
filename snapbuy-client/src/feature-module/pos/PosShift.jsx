@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { message } from "antd";
- 
+
 import {
   openShift,
   closeShift,
@@ -14,7 +14,6 @@ import {
 import { getMyInfo } from "../../services/AccountService";
 
 const PosShift = () => {
-  
   const [loading, setLoading] = useState(false);
   const [currentShift, setCurrentShift] = useState(null);
   const [initialCash, setInitialCash] = useState(0);
@@ -22,11 +21,11 @@ const PosShift = () => {
   const [orders, setOrders] = useState([]);
   const [shiftHistory, setShiftHistory] = useState([]);
   const [selectedHistoryShift, setSelectedHistoryShift] = useState(null);
-  const [polling, setPolling] = useState(null);
+  const pollingRef = useRef(null);
   const [myAccountId, setMyAccountId] = useState(null);
   const [closingNote, setClosingNote] = useState("");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getCurrentShift();
@@ -36,7 +35,7 @@ const PosShift = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     load();
@@ -44,7 +43,9 @@ const PosShift = () => {
       try {
         const list = await getMyShifts("Đóng");
         setShiftHistory(list || []);
-      } catch { void 0; }
+      } catch {
+        void 0;
+      }
     };
     loadHistory();
     const loadUser = async () => {
@@ -52,10 +53,12 @@ const PosShift = () => {
         const info = await getMyInfo();
         const u = info.result || info;
         setMyAccountId(u?.id || null);
-      } catch { void 0; }
+      } catch {
+        void 0;
+      }
     };
     loadUser();
-  }, []);
+  }, [load]);
 
   const fetchOrdersForRange = useCallback(
     async (fromISO, toISO) => {
@@ -93,32 +96,40 @@ const PosShift = () => {
                 dt <= toTs
               );
             });
-        } catch { void 0; }
+          } catch {
+            void 0;
+          }
         }
         setOrders(data || []);
-    } catch { void 0; }
+      } catch {
+        void 0;
+      }
     },
     [myAccountId]
   );
 
   useEffect(() => {
-    if (currentShift && currentShift.status === "Mở" && currentShift.openedAt) {
-      // start polling
-      const startISO = currentShift.openedAt;
-      const stop = setInterval(async () => {
-        const nowISO = new Date().toISOString();
-        await fetchOrdersForRange(startISO, nowISO);
-      }, 3000);
-      setPolling(stop);
+    if (currentShift && currentShift.isOpen) {
+      const startISO = new Date(currentShift.startTime).toISOString();
+
+      // Clear existing interval if any
+      if (pollingRef.current) clearInterval(pollingRef.current);
+
+      const stop = setInterval(() => {
+        fetchOrdersForRange(startISO, new Date().toISOString());
+      }, 5000);
+      pollingRef.current = stop;
+
       // initial fetch
       fetchOrdersForRange(startISO, new Date().toISOString());
       return () => {
         if (stop) clearInterval(stop);
+        pollingRef.current = null;
       };
     } else {
-      if (polling) {
-        clearInterval(polling);
-        setPolling(null);
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
       }
     }
   }, [currentShift, fetchOrdersForRange]);
@@ -139,7 +150,9 @@ const PosShift = () => {
             status: "Mở",
           })
         );
-      } catch { void 0; }
+      } catch {
+        void 0;
+      }
       const res = await openShift(Number(initialCash));
       setCurrentShift(res);
       setSelectedHistoryShift(null);
@@ -176,7 +189,9 @@ const PosShift = () => {
             note: closingNote,
           })
         );
-      } catch { void 0; }
+      } catch {
+        void 0;
+      }
       const res = await closeShift(Number(closingCash), closingNote);
       setCurrentShift(res);
       setClosingCash("");
@@ -184,7 +199,9 @@ const PosShift = () => {
       try {
         const list = await getMyShifts("Đóng");
         setShiftHistory(list || []);
-      } catch { void 0; }
+      } catch {
+        void 0;
+      }
       setSelectedHistoryShift(res);
       if (res && res.openedAt && res.closedAt) {
         await fetchOrdersForRange(res.openedAt, res.closedAt);

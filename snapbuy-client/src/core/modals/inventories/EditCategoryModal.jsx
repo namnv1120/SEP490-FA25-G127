@@ -1,5 +1,8 @@
-import { useState, useEffect } from "react";
-import { getCategoryById, updateCategory } from "../../../services/CategoryService";
+import { useState, useEffect, useCallback } from "react";
+import {
+  getCategoryById,
+  updateCategory,
+} from "../../../services/CategoryService";
 import { Modal, message, Spin } from "antd";
 
 const EditCategory = ({ isOpen, categoryId, onSuccess, onClose }) => {
@@ -15,9 +18,9 @@ const EditCategory = ({ isOpen, categoryId, onSuccess, onClose }) => {
     if (isOpen && categoryId) {
       loadCategoryData();
     }
-  }, [isOpen, categoryId]);
+  }, [isOpen, categoryId, loadCategoryData]);
 
-  const loadCategoryData = async () => {
+  const loadCategoryData = useCallback(async () => {
     try {
       setLoading(true);
       const category = await getCategoryById(categoryId);
@@ -33,7 +36,7 @@ const EditCategory = ({ isOpen, categoryId, onSuccess, onClose }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [categoryId, onClose]);
 
   // 🧩 Validate dữ liệu
   const validateForm = () => {
@@ -46,7 +49,8 @@ const EditCategory = ({ isOpen, categoryId, onSuccess, onClose }) => {
     } else if (formData.categoryName.length > 100) {
       newErrors.categoryName = "Tên danh mục không được vượt quá 100 ký tự.";
     } else if (!/^[\p{L}\d ]+$/u.test(formData.categoryName)) {
-      newErrors.categoryName = "Tên danh mục chỉ cho phép chữ, số và khoảng trắng.";
+      newErrors.categoryName =
+        "Tên danh mục chỉ cho phép chữ, số và khoảng trắng.";
     }
 
     if (formData.description && formData.description.length > 1000) {
@@ -65,8 +69,6 @@ const EditCategory = ({ isOpen, categoryId, onSuccess, onClose }) => {
     }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
-
-  
 
   const handleSubmit = async () => {
     if (!validateForm()) {
@@ -91,7 +93,8 @@ const EditCategory = ({ isOpen, categoryId, onSuccess, onClose }) => {
       if (onClose) onClose();
     } catch (error) {
       const errorMessage =
-        error.response?.data?.message || "Không thể cập nhật danh mục. Vui lòng thử lại.";
+        error.response?.data?.message ||
+        "Không thể cập nhật danh mục. Vui lòng thử lại.";
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -119,7 +122,12 @@ const EditCategory = ({ isOpen, categoryId, onSuccess, onClose }) => {
           <Spin size="large" />
         </div>
       ) : (
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+        >
           <div className="mb-3">
             <label className="form-label">
               Tên danh mục<span className="text-danger">*</span>
@@ -127,15 +135,15 @@ const EditCategory = ({ isOpen, categoryId, onSuccess, onClose }) => {
             <input
               type="text"
               name="categoryName"
-              className={`form-control ${errors.categoryName ? "is-invalid" : ""}`}
+              className={`form-control ${
+                errors.categoryName ? "is-invalid" : ""
+              }`}
               value={formData.categoryName}
               onChange={handleInputChange}
               disabled={loading}
             />
             {errors.categoryName && (
-              <div className="invalid-feedback">
-                {errors.categoryName}
-              </div>
+              <div className="invalid-feedback">{errors.categoryName}</div>
             )}
           </div>
 
@@ -143,16 +151,16 @@ const EditCategory = ({ isOpen, categoryId, onSuccess, onClose }) => {
             <label className="form-label">Mô tả</label>
             <textarea
               name="description"
-              className={`form-control ${errors.description ? "is-invalid" : ""}`}
+              className={`form-control ${
+                errors.description ? "is-invalid" : ""
+              }`}
               rows="3"
               value={formData.description}
               onChange={handleInputChange}
               disabled={loading}
             />
             {errors.description && (
-              <div className="invalid-feedback">
-                {errors.description}
-              </div>
+              <div className="invalid-feedback">{errors.description}</div>
             )}
           </div>
 
@@ -165,11 +173,7 @@ const EditCategory = ({ isOpen, categoryId, onSuccess, onClose }) => {
             >
               Huỷ
             </button>
-            <button
-              type="submit"
-              className="btn btn-submit"
-              disabled={loading}
-            >
+            <button type="submit" className="btn btn-submit" disabled={loading}>
               {loading ? "Đang lưu..." : "Cập nhật"}
             </button>
           </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Modal, message, Spin } from "antd";
 import { Dropdown } from "primereact/dropdown";
 import { createAccount } from "../../../services/AccountService";
@@ -26,7 +26,7 @@ const AddAccount = ({ isOpen, onClose, onSuccess, allowedRoles, onCreate }) => {
     if (isOpen) {
       loadRoles();
     }
-  }, [isOpen]);
+  }, [isOpen, loadRoles]);
 
   // Reset form khi modal đóng
   useEffect(() => {
@@ -43,12 +43,16 @@ const AddAccount = ({ isOpen, onClose, onSuccess, allowedRoles, onCreate }) => {
     }
   }, [isOpen]);
 
-  const loadRoles = async () => {
+  const loadRoles = useCallback(async () => {
     try {
       const rolesData = await getAllRoles();
-      let filtered = rolesData.filter((role) => role.active === true || role.active === 1);
+      let filtered = rolesData.filter(
+        (role) => role.active === true || role.active === 1
+      );
       if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
-        filtered = filtered.filter((role) => allowedRoles.includes(role.roleName));
+        filtered = filtered.filter((role) =>
+          allowedRoles.includes(role.roleName)
+        );
       }
       const roleOptions = filtered.map((role) => ({
         value: role.roleName,
@@ -58,7 +62,7 @@ const AddAccount = ({ isOpen, onClose, onSuccess, allowedRoles, onCreate }) => {
     } catch (error) {
       console.error("Lỗi khi tải danh sách vai trò:", error);
     }
-  };
+  }, [allowedRoles]);
 
   // Hàm kiểm tra hợp lệ dữ liệu dựa trên backend validation
   const validateForm = () => {
@@ -77,7 +81,8 @@ const AddAccount = ({ isOpen, onClose, onSuccess, allowedRoles, onCreate }) => {
     } else if (formData.username.length < 3 || formData.username.length > 50) {
       newErrors.username = "Tên đăng nhập phải từ 3 đến 50 ký tự.";
     } else if (!/^[A-Za-z0-9._-]+$/.test(formData.username)) {
-      newErrors.username = "Tên đăng nhập chỉ được gồm chữ, số, dấu chấm (.), gạch dưới (_) hoặc gạch ngang (-), không có khoảng trắng.";
+      newErrors.username =
+        "Tên đăng nhập chỉ được gồm chữ, số, dấu chấm (.), gạch dưới (_) hoặc gạch ngang (-), không có khoảng trắng.";
     }
 
     // Mật khẩu
@@ -135,9 +140,10 @@ const AddAccount = ({ isOpen, onClose, onSuccess, allowedRoles, onCreate }) => {
       setLoading(true);
 
       // Đảm bảo roles là array và không có giá trị null/undefined
-      const rolesArray = formData.roles && formData.roles.length > 0
-        ? formData.roles.filter(r => r != null && r !== '')
-        : [];
+      const rolesArray =
+        formData.roles && formData.roles.length > 0
+          ? formData.roles.filter((r) => r != null && r !== "")
+          : [];
 
       const newAccount = {
         fullName: formData.fullName.trim(),
@@ -148,7 +154,7 @@ const AddAccount = ({ isOpen, onClose, onSuccess, allowedRoles, onCreate }) => {
         active: true,
       };
 
-      if (typeof onCreate === 'function') {
+      if (typeof onCreate === "function") {
         await onCreate(newAccount);
       } else {
         await createAccount(newAccount);
@@ -172,7 +178,9 @@ const AddAccount = ({ isOpen, onClose, onSuccess, allowedRoles, onCreate }) => {
       if (onSuccess) onSuccess();
     } catch (error) {
       const errorMessage =
-        error.response?.data?.message || error.message || "Không thể thêm tài khoản.";
+        error.response?.data?.message ||
+        error.message ||
+        "Không thể thêm tài khoản.";
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -193,7 +201,12 @@ const AddAccount = ({ isOpen, onClose, onSuccess, allowedRoles, onCreate }) => {
         </div>
       }
     >
-      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit();
+        }}
+      >
         {/* Họ và tên */}
         <div className="mb-3">
           <label className="form-label">
@@ -268,16 +281,18 @@ const AddAccount = ({ isOpen, onClose, onSuccess, allowedRoles, onCreate }) => {
               placeholder="Nhập mật khẩu (ít nhất 6 ký tự)"
               disabled={loading}
               style={{
-                paddingRight: errors.password ? "3rem" : "2.5rem"
+                paddingRight: errors.password ? "3rem" : "2.5rem",
               }}
             />
             <span
-              className={`ti toggle-password position-absolute top-50 translate-middle-y ${showPassword ? "ti-eye" : "ti-eye-off"}`}
+              className={`ti toggle-password position-absolute top-50 translate-middle-y ${
+                showPassword ? "ti-eye" : "ti-eye-off"
+              }`}
               onClick={() => setShowPassword(!showPassword)}
               style={{
                 cursor: "pointer",
                 right: errors.password ? "2rem" : "0.75rem",
-                zIndex: 10
+                zIndex: 10,
               }}
             />
           </div>
@@ -295,27 +310,33 @@ const AddAccount = ({ isOpen, onClose, onSuccess, allowedRoles, onCreate }) => {
             <input
               type={showConfirmPassword ? "text" : "password"}
               name="confirmPassword"
-              className={`form-control ${errors.confirmPassword ? "is-invalid" : ""}`}
+              className={`form-control ${
+                errors.confirmPassword ? "is-invalid" : ""
+              }`}
               value={formData.confirmPassword}
               onChange={handleInputChange}
               placeholder="Nhập lại mật khẩu"
               disabled={loading}
               style={{
-                paddingRight: errors.confirmPassword ? "3rem" : "2.5rem"
+                paddingRight: errors.confirmPassword ? "3rem" : "2.5rem",
               }}
             />
             <span
-              className={`ti toggle-password position-absolute top-50 translate-middle-y ${showConfirmPassword ? "ti-eye" : "ti-eye-off"}`}
+              className={`ti toggle-password position-absolute top-50 translate-middle-y ${
+                showConfirmPassword ? "ti-eye" : "ti-eye-off"
+              }`}
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               style={{
                 cursor: "pointer",
                 right: errors.confirmPassword ? "2rem" : "0.75rem",
-                zIndex: 10
+                zIndex: 10,
               }}
             />
           </div>
           {errors.confirmPassword && (
-            <div className="invalid-feedback d-block">{errors.confirmPassword}</div>
+            <div className="invalid-feedback d-block">
+              {errors.confirmPassword}
+            </div>
           )}
         </div>
 
@@ -329,11 +350,7 @@ const AddAccount = ({ isOpen, onClose, onSuccess, allowedRoles, onCreate }) => {
           >
             Huỷ
           </button>
-          <button
-            type="submit"
-            className="btn btn-submit"
-            disabled={loading}
-          >
+          <button type="submit" className="btn btn-submit" disabled={loading}>
             {loading ? "Đang lưu..." : "Thêm tài khoản"}
           </button>
         </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { message, Spin } from "antd";
 import Chart from "react-apexcharts";
 import {
@@ -18,14 +18,12 @@ import {
   getAllOrders,
   getMyTodayOrderCount,
 } from "../../services/OrderService";
-import {
-  getCurrentShift,
-} from "../../services/ShiftService";
+import { getCurrentShift } from "../../services/ShiftService";
 
 const SalesDashboard = () => {
   const [user, setUser] = useState(null);
   const [loadingOrders, setLoadingOrders] = useState(false);
-  
+
   const [shift, setShift] = useState(null);
   const [shiftLoading, setShiftLoading] = useState(false);
   const [myTodayCount, setMyTodayCount] = useState(0);
@@ -35,7 +33,6 @@ const SalesDashboard = () => {
     categories: [],
   });
   const [ordersByHourToday, setOrdersByHourToday] = useState(Array(24).fill(0));
-  
 
   ChartJS.register(
     CategoryScale,
@@ -70,147 +67,159 @@ const SalesDashboard = () => {
       try {
         const count = await getMyTodayOrderCount("Đã thanh toán");
         setMyTodayCount(Number(count || 0));
-      } catch { void 0; }
+      } catch {
+        void 0;
+      }
       await fetchOrdersToday(accountIdLocal);
       await fetchOrdersLast7Days(accountIdLocal);
     };
     init();
-  }, []);
+  }, [fetchOrdersToday, fetchOrdersLast7Days]);
 
-  const fetchOrdersToday = async (accountIdLocal = null) => {
-    try {
-      setLoadingOrders(true);
-      const today = new Date();
-      const start = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate()
-      );
-      const end = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate()
-      );
-      const formatDate = (date) => {
-        const y = date.getFullYear();
-        const m = String(date.getMonth() + 1).padStart(2, "0");
-        const d = String(date.getDate()).padStart(2, "0");
-        return `${y}-${m}-${d}`;
-      };
-      const res = await getAllOrders({
-        from: formatDate(start),
-        to: formatDate(end),
-      });
-      const data = res.result || res || [];
-      const myId = accountIdLocal || user?.id || null;
-      const filtered = data.filter((o) => {
-        const uid = o.accountId || (o.account && o.account.accountId) || null;
-        const paid =
-          (o.paymentStatus || "").toString().toLowerCase() === "đã thanh toán";
-        return uid && myId && String(uid) === String(myId) && paid;
-      });
-      
-      setMyTodayCount(filtered.length);
-      const revenue = filtered.reduce(
-        (sum, o) => sum + Number(o.totalAmount || 0),
-        0
-      );
-      setTodayRevenue(revenue);
-      const byHour = Array(24).fill(0);
-      filtered.forEach((o) => {
-        const dt = new Date(
-          o.orderDate || o.createdDate || o.createdAt || Date.now()
-        );
-        const h = dt.getHours();
-        byHour[h] += 1;
-      });
-      setOrdersByHourToday(byHour);
-      const pm = { CASH: 0, MOMO: 0, OTHER: 0 };
-      filtered.forEach((o) => {
-        const method = (o.payment?.paymentMethod || o.paymentMethod || "OTHER")
-          .toString()
-          .toUpperCase();
-        if (method.includes("MOMO")) pm.MOMO += 1;
-        else if (method.includes("CASH") || method.includes("TIỀN MẶT"))
-          pm.CASH += 1;
-        else pm.OTHER += 1;
-      });
-      
-    } catch { void 0; } finally {
-      setLoadingOrders(false);
-    }
-  };
-
-  const fetchOrdersLast7Days = async (accountIdLocal = null) => {
-    try {
-      const today = new Date();
-      const start = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate() - 6
-      );
-      const end = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate()
-      );
-      const formatDate = (date) => {
-        const y = date.getFullYear();
-        const m = String(date.getMonth() + 1).padStart(2, "0");
-        const d = String(date.getDate()).padStart(2, "0");
-        return `${y}-${m}-${d}`;
-      };
-      const res = await getAllOrders({
-        from: formatDate(start),
-        to: formatDate(end),
-      });
-      const data = res.result || res || [];
-      const myId = accountIdLocal || user?.id || null;
-      const filtered = data.filter((o) => {
-        const uid = o.accountId || (o.account && o.account.accountId) || null;
-        return uid && myId && String(uid) === String(myId);
-      });
-      const counts = {};
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(
+  const fetchOrdersToday = useCallback(
+    async (accountIdLocal = null) => {
+      try {
+        setLoadingOrders(true);
+        const today = new Date();
+        const start = new Date(
           today.getFullYear(),
           today.getMonth(),
-          today.getDate() - (6 - i)
+          today.getDate()
         );
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-          2,
-          "0"
-        )}-${String(d.getDate()).padStart(2, "0")}`;
-        counts[key] = 0;
+        const end = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate()
+        );
+        const formatDate = (date) => {
+          const y = date.getFullYear();
+          const m = String(date.getMonth() + 1).padStart(2, "0");
+          const d = String(date.getDate()).padStart(2, "0");
+          return `${y}-${m}-${d}`;
+        };
+        const res = await getAllOrders({
+          from: formatDate(start),
+          to: formatDate(end),
+        });
+        const data = res.result || res || [];
+        const myId = accountIdLocal || user?.id || null;
+        const filtered = data.filter((o) => {
+          const uid = o.accountId || (o.account && o.account.accountId) || null;
+          const paid =
+            (o.paymentStatus || "").toString().toLowerCase() ===
+            "đã thanh toán";
+          return uid && myId && String(uid) === String(myId) && paid;
+        });
+
+        setMyTodayCount(filtered.length);
+        const revenue = filtered.reduce(
+          (sum, o) => sum + Number(o.totalAmount || 0),
+          0
+        );
+        setTodayRevenue(revenue);
+        const byHour = Array(24).fill(0);
+        filtered.forEach((o) => {
+          const dt = new Date(
+            o.orderDate || o.createdDate || o.createdAt || Date.now()
+          );
+          const h = dt.getHours();
+          byHour[h] += 1;
+        });
+        setOrdersByHourToday(byHour);
+        const pm = { CASH: 0, MOMO: 0, OTHER: 0 };
+        filtered.forEach((o) => {
+          const method = (
+            o.payment?.paymentMethod ||
+            o.paymentMethod ||
+            "OTHER"
+          )
+            .toString()
+            .toUpperCase();
+          if (method.includes("MOMO")) pm.MOMO += 1;
+          else if (method.includes("CASH") || method.includes("TIỀN MẶT"))
+            pm.CASH += 1;
+          else pm.OTHER += 1;
+        });
+      } catch {
+        void 0;
+      } finally {
+        setLoadingOrders(false);
       }
-      filtered.forEach((o) => {
-        const dt = new Date(
-          o.orderDate || o.createdDate || o.createdAt || Date.now()
+    },
+    [user?.id]
+  );
+
+  const fetchOrdersLast7Days = useCallback(
+    async (accountIdLocal = null) => {
+      try {
+        const today = new Date();
+        const start = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() - 6
         );
-        const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(
-          2,
-          "0"
-        )}-${String(dt.getDate()).padStart(2, "0")}`;
-        if (counts[key] !== undefined) counts[key] += 1;
-      });
-      const series = Object.values(counts);
-      const categories = Object.keys(counts).map((k) => {
-        const [, mm, dd] = k.split("-");
-        return `${dd}/${mm}`;
-      });
-      setOrders7Days({ series, categories });
-    } catch { void 0; }
-  };
+        const end = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate()
+        );
+        const formatDate = (date) => {
+          const y = date.getFullYear();
+          const m = String(date.getMonth() + 1).padStart(2, "0");
+          const d = String(date.getDate()).padStart(2, "0");
+          return `${y}-${m}-${d}`;
+        };
+        const res = await getAllOrders({
+          from: formatDate(start),
+          to: formatDate(end),
+        });
+        const data = res.result || res || [];
+        const myId = accountIdLocal || user?.id || null;
+        const filtered = data.filter((o) => {
+          const uid = o.accountId || (o.account && o.account.accountId) || null;
+          return uid && myId && String(uid) === String(myId);
+        });
+        const counts = {};
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate() - (6 - i)
+          );
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+            2,
+            "0"
+          )}-${String(d.getDate()).padStart(2, "0")}`;
+          counts[key] = 0;
+        }
+        filtered.forEach((o) => {
+          const dt = new Date(
+            o.orderDate || o.createdDate || o.createdAt || Date.now()
+          );
+          const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(
+            2,
+            "0"
+          )}-${String(dt.getDate()).padStart(2, "0")}`;
+          if (counts[key] !== undefined) counts[key] += 1;
+        });
+        const series = Object.values(counts);
+        const categories = Object.keys(counts).map((k) => {
+          const [, mm, dd] = k.split("-");
+          return `${dd}/${mm}`;
+        });
+        setOrders7Days({ series, categories });
+      } catch {
+        void 0;
+      }
+    },
+    [user?.id]
+  );
 
   const formatCurrency = (v) =>
     new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
     }).format(v || 0);
-
-  
-
-
 
   return (
     <div className="page-wrapper">
@@ -354,7 +363,6 @@ const SalesDashboard = () => {
                         ? new Date(shift.openedAt).toLocaleString("vi-VN")
                         : ""}
                     </div>
-
                   </div>
                 ) : (
                   <div>
@@ -437,8 +445,6 @@ const SalesDashboard = () => {
             </div>
           </div>
         </div>
-
-
       </div>
     </div>
   );

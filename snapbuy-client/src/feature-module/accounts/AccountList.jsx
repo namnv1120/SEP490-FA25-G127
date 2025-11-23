@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import AddAccount from "../../core/modals/accounts/AddAccountModal";
 import EditAccount from "../../core/modals/accounts/EditAccountModal";
@@ -8,11 +8,9 @@ import PrimeDataTable from "../../components/data-table";
 import CommonSelect from "../../components/select/common-select";
 import DeleteModal from "../../components/delete-modal";
 import {
-  getAllAccounts,
-  toggleAccountStatus,
   deleteAccount,
-  searchAccounts,
   searchAccountsPaged,
+  toggleAccountStatus,
 } from "../../services/AccountService";
 import { getAllRoles } from "../../services/RoleService";
 import { message } from "antd";
@@ -24,11 +22,14 @@ const AccountList = () => {
   const [statusFilter, setStatusFilter] = useState(null); // true=Hoạt động, false=Không hoạt động, null=Tất cả
   const [roleFilter, setRoleFilter] = useState("");
   const [roleOptions, setRoleOptions] = useState([]);
-  const StatusOptions = useMemo(() => ([
-    { value: null, label: "Tất cả" },
-    { value: true, label: "Hoạt động" },
-    { value: false, label: "Ngừng hoạt động" },
-  ]), []);
+  const StatusOptions = useMemo(
+    () => [
+      { value: null, label: "Tất cả" },
+      { value: true, label: "Hoạt động" },
+      { value: false, label: "Ngừng hoạt động" },
+    ],
+    []
+  );
 
   const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -40,7 +41,7 @@ const AccountList = () => {
 
   useEffect(() => {
     fetchAccounts();
-  }, [searchQuery, statusFilter, roleFilter, currentPage, rows]);
+  }, [fetchAccounts]);
 
   useEffect(() => {
     const loadRoles = async () => {
@@ -61,11 +62,11 @@ const AccountList = () => {
     setCurrentPage(1);
   }, [searchQuery, statusFilter, roleFilter]);
 
-  const fetchAccounts = async () => {
+  const fetchAccounts = useCallback(async () => {
     try {
       const backendPage = Math.max(0, (currentPage || 1) - 1);
-      const sortBy = 'fullName';
-      const sortDir = 'ASC';
+      const sortBy = "fullName";
+      const sortDir = "ASC";
       const params = {
         keyword: searchQuery,
         active: statusFilter,
@@ -79,7 +80,10 @@ const AccountList = () => {
       const rawList = result?.content || result || [];
       const mappedData = (rawList || []).map((account) => ({
         ...account,
-        active: account.active === true || account.active === 1 || account.active === "1",
+        active:
+          account.active === true ||
+          account.active === 1 ||
+          account.active === "1",
       }));
       setDataSource(mappedData);
       setTotalRecords(result?.totalElements ?? mappedData.length);
@@ -93,13 +97,15 @@ const AccountList = () => {
         message.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
       } else {
         message.error(
-          error.response?.data?.message || error.message || "Lỗi khi lấy danh sách tài khoản"
+          error.response?.data?.message ||
+            error.message ||
+            "Lỗi khi lấy danh sách tài khoản"
         );
       }
     } finally {
       void 0;
     }
-  };
+  }, [currentPage, rows, searchQuery, statusFilter, roleFilter]);
 
   const handleToggleStatus = async (account) => {
     try {
@@ -290,8 +296,7 @@ const AccountList = () => {
                 <h6>Quản lý danh sách tài khoản</h6>
               </div>
             </div>
-            <TableTopHead
-            />
+            <TableTopHead />
             <div className="page-btn">
               <button
                 type="button"
@@ -307,13 +312,20 @@ const AccountList = () => {
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
               <div className="search-set">
-                <SearchFromApi callback={(value) => { setSearchQuery(value || ""); }} />
+                <SearchFromApi
+                  callback={(value) => {
+                    setSearchQuery(value || "");
+                  }}
+                />
               </div>
               <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
                 <div className="me-2">
                   <CommonSelect
                     options={StatusOptions}
-                    value={StatusOptions.find((o) => o.value === statusFilter) || StatusOptions[0]}
+                    value={
+                      StatusOptions.find((o) => o.value === statusFilter) ||
+                      StatusOptions[0]
+                    }
                     onChange={(s) => {
                       const v = s?.value;
                       setStatusFilter(v === true || v === false ? v : null);
@@ -326,7 +338,11 @@ const AccountList = () => {
                 <div>
                   <CommonSelect
                     options={[{ value: "", label: "Tất cả" }, ...roleOptions]}
-                    value={[{ value: "", label: "Tất cả" }, ...roleOptions].find((o) => o.value === (roleFilter || "")) || { value: "", label: "Tất cả" }}
+                    value={
+                      [{ value: "", label: "Tất cả" }, ...roleOptions].find(
+                        (o) => o.value === (roleFilter || "")
+                      ) || { value: "", label: "Tất cả" }
+                    }
                     onChange={(s) => {
                       setRoleFilter(s?.value || "");
                     }}

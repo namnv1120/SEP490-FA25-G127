@@ -1,9 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Modal, Spin, message } from "antd";
 import { getProductById } from "../../../services/ProductService";
 import { getImageUrl } from "../../../utils/imageUtils";
 import { product69 } from "../../../utils/imagepath";
-import { downloadBarcode, displayBarcodePreview } from "../../../utils/barcodeUtils";
+import {
+  downloadBarcode,
+  displayBarcodePreview,
+} from "../../../utils/barcodeUtils";
 
 const ProductDetailModal = ({ isOpen, onClose, productId }) => {
   const [loading, setLoading] = useState(false);
@@ -13,40 +16,46 @@ const ProductDetailModal = ({ isOpen, onClose, productId }) => {
     if (isOpen && productId) {
       fetchProductDetail();
     }
-  }, [isOpen, productId]);
+  }, [isOpen, productId, fetchProductDetail]);
 
   // Hiển thị barcode preview khi product thay đổi
   useEffect(() => {
     const updateBarcodePreview = async () => {
-      const container = document.getElementById('barcode-preview-detail');
+      const container = document.getElementById("barcode-preview-detail");
       if (!container) return;
 
       if (product?.barcode?.trim()) {
         // Kích thước hình chữ nhật vừa với khung (350px - padding 40px = ~310px width, height ~110px)
         // Tăng width để đảm bảo text barcode dài không bị cắt
-        await displayBarcodePreview(product.barcode, 'barcode-preview-detail', 310, 110);
-        
+        await displayBarcodePreview(
+          product.barcode,
+          "barcode-preview-detail",
+          310,
+          110
+        );
+
         // Đảm bảo image vừa khung
         setTimeout(() => {
-          const img = container.querySelector('img');
+          const img = container.querySelector("img");
           if (img) {
-            img.style.maxWidth = '100%';
-            img.style.width = '100%';
-            img.style.height = 'auto';
-            img.style.display = 'block';
-            img.style.margin = '0 auto';
-            img.style.objectFit = 'contain';
+            img.style.maxWidth = "100%";
+            img.style.width = "100%";
+            img.style.height = "auto";
+            img.style.display = "block";
+            img.style.margin = "0 auto";
+            img.style.objectFit = "contain";
           }
         }, 100);
       } else {
-        container.innerHTML = '<div class="text-center text-muted"><small>Sản phẩm chưa có barcode</small></div>';
+        container.innerHTML =
+          '<div class="text-center text-muted"><small>Sản phẩm chưa có barcode</small></div>';
       }
     };
-    
+
     updateBarcodePreview();
   }, [product?.barcode]);
 
-  const fetchProductDetail = async () => {
+  const fetchProductDetail = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getProductById(productId);
@@ -63,7 +72,10 @@ const ProductDetailModal = ({ isOpen, onClose, productId }) => {
       const errorMessage = error.message || "Không thể tải chi tiết sản phẩm!";
       message.error(errorMessage);
 
-      if (error.message?.includes("Status: 404") || error.message?.includes("Status: 500")) {
+      if (
+        error.message?.includes("Status: 404") ||
+        error.message?.includes("Status: 500")
+      ) {
         setTimeout(() => {
           onClose();
         }, 2000);
@@ -71,7 +83,7 @@ const ProductDetailModal = ({ isOpen, onClose, productId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [productId, onClose]);
 
   const formatDateTime = (dateString) => {
     if (!dateString) return "—";
@@ -84,7 +96,9 @@ const ProductDetailModal = ({ isOpen, onClose, productId }) => {
     });
   };
 
-  const productImageUrl = product ? (getImageUrl(product.imageUrl) || product69) : product69;
+  const productImageUrl = product
+    ? getImageUrl(product.imageUrl) || product69
+    : product69;
 
   return (
     <Modal
@@ -97,11 +111,7 @@ const ProductDetailModal = ({ isOpen, onClose, productId }) => {
       title={
         <div>
           <h4 className="mb-1">Chi tiết sản phẩm</h4>
-          {product && (
-            <span className="text-muted">
-              {product.productCode}
-            </span>
-          )}
+          {product && <span className="text-muted">{product.productCode}</span>}
         </div>
       }
     >
@@ -116,21 +126,27 @@ const ProductDetailModal = ({ isOpen, onClose, productId }) => {
               <div className="card mb-3">
                 <div className="card-body">
                   <div className="d-flex align-items-start gap-3 mb-3">
-                    <div className="bar-code-view" style={{ flex: 1, maxWidth: '350px' }}>
-                      <div id="barcode-preview-detail" style={{ 
-                        width: '100%',
-                        minHeight: '110px',
-                        aspectRatio: '3 / 1', // Tỷ lệ hình chữ nhật dài hơn
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        backgroundColor: '#fff',
-                        border: '1px solid #dee2e6',
-                        borderRadius: '4px',
-                        padding: '15px 20px', // Tăng padding để text không bị cắt
-                        overflow: 'visible', // Đổi thành visible để text không bị cắt
-                        boxSizing: 'border-box'
-                      }}>
+                    <div
+                      className="bar-code-view"
+                      style={{ flex: 1, maxWidth: "350px" }}
+                    >
+                      <div
+                        id="barcode-preview-detail"
+                        style={{
+                          width: "100%",
+                          minHeight: "110px",
+                          aspectRatio: "3 / 1", // Tỷ lệ hình chữ nhật dài hơn
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          backgroundColor: "#fff",
+                          border: "1px solid #dee2e6",
+                          borderRadius: "4px",
+                          padding: "15px 20px", // Tăng padding để text không bị cắt
+                          overflow: "visible", // Đổi thành visible để text không bị cắt
+                          boxSizing: "border-box",
+                        }}
+                      >
                         {!product?.barcode?.trim() && (
                           <div className="text-center text-muted">
                             <small>Sản phẩm chưa có barcode</small>
@@ -139,7 +155,7 @@ const ProductDetailModal = ({ isOpen, onClose, productId }) => {
                       </div>
                     </div>
                     {product?.barcode?.trim() && (
-                      <button 
+                      <button
                         className="btn btn-outline-primary d-flex align-items-center justify-content-center"
                         onClick={async () => {
                           try {
@@ -149,17 +165,22 @@ const ProductDetailModal = ({ isOpen, onClose, productId }) => {
                             );
                             message.success("Đã tải barcode về máy");
                           } catch (error) {
-                            message.error(error.message || "Không thể tải barcode");
+                            message.error(
+                              error.message || "Không thể tải barcode"
+                            );
                           }
                         }}
                         title="Tải barcode về máy"
-                        style={{ 
-                          minWidth: '45px',
-                          height: '45px',
-                          padding: '0'
+                        style={{
+                          minWidth: "45px",
+                          height: "45px",
+                          padding: "0",
                         }}
                       >
-                        <i className="ti ti-download" style={{ fontSize: '20px' }} />
+                        <i
+                          className="ti ti-download"
+                          style={{ fontSize: "20px" }}
+                        />
                       </button>
                     )}
                   </div>
@@ -263,5 +284,3 @@ const ProductDetailModal = ({ isOpen, onClose, productId }) => {
 };
 
 export default ProductDetailModal;
-
-

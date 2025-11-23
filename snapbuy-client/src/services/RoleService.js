@@ -9,7 +9,7 @@ const getAuthHeader = () => {
   return { Authorization: `${tokenType} ${token}` };
 };
 
-export const getAllRoles = async (active) => {
+export const getAllRoles = async () => {
   try {
     const response = await axios.get(REST_API_BASE_URL, {
       headers: getAuthHeader(),

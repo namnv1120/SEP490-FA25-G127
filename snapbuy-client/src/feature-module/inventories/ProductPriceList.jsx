@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import ProductDetailModal from "../../core/modals/inventories/ProductDetailModal";
 import { allRoutes } from "../../routes/AllRoutes";
@@ -25,9 +25,9 @@ const ProductPriceList = () => {
 
   useEffect(() => {
     fetchProductPrices();
-  }, []);
+  }, [fetchProductPrices]);
 
-  const fetchProductPrices = async () => {
+  const fetchProductPrices = useCallback(async () => {
     try {
       setError(null);
       const data = await getAllProductPrices();
@@ -64,7 +64,7 @@ const ProductPriceList = () => {
     } finally {
       void 0;
     }
-  };
+  }, []);
 
   const getStatus = (validFrom, validTo) => {
     const now = new Date();
@@ -79,9 +79,6 @@ const ProductPriceList = () => {
     }
     return "Không hoạt động";
   };
-
-
-  
 
   const handleExportExcel = async () => {
     if (!productPrices || productPrices.length === 0) {

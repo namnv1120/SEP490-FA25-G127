@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import "../../assets/css/pos-promotion.css";
 import PosModals from "../../core/modals/pos/PosModals";
 import AddCustomerModal from "../../core/modals/pos/AddCustomerModal";
 import CounterTwo from "../../components/counter/CounterTwo";
@@ -22,6 +23,7 @@ import {
   getOrderById,
 } from "../../services/OrderService";
 import { getPosSettings } from "../../services/PosSettingsService";
+import { getBestDiscountForProduct } from "../../services/PromotionService";
 import { getImageUrl } from "../../utils/imageUtils";
 import usePermission from "../../hooks/usePermission";
 import {
@@ -244,24 +246,46 @@ const Pos = () => {
     try {
       setLoading(true);
       const data = await getAllProducts();
-      const mappedProducts = data
-        .filter((product) => product.active)
-        .map((product) => ({
-          id: product.productId,
-          productId: product.productId,
-          name: product.productName,
-          productName: product.productName,
-          code: product.productCode,
-          productCode: product.productCode,
-          barcode: product.barcode || null,
-          price: product.unitPrice,
-          stock: product.quantityInStock,
-          quantityInStock: product.quantityInStock,
-          categoryId: product.categoryId,
-          categoryName: product.categoryName || "",
-          image: getImageUrl(product.imageUrl || product.image || null),
-        }));
 
+      // Map products data và load khuyến mãi
+      const mappedProductsPromises = data
+        .filter((product) => product.active)
+        .map(async (product) => {
+          const originalPrice = product.unitPrice || 0;
+          // Lấy % giảm giá tốt nhất cho sản phẩm (truyền unitPrice để tính cho FIXED discount)
+          const discountPercent = await getBestDiscountForProduct(
+            product.productId,
+            originalPrice
+          );
+          const discountedPrice =
+            discountPercent > 0
+              ? originalPrice * (1 - discountPercent / 100)
+              : originalPrice;
+
+          console.log(
+            `[POS] Product: ${product.productName}, Original: ${originalPrice}, Discount: ${discountPercent}%, Final: ${discountedPrice}`
+          );
+
+          return {
+            id: product.productId,
+            productId: product.productId,
+            name: product.productName,
+            productName: product.productName,
+            code: product.productCode,
+            productCode: product.productCode,
+            barcode: product.barcode || null,
+            price: discountedPrice, // Giá sau khuyến mãi
+            originalPrice: originalPrice, // Giá gốc
+            discountPercent: discountPercent, // % giảm giá
+            stock: product.quantityInStock,
+            quantityInStock: product.quantityInStock,
+            categoryId: product.categoryId,
+            categoryName: product.categoryName || "",
+            image: getImageUrl(product.imageUrl || product.image || null),
+          };
+        });
+
+      const mappedProducts = await Promise.all(mappedProductsPromises);
       setProducts(mappedProducts);
 
       setCartItems((prevCartItems) => {
@@ -552,7 +576,7 @@ const Pos = () => {
 
       focusBarcodeInput(false);
     },
-    [createdOrder, focusBarcodeInput, showMessage]
+    [focusBarcodeInput, showMessage]
   );
 
   const handleBarcodeScan = useCallback(
@@ -578,7 +602,9 @@ const Pos = () => {
           productName: product.productName,
           code: product.productCode,
           productCode: product.productCode,
-          price: product.unitPrice || 0,
+          price: product.price, // Note: check if this needs to be calculated or if getProductByBarcode returns it
+          originalPrice: product.originalPrice,
+          discountPercent: product.discountPercent || 0,
           stock: product.quantityInStock || 0,
           quantityInStock: product.quantityInStock || 0,
           categoryId: product.categoryId,
@@ -608,7 +634,7 @@ const Pos = () => {
         }, 50);
       }
     },
-    [isBarcodeInputFocused, handleAddToCart, createdOrder, focusBarcodeInput]
+    [isBarcodeInputFocused, handleAddToCart, focusBarcodeInput]
   );
 
   useEffect(() => {
@@ -668,7 +694,7 @@ const Pos = () => {
     if (!item) return;
 
     if (item.quantity === newQuantity) {
-      return; 
+      return;
     }
 
     const availableStock = item.stock || 0;
@@ -862,11 +888,11 @@ const Pos = () => {
         items: cartItems.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
-          unitPrice: item.price,
-          discount: 0,
+          unitPrice: item.originalPrice || item.price, // Gửi giá gốc
+          discount: item.discountPercent || 0, // Gửi % giảm giá của sản phẩm
         })),
-        discountAmount: totals.discountPercent || 0, 
-        taxAmount: totals.taxPercent || 0, 
+        discountAmount: totals.discountPercent || 0,
+        taxAmount: totals.taxPercent || 0,
         paymentMethod: paymentMethod === "cash" ? null : "MOMO",
         notes: null,
         usePoints: totals.pointsUsed || 0,
@@ -1151,17 +1177,17 @@ const Pos = () => {
     if (!isGuest && previousCustomerId) {
       try {
         await getCustomerById(previousCustomerId);
-      } catch { void 0; }
+      } catch {
+        void 0;
+      }
     }
   };
-
 
   return (
     <div className="main-wrapper">
       <div className="page-wrapper pos-pg-wrapper ms-0">
         <div className="content pos-design p-0">
           <div className="row align-items-start pos-wrapper">
-            
             <div className="col-md-12 col-lg-7 col-xl-8">
               <div className="pos-categories tabs_wrapper pb-0">
                 <div className="card pos-button">
@@ -1332,7 +1358,7 @@ const Pos = () => {
                             filteredProducts.map((product) => (
                               <div
                                 key={product.id}
-                                className="col-sm-6 col-md-6 col-lg-4 col-xl-3"
+                                className="col-sm-6 col-md-6 col-lg-4 col-xl-3 mb-3"
                               >
                                 <div
                                   className="product-info card"
@@ -1370,14 +1396,83 @@ const Pos = () => {
                                       {product.name}
                                     </Link>
                                   </h6>
-                                  <div className="d-flex align-items-center justify-content-between price">
-                                    <span>{product.stock || 0} Cái</span>
-                                    <p>
-                                      {new Intl.NumberFormat("vi-VN", {
-                                        style: "currency",
-                                        currency: "VND",
-                                      }).format(product.price || 0)}
-                                    </p>
+                                  <div className="d-flex align-items-start justify-content-between price">
+                                    <span
+                                      style={{
+                                        fontSize: "13px",
+                                        color: "#6c757d",
+                                        lineHeight: "1.5",
+                                      }}
+                                    >
+                                      {product.stock || 0} Cái
+                                    </span>
+                                    <div
+                                      className="text-end"
+                                      style={{ minWidth: "140px" }}
+                                    >
+                                      {product.discountPercent > 0 ? (
+                                        <div className="d-flex flex-column align-items-end">
+                                          <div className="d-flex align-items-center gap-1 mb-1">
+                                            <small
+                                              className="text-muted text-decoration-line-through"
+                                              style={{ fontSize: "12px" }}
+                                            >
+                                              {new Intl.NumberFormat("vi-VN", {
+                                                style: "currency",
+                                                currency: "VND",
+                                              }).format(
+                                                product.originalPrice || 0
+                                              )}
+                                            </small>
+                                            <span
+                                              className="badge"
+                                              style={{
+                                                fontSize: "10px",
+                                                padding: "2px 6px",
+                                                backgroundColor: "#ff4d4f",
+                                                color: "white",
+                                                fontWeight: "600",
+                                              }}
+                                            >
+                                              -{product.discountPercent}%
+                                            </span>
+                                          </div>
+                                          <p
+                                            className="mb-0 fw-bold"
+                                            style={{
+                                              fontSize: "15px",
+                                              color: "#ff4d4f",
+                                            }}
+                                          >
+                                            {new Intl.NumberFormat("vi-VN", {
+                                              style: "currency",
+                                              currency: "VND",
+                                            }).format(product.price || 0)}
+                                          </p>
+                                        </div>
+                                      ) : (
+                                        <div className="d-flex flex-column align-items-end">
+                                          <div
+                                            style={{
+                                              height: "20px",
+                                              marginBottom: "4px",
+                                            }}
+                                          ></div>
+                                          <p
+                                            className="mb-0 fw-semibold"
+                                            style={{
+                                              fontSize: "15px",
+                                              color: "#1f1f1f",
+                                            }}
+                                          >
+                                            {new Intl.NumberFormat("vi-VN", {
+                                              style: "currency",
+                                              currency: "VND",
+                                            }).format(product.price || 0)}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
@@ -1683,12 +1778,35 @@ const Pos = () => {
                                   {item.name}
                                 </Link>
                               </h6>
-                              <p className="fw-bold text-teal">
-                                {new Intl.NumberFormat("vi-VN", {
-                                  style: "currency",
-                                  currency: "VND",
-                                }).format(item.price)}
-                              </p>
+                              {item.discountPercent > 0 ? (
+                                <div>
+                                  <p className="fw-bold text-danger mb-0">
+                                    {new Intl.NumberFormat("vi-VN", {
+                                      style: "currency",
+                                      currency: "VND",
+                                    }).format(item.price)}
+                                    <span
+                                      className="badge bg-danger ms-1"
+                                      style={{ fontSize: "10px" }}
+                                    >
+                                      -{item.discountPercent}%
+                                    </span>
+                                  </p>
+                                  <small className="text-muted text-decoration-line-through">
+                                    {new Intl.NumberFormat("vi-VN", {
+                                      style: "currency",
+                                      currency: "VND",
+                                    }).format(item.originalPrice)}
+                                  </small>
+                                </div>
+                              ) : (
+                                <p className="fw-bold text-teal">
+                                  {new Intl.NumberFormat("vi-VN", {
+                                    style: "currency",
+                                    currency: "VND",
+                                  }).format(item.price)}
+                                </p>
+                              )}
                             </div>
                           </div>
                           <div

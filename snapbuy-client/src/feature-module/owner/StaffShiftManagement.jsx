@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { message, Modal, Table, Tag, Descriptions, Spin } from "antd";
 import PrimeDataTable from "../../components/data-table";
 import { getShiftsByAccountId } from "../../services/ShiftService";
@@ -70,7 +70,7 @@ const StaffShiftManagement = () => {
     };
 
     fetchStaff();
-  }, []);
+  }, [fetchAllShifts]);
 
   // Calculate daily revenue separately
   useEffect(() => {
@@ -121,7 +121,7 @@ const StaffShiftManagement = () => {
   }, [staffList]);
 
   // Fetch all shifts
-  const fetchAllShifts = async (staff) => {
+  const fetchAllShifts = useCallback(async (staff) => {
     try {
       const allShifts = [];
 
@@ -152,7 +152,7 @@ const StaffShiftManagement = () => {
         "Không thể tải dữ liệu ca làm việc: " + (error.message || "")
       );
     }
-  };
+  }, []);
 
   // Calculate summary stats (shifts only)
   const calculateStats = (shifts) => {

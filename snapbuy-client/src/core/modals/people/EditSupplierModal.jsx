@@ -1,6 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Modal, message, Spin } from "antd";
-import { getSupplierById, updateSupplier } from "../../../services/SupplierService";
+import {
+  getSupplierById,
+  updateSupplier,
+} from "../../../services/SupplierService";
 
 const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
@@ -20,9 +23,9 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
     if (isOpen && supplierId) {
       loadSupplierData();
     }
-  }, [isOpen, supplierId]);
+  }, [isOpen, supplierId, loadSupplierData]);
 
-  const loadSupplierData = async () => {
+  const loadSupplierData = useCallback(async () => {
     try {
       setLoading(true);
       const supplier = await getSupplierById(supplierId);
@@ -43,7 +46,7 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supplierId, onClose]);
 
   // 🧩 Validate dữ liệu
   const validateForm = () => {
@@ -58,12 +61,16 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
     if (!formData.supplierName.trim()) {
       newErrors.supplierName = "Vui lòng nhập tên nhà cung cấp.";
     } else if (formData.supplierName.length > 100) {
-      newErrors.supplierName = "Tên nhà cung cấp không được vượt quá 100 ký tự.";
+      newErrors.supplierName =
+        "Tên nhà cung cấp không được vượt quá 100 ký tự.";
     }
 
     if (formData.email && formData.email.length > 100) {
       newErrors.email = "Email không được vượt quá 100 ký tự.";
-    } else if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    } else if (
+      formData.email &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+    ) {
       newErrors.email = "Email không đúng định dạng. Vui lòng kiểm tra lại.";
     }
 
@@ -97,8 +104,6 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
     }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
-
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -167,15 +172,15 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                 <input
                   type="text"
                   name="supplierCode"
-                  className={`form-control ${errors.supplierCode ? "is-invalid" : ""}`}
+                  className={`form-control ${
+                    errors.supplierCode ? "is-invalid" : ""
+                  }`}
                   value={formData.supplierCode}
                   onChange={handleInputChange}
                   disabled={loading}
                 />
                 {errors.supplierCode && (
-                  <div className="invalid-feedback">
-                    {errors.supplierCode}
-                  </div>
+                  <div className="invalid-feedback">{errors.supplierCode}</div>
                 )}
               </div>
             </div>
@@ -188,15 +193,15 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                 <input
                   type="text"
                   name="supplierName"
-                  className={`form-control ${errors.supplierName ? "is-invalid" : ""}`}
+                  className={`form-control ${
+                    errors.supplierName ? "is-invalid" : ""
+                  }`}
                   value={formData.supplierName}
                   onChange={handleInputChange}
                   disabled={loading}
                 />
                 {errors.supplierName && (
-                  <div className="invalid-feedback">
-                    {errors.supplierName}
-                  </div>
+                  <div className="invalid-feedback">{errors.supplierName}</div>
                 )}
               </div>
             </div>
@@ -215,9 +220,7 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                   disabled={loading}
                 />
                 {errors.email && (
-                  <div className="invalid-feedback">
-                    {errors.email}
-                  </div>
+                  <div className="invalid-feedback">{errors.email}</div>
                 )}
               </div>
             </div>
@@ -236,9 +239,7 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                   disabled={loading}
                 />
                 {errors.phone && (
-                  <div className="invalid-feedback">
-                    {errors.phone}
-                  </div>
+                  <div className="invalid-feedback">{errors.phone}</div>
                 )}
               </div>
             </div>
@@ -251,15 +252,15 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                 <input
                   type="text"
                   name="address"
-                  className={`form-control ${errors.address ? "is-invalid" : ""}`}
+                  className={`form-control ${
+                    errors.address ? "is-invalid" : ""
+                  }`}
                   value={formData.address}
                   onChange={handleInputChange}
                   disabled={loading}
                 />
                 {errors.address && (
-                  <div className="invalid-feedback">
-                    {errors.address}
-                  </div>
+                  <div className="invalid-feedback">{errors.address}</div>
                 )}
               </div>
             </div>
@@ -276,9 +277,7 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                   disabled={loading}
                 />
                 {errors.ward && (
-                  <div className="invalid-feedback">
-                    {errors.ward}
-                  </div>
+                  <div className="invalid-feedback">{errors.ward}</div>
                 )}
               </div>
             </div>
@@ -296,13 +295,10 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                   disabled={loading}
                 />
                 {errors.city && (
-                  <div className="invalid-feedback">
-                    {errors.city}
-                  </div>
+                  <div className="invalid-feedback">{errors.city}</div>
                 )}
               </div>
             </div>
-
           </div>
 
           <div className="modal-footer-btn mt-4 d-flex justify-content-end">

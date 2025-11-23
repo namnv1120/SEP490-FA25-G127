@@ -1,10 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Modal, message, Spin } from "antd";
 import { Dropdown } from "primereact/dropdown";
-import { getStaffAccountByIdForOwner, updateAccount } from "../../../services/AccountService";
+import {
+  getStaffAccountByIdForOwner,
+  updateAccount,
+} from "../../../services/AccountService";
 import { getAllRoles } from "../../../services/RoleService";
 
-const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose, allowedRoles, onUpdate, onUpdateRole }) => {
+const EditAccount = ({
+  isOpen,
+  accountId,
+  onSuccess,
+  onUpdated,
+  onClose,
+  allowedRoles,
+  onUpdate,
+  onUpdateRole,
+}) => {
   const [loading, setLoading] = useState(false);
   const [roles, setRoles] = useState([]);
   const [selectedRoleValue, setSelectedRoleValue] = useState(null);
@@ -27,26 +39,31 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose, allowed
     if (isOpen) {
       loadRoles();
     }
-  }, [isOpen]);
+  }, [isOpen, loadRoles]);
 
   // Load account data khi modal mở và roles đã sẵn sàng
   useEffect(() => {
     if (isOpen && accountId && roles.length > 0) {
       loadAccountData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, accountId, roles]);
+  }, [isOpen, accountId, roles, loadAccountData]);
 
   // Map selectedRole sau khi formData.roles đã được set
   useEffect(() => {
-    if (isOpen && formData.roles && formData.roles.length > 0 && roles.length > 0) {
+    if (
+      isOpen &&
+      formData.roles &&
+      formData.roles.length > 0 &&
+      roles.length > 0
+    ) {
       const roleName = formData.roles[0];
-      const foundRole = roles.find(r => r.value === roleName || r.label === roleName);
+      const foundRole = roles.find(
+        (r) => r.value === roleName || r.label === roleName
+      );
       if (foundRole) {
         // Chỉ set nếu chưa được set hoặc đang khác với role hiện tại
         if (!selectedRoleValue || selectedRoleValue !== roleName) {
           setSelectedRoleValue(roleName);
-          
         }
       } else {
         // Vẫn set value để hiển thị
@@ -55,8 +72,7 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose, allowed
         }
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, formData.roles, roles]);
+  }, [isOpen, formData.roles, roles, selectedRoleValue]);
 
   // Reset form khi modal đóng
   useEffect(() => {
@@ -76,12 +92,16 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose, allowed
     }
   }, [isOpen]);
 
-  const loadRoles = async () => {
+  const loadRoles = useCallback(async () => {
     try {
       const rolesData = await getAllRoles();
-      let filtered = rolesData.filter((role) => role.active === true || role.active === 1);
+      let filtered = rolesData.filter(
+        (role) => role.active === true || role.active === 1
+      );
       if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
-        filtered = filtered.filter((role) => allowedRoles.includes(role.roleName));
+        filtered = filtered.filter((role) =>
+          allowedRoles.includes(role.roleName)
+        );
       }
       const roleOptions = filtered.map((role) => ({
         value: role.roleName,
@@ -91,9 +111,9 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose, allowed
     } catch (error) {
       console.error("Lỗi khi tải danh sách vai trò:", error);
     }
-  };
+  }, [allowedRoles]);
 
-  const loadAccountData = async () => {
+  const loadAccountData = useCallback(async () => {
     try {
       setLoading(true);
       const account = await getStaffAccountByIdForOwner(accountId);
@@ -127,7 +147,7 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose, allowed
     } finally {
       setLoading(false);
     }
-  };
+  }, [accountId, roles, onClose]);
 
   // Hàm kiểm tra hợp lệ dữ liệu dựa trên backend validation
   const validateForm = () => {
@@ -179,7 +199,10 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose, allowed
   const handleRoleChange = (e) => {
     const selected = e.value;
     // selected có thể là object hoặc string
-    const roleName = typeof selected === 'string' ? selected : (selected?.value || selected?.label || selected);
+    const roleName =
+      typeof selected === "string"
+        ? selected
+        : selected?.value || selected?.label || selected;
     setSelectedRoleValue(roleName);
     setFormData((prev) => ({
       ...prev,
@@ -187,7 +210,6 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose, allowed
     }));
     setErrors((prev) => ({ ...prev, roles: "" }));
   };
-
 
   const handleSubmit = async () => {
     if (!validateForm()) {
@@ -232,7 +254,9 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose, allowed
       if (onClose) onClose();
     } catch (error) {
       const errorMessage =
-        error.response?.data?.message || error.message || "Không thể cập nhật tài khoản. Vui lòng thử lại.";
+        error.response?.data?.message ||
+        error.message ||
+        "Không thể cập nhật tài khoản. Vui lòng thử lại.";
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -260,7 +284,13 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose, allowed
           <Spin size="large" />
         </div>
       ) : (
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} noValidate>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+          noValidate
+        >
           {/* Họ và tên */}
           <div className="mb-3">
             <label className="form-label">Họ và tên</label>
@@ -336,19 +366,25 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose, allowed
 
           {/* Mật khẩu */}
           <div className="mb-3">
-            <label className="form-label">Mật khẩu mới (để trống nếu không đổi)</label>
+            <label className="form-label">
+              Mật khẩu mới (để trống nếu không đổi)
+            </label>
             <div className="pass-group position-relative">
               <input
                 type={showPassword ? "text" : "password"}
                 name="password"
-                className={`form-control ${errors.password ? "is-invalid" : ""}`}
+                className={`form-control ${
+                  errors.password ? "is-invalid" : ""
+                }`}
                 value={formData.password}
                 onChange={handleInputChange}
                 placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)"
                 disabled={loading}
               />
               <span
-                className={`ti toggle-password position-absolute end-0 top-50 translate-middle-y me-2 ${showPassword ? "ti-eye" : "ti-eye-off"}`}
+                className={`ti toggle-password position-absolute end-0 top-50 translate-middle-y me-2 ${
+                  showPassword ? "ti-eye" : "ti-eye-off"
+                }`}
                 onClick={() => setShowPassword(!showPassword)}
                 style={{ cursor: "pointer" }}
               />
@@ -366,14 +402,18 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose, allowed
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   name="confirmPassword"
-                  className={`form-control ${errors.confirmPassword ? "is-invalid" : ""}`}
+                  className={`form-control ${
+                    errors.confirmPassword ? "is-invalid" : ""
+                  }`}
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
                   placeholder="Nhập lại mật khẩu mới"
                   disabled={loading}
                 />
                 <span
-                  className={`ti toggle-password position-absolute end-0 top-50 translate-middle-y me-2 ${showConfirmPassword ? "ti-eye" : "ti-eye-off"}`}
+                  className={`ti toggle-password position-absolute end-0 top-50 translate-middle-y me-2 ${
+                    showConfirmPassword ? "ti-eye" : "ti-eye-off"
+                  }`}
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   style={{ cursor: "pointer" }}
                 />
@@ -394,11 +434,7 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose, allowed
             >
               Huỷ
             </button>
-            <button
-              type="submit"
-              className="btn btn-submit"
-              disabled={loading}
-            >
+            <button type="submit" className="btn btn-submit" disabled={loading}>
               {loading ? "Đang lưu..." : "Cập nhật"}
             </button>
           </div>

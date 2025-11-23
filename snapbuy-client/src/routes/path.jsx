@@ -1,8 +1,5 @@
 import { allRoutes } from "./AllRoutes";
 
-// Chỉ giữ cấu hình route, không import component để tránh cảnh báo Fast Refresh
-
-
 const routes = allRoutes;
 
 export const authRoutes = [
@@ -154,13 +151,6 @@ export const authRoutes = [
     componentKey: "EditPurchaseOrder",
     protected: true,
   },
-  // {
-  //   id: 20,
-  //   path: routes.possettings,
-  //   name: "possettings",
-  //   element: <PosSettings />,
-  //   route: Route,
-  // },
   {
     id: 20,
     path: routes.revenuereport,
@@ -187,6 +177,13 @@ export const authRoutes = [
     path: routes.supplierreport,
     name: "supplier-report",
     componentKey: "SupplierReport",
+    protected: true,
+  },
+  {
+    id: 24,
+    path: routes.promotions,
+    name: "promotions",
+    componentKey: "PromotionList",
     protected: true,
   },
   {
@@ -230,7 +227,7 @@ export const authRoutes = [
     name: "pos-shift",
     componentKey: "PosShift",
     protected: true,
-  }
+  },
 ];
 
 export const posPage = [

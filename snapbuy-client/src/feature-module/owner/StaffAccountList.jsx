@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Modal, message, Spin } from "antd";
 import PrimeDataTable from "../../components/data-table";
@@ -28,16 +28,21 @@ const StaffAccountList = () => {
   const [editing, setEditing] = useState(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  
 
-  const roleOptions = useMemo(() => allowedRoles.map((r) => ({ label: r, value: r })), []);
-  const StatusOptions = useMemo(() => ([
-    { value: null, label: "Tất cả" },
-    { value: true, label: "Hoạt động" },
-    { value: false, label: "Ngừng hoạt động" },
-  ]), []);
+  const roleOptions = useMemo(
+    () => allowedRoles.map((r) => ({ label: r, value: r })),
+    []
+  );
+  const StatusOptions = useMemo(
+    () => [
+      { value: null, label: "Tất cả" },
+      { value: true, label: "Hoạt động" },
+      { value: false, label: "Ngừng hoạt động" },
+    ],
+    []
+  );
 
-  const fetchStaff = async () => {
+  const fetchStaff = useCallback(async () => {
     setLoading(true);
     try {
       const backendPage = Math.max(0, (currentPage || 1) - 1);
@@ -47,8 +52,8 @@ const StaffAccountList = () => {
         role: roleFilter,
         page: backendPage,
         size: rows,
-        sortBy: 'fullName',
-        sortDir: 'ASC',
+        sortBy: "fullName",
+        sortDir: "ASC",
       });
       const rawList = result?.content || [];
       const mapped = rawList.map((acc) => ({
@@ -64,11 +69,11 @@ const StaffAccountList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, rows, searchQuery, statusFilter, roleFilter]);
 
   useEffect(() => {
     fetchStaff();
-  }, [searchQuery, statusFilter, roleFilter, currentPage, rows]);
+  }, [fetchStaff]);
 
   const openAddModal = () => {
     setAdding(true);
@@ -84,12 +89,16 @@ const StaffAccountList = () => {
     setIsEditOpen(false);
   };
 
-  
-
   const toggleActive = async (acc) => {
     const id = acc.id || acc.accountId;
     try {
-      await updateStaffByOwner(id, { active: !(acc.active === true || acc.active === 1 || acc.active === "1") });
+      await updateStaffByOwner(id, {
+        active: !(
+          acc.active === true ||
+          acc.active === 1 ||
+          acc.active === "1"
+        ),
+      });
       fetchStaff();
     } catch (e) {
       message.error(e.message || "Không thể đổi trạng thái");
@@ -154,10 +163,15 @@ const StaffAccountList = () => {
       key: "active",
       sortable: true,
       body: (row) => {
-        const active = row.active === true || row.active === 1 || row.active === "1";
+        const active =
+          row.active === true || row.active === 1 || row.active === "1";
         return (
           <div className="d-flex align-items-center gap-2">
-            <span className={`badge fw-medium fs-10 ${active ? "bg-success" : "bg-danger"}`}>
+            <span
+              className={`badge fw-medium fs-10 ${
+                active ? "bg-success" : "bg-danger"
+              }`}
+            >
               {active ? "Hoạt động" : "Không hoạt động"}
             </span>
             <div className="form-check form-switch">
@@ -211,7 +225,11 @@ const StaffAccountList = () => {
             </div>
             <TableTopHead />
             <div className="page-btn">
-              <button type="button" className="btn btn-primary" onClick={openAddModal}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={openAddModal}
+              >
                 <i className="ti ti-circle-plus me-1" />
                 Thêm nhân viên
               </button>
@@ -221,13 +239,16 @@ const StaffAccountList = () => {
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
               <div className="search-set">
-                <SearchFromApi callback={(v) => setSearchQuery(v || "") } />
+                <SearchFromApi callback={(v) => setSearchQuery(v || "")} />
               </div>
               <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
                 <div className="me-2">
                   <CommonSelect
                     options={StatusOptions}
-                    value={StatusOptions.find(o => o.value === statusFilter) || StatusOptions[0]}
+                    value={
+                      StatusOptions.find((o) => o.value === statusFilter) ||
+                      StatusOptions[0]
+                    }
                     onChange={(s) => {
                       const v = s?.value;
                       setStatusFilter(v === true || v === false ? v : null);
@@ -240,7 +261,11 @@ const StaffAccountList = () => {
                 <div>
                   <CommonSelect
                     options={[{ value: "", label: "Tất cả" }, ...roleOptions]}
-                    value={[{ value: "", label: "Tất cả" }, ...roleOptions].find(o => o.value === (roleFilter || "")) || { value: "", label: "Tất cả" }}
+                    value={
+                      [{ value: "", label: "Tất cả" }, ...roleOptions].find(
+                        (o) => o.value === (roleFilter || "")
+                      ) || { value: "", label: "Tất cả" }
+                    }
                     onChange={(s) => {
                       setRoleFilter(s?.value || "");
                       setCurrentPage(1);
@@ -253,7 +278,9 @@ const StaffAccountList = () => {
             </div>
             <div className="card-body">
               {loading ? (
-                <div className="d-flex justify-content-center p-4"><Spin size="large" /></div>
+                <div className="d-flex justify-content-center p-4">
+                  <Spin size="large" />
+                </div>
               ) : (
                 <div className="table-responsive">
                   <PrimeDataTable
@@ -278,7 +305,9 @@ const StaffAccountList = () => {
       <AddAccountModal
         isOpen={adding}
         onClose={closeAddModal}
-        onSuccess={() => { fetchStaff(); }}
+        onSuccess={() => {
+          fetchStaff();
+        }}
         allowedRoles={allowedRoles}
         onCreate={(newAccount) => createStaff(newAccount)}
       />
@@ -287,8 +316,12 @@ const StaffAccountList = () => {
         isOpen={isEditOpen}
         accountId={editing?.id || editing?.accountId}
         onClose={closeEditModal}
-        onSuccess={() => { fetchStaff(); }}
-        onUpdated={() => { fetchStaff(); }}
+        onSuccess={() => {
+          fetchStaff();
+        }}
+        onUpdated={() => {
+          fetchStaff();
+        }}
         allowedRoles={allowedRoles}
         onUpdate={(id, general) => updateStaffByOwner(id, general)}
         onUpdateRole={(id, roles) => updateStaffRolesByOwner(id, roles)}
