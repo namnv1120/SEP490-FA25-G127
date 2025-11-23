@@ -4,8 +4,8 @@ import CollapesIcon from "../../components/tooltip-content/collapes";
 import CommonFooter from "../../components/footer/CommonFooter";
 import SettingsSideBar from "../../feature-module/settings/SettingsSideBar";
 import { message } from "antd";
-import { getMyInfo } from "../../services/AccountService";
 import axios from "axios";
+import PageLoader from "../../components/loading/PageLoader.jsx";
 
 const REST_API_BASE_URL = 'http://localhost:8080/api/accounts';
 
@@ -91,7 +91,7 @@ const PasswordSettings = () => {
         confirmNewPassword: formData.confirmPassword,
       };
 
-      const response = await axios.put(
+      await axios.put(
         `${REST_API_BASE_URL}/me/change-password`,
         passwordData,
         { headers: getAuthHeader() }
@@ -116,9 +116,12 @@ const PasswordSettings = () => {
   };
 
   return (
-    <>
-      <div className="page-wrapper">
-        <div className="content settings-content">
+    isLoading ? (
+      <PageLoader />
+    ) : (
+      <>
+        <div className="page-wrapper">
+          <div className="content settings-content">
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
@@ -131,7 +134,7 @@ const PasswordSettings = () => {
               <CollapesIcon />
             </ul>
           </div>
-          <div className="row">
+            <div className="row">
             <div className="col-xl-12">
               <div className="settings-wrapper d-flex">
                 <SettingsSideBar />
@@ -140,14 +143,7 @@ const PasswordSettings = () => {
                     <h4 className="fs-18 fw-bold">Mật khẩu</h4>
                   </div>
                   <div className="card-body">
-                    {isLoading ? (
-                      <div className="text-center py-5">
-                        <div className="spinner-border text-primary" role="status">
-                          <span className="visually-hidden">Loading...</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <form onSubmit={handleChangePassword} noValidate>
+                    <form onSubmit={handleChangePassword} noValidate>
                         <div className="card-title-head mb-3">
                           <h6 className="fs-16 fw-bold mb-1">
                             <span className="fs-16 me-2">
@@ -251,19 +247,18 @@ const PasswordSettings = () => {
                             {savingPassword ? "Đang lưu..." : "Đổi Mật khẩu"}
                           </button>
                         </div>
-                      </form>
-                    )}
+                    </form>
                   </div>
                 </div>
               </div>
             </div>
+            </div>
           </div>
+          <CommonFooter />
         </div>
-        <CommonFooter />
-      </div>
-    </>
+      </>
+    )
   );
 };
 
 export default PasswordSettings;
-

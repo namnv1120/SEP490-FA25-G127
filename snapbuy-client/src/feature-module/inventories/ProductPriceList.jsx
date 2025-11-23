@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import ProductDetailModal from "../../core/modals/inventories/ProductDetailModal";
 import { allRoutes } from "../../routes/AllRoutes";
@@ -15,9 +15,7 @@ const ProductPriceList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
-  const [searchQuery, setSearchQuery] = useState(undefined);
   const [productPrices, setProductPrices] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
@@ -27,11 +25,10 @@ const ProductPriceList = () => {
 
   useEffect(() => {
     fetchProductPrices();
-  }, []);
+  }, [fetchProductPrices]);
 
-  const fetchProductPrices = async () => {
+  const fetchProductPrices = useCallback(async () => {
     try {
-      setLoading(true);
       setError(null);
       const data = await getAllProductPrices();
 
@@ -65,9 +62,9 @@ const ProductPriceList = () => {
       console.error("❌ Lỗi khi tải danh sách giá sản phẩm:", err);
       setError("Không thể tải danh sách giá sản phẩm. Vui lòng thử lại sau.");
     } finally {
-      setLoading(false);
+      void 0;
     }
-  };
+  }, []);
 
   const getStatus = (validFrom, validTo) => {
     const now = new Date();
@@ -81,18 +78,6 @@ const ProductPriceList = () => {
       return "Hoạt động";
     }
     return "Không hoạt động";
-  };
-
-
-  const getStatusBadge = (status) => {
-    return (
-      <span
-        className={`badge fw-medium fs-10 ${status === "Hoạt động" ? "bg-success" : "bg-danger"
-          }`}
-      >
-        {status}
-      </span>
-    );
   };
 
   const handleExportExcel = async () => {
@@ -113,7 +98,7 @@ const ProductPriceList = () => {
 
     try {
       await exportToExcel(exportData, "Danh_sach_gia_san_pham");
-    } catch (error) {
+    } catch {
       message.error("Lỗi khi xuất file Excel!");
     }
   };
@@ -128,9 +113,7 @@ const ProductPriceList = () => {
     setShowImportModal(false);
   };
 
-  const handleSearch = (value) => {
-    setSearchQuery(value);
-  };
+  const handleSearch = () => {};
 
   const columns = [
     {
@@ -173,12 +156,14 @@ const ProductPriceList = () => {
       field: "unitPrice",
       key: "unitPrice",
       sortable: true,
+      sortField: "rawUnitPrice",
     },
     {
       header: "Giá nhập",
       field: "costPrice",
       key: "costPrice",
       sortable: true,
+      sortField: "rawCostPrice",
     },
     // {
     //   header: "Valid From",

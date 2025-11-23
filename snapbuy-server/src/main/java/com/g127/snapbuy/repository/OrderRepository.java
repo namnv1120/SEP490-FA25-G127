@@ -33,6 +33,26 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
             @Param("endDate") LocalDateTime endDate,
             @Param("paymentStatus") String paymentStatus);
 
+    @Query("SELECT COUNT(o) FROM Order o " +
+            "WHERE o.account.accountId = :accountId " +
+            "AND o.createdDate BETWEEN :startDate AND :endDate " +
+            "AND (:paymentStatus IS NULL OR o.paymentStatus = :paymentStatus)")
+    Long countOrdersByAccountAndDateRange(
+            @Param("accountId") UUID accountId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("paymentStatus") String paymentStatus);
+
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o " +
+            "WHERE o.account.accountId = :accountId " +
+            "AND o.createdDate BETWEEN :startDate AND :endDate " +
+            "AND (:paymentStatus IS NULL OR o.paymentStatus = :paymentStatus)")
+    BigDecimal sumRevenueByAccountAndDateRange(
+            @Param("accountId") UUID accountId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("paymentStatus") String paymentStatus);
+
     @Query("""
         SELECT DISTINCT o FROM Order o
         LEFT JOIN o.customer c
@@ -52,4 +72,14 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
             @Param("orderStatus") String orderStatus,
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate);
+
+    @Query("SELECT o FROM Order o WHERE o.account.accountId = :accountId AND o.createdDate BETWEEN :start AND :end ORDER BY o.createdDate DESC")
+    List<Order> findByAccountAndCreatedDateBetween(@Param("accountId") UUID accountId,
+                                                   @Param("start") LocalDateTime start,
+                                                   @Param("end") LocalDateTime end);
+
+    @Query("SELECT o FROM Order o WHERE o.account.accountId = :accountId AND o.orderDate BETWEEN :start AND :end ORDER BY o.orderDate DESC")
+    List<Order> findByAccountAndOrderDateBetween(@Param("accountId") UUID accountId,
+                                                 @Param("start") LocalDateTime start,
+                                                 @Param("end") LocalDateTime end);
 }

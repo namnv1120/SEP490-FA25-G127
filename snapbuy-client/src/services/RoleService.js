@@ -9,9 +9,8 @@ const getAuthHeader = () => {
   return { Authorization: `${tokenType} ${token}` };
 };
 
-export const getAllRoles = async (active) => {
+export const getAllRoles = async () => {
   try {
-    // Giống như getAllAccounts, không cần tham số active, trả về tất cả roles
     const response = await axios.get(REST_API_BASE_URL, {
       headers: getAuthHeader(),
     });

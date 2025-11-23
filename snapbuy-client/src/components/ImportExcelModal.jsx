@@ -8,7 +8,7 @@ const normalizeBarcode = (input) => {
   if (input == null) return "";
   let raw = String(input).trim();
   if (raw === "") return "";
-  const sci = /^\s*([+-])?(\d+)(?:[\.,](\d+))?e([+-]?\d+)\s*$/i;
+  const sci = /^\s*([+-])?(\d+)(?:[.,](\d+))?e([+-]?\d+)\s*$/i;
   const m = raw.match(sci);
   if (m) {
     const sign = m[1] || "";
@@ -80,7 +80,7 @@ const ImportExcelModal = ({
 
       // Đọc dữ liệu từ row 2 trở đi, bỏ qua header row
       const jsonData = [];
-      worksheet.eachRow({ includeEmpty: false, firstRow: 2 }, (row, rowNumber) => {
+      worksheet.eachRow({ includeEmpty: false, firstRow: 2 }, (row) => {
         // Kiểm tra xem row này có phải là header row không (so sánh với headers)
         const rowValues = [];
         row.eachCell({ includeEmpty: true }, (cell) => {
@@ -167,7 +167,7 @@ const ImportExcelModal = ({
       }
 
       setFileData(mapped);
-    } catch (err) {
+    } catch {
       message.error("Lỗi khi đọc dữ liệu Excel. Vui lòng kiểm tra file!");
       setFileData([]);
       setFileList([]);

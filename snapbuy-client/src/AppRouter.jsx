@@ -8,39 +8,104 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 // Khai báo component ở đây để path.jsx chỉ là cấu hình dữ liệu
 const Pos = lazy(() => import("./feature-module/pos/Pos"));
 const Login = lazy(() => import("./feature-module/pages/authentication/Login"));
-const ForgotPassword = lazy(() => import("./feature-module/pages/authentication/ForgotPassword"));
-const VerifyOtp = lazy(() => import("./feature-module/pages/authentication/VerifyOtp"));
-const ResetPassword = lazy(() => import("./feature-module/pages/authentication/ResetPassword"));
+const ForgotPassword = lazy(() =>
+  import("./feature-module/pages/authentication/ForgotPassword")
+);
+const VerifyOtp = lazy(() =>
+  import("./feature-module/pages/authentication/VerifyOtp")
+);
+const ResetPassword = lazy(() =>
+  import("./feature-module/pages/authentication/ResetPassword")
+);
 const Suppliers = lazy(() => import("./feature-module/people/SupplierList"));
 const Dashboard = lazy(() => import("./feature-module/dashboard/Dashboard"));
-const ProductList = lazy(() => import("./feature-module/inventories/ProductList"));
-const AddProduct = lazy(() => import("./feature-module/inventories/AddProduct"));
-const EditProduct = lazy(() => import("./feature-module/inventories/EditProduct"));
-const ProductPriceList = lazy(() => import("./feature-module/inventories/ProductPriceList"));
-const EditProductPrice = lazy(() => import("./feature-module/inventories/EditProductPrice"));
-const InventoryList = lazy(() => import("./feature-module/inventories/InventoryList"));
-const CategoryList = lazy(() => import("./feature-module/inventories/CategoryList"));
-const SubCategoryList = lazy(() => import("./feature-module/inventories/SubCategoryList"));
+const ProductList = lazy(() =>
+  import("./feature-module/inventories/ProductList")
+);
+const AddProduct = lazy(() =>
+  import("./feature-module/inventories/AddProduct")
+);
+const EditProduct = lazy(() =>
+  import("./feature-module/inventories/EditProduct")
+);
+const ProductPriceList = lazy(() =>
+  import("./feature-module/inventories/ProductPriceList")
+);
+const EditProductPrice = lazy(() =>
+  import("./feature-module/inventories/EditProductPrice")
+);
+const PosShift = lazy(() => import("./feature-module/pos/PosShift"));
+const SalesDashboard = lazy(() =>
+  import("./feature-module/dashboard/SalesDashboard")
+);
+const InventoryList = lazy(() =>
+  import("./feature-module/inventories/InventoryList")
+);
+const CategoryList = lazy(() =>
+  import("./feature-module/inventories/CategoryList")
+);
+const SubCategoryList = lazy(() =>
+  import("./feature-module/inventories/SubCategoryList")
+);
 const AccountList = lazy(() => import("./feature-module/accounts/AccountList"));
 const RoleList = lazy(() => import("./feature-module/accounts/RoleList"));
 const Profile = lazy(() => import("./feature-module/settings/Profile"));
-const EmailSettings = lazy(() => import("./feature-module/settings/EmailSettings"));
-const PasswordSettings = lazy(() => import("./feature-module/settings/PasswordSettings"));
+const EmailSettings = lazy(() =>
+  import("./feature-module/settings/EmailSettings")
+);
+const PasswordSettings = lazy(() =>
+  import("./feature-module/settings/PasswordSettings")
+);
 const Customers = lazy(() => import("./feature-module/people/CustomerList"));
-const PurchaseOrder = lazy(() => import("./feature-module/sales/PurchaseOrder"));
-const AddPurchaseOrder = lazy(() => import("./feature-module/sales/AddPurchaseOrder"));
-const EditPurchaseOrder = lazy(() => import("./feature-module/sales/EditPurchaseOrder"));
-const RevenueReport = lazy(() => import("./feature-module/reports/RevenueReport"));
-const ProductReport = lazy(() => import("./feature-module/reports/ProductReport"));
-const CustomerReport = lazy(() => import("./feature-module/reports/CustomerReport"));
-const SupplierReport = lazy(() => import("./feature-module/reports/SupplierReport"));
-const TransactionHistory = lazy(() => import("./feature-module/sales/TransactionHistory"));
+const PurchaseOrder = lazy(() =>
+  import("./feature-module/sales/PurchaseOrder")
+);
+const AddPurchaseOrder = lazy(() =>
+  import("./feature-module/sales/AddPurchaseOrder")
+);
+const EditPurchaseOrder = lazy(() =>
+  import("./feature-module/sales/EditPurchaseOrder")
+);
+const RevenueReport = lazy(() =>
+  import("./feature-module/reports/RevenueReport")
+);
+const ProductReport = lazy(() =>
+  import("./feature-module/reports/ProductReport")
+);
+const CustomerReport = lazy(() =>
+  import("./feature-module/reports/CustomerReport")
+);
+const SupplierReport = lazy(() =>
+  import("./feature-module/reports/SupplierReport")
+);
+const TransactionHistory = lazy(() =>
+  import("./feature-module/sales/TransactionHistory")
+);
 const OrderHistory = lazy(() => import("./feature-module/sales/OrderHistory"));
-const PosSystemSettings = lazy(() => import("./feature-module/pos/PosSystemSettings"));
-const FormHorizontal = lazy(() => import("./feature-module/uiinterface/forms/formelements/layouts/form-horizontal"));
+const PosSystemSettings = lazy(() =>
+  import("./feature-module/pos/PosSystemSettings")
+);
+const FormHorizontal = lazy(() =>
+  import(
+    "./feature-module/uiinterface/forms/formelements/layouts/form-horizontal"
+  )
+);
+const OwnerStaffAccountList = lazy(() =>
+  import("./feature-module/owner/StaffAccountList")
+);
+const StaffShiftManagement = lazy(() =>
+  import("./feature-module/owner/StaffShiftManagement")
+);
+const StaffShiftReport = lazy(() =>
+  import("./feature-module/owner/StaffShiftReport")
+);
+const PromotionList = lazy(() =>
+  import("./feature-module/promotions/PromotionList.jsx")
+);
 
 const componentsMap = {
   Pos,
+  PosShift,
   Login,
   ForgotPassword,
   VerifyOtp,
@@ -72,6 +137,11 @@ const componentsMap = {
   OrderHistory,
   PosSystemSettings,
   FormHorizontal,
+  SalesDashboard,
+  OwnerStaffAccountList,
+  StaffShiftManagement,
+  StaffShiftReport,
+  PromotionList,
 };
 
 const AppRouter = () => {
@@ -87,11 +157,7 @@ const AppRouter = () => {
           <Comp />
         );
         return (
-          <Route
-            key={`route-${item?.id}`}
-            path={item?.path}
-            element={el}
-          />
+          <Route key={`route-${item?.id}`} path={item?.path} element={el} />
         );
       });
 

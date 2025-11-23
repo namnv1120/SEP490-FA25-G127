@@ -16,20 +16,11 @@ const getAuthHeaders = () => {
 };
 
 export const getPosSettings = async () => {
-  try {
-    const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
-    return response.data?.result || response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
+  return response.data?.result || response.data;
 };
 
 export const updatePosSettings = async (settings) => {
-  try {
-    const response = await axios.put(REST_API_BASE_URL, settings, getAuthHeaders());
-    return response.data?.result || response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axios.put(REST_API_BASE_URL, settings, getAuthHeaders());
+  return response.data?.result || response.data;
 };
-

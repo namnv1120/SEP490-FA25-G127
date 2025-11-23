@@ -7,6 +7,7 @@ import SettingsSideBar from "../../feature-module/settings/SettingsSideBar";
 import { message } from "antd";
 import { getMyInfo } from "../../services/AccountService";
 import { getImageUrl } from "../../utils/imageUtils";
+import PageLoader from "../../components/loading/PageLoader.jsx";
 
 const pickFirstDefined = (...values) =>
   values.find((value) => value !== undefined && value !== null && value !== "") ?? "";
@@ -187,6 +188,9 @@ const Profile = () => {
     fetchProfile();
   }, []);
 
+  if (isLoading) {
+    return <PageLoader />;
+  }
   return (
     <>
       <div className="page-wrapper">
@@ -212,13 +216,6 @@ const Profile = () => {
                     <h4 className="fs-18 fw-bold">Trang cá nhân</h4>
                   </div>
                   <div className="card-body">
-                    {isLoading ? (
-                      <div className="text-center py-5">
-                        <div className="spinner-border text-primary" role="status">
-                          <span className="visually-hidden">Đang tải...</span>
-                        </div>
-                      </div>
-                    ) : (
                       <form onSubmit={handleSubmit}>
                         <div className="card-title-head">
                           <h6 className="fs-16 fw-bold mb-1">
@@ -334,7 +331,6 @@ const Profile = () => {
                           </button>
                         </div>
                       </form>
-                    )}
                   </div>
                 </div>
               </div>

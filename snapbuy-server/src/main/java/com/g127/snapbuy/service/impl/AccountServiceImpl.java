@@ -2,8 +2,11 @@ package com.g127.snapbuy.service.impl;
 
 import com.g127.snapbuy.dto.request.*;
 import com.g127.snapbuy.dto.response.AccountResponse;
+import com.g127.snapbuy.dto.response.PageResponse;
 import com.g127.snapbuy.entity.Account;
 import com.g127.snapbuy.entity.Role;
+import com.g127.snapbuy.exception.AppException;
+import com.g127.snapbuy.exception.ErrorCode;
 import com.g127.snapbuy.mapper.AccountMapper;
 import com.g127.snapbuy.repository.AccountRepository;
 import com.g127.snapbuy.repository.RoleRepository;
@@ -11,6 +14,7 @@ import com.g127.snapbuy.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -135,7 +139,8 @@ public class AccountServiceImpl implements AccountService {
         }
         String username = req.getUsername().toLowerCase();
         if (username.contains(" ")) throw new IllegalArgumentException("Tên đăng nhập không được chứa khoảng trắng");
-        if (accountRepository.existsByUsernameIgnoreCase(username)) throw new IllegalArgumentException("Tên đăng nhập đã tồn tại");
+        if (accountRepository.existsByUsernameIgnoreCase(username))
+            throw new IllegalArgumentException("Tên đăng nhập đã tồn tại");
     }
 
     @Override
@@ -171,6 +176,7 @@ public class AccountServiceImpl implements AccountService {
             throw new IllegalArgumentException("Mật khẩu cũ không đúng");
 
         acc.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
+        acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         return accountMapper.toResponse(accountRepository.save(acc));
     }
 
@@ -187,6 +193,7 @@ public class AccountServiceImpl implements AccountService {
             throw new IllegalArgumentException("Mật khẩu cũ không đúng");
 
         acc.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
+        acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         accountRepository.save(acc);
     }
 
@@ -199,6 +206,7 @@ public class AccountServiceImpl implements AccountService {
         ensureActive(role);
 
         acc.getRoles().add(role);
+        acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         accountRepository.save(acc);
         return accountMapper.toResponse(acc);
     }
@@ -220,6 +228,7 @@ public class AccountServiceImpl implements AccountService {
             throw new IllegalStateException("Bạn không thể tự gỡ vai trò của chính mình");
 
         acc.getRoles().remove(role);
+        acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         accountRepository.save(acc);
     }
 
@@ -240,8 +249,8 @@ public class AccountServiceImpl implements AccountService {
         if (req.getActive() != null) {
             if (staff.getUsername().equalsIgnoreCase(getCurrentUsername()))
                 throw new IllegalStateException("Bạn không thể tự vô hiệu hóa chính mình");
-            }
             staff.setActive(req.getActive());
+        }
 
         return accountMapper.toResponse(accountRepository.save(staff));
     }
@@ -269,6 +278,24 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
+    public AccountResponse getStaffByIdForOwner(UUID staffId) {
+        Account staff = accountRepository.findById(staffId)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
+
+        // Prevent accessing admin or owner accounts
+        boolean forbidden = staff.getRoles().stream()
+                .anyMatch(r -> FORBIDDEN_STAFF_ROLES.stream()
+                        .anyMatch(f -> f.equalsIgnoreCase(r.getRoleName())));
+        if (forbidden) {
+            throw new IllegalArgumentException("Không thể truy cập tài khoản Quản trị viên hoặc Chủ cửa hàng");
+        }
+
+        return accountMapper.toResponse(staff);
+    }
+
+
+    @Override
     @PreAuthorize("hasRole('Quản trị viên')")
     public AccountResponse adminUpdateAccount(UUID accountId, AccountUpdateRequest req) {
         Account acc = accountRepository.findById(accountId)
@@ -283,7 +310,7 @@ public class AccountServiceImpl implements AccountService {
         if (req.getEmail() != null) {
             String newEmail = req.getEmail().trim();
             String currentEmail = acc.getEmail() != null ? acc.getEmail().trim() : "";
-            
+
             // Chỉ cập nhật nếu email mới khác email hiện tại
             if (!newEmail.equalsIgnoreCase(currentEmail)) {
                 // Kiểm tra email đã được sử dụng bởi tài khoản khác chưa
@@ -298,13 +325,14 @@ public class AccountServiceImpl implements AccountService {
         if (req.getActive() != null) acc.setActive(req.getActive());
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
             acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+            acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         }
 
         if (req.getRoles() != null && !req.getRoles().isEmpty()) {
             if (req.getRoles().size() > 1) {
                 throw new IllegalArgumentException("Chỉ được chọn 1 vai trò cho tài khoản");
             }
-            
+
             String roleName = req.getRoles().get(0);
             Role role = roleRepository.findByRoleNameIgnoreCase(roleName)
                     .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò: " + roleName));
@@ -312,6 +340,7 @@ public class AccountServiceImpl implements AccountService {
 
             acc.getRoles().clear();
             acc.getRoles().add(role);
+            acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         }
         return accountMapper.toResponse(accountRepository.save(acc));
     }
@@ -333,7 +362,7 @@ public class AccountServiceImpl implements AccountService {
         if (req.getEmail() != null) {
             String newEmail = req.getEmail().trim();
             String currentEmail = acc.getEmail() != null ? acc.getEmail().trim() : "";
-            
+
             // Chỉ cập nhật nếu email mới khác email hiện tại
             if (!newEmail.equalsIgnoreCase(currentEmail)) {
                 // Kiểm tra email đã được sử dụng bởi tài khoản khác chưa
@@ -344,44 +373,46 @@ public class AccountServiceImpl implements AccountService {
             }
         }
         if (req.getPhone() != null) acc.setPhone(req.getPhone());
-        
+
         if (req.getRemoveAvatar() != null && req.getRemoveAvatar()) {
             acc.setAvatarUrl(null);
         } else if (req.getAvatar() != null && !req.getAvatar().isEmpty()) {
             try {
                 String fileName = System.currentTimeMillis() + "_" + req.getAvatar().getOriginalFilename();
                 Path uploadPath = Paths.get(uploadDir, "avatars").toAbsolutePath();
-                
+
                 if (!Files.exists(uploadPath)) {
                     Files.createDirectories(uploadPath);
                 }
-                
+
                 Path filePath = uploadPath.resolve(fileName);
                 req.getAvatar().transferTo(filePath.toFile());
-                
+
                 acc.setAvatarUrl("/uploads/avatars/" + fileName);
             } catch (Exception e) {
-                throw new com.g127.snapbuy.exception.AppException(com.g127.snapbuy.exception.ErrorCode.FILE_UPLOAD_FAILED);
+                throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
             }
         } else if (req.getAvatarUrl() != null) {
             acc.setAvatarUrl(req.getAvatarUrl());
         }
-        
+
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
             acc.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+            acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         }
 
         if (req.getRoles() != null && !req.getRoles().isEmpty() && isAdmin()) {
             if (req.getRoles().size() > 1) {
                 throw new IllegalArgumentException("Chỉ được chọn 1 vai trò cho tài khoản");
             }
-            
+
             String roleName = req.getRoles().get(0);
             Role role = roleRepository.findByRoleNameIgnoreCase(roleName)
                     .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò: " + roleName));
             ensureActive(role);
             acc.getRoles().clear();
             acc.getRoles().add(role);
+            acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         }
 
         return accountMapper.toResponse(accountRepository.save(acc));
@@ -408,15 +439,16 @@ public class AccountServiceImpl implements AccountService {
     public AccountResponse toggleAccountStatus(UUID accountId) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
-        
+
         String currentUser = getCurrentUsername();
         if (account.getUsername().equalsIgnoreCase(currentUser)) {
             throw new IllegalStateException("Bạn không thể tự vô hiệu hóa tài khoản của chính mình");
         }
-        
+
         Boolean currentActive = account.getActive();
         account.setActive(currentActive == null || !currentActive);
         account.setUpdatedDate(LocalDateTime.now());
+        account.setTokenVersion((account.getTokenVersion() == null ? 0 : account.getTokenVersion()) + 1);
         Account savedAccount = accountRepository.save(account);
         return accountMapper.toResponse(savedAccount);
     }
@@ -427,5 +459,68 @@ public class AccountServiceImpl implements AccountService {
         return accounts.stream()
                 .map(accountMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @PreAuthorize("hasRole('Quản trị viên')")
+    public List<AccountResponse> searchAccounts(String keyword, Boolean active, String roleName) {
+        List<Account> accounts = accountRepository.searchAccounts(
+                keyword == null || keyword.isBlank() ? null : keyword.trim(),
+                active,
+                roleName == null || roleName.isBlank() ? null : roleName.trim()
+        );
+        return accounts.stream().map(accountMapper::toResponse).toList();
+    }
+
+    @Override
+    @PreAuthorize("hasRole('Quản trị viên')")
+    public PageResponse<AccountResponse> searchAccountsPaged(String keyword, Boolean active, String roleName, Pageable pageable) {
+        var page = accountRepository.searchAccountsPage(
+                keyword == null || keyword.isBlank() ? null : keyword.trim(),
+                active,
+                roleName == null || roleName.isBlank() ? null : roleName.trim(),
+                pageable
+        );
+        var content = page.getContent().stream().map(accountMapper::toResponse).toList();
+        return PageResponse.<AccountResponse>builder()
+                .content(content)
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .size(page.getSize())
+                .number(page.getNumber())
+                .first(page.isFirst())
+                .last(page.isLast())
+                .empty(page.isEmpty())
+                .build();
+    }
+
+    @Override
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    public PageResponse<AccountResponse> searchStaffAccountsPaged(String keyword, Boolean active, String roleName,
+                                                                  Pageable pageable) {
+        List<String> allowedRoles = List.of("Nhân viên bán hàng", "Nhân viên kho");
+        List<String> roleFilterList;
+        if (roleName != null && !roleName.isBlank() && allowedRoles.contains(roleName.trim())) {
+            roleFilterList = List.of(roleName.trim());
+        } else {
+            roleFilterList = allowedRoles;
+        }
+        var page = accountRepository.searchStaffAccountsPage(
+                keyword == null || keyword.isBlank() ? null : keyword.trim(),
+                active,
+                roleFilterList,
+                pageable
+        );
+        var content = page.getContent().stream().map(accountMapper::toResponse).toList();
+        return PageResponse.<AccountResponse>builder()
+                .content(content)
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .size(page.getSize())
+                .number(page.getNumber())
+                .first(page.isFirst())
+                .last(page.isLast())
+                .empty(page.isEmpty())
+                .build();
     }
 }

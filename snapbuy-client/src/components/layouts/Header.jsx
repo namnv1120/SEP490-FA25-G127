@@ -1,17 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import {
-  Nav,
-  NavDropdown,
-  Dropdown,
-  Button,
-  Form
-} from "react-bootstrap";
+import { Nav, NavDropdown, Dropdown, Button, Form } from "react-bootstrap";
 import { allRoutes } from "../../routes/AllRoutes";
 import { getMyInfo } from "../../services/AccountService";
 import { getImageUrl } from "../../utils/imageUtils";
-import { SidebarData1 } from "../../core/json/sidebarDataOne";
+import usePermission from "../../hooks/usePermission";
+import { SidebarDataAdmin } from "../../core/json/sidebarDataAdmin";
+import { SidebarDataOwner } from "../../core/json/sidebarDataOwner";
+import { SidebarDataWarehouse } from "../../core/json/sidebarDataWarehouse";
+import { SidebarDataSales } from "../../core/json/sidebarDataSales";
 import {
   avatar_02,
   avatar_03,
@@ -33,14 +31,12 @@ const Header = () => {
   const [searchResults, setSearchResults] = useState([]);
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState({
-    fullName: 'John Smilga',
-    role: 'Admin',
-    avatarUrl: null
+    fullName: "John Smilga",
+    role: "Admin",
+    avatarUrl: null,
   });
 
-  const { expandMenus } = useSelector(
-    (state) => state.themeSetting.expandMenus
-  );
+  const expandMenus = useSelector((state) => state.themeSetting.expandMenus);
   const dataLayout = useSelector((state) => state.themeSetting.dataLayout);
 
   const isElementVisible = (element) => {
@@ -77,9 +73,9 @@ const Header = () => {
     const handleFullscreenChange = () => {
       setIsFullscreen(
         document.fullscreenElement ||
-        document.mozFullScreenElement ||
-        document.webkitFullscreenElement ||
-        document.msFullscreenElement
+          document.mozFullScreenElement ||
+          document.webkitFullscreenElement ||
+          document.msFullscreenElement
       );
     };
 
@@ -90,9 +86,18 @@ const Header = () => {
 
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
-      document.removeEventListener("mozfullscreenchange", handleFullscreenChange);
-      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
-      document.removeEventListener("msfullscreenchange", handleFullscreenChange);
+      document.removeEventListener(
+        "mozfullscreenchange",
+        handleFullscreenChange
+      );
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        handleFullscreenChange
+      );
+      document.removeEventListener(
+        "msfullscreenchange",
+        handleFullscreenChange
+      );
     };
   }, []);
 
@@ -102,6 +107,24 @@ const Header = () => {
   };
 
   const location = useLocation();
+  const { userRole } = usePermission();
+  let sidebarData;
+  switch (userRole) {
+    case "Quản trị viên":
+      sidebarData = SidebarDataAdmin;
+      break;
+    case "Chủ cửa hàng":
+      sidebarData = SidebarDataOwner;
+      break;
+    case "Nhân viên kho":
+      sidebarData = SidebarDataWarehouse;
+      break;
+    case "Nhân viên bán hàng":
+      sidebarData = SidebarDataSales;
+      break;
+    default:
+      sidebarData = [];
+  }
 
   // Flatten all routes from SidebarData1
   const flattenRoutes = (data, parentTitle = "") => {
@@ -114,7 +137,9 @@ const Header = () => {
               title: subItem.tittle,
               route: subItem.route,
               parentTitle: item.tittle,
-              fullPath: parentTitle ? `${parentTitle} > ${item.tittle} > ${subItem.tittle}` : `${item.tittle} > ${subItem.tittle}`
+              fullPath: parentTitle
+                ? `${parentTitle} > ${item.tittle} > ${subItem.tittle}`
+                : `${item.tittle} > ${subItem.tittle}`,
             });
           }
           // Handle nested subRoutes
@@ -125,7 +150,7 @@ const Header = () => {
                   title: nestedItem.tittle,
                   route: nestedItem.route,
                   parentTitle: `${item.tittle} > ${subItem.tittle}`,
-                  fullPath: `${item.tittle} > ${subItem.tittle} > ${nestedItem.tittle}`
+                  fullPath: `${item.tittle} > ${subItem.tittle} > ${nestedItem.tittle}`,
                 });
               }
             });
@@ -139,12 +164,13 @@ const Header = () => {
   // Search routes based on query
   useEffect(() => {
     if (searchQuery.trim()) {
-      const flattenedRoutes = flattenRoutes(SidebarData1);
+      const flattenedRoutes = flattenRoutes(sidebarData);
       const query = searchQuery.toLowerCase().trim();
-      const filtered = flattenedRoutes.filter((item) =>
-        item.title.toLowerCase().includes(query) ||
-        item.parentTitle.toLowerCase().includes(query) ||
-        item.route.toLowerCase().includes(query)
+      const filtered = flattenedRoutes.filter(
+        (item) =>
+          item.title.toLowerCase().includes(query) ||
+          item.parentTitle.toLowerCase().includes(query) ||
+          item.route.toLowerCase().includes(query)
       );
       setSearchResults(filtered.slice(0, 10)); // Limit to 10 results
       setShowSearchDropdown(filtered.length > 0);
@@ -152,7 +178,7 @@ const Header = () => {
       setSearchResults([]);
       setShowSearchDropdown(false);
     }
-  }, [searchQuery]);
+  }, [searchQuery, userRole, sidebarData]);
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -175,7 +201,7 @@ const Header = () => {
     document.querySelector(".main-wrapper")?.classList.remove("slide-nav");
     document.querySelector(".sidebar-overlay")?.classList.remove("opened");
     document.querySelector("html")?.classList.remove("menu-opened");
-  }, [location.pathname]);
+  }, [location.pathname, sidebarData]);
 
   // Fetch user info on mount
   useEffect(() => {
@@ -184,20 +210,26 @@ const Header = () => {
         const data = await getMyInfo();
         const userData = data.result || data;
 
-        let roleName = 'Admin';
-        if (userData.roles && Array.isArray(userData.roles) && userData.roles.length > 0) {
-          roleName = userData.roles[0].replace('ROLE_', '');
+        let roleName = "Admin";
+        if (
+          userData.roles &&
+          Array.isArray(userData.roles) &&
+          userData.roles.length > 0
+        ) {
+          roleName = userData.roles[0].replace("ROLE_", "");
         }
 
-        const avatarUrl = userData.avatarUrl ? getImageUrl(userData.avatarUrl) : null;
+        const avatarUrl = userData.avatarUrl
+          ? getImageUrl(userData.avatarUrl)
+          : null;
 
         setUserInfo({
-          fullName: userData.fullName || 'John Smilga',
+          fullName: userData.fullName || "John Smilga",
           role: roleName,
-          avatarUrl: avatarUrl
+          avatarUrl: avatarUrl,
         });
       } catch (error) {
-        console.error('Lỗi khi lấy thông tin user:', error);
+        console.error("Lỗi khi lấy thông tin user:", error);
       }
     };
 
@@ -205,24 +237,30 @@ const Header = () => {
 
     const handleProfileUpdate = (event) => {
       const userData = event.detail;
-      let roleName = 'Admin';
-      if (userData.roles && Array.isArray(userData.roles) && userData.roles.length > 0) {
-        roleName = userData.roles[0].replace('ROLE_', '');
+      let roleName = "Admin";
+      if (
+        userData.roles &&
+        Array.isArray(userData.roles) &&
+        userData.roles.length > 0
+      ) {
+        roleName = userData.roles[0].replace("ROLE_", "");
       }
 
-      const avatarUrl = userData.avatarUrl ? getImageUrl(userData.avatarUrl) : null;
+      const avatarUrl = userData.avatarUrl
+        ? getImageUrl(userData.avatarUrl)
+        : null;
 
       setUserInfo({
-        fullName: userData.fullName || 'John Smilga',
+        fullName: userData.fullName || "John Smilga",
         role: roleName,
-        avatarUrl: avatarUrl
+        avatarUrl: avatarUrl,
       });
     };
 
-    window.addEventListener('profileUpdated', handleProfileUpdate);
+    window.addEventListener("profileUpdated", handleProfileUpdate);
 
     return () => {
-      window.removeEventListener('profileUpdated', handleProfileUpdate);
+      window.removeEventListener("profileUpdated", handleProfileUpdate);
     };
   }, []);
 
@@ -280,18 +318,43 @@ const Header = () => {
         <div
           className={`header-left
              ${toggle ? "" : "active"}
-             ${expandMenus || dataLayout === "layout-hovered" ? "expand-menu" : ""}
+             ${
+               expandMenus || dataLayout === "layout-hovered"
+                 ? "expand-menu"
+                 : ""
+             }
              `}
           onMouseLeave={expandMenu}
           onMouseOver={expandMenuOpen}
         >
-          <Link to="/dashboard" className="logo logo-normal">
+          <Link
+            to={
+              userRole === "Nhân viên bán hàng"
+                ? route.salesdashboard
+                : route.dashboard
+            }
+            className="logo logo-normal"
+          >
             <img src={logoPng} alt="img" />
           </Link>
-          <Link to="/dashboard" className="logo logo-white">
+          <Link
+            to={
+              userRole === "Nhân viên bán hàng"
+                ? route.salesdashboard
+                : route.dashboard
+            }
+            className="logo logo-white"
+          >
             <img src={logoWhitePng} alt="img" />
           </Link>
-          <Link to="/dashboard" className="logo-small">
+          <Link
+            to={
+              userRole === "Nhân viên bán hàng"
+                ? route.salesdashboard
+                : route.dashboard
+            }
+            className="logo-small"
+          >
             <img src={logoSmallPng} alt="img" />
           </Link>
           <Link
@@ -302,8 +365,8 @@ const Header = () => {
                 pathname.includes("tasks") || pathname.includes("pos")
                   ? "none"
                   : pathname.includes("compose")
-                    ? "none"
-                    : "",
+                  ? "none"
+                  : "",
             }}
             onClick={handlesidebar}
           >
@@ -325,7 +388,6 @@ const Header = () => {
         </Link>
 
         <Nav as="ul" className="nav user-menu">
-
           <Nav.Item as="li" className="nav-searchinputs">
             <div className="top-nav-search">
               <Link to="#" className="responsive-search">
@@ -367,7 +429,7 @@ const Header = () => {
                     style={{
                       maxHeight: "400px",
                       overflowY: "auto",
-                      padding: 0
+                      padding: 0,
                     }}
                   >
                     {searchResults.map((result, index) => (
@@ -376,10 +438,14 @@ const Header = () => {
                         onClick={() => handleRouteClick(result.route)}
                         className="search-result-item"
                         style={{
-                          borderBottom: index < searchResults.length - 1 ? "1px solid #e9ecef" : "none"
+                          borderBottom:
+                            index < searchResults.length - 1
+                              ? "1px solid #e9ecef"
+                              : "none",
                         }}
                         onMouseEnter={(e) => {
-                          e.target.style.backgroundColor = "rgba(var(--bs-primary-rgb), 0.05)";
+                          e.target.style.backgroundColor =
+                            "rgba(var(--bs-primary-rgb), 0.05)";
                           e.target.style.color = "var(--bs-primary)";
                         }}
                         onMouseLeave={(e) => {
@@ -387,9 +453,22 @@ const Header = () => {
                           e.target.style.color = "inherit";
                         }}
                       >
-                        <div className="fw-bold" style={{ fontSize: "15px", marginBottom: "4px" }}>{result.title}</div>
-                        <div className="text-muted" style={{ fontSize: "13px", marginBottom: "4px" }}>{result.fullPath}</div>
-                        <div className="text-muted" style={{ fontSize: "12px", marginBottom: 0 }}>
+                        <div
+                          className="fw-bold"
+                          style={{ fontSize: "15px", marginBottom: "4px" }}
+                        >
+                          {result.title}
+                        </div>
+                        <div
+                          className="text-muted"
+                          style={{ fontSize: "13px", marginBottom: "4px" }}
+                        >
+                          {result.fullPath}
+                        </div>
+                        <div
+                          className="text-muted"
+                          style={{ fontSize: "12px", marginBottom: 0 }}
+                        >
                           <i className="ti ti-route me-1" />
                           {result.route}
                         </div>
@@ -397,13 +476,19 @@ const Header = () => {
                     ))}
                   </Dropdown.Menu>
                 )}
-                {showSearchDropdown && searchQuery.trim() && searchResults.length === 0 && (
-                  <Dropdown.Menu show className="w-100" style={{ marginTop: "5px" }}>
-                    <Dropdown.Item disabled className="text-center py-3">
-                      Không tìm thấy kết quả
-                    </Dropdown.Item>
-                  </Dropdown.Menu>
-                )}
+                {showSearchDropdown &&
+                  searchQuery.trim() &&
+                  searchResults.length === 0 && (
+                    <Dropdown.Menu
+                      show
+                      className="w-100"
+                      style={{ marginTop: "5px" }}
+                    >
+                      <Dropdown.Item disabled className="text-center py-3">
+                        Không tìm thấy kết quả
+                      </Dropdown.Item>
+                    </Dropdown.Menu>
+                  )}
               </Dropdown>
             </div>
           </Nav.Item>
@@ -459,7 +544,8 @@ const Header = () => {
                       <div className="flex-grow-1">
                         <p className="noti-details">
                           <span className="noti-title">James Kirwin</span>{" "}
-                          confirmed his order. Order No: #78901.Estimated delivery: 2 days
+                          confirmed his order. Order No: #78901.Estimated
+                          delivery: 2 days
                         </p>
                         <p className="noti-time">4 mins ago</p>
                       </div>
@@ -506,7 +592,8 @@ const Header = () => {
                       </span>
                       <div className="flex-grow-1">
                         <p className="noti-details">
-                          <span className="noti-title">Andrea</span> confirmed his order. Order No: #73401.Estimated delivery: 3 days
+                          <span className="noti-title">Andrea</span> confirmed
+                          his order. Order No: #73401.Estimated delivery: 3 days
                         </p>
                         <p className="noti-time">4 mins ago</p>
                       </div>
@@ -516,10 +603,22 @@ const Header = () => {
               </ul>
             </div>
             <div className="topnav-dropdown-footer d-flex align-items-center gap-3">
-              <Button as={Link} to="#" variant="secondary" size="md" className="w-100">
+              <Button
+                as={Link}
+                to="#"
+                variant="secondary"
+                size="md"
+                className="w-100"
+              >
                 Cancel
               </Button>
-              <Button as={Link} to={route.activities} variant="primary" size="md" className="w-100">
+              <Button
+                as={Link}
+                to={route.activities}
+                variant="primary"
+                size="md"
+                className="w-100"
+              >
                 View all
               </Button>
             </div>
@@ -562,8 +661,27 @@ const Header = () => {
                 />
               </span>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <h6 className="fw-medium" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{userInfo.fullName}</h6>
-                <p style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{userInfo.role}</p>
+                <h6
+                  className="fw-medium"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    margin: 0,
+                  }}
+                >
+                  {userInfo.fullName}
+                </h6>
+                <p
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    margin: 0,
+                  }}
+                >
+                  {userInfo.role}
+                </p>
               </div>
             </div>
             <NavDropdown.Item as={Link} to={route.profile}>

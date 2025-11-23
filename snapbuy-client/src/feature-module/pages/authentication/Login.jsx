@@ -17,7 +17,12 @@ const Login = () => {
     }
     try {
       await login(username, password);
-      window.location.href = "/dashboard";
+      const role = localStorage.getItem("role");
+      if (role === "Nhân viên bán hàng") {
+        window.location.href = "/sales-dashboard";
+      } else {
+        window.location.href = "/dashboard";
+      }
     } catch (err) {
       setError(err.message);
     }

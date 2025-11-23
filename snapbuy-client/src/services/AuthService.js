@@ -28,26 +28,25 @@ export const login = async (username, password) => {
       } catch (error) {
         console.error('Lỗi khi giải mã token:', error);
       }
+      // Lưu thêm thông tin người dùng đang đăng nhập trước khi trả về
+      if (accountId) {
+        localStorage.setItem('accountId', accountId);
+      }
+      if (username) {
+        localStorage.setItem('username', username);
+      }
+      if (fullName) {
+        localStorage.setItem('fullName', fullName);
+      }
+      if (roleName) {
+        localStorage.setItem('roleName', roleName);
+      }
+
       return response.data.result;
     } else {
       throw new Error('Login failed: No token received.');
     }
 
-    // ✅ Lưu thêm thông tin người dùng đang đăng nhập
-    if (accountId) {
-      localStorage.setItem('accountId', accountId);
-    }
-    if (username) {
-      localStorage.setItem('username', username);
-    }
-    if (fullName) {
-      localStorage.setItem('fullName', fullName);
-    }
-    if (roleName) {
-      localStorage.setItem('roleName', roleName);
-    }
-
-    return response.data.result;
   } catch (error) {
     throw new Error(error.response ? error.response.data.message : error.message);
   }

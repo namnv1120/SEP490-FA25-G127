@@ -17,74 +17,48 @@ const getAuthHeaders = () => {
 
 // Lấy doanh thu theo ngày
 export const getDailyRevenue = async (date) => {
-  try {
-    const response = await axios.get(
-      `${REST_API_BASE_URL}/daily?date=${date}`,
-      getAuthHeaders()
-    );
-    return response.data?.result || response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axios.get(
+    `${REST_API_BASE_URL}/daily?date=${date}`,
+    getAuthHeaders()
+  );
+  return response.data?.result || response.data;
 };
 
 // Lấy doanh thu theo tháng
 export const getMonthlyRevenue = async (year, month) => {
-  try {
-    const response = await axios.get(
-      `${REST_API_BASE_URL}/monthly?year=${year}&month=${month}`,
-      getAuthHeaders()
-    );
-    return response.data?.result || response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axios.get(
+    `${REST_API_BASE_URL}/monthly?year=${year}&month=${month}`,
+    getAuthHeaders()
+  );
+  return response.data?.result || response.data;
 };
 
 // Lấy doanh thu theo năm
 export const getYearlyRevenue = async (year) => {
-  try {
-    const response = await axios.get(
-      `${REST_API_BASE_URL}/yearly?year=${year}`,
-      getAuthHeaders()
-    );
-    return response.data?.result || response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axios.get(
+    `${REST_API_BASE_URL}/yearly?year=${year}`,
+    getAuthHeaders()
+  );
+  return response.data?.result || response.data;
 };
 
 // Lấy doanh thu theo khoảng thời gian tùy chỉnh
 export const getCustomRevenue = async (startDate, endDate) => {
-  try {
-    const response = await axios.get(
-      `${REST_API_BASE_URL}/custom?startDate=${startDate}&endDate=${endDate}`,
-      getAuthHeaders()
-    );
-    return response.data?.result || response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axios.get(
+    `${REST_API_BASE_URL}/custom?startDate=${startDate}&endDate=${endDate}`,
+    getAuthHeaders()
+  );
+  return response.data?.result || response.data;
 };
 
 // Lấy báo cáo doanh thu sản phẩm
 export const getProductRevenue = async (fromDate, toDate, accountId = null) => {
-  try {
-    // Encode datetime để tránh lỗi với ký tự đặc biệt trong URL
-    const encodedFrom = encodeURIComponent(fromDate);
-    const encodedTo = encodeURIComponent(toDate);
-    let url = `http://localhost:8080/api/reports/products-revenue?from=${encodedFrom}&to=${encodedTo}`;
-    if (accountId) {
-      url += `&accountId=${accountId}`;
-    }
-    const response = await axios.get(url, getAuthHeaders());
-    return response.data?.result || response.data;
-  } catch (error) {
-    console.error("Error fetching product revenue:", error);
-    console.error("From date:", fromDate);
-    console.error("To date:", toDate);
-    console.error("Account ID:", accountId);
-    throw error;
+  const encodedFrom = encodeURIComponent(fromDate);
+  const encodedTo = encodeURIComponent(toDate);
+  let url = `http://localhost:8080/api/reports/products-revenue?from=${encodedFrom}&to=${encodedTo}`;
+  if (accountId) {
+    url += `&accountId=${accountId}`;
   }
+  const response = await axios.get(url, getAuthHeaders());
+  return response.data?.result || response.data;
 };
-

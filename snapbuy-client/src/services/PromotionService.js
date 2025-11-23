@@ -1,8 +1,6 @@
-/* eslint-disable no-useless-catch */
 import axios from "axios";
-import { getApiUrl } from '../config/apiConfig';
 
-const REST_API_BASE_URL = getApiUrl('/api/promotions');
+const REST_API_BASE_URL = "http://localhost:8080/api/promotions";
 
 // Helper function để lấy headers với token
 const getAuthHeaders = () => {
@@ -19,42 +17,26 @@ const getAuthHeaders = () => {
 
 // Lấy tất cả khuyến mãi
 export const getAllPromotions = async () => {
-  try {
-    const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
-    return response.data?.result || response.data || [];
-  } catch (error) {
-    throw error;
-  }
+  const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
+  return response.data?.result || response.data || [];
 };
 
 // Lấy chi tiết khuyến mãi theo ID
 export const getPromotionById = async (id) => {
-  try {
-    const response = await axios.get(`${REST_API_BASE_URL}/${id}`, getAuthHeaders());
-    return response.data?.result || response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axios.get(`${REST_API_BASE_URL}/${id}`, getAuthHeaders());
+  return response.data?.result || response.data;
 };
 
 // Tạo khuyến mãi mới
 export const createPromotion = async (promotionData) => {
-  try {
-    const response = await axios.post(REST_API_BASE_URL, promotionData, getAuthHeaders());
-    return response.data?.result || response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axios.post(REST_API_BASE_URL, promotionData, getAuthHeaders());
+  return response.data?.result || response.data;
 };
 
 // Cập nhật khuyến mãi
 export const updatePromotion = async (id, promotionData) => {
-  try {
-    const response = await axios.put(`${REST_API_BASE_URL}/${id}`, promotionData, getAuthHeaders());
-    return response.data?.result || response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axios.put(`${REST_API_BASE_URL}/${id}`, promotionData, getAuthHeaders());
+  return response.data?.result || response.data;
 };
 
 // Lấy % giảm giá tốt nhất cho sản phẩm
@@ -75,11 +57,7 @@ export const getBestDiscountForProduct = async (productId, unitPrice) => {
 
 // Xóa khuyến mãi (nếu backend có API này)
 export const deletePromotion = async (id) => {
-  try {
-    const response = await axios.delete(`${REST_API_BASE_URL}/${id}`, getAuthHeaders());
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axios.delete(`${REST_API_BASE_URL}/${id}`, getAuthHeaders());
+  return response.data;
 };
 

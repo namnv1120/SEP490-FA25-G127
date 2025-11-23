@@ -6,10 +6,13 @@ import { allRoutes } from '../../routes/AllRoutes';
 import { getMyInfo } from '../../services/AccountService';
 import { getImageUrl } from '../../utils/imageUtils';
 import { avator1 } from '../../utils/imagepath';
+import { getCurrentShift } from '../../services/ShiftService';
 
 const PosHeader = () => {
-  const [isFullscreen] = useState(false);
+  
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentShift, setCurrentShift] = useState(null);
+  const [shiftTimeText, setShiftTimeText] = useState('');
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState({
@@ -17,6 +20,7 @@ const PosHeader = () => {
     role: 'Role',
     avatarUrl: null
   });
+  const homeRoute = userInfo.role === 'Nhân viên bán hàng' ? allRoutes.salesdashboard : allRoutes.dashboard;
 
   // Update time every second
   useEffect(() => {
@@ -26,6 +30,44 @@ const PosHeader = () => {
 
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    const loadShift = async () => {
+      const data = await getCurrentShift();
+      setCurrentShift(data);
+    };
+    loadShift();
+    const onShiftUpdated = (e) => {
+      const data = e.detail;
+      setCurrentShift(data);
+    };
+    window.addEventListener('shiftUpdated', onShiftUpdated);
+    return () => {
+      window.removeEventListener('shiftUpdated', onShiftUpdated);
+    };
+  }, []);
+
+  useEffect(() => {
+    let interval;
+    if (currentShift && currentShift.status === 'Mở' && currentShift.openedAt) {
+      const update = () => {
+        const start = new Date(currentShift.openedAt).getTime();
+        const now = new Date().getTime();
+        const diff = Math.max(0, now - start);
+        const h = String(Math.floor(diff / 3600000)).padStart(2, '0');
+        const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+        const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+        setShiftTimeText(`${h}:${m}:${s}`);
+      };
+      update();
+      interval = setInterval(update, 1000);
+    } else {
+      setShiftTimeText('');
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [currentShift]);
 
   // Format time as 24h
   const formatTime24h = (date) => {
@@ -124,13 +166,13 @@ const PosHeader = () => {
       <div className="header pos-header">
         {/* Logo */}
         <div className="header-left active">
-          <Link to={allRoutes.dashboard} className="logo logo-normal">
+          <Link to={homeRoute} className="logo logo-normal">
             <img src="src/assets/img/logo.png" alt="Img" />
           </Link>
-          <Link to={allRoutes.dashboard} className="logo logo-white">
+          <Link to={homeRoute} className="logo logo-white">
             <img src="src/assets/img/logo-white.png" alt="Img" />
           </Link>
-          <Link to={allRoutes.dashboard} className="logo-small">
+          <Link to={homeRoute} className="logo-small">
             <img src="src/assets/img/logo-small.png" alt="Img" />
           </Link>
         </div>
@@ -147,14 +189,35 @@ const PosHeader = () => {
               {formatTime24h(currentTime)}
             </span>
           </li>
+          {shiftTimeText && (
+            <li className="nav-item time-nav">
+              <span className="bg-purple text-white d-inline-flex align-items-center">
+                <i className="ti ti-clock me-2" />
+                Ca: {shiftTimeText}
+              </span>
+            </li>
+          )}
           {/* /Search */}
           <li className="nav-item pos-nav">
             <Link
-              to={allRoutes.dashboard}
+              to={homeRoute}
               className="btn btn-purple btn-md d-inline-flex align-items-center"
             >
               <i className="ti ti-world me-1" />
               Dashboard
+            </Link>
+          </li>
+          <li className="nav-item pos-nav">
+            <Link
+              to="#"
+              className="btn btn-teal btn-md d-inline-flex align-items-center"
+              onClick={(e) => {
+                e.preventDefault();
+                window.dispatchEvent(new CustomEvent('openShiftModal'));
+              }}
+            >
+              <i className="ti ti-cash me-1" />
+              Đóng/Mở ca
             </Link>
           </li>
 
@@ -380,4 +443,3 @@ const PosHeader = () => {
 };
 
 export default PosHeader;
-

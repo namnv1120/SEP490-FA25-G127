@@ -12,7 +12,9 @@ export const allRoutes = {
 
   orderhistory: "/order-history",
   pos: "/pos",
+  posshift: "/pos-shift",
   transactionhistory: "/transaction-history",
+  salesdashboard: "/sales-dashboard",
   promotions: "/promotions",
 
   purchaseorders: "/purchase-orders",
@@ -29,6 +31,9 @@ export const allRoutes = {
   customerreport: "/customer-report",
   supplierreport: "/supplier-report",
 
+  ownerstaffaccounts: "/staff-accounts",
+  staffshiftreport: "/staff-shifts",
+
   profile: "/settings/profile",
   emailsettings: "/settings/email",
   passwordsettings: "/settings/password",
@@ -38,5 +43,4 @@ export const allRoutes = {
   forgotpassword: "/forgot-password",
   verifyotp: "/verify-otp",
   resetpassword: "/reset-password",
-
 };

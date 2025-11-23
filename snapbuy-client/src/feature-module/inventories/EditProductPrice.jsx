@@ -1,10 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { allRoutes } from "../../routes/AllRoutes";
 import CommonFooter from "../../components/footer/CommonFooter";
 import { message } from "antd";
-import { getProductPriceById, updateProductPrice } from "../../services/ProductPriceService";
+import {
+  getProductPriceById,
+  updateProductPrice,
+} from "../../services/ProductPriceService";
 import { getAllProducts } from "../../services/ProductService";
+import PageLoader from "../../components/loading/PageLoader.jsx";
 
 const EditProductPrice = () => {
   const { id } = useParams();
@@ -27,9 +31,9 @@ const EditProductPrice = () => {
   useEffect(() => {
     fetchProducts();
     fetchProductPrice();
-  }, [id]);
+  }, [fetchProducts, fetchProductPrice]);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoadingProducts(true);
       const data = await getAllProducts();
@@ -40,9 +44,9 @@ const EditProductPrice = () => {
     } finally {
       setLoadingProducts(false);
     }
-  };
+  }, []);
 
-  const fetchProductPrice = async () => {
+  const fetchProductPrice = useCallback(async () => {
     try {
       setInitialLoading(true);
       const data = await getProductPriceById(id);
@@ -65,15 +69,15 @@ const EditProductPrice = () => {
     } finally {
       setInitialLoading(false);
     }
-  };
+  }, [id, navigate, route.productprices]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     let processedValue = value;
-    
-    if (name === 'unitPrice' || name === 'costPrice') {
-      if (value === '' || value === '-') {
+
+    if (name === "unitPrice" || name === "costPrice") {
+      if (value === "" || value === "-") {
         processedValue = value;
       } else {
         const numValue = parseFloat(value);
@@ -83,7 +87,7 @@ const EditProductPrice = () => {
         processedValue = value;
       }
     }
-    
+
     setFormData((prev) => ({
       ...prev,
       [name]: processedValue,
@@ -95,8 +99,8 @@ const EditProductPrice = () => {
         [name]: "",
       }));
     }
-    
-    if (name === 'unitPrice' || name === 'costPrice') {
+
+    if (name === "unitPrice" || name === "costPrice") {
       setErrors((prev) => ({
         ...prev,
         unitPrice: "",
@@ -152,7 +156,10 @@ const EditProductPrice = () => {
       message.success("Cập nhật giá sản phẩm thành công!");
       navigate(route.productprices);
     } catch (error) {
-      message.error(error.response?.data?.message || "Lỗi khi cập nhật giá sản phẩm. Vui lòng thử lại.");
+      message.error(
+        error.response?.data?.message ||
+          "Lỗi khi cập nhật giá sản phẩm. Vui lòng thử lại."
+      );
     } finally {
       setLoading(false);
     }
@@ -165,18 +172,7 @@ const EditProductPrice = () => {
   // const selectedProduct = products.find((p) => p.productId === formData.productId);
 
   if (initialLoading) {
-    return (
-      <div className="page-wrapper">
-        <div className="content">
-          <div className="text-center my-5">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Đang tải ...</span>
-            </div>
-            <p className="mt-2">Đang tải giá sản phẩm ...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (
@@ -218,30 +214,38 @@ const EditProductPrice = () => {
                         <label className="form-label">
                           Sản phẩm <span className="text-danger">*</span>
                         </label>
-                        {loadingProducts ? (
-                          <div className="spinner-border spinner-border-sm" role="status">
-                            <span className="visually-hidden">Loading...</span>
-                          </div>
-                        ) : (
-                          <select
-                            className={`form-control ${errors.productId ? "is-invalid" : ""}`}
-                            name="productId"
-                            value={formData.productId}
-                            onChange={handleChange}
-                            disabled
-                          >
-                            <option value="">Chọn sản phẩm</option>
-                            {products.map((product) => (
-                              <option key={product.productId} value={product.productId}>
+                        <select
+                          className={`form-control ${
+                            errors.productId ? "is-invalid" : ""
+                          }`}
+                          name="productId"
+                          value={formData.productId}
+                          onChange={handleChange}
+                          disabled
+                        >
+                          <option value="">
+                            {loadingProducts
+                              ? "Đang tải dữ liệu..."
+                              : "Chọn sản phẩm"}
+                          </option>
+                          {!loadingProducts &&
+                            products.map((product) => (
+                              <option
+                                key={product.productId}
+                                value={product.productId}
+                              >
                                 {product.productCode} - {product.productName}
                               </option>
                             ))}
-                          </select>
-                        )}
+                        </select>
                         {errors.productId && (
-                          <div className="invalid-feedback d-block">{errors.productId}</div>
+                          <div className="invalid-feedback d-block">
+                            {errors.productId}
+                          </div>
                         )}
-                        <small className="text-muted">Sản phẩm không thể thay đổi</small>
+                        <small className="text-muted">
+                          Sản phẩm không thể thay đổi
+                        </small>
                       </div>
                     </div>
 
@@ -252,12 +256,19 @@ const EditProductPrice = () => {
                         </label>
                         <input
                           type="number"
-                          className={`form-control ${errors.unitPrice ? "is-invalid" : ""}`}
+                          className={`form-control ${
+                            errors.unitPrice ? "is-invalid" : ""
+                          }`}
                           name="unitPrice"
                           value={formData.unitPrice}
                           onChange={handleChange}
                           onKeyDown={(e) => {
-                            if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+                            if (
+                              e.key === "-" ||
+                              e.key === "+" ||
+                              e.key === "e" ||
+                              e.key === "E"
+                            ) {
                               e.preventDefault();
                             }
                           }}
@@ -266,7 +277,9 @@ const EditProductPrice = () => {
                           min="0"
                         />
                         {errors.unitPrice && (
-                          <div className="invalid-feedback">{errors.unitPrice}</div>
+                          <div className="invalid-feedback">
+                            {errors.unitPrice}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -278,12 +291,19 @@ const EditProductPrice = () => {
                         </label>
                         <input
                           type="number"
-                          className={`form-control ${errors.costPrice ? "is-invalid" : ""}`}
+                          className={`form-control ${
+                            errors.costPrice ? "is-invalid" : ""
+                          }`}
                           name="costPrice"
                           value={formData.costPrice}
                           onChange={handleChange}
                           onKeyDown={(e) => {
-                            if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+                            if (
+                              e.key === "-" ||
+                              e.key === "+" ||
+                              e.key === "e" ||
+                              e.key === "E"
+                            ) {
                               e.preventDefault();
                             }
                           }}
@@ -292,7 +312,9 @@ const EditProductPrice = () => {
                           min="0"
                         />
                         {errors.costPrice && (
-                          <div className="invalid-feedback">{errors.costPrice}</div>
+                          <div className="invalid-feedback">
+                            {errors.costPrice}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -339,13 +361,22 @@ const EditProductPrice = () => {
                         <div className="alert alert-info">
                           <strong>Xem trước:</strong>
                           <ul className="mb-0 mt-2">
-                            <li>Giá bán: {parseFloat(formData.unitPrice).toLocaleString()} đ</li>
-                            <li>Giá nhập: {parseFloat(formData.costPrice).toLocaleString()} đ</li>
+                            <li>
+                              Giá bán:{" "}
+                              {parseFloat(formData.unitPrice).toLocaleString()}{" "}
+                              đ
+                            </li>
+                            <li>
+                              Giá nhập:{" "}
+                              {parseFloat(formData.costPrice).toLocaleString()}{" "}
+                              đ
+                            </li>
                             {formData.costPrice && (
                               <li className="mt-2">
                                 Biên lợi nhuận:{" "}
                                 {(
-                                  ((parseFloat(formData.unitPrice) - parseFloat(formData.costPrice)) /
+                                  ((parseFloat(formData.unitPrice) -
+                                    parseFloat(formData.costPrice)) /
                                     parseFloat(formData.costPrice)) *
                                   100
                                 ).toFixed(2)}
@@ -371,10 +402,17 @@ const EditProductPrice = () => {
               >
                 Huỷ
               </button>
-              <button type="submit" className="btn btn-primary" disabled={loading}>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={loading}
+              >
                 {loading ? (
                   <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                    <span
+                      className="spinner-border spinner-border-sm me-2"
+                      role="status"
+                    ></span>
                     Đang cập nhật ...
                   </>
                 ) : (

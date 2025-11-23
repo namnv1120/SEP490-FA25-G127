@@ -1,25 +1,25 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const initialState = {
-  dataLayout: localStorage.getItem("dataLayout") || "horizontal",
-  dataWidth: localStorage.getItem("dataWidth") || "fluid",
-  dataCard: localStorage.getItem("dataCard") || "bordered",
-  dataSidebar: localStorage.getItem("dataSidebar") || "light",
-  dataSidebarAll: localStorage.getItem("dataSidebarAll") || "",
-  dataTopbarAll: localStorage.getItem("dataTopbarAll") || "",
-  dataTopBarColorAll: localStorage.getItem("dataTopBarColorAll") || "",
-  dataColorAll: localStorage.getItem("dataColorAll") || "",
-  dataTheme: localStorage.getItem("dataTheme") || "light",
-  dataTopBar: localStorage.getItem("dataTopBar") || "white",
-  dataTopBarColor: localStorage.getItem("dataTopBarolor") || "white",
-  dataSidebarBg: localStorage.getItem("dataSidebarBg") || "",
-  dataTopbarBg: localStorage.getItem("dataTopbarBg") || "",
-  dataColor: localStorage.getItem("dataColor") || "primary",
-  dataLoader: localStorage.getItem("dataLoader") || "enable",
-  isRtl: localStorage.getItem("rtl") || false,
-  headerCollapse: false,
-  expandMenus: false,
-};
+  const initialState = {
+    dataLayout: localStorage.getItem("dataLayout") || "horizontal",
+    dataWidth: localStorage.getItem("dataWidth") || "fluid",
+    dataCard: localStorage.getItem("dataCard") || "bordered",
+    dataSidebar: localStorage.getItem("dataSidebar") || "light",
+    dataSidebarAll: localStorage.getItem("dataSidebarAll") || "",
+    dataTopbarAll: localStorage.getItem("dataTopbarAll") || "",
+    dataTopBarColorAll: localStorage.getItem("dataTopBarColorAll") || "",
+    dataColorAll: localStorage.getItem("dataColorAll") || "",
+    dataTheme: localStorage.getItem("dataTheme") || "light",
+    dataTopBar: localStorage.getItem("dataTopBar") || "white",
+    dataTopBarColor: localStorage.getItem("dataTopBarColor") || "white",
+    dataSidebarBg: localStorage.getItem("dataSidebarBg") || "",
+    dataTopbarBg: localStorage.getItem("dataTopbarBg") || "",
+    dataColor: localStorage.getItem("dataColor") || "primary",
+    dataLoader: localStorage.getItem("dataLoader") || "enable",
+    isRtl: localStorage.getItem("rtl") || false,
+    headerCollapse: false,
+    expandMenus: false,
+  };
 
 const themeSettingSlice = createSlice({
   name: "themeSetting",

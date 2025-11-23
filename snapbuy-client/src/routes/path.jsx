@@ -1,11 +1,5 @@
 import { allRoutes } from "./AllRoutes";
 
-// Chỉ giữ cấu hình route, không import component để tránh cảnh báo Fast Refresh
-
-const PromotionList = lazy(() =>
-  import("../feature-module/promotions/PromotionList")
-);
-
 const routes = allRoutes;
 
 export const authRoutes = [
@@ -157,13 +151,6 @@ export const authRoutes = [
     componentKey: "EditPurchaseOrder",
     protected: true,
   },
-  // {
-  //   id: 20,
-  //   path: routes.possettings,
-  //   name: "possettings",
-  //   element: <PosSettings />,
-  //   route: Route,
-  // },
   {
     id: 20,
     path: routes.revenuereport,
@@ -189,22 +176,29 @@ export const authRoutes = [
     id: 23,
     path: routes.supplierreport,
     name: "supplier-report",
-    element: <SupplierReport />,
-    route: Route,
+    componentKey: "SupplierReport",
+    protected: true,
   },
   {
     id: 24,
     path: routes.promotions,
     name: "promotions",
-    element: <PromotionList />,
-    route: Route,
+    componentKey: "PromotionList",
+    protected: true,
   },
   {
-    id: 24,
-    path: routes.permissions,
-    name: "permissions",
-    element: <Permissions />,
-    route: Route,
+    id: 23.1,
+    path: routes.ownerstaffaccounts,
+    name: "owner-staff-accounts",
+    componentKey: "OwnerStaffAccountList",
+    protected: true,
+  },
+  {
+    id: 35,
+    path: routes.staffshiftreport,
+    name: "staff-shift-management",
+    componentKey: "StaffShiftManagement",
+    protected: true,
   },
   {
     id: 25,
@@ -219,7 +213,21 @@ export const authRoutes = [
     name: "order-history",
     componentKey: "OrderHistory",
     protected: true,
-  }
+  },
+  {
+    id: 27,
+    path: routes.salesdashboard,
+    name: "sales-dashboard",
+    componentKey: "SalesDashboard",
+    protected: true,
+  },
+  {
+    id: 28,
+    path: routes.posshift,
+    name: "pos-shift",
+    componentKey: "PosShift",
+    protected: true,
+  },
 ];
 
 export const posPage = [

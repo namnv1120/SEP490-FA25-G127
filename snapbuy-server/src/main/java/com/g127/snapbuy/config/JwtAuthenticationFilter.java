@@ -17,13 +17,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
+    private final com.g127.snapbuy.repository.AccountRepository accountRepository;
 
     public JwtAuthenticationFilter(JwtUtil jwtUtil,
                                    UserDetailsService userDetailsService,
-                                   TokenBlacklistService tokenBlacklistService) {
+                                   TokenBlacklistService tokenBlacklistService,
+                                   com.g127.snapbuy.repository.AccountRepository accountRepository) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
         this.tokenBlacklistService = tokenBlacklistService;
+        this.accountRepository = accountRepository;
     }
 
     @Override
@@ -62,6 +65,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String username = jwtUtil.extractUsername(jwt);
+        Integer ver = jwtUtil.extractVersion(jwt);
+        if (username != null && ver != null) {
+            var accOpt = accountRepository.findByUsername(username);
+            if (accOpt.isPresent()) {
+                Integer currentVer = accOpt.get().getTokenVersion();
+                if (currentVer != null && !currentVer.equals(ver)) {
+                    response.setStatus(401);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"code\":\"UNAUTHENTICATED\",\"message\":\"Token has been revoked (version mismatch)\"}");
+                    return;
+                }
+            }
+        }
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
             if (jwtUtil.validateToken(jwt, userDetails)) {

@@ -2,8 +2,8 @@ export const saveToLocalStorage = (state) => {
   try {
     const serializedState = JSON.stringify(state);
     localStorage.setItem("state", serializedState);
-  } catch (e) {
-    // lỗi bị bỏ qua
+  } catch {
+    void 0;
   }
 };
 
@@ -12,8 +12,7 @@ export const getPreloadedState = () => {
     const serializedState = localStorage.getItem("state");
     if (serializedState === null) return undefined;
     return JSON.parse(serializedState);
-  } catch (e) {
-    // lỗi bị bỏ qua
+  } catch {
     return undefined;
   }
 };

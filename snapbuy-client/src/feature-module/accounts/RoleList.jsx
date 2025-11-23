@@ -16,7 +16,7 @@ import { message } from "antd";
 
 const RoleList = () => {
   const [roles, setRoles] = useState([]);
-  const [loading, setLoading] = useState(false);
+  
   const [selectedRole, setSelectedRole] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -25,7 +25,6 @@ const RoleList = () => {
 
   const fetchRoles = async () => {
     try {
-      setLoading(true);
       // Giống như Account, gọi getAllRoles không cần tham số, trả về tất cả roles
       const response = await getAllRoles();
       const data = Array.isArray(response) ? response : response.data || response.result || [];
@@ -44,7 +43,7 @@ const RoleList = () => {
         message.error(error.response?.data?.message || error.message || "Lỗi khi lấy danh sách vai trò");
       }
     } finally {
-      setLoading(false);
+      void 0;
     }
   };
 
@@ -68,7 +67,8 @@ const RoleList = () => {
     try {
       await deleteRole(selectedRole.id || selectedRole.roleId);
       fetchRoles();
-    } catch (error) {
+    } catch {
+      void 0;
     }
   };
 
@@ -76,14 +76,16 @@ const RoleList = () => {
     try {
       await createRole(roleData);
       fetchRoles();
-    } catch (error) {
+    } catch {
+      void 0;
     }
   };
 
   const handleUpdateRole = async () => {
     try {
       await fetchRoles();
-    } catch (error) {
+    } catch {
+      void 0;
     }
   };
 

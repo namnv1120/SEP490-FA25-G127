@@ -4,6 +4,7 @@ import com.g127.snapbuy.dto.request.OrderCreateRequest;
 import com.g127.snapbuy.dto.response.OrderResponse;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,5 +19,8 @@ public interface OrderService {
     void finalizePayment(UUID orderId);
     void finalizePaymentByReference(String transactionReference);
     void cancelOrderByReference(String transactionReference);
+    Long getMyTodayOrderCount(String paymentStatus);
+    BigDecimal getMyTodayRevenue(String paymentStatus);
+    java.util.List<OrderResponse> getMyOrdersByDateTimeRange(java.time.LocalDateTime from, java.time.LocalDateTime to);
+    java.util.List<OrderResponse> getOrdersByAccountAndDateTimeRange(java.util.UUID accountId, java.time.LocalDateTime from, java.time.LocalDateTime to);
 }
-

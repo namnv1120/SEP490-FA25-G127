@@ -3,10 +3,13 @@ package com.g127.snapbuy.controller;
 import com.g127.snapbuy.dto.ApiResponse;
 import com.g127.snapbuy.dto.request.*;
 import com.g127.snapbuy.dto.response.AccountResponse;
+import com.g127.snapbuy.dto.response.PageResponse;
 import com.g127.snapbuy.service.AccountService;
 import com.g127.snapbuy.service.EmailVerificationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,7 +43,7 @@ public class AccountController {
     }
 
     @GetMapping("/{accountId}")
-    @PreAuthorize("hasRole('Quản trị viên')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<AccountResponse> getAccount(@PathVariable UUID accountId) {
         ApiResponse<AccountResponse> response = new ApiResponse<>();
         response.setResult(accountService.getAccount(accountId));
@@ -67,7 +70,7 @@ public class AccountController {
 
     @PutMapping(value = "/{accountId}/json", consumes = {"application/json"})
     public ApiResponse<AccountResponse> updateAccountJson(@PathVariable UUID accountId,
-                                                           @RequestBody @Valid AccountUpdateRequest req) {
+                                                          @RequestBody @Valid AccountUpdateRequest req) {
         ApiResponse<AccountResponse> response = new ApiResponse<>();
         response.setResult(accountService.updateAccount(accountId, req));
         response.setMessage("Cập nhật tài khoản thành công.");
@@ -129,6 +132,16 @@ public class AccountController {
         return response;
     }
 
+    @GetMapping("/staff/{staffId}")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
+    public ApiResponse<AccountResponse> getStaffByIdForOwner(@PathVariable UUID staffId) {
+        ApiResponse<AccountResponse> response = new ApiResponse<>();
+        response.setResult(accountService.getStaffByIdForOwner(staffId));
+        response.setMessage("Lấy thông tin nhân viên thành công.");
+        return response;
+    }
+
+
     @PutMapping("/staff/{staffId}")
     @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<AccountResponse> updateStaffByOwner(@PathVariable UUID staffId,
@@ -188,7 +201,7 @@ public class AccountController {
     }
 
     @PostMapping("/me/verify-email-otp")
-    public ApiResponse<Void> verifyEmailOtp(@Valid @RequestBody com.g127.snapbuy.dto.request.VerifyEmailOtpRequest req) {
+    public ApiResponse<Void> verifyEmailOtp(@Valid @RequestBody VerifyEmailOtpRequest req) {
         UUID accountId = accountService.getMyInfo().getId();
         emailVerificationService.verifyOtp(accountId, req);
         ApiResponse<Void> response = new ApiResponse<>();
@@ -202,6 +215,61 @@ public class AccountController {
         ApiResponse<List<AccountResponse>> response = new ApiResponse<>();
         response.setResult(accountService.getAccountsByRoleName(roleName));
         response.setMessage("Lấy danh sách tài khoản theo vai trò thành công.");
+        return response;
+    }
+
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('Quản trị viên')")
+    public ApiResponse<List<AccountResponse>> searchAccounts(@RequestParam(required = false) String keyword,
+                                                             @RequestParam(required = false) Boolean active,
+                                                             @RequestParam(required = false) String role) {
+        ApiResponse<List<AccountResponse>> response = new ApiResponse<>();
+        response.setResult(accountService.searchAccounts(keyword, active, role));
+        response.setMessage("Tìm kiếm tài khoản thành công.");
+        return response;
+    }
+
+    @GetMapping("/search-paged")
+    @PreAuthorize("hasRole('Quản trị viên')")
+    public ApiResponse<PageResponse<AccountResponse>> searchAccountsPaged(@RequestParam(required = false) String keyword,
+                                                                          @RequestParam(required = false) Boolean active,
+                                                                          @RequestParam(required = false) String role,
+                                                                          @RequestParam(defaultValue = "0") int page,
+                                                                          @RequestParam(defaultValue = "10") int size,
+                                                                          @RequestParam(defaultValue = "fullName") String sortBy,
+                                                                          @RequestParam(defaultValue = "ASC") String sortDir) {
+        var direction = "DESC".equalsIgnoreCase(sortDir)
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
+        var pageable = PageRequest.of(
+                Math.max(page, 0), Math.min(Math.max(size, 1), 200),
+                Sort.by(direction, sortBy)
+        );
+        ApiResponse<PageResponse<AccountResponse>> response = new ApiResponse<>();
+        response.setResult(accountService.searchAccountsPaged(keyword, active, role, pageable));
+        response.setMessage("Tìm kiếm tài khoản (phân trang) thành công.");
+        return response;
+    }
+
+    @GetMapping("/staff/search-paged")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    public ApiResponse<PageResponse<AccountResponse>> searchStaffAccountsPaged(@RequestParam(required = false) String keyword,
+                                                                               @RequestParam(required = false) Boolean active,
+                                                                               @RequestParam(required = false) String role,
+                                                                               @RequestParam(defaultValue = "0") int page,
+                                                                               @RequestParam(defaultValue = "10") int size,
+                                                                               @RequestParam(defaultValue = "fullName") String sortBy,
+                                                                               @RequestParam(defaultValue = "ASC") String sortDir) {
+        var direction = "DESC".equalsIgnoreCase(sortDir)
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
+        var pageable = PageRequest.of(
+                Math.max(page, 0), Math.min(Math.max(size, 1), 200),
+                Sort.by(direction, sortBy)
+        );
+        ApiResponse<PageResponse<AccountResponse>> response = new ApiResponse<>();
+        response.setResult(accountService.searchStaffAccountsPaged(keyword, active, role, pageable));
+        response.setMessage("Tìm kiếm tài khoản nhân viên (phân trang) thành công.");
         return response;
     }
 }

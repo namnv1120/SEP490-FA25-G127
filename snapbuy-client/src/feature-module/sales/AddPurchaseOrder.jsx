@@ -35,7 +35,7 @@ const AddPurchaseOrder = () => {
             label: s.supplierName,
           }));
         setSuppliers(options);
-      } catch (err) {
+      } catch {
         message.error("Không thể tải danh sách nhà cung cấp.");
       }
     };
@@ -59,7 +59,7 @@ const AddPurchaseOrder = () => {
             unitPrice: p.costPrice || 0, // Sử dụng giá nhập (costPrice) thay vì giá bán (unitPrice)
           }));
         setProducts(options);
-      } catch (err) {
+      } catch {
         message.error("Không thể tải sản phẩm của nhà cung cấp này.");
       }
     };
@@ -198,6 +198,7 @@ const AddPurchaseOrder = () => {
                   ]);
                 }}
                 placeholder="Chọn nhà cung cấp"
+                width={350}
               />
             </div>
 
@@ -222,6 +223,7 @@ const AddPurchaseOrder = () => {
                           value={item.product}
                           onChange={(opt) => updateItem(index, "product", opt)}
                           placeholder="Chọn sản phẩm"
+                          width={350}
                         />
                       </td>
                       <td>

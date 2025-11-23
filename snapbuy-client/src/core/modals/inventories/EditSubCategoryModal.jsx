@@ -1,8 +1,17 @@
-import { useState, useEffect } from "react";
-import { getCategoryById, updateCategory } from "../../../services/CategoryService";
+import { useState, useEffect, useCallback } from "react";
+import {
+  getCategoryById,
+  updateCategory,
+} from "../../../services/CategoryService";
 import { Modal, message, Spin } from "antd";
 
-const EditSubCategory = ({ isOpen, categoryId, parentCategories, onSuccess, onClose }) => {
+const EditSubCategory = ({
+  isOpen,
+  categoryId,
+  parentCategories,
+  onSuccess,
+  onClose,
+}) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     categoryName: "",
@@ -16,9 +25,9 @@ const EditSubCategory = ({ isOpen, categoryId, parentCategories, onSuccess, onCl
     if (isOpen && categoryId) {
       loadCategoryData();
     }
-  }, [isOpen, categoryId]);
+  }, [isOpen, categoryId, loadCategoryData]);
 
-  const loadCategoryData = async () => {
+  const loadCategoryData = useCallback(async () => {
     try {
       setLoading(true);
       const category = await getCategoryById(categoryId);
@@ -35,7 +44,7 @@ const EditSubCategory = ({ isOpen, categoryId, parentCategories, onSuccess, onCl
     } finally {
       setLoading(false);
     }
-  };
+  }, [categoryId, onClose]);
 
   // 🧩 Validate dữ liệu
   const validateForm = () => {
@@ -46,9 +55,11 @@ const EditSubCategory = ({ isOpen, categoryId, parentCategories, onSuccess, onCl
     } else if (formData.categoryName.length < 3) {
       newErrors.categoryName = "Tên danh mục con phải có ít nhất 3 ký tự.";
     } else if (formData.categoryName.length > 100) {
-      newErrors.categoryName = "Tên danh mục con không được vượt quá 100 ký tự.";
+      newErrors.categoryName =
+        "Tên danh mục con không được vượt quá 100 ký tự.";
     } else if (!/^[\p{L}\d ]+$/u.test(formData.categoryName)) {
-      newErrors.categoryName = "Tên danh mục chỉ cho phép chữ, số và khoảng trắng.";
+      newErrors.categoryName =
+        "Tên danh mục chỉ cho phép chữ, số và khoảng trắng.";
     }
 
     if (!formData.parentCategoryId) {
@@ -70,13 +81,6 @@ const EditSubCategory = ({ isOpen, categoryId, parentCategories, onSuccess, onCl
       [name]: value,
     }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
-  };
-
-  const handleStatusChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      active: e.target.checked,
-    }));
   };
 
   const handleSubmit = async () => {
@@ -120,27 +124,32 @@ const EditSubCategory = ({ isOpen, categoryId, parentCategories, onSuccess, onCl
       footer={null}
       width={600}
       closable={true}
-
       title={
         <div>
           <h4 className="mb-0">Cập nhật danh mục con</h4>
         </div>
       }
-
     >
       {loading && !formData.categoryName ? (
         <div className="d-flex justify-content-center p-4">
           <Spin size="large" />
         </div>
       ) : (
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+        >
           <div className="mb-3">
             <label className="form-label">
               Danh mục cha<span className="text-danger">*</span>
             </label>
             <select
               name="parentCategoryId"
-              className={`form-select ${errors.parentCategoryId ? "is-invalid" : ""}`}
+              className={`form-select ${
+                errors.parentCategoryId ? "is-invalid" : ""
+              }`}
               value={formData.parentCategoryId}
               onChange={handleInputChange}
               disabled={loading}
@@ -153,9 +162,7 @@ const EditSubCategory = ({ isOpen, categoryId, parentCategories, onSuccess, onCl
               ))}
             </select>
             {errors.parentCategoryId && (
-              <div className="invalid-feedback">
-                {errors.parentCategoryId}
-              </div>
+              <div className="invalid-feedback">{errors.parentCategoryId}</div>
             )}
           </div>
 
@@ -166,15 +173,15 @@ const EditSubCategory = ({ isOpen, categoryId, parentCategories, onSuccess, onCl
             <input
               type="text"
               name="categoryName"
-              className={`form-control ${errors.categoryName ? "is-invalid" : ""}`}
+              className={`form-control ${
+                errors.categoryName ? "is-invalid" : ""
+              }`}
               value={formData.categoryName}
               onChange={handleInputChange}
               disabled={loading}
             />
             {errors.categoryName && (
-              <div className="invalid-feedback">
-                {errors.categoryName}
-              </div>
+              <div className="invalid-feedback">{errors.categoryName}</div>
             )}
           </div>
 
@@ -182,16 +189,16 @@ const EditSubCategory = ({ isOpen, categoryId, parentCategories, onSuccess, onCl
             <label className="form-label">Mô tả</label>
             <textarea
               name="description"
-              className={`form-control ${errors.description ? "is-invalid" : ""}`}
+              className={`form-control ${
+                errors.description ? "is-invalid" : ""
+              }`}
               rows="3"
               value={formData.description}
               onChange={handleInputChange}
               disabled={loading}
             />
             {errors.description && (
-              <div className="invalid-feedback">
-                {errors.description}
-              </div>
+              <div className="invalid-feedback">{errors.description}</div>
             )}
           </div>
 
@@ -204,11 +211,7 @@ const EditSubCategory = ({ isOpen, categoryId, parentCategories, onSuccess, onCl
             >
               Huỷ
             </button>
-            <button
-              type="submit"
-              className="btn btn-submit"
-              disabled={loading}
-            >
+            <button type="submit" className="btn btn-submit" disabled={loading}>
               {loading ? "Đang lưu..." : "Lưu thay đổi"}
             </button>
           </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Modal, Spin, message } from "antd";
 import { getPurchaseOrderById } from "../../../services/PurchaseOrderService";
 
@@ -10,9 +10,9 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
     if (isOpen && purchaseOrderId) {
       fetchOrderDetail();
     }
-  }, [isOpen, purchaseOrderId]);
+  }, [isOpen, purchaseOrderId, fetchOrderDetail]);
 
-  const fetchOrderDetail = async () => {
+  const fetchOrderDetail = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getPurchaseOrderById(purchaseOrderId);
@@ -28,7 +28,10 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
       const errorMessage = error.message || "Không thể tải chi tiết đơn hàng!";
       message.error(errorMessage);
 
-      if (error.message?.includes("Status: 404") || error.message?.includes("Status: 500")) {
+      if (
+        error.message?.includes("Status: 404") ||
+        error.message?.includes("Status: 500")
+      ) {
         setTimeout(() => {
           onClose();
         }, 2000);
@@ -36,7 +39,7 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [purchaseOrderId, onClose]);
 
   const formatDateTime = (dateString) => {
     if (!dateString) return "—";
@@ -61,7 +64,14 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
       case "đã duyệt":
         return <span className="badge bg-info">Đã duyệt</span>;
       case "chờ xác nhận":
-        return <span className="badge text-white" style={{ backgroundColor: '#ff9800' }}>Chờ xác nhận</span>;
+        return (
+          <span
+            className="badge text-white"
+            style={{ backgroundColor: "#ff9800" }}
+          >
+            Chờ xác nhận
+          </span>
+        );
       case "đã nhận hàng":
         return <span className="badge bg-success">Đã nhận hàng</span>;
       default:
@@ -70,34 +80,38 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
   };
 
   const isReceived = orderData?.status?.toLowerCase() === "đã nhận hàng";
-  const isWaitingConfirmation = orderData?.status?.toLowerCase() === "chờ xác nhận";
+  const isWaitingConfirmation =
+    orderData?.status?.toLowerCase() === "chờ xác nhận";
   const isApproved = orderData?.status?.toLowerCase() === "đã duyệt";
   // Nếu đã duyệt hoặc chờ xác nhận, tính theo số lượng thực nhận (kể cả = 0)
-  const shouldUseReceivedQty = isApproved || isWaitingConfirmation || isReceived;
-  
+  const shouldUseReceivedQty =
+    isApproved || isWaitingConfirmation || isReceived;
+
   const subtotal =
-    orderData?.details?.reduce(
-      (sum, item) => {
-        const receiveQty = item.receiveQuantity || item.receivedQuantity || 0;
-        const quantity = item.quantity || 0;
-        const unitPrice = item.unitPrice || 0;
-        // Nếu đã duyệt/chờ xác nhận/đã nhận hàng và có receiveQuantity (kể cả = 0), tính theo receiveQuantity
-        // Ngược lại tính theo quantity
-        const qty = shouldUseReceivedQty && (receiveQty !== null && receiveQty !== undefined) ? receiveQty : quantity;
-        return sum + qty * unitPrice;
-      },
-      0
-    ) || 0;
+    orderData?.details?.reduce((sum, item) => {
+      const receiveQty = item.receiveQuantity || item.receivedQuantity || 0;
+      const quantity = item.quantity || 0;
+      const unitPrice = item.unitPrice || 0;
+      // Nếu đã duyệt/chờ xác nhận/đã nhận hàng và có receiveQuantity (kể cả = 0), tính theo receiveQuantity
+      // Ngược lại tính theo quantity
+      const qty =
+        shouldUseReceivedQty && receiveQty !== null && receiveQty !== undefined
+          ? receiveQty
+          : quantity;
+      return sum + qty * unitPrice;
+    }, 0) || 0;
 
   const taxAmount = orderData?.taxAmount || 0;
   // Nếu đã nhận hàng, sử dụng totalAmount và taxAmount từ server (đã tính theo giá mới)
   // Ngược lại tính theo công thức cũ
-  const calculatedTax = isReceived && orderData?.taxAmount != null
-    ? orderData.taxAmount
-    : subtotal * (parseFloat(taxAmount || 0) / 100);
-  const totalAmount = isReceived && orderData?.totalAmount 
-    ? orderData.totalAmount 
-    : subtotal + calculatedTax;
+  const calculatedTax =
+    isReceived && orderData?.taxAmount != null
+      ? orderData.taxAmount
+      : subtotal * (parseFloat(taxAmount || 0) / 100);
+  const totalAmount =
+    isReceived && orderData?.totalAmount
+      ? orderData.totalAmount
+      : subtotal + calculatedTax;
 
   return (
     <Modal
@@ -111,9 +125,7 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
         <div>
           <h4 className="mb-1">Chi tiết đơn đặt hàng</h4>
           {orderData && (
-            <span className="text-muted">
-              {orderData.purchaseOrderNumber}
-            </span>
+            <span className="text-muted">{orderData.purchaseOrderNumber}</span>
           )}
         </div>
       }
@@ -133,11 +145,15 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
               <div className="row">
                 <div className="col-md-6 mb-3">
                   <label className="text-muted small">Nhà cung cấp:</label>
-                  <p className="mb-0 fw-semibold">{orderData.supplierName || "—"}</p>
+                  <p className="mb-0 fw-semibold">
+                    {orderData.supplierName || "—"}
+                  </p>
                 </div>
                 <div className="col-md-6 mb-3">
                   <label className="text-muted small">Người tạo đơn:</label>
-                  <p className="mb-0 fw-semibold">{orderData.fullName || "—"}</p>
+                  <p className="mb-0 fw-semibold">
+                    {orderData.fullName || "—"}
+                  </p>
                 </div>
                 <div className="col-md-6 mb-3">
                   <label className="text-muted small">Ngày tạo phiếu:</label>
@@ -171,11 +187,25 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
                 <table className="table table-bordered align-middle mb-0">
                   <thead className="table-light">
                     <tr>
-                      <th style={{ width: (orderData.status?.toLowerCase() === "đã duyệt" || orderData.status?.toLowerCase() === "chờ xác nhận" || orderData.status?.toLowerCase() === "đã nhận hàng") ? "30%" : "40%" }}>Sản phẩm</th>
+                      <th
+                        style={{
+                          width:
+                            orderData.status?.toLowerCase() === "đã duyệt" ||
+                            orderData.status?.toLowerCase() ===
+                              "chờ xác nhận" ||
+                            orderData.status?.toLowerCase() === "đã nhận hàng"
+                              ? "30%"
+                              : "40%",
+                        }}
+                      >
+                        Sản phẩm
+                      </th>
                       <th style={{ width: "15%" }} className="text-center">
                         Số lượng
                       </th>
-                      {(orderData.status?.toLowerCase() === "đã duyệt" || orderData.status?.toLowerCase() === "chờ xác nhận" || orderData.status?.toLowerCase() === "đã nhận hàng") && (
+                      {(orderData.status?.toLowerCase() === "đã duyệt" ||
+                        orderData.status?.toLowerCase() === "chờ xác nhận" ||
+                        orderData.status?.toLowerCase() === "đã nhận hàng") && (
                         <th style={{ width: "15%" }} className="text-center">
                           SL thực nhận
                         </th>
@@ -191,14 +221,21 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
                   <tbody>
                     {orderData.details && orderData.details.length > 0 ? (
                       orderData.details.map((item, index) => {
-                        const isApprovedOrReceived = orderData.status?.toLowerCase() === "đã duyệt" || orderData.status?.toLowerCase() === "chờ xác nhận" || orderData.status?.toLowerCase() === "đã nhận hàng";
-                        const receiveQty = item.receiveQuantity || item.receivedQuantity || 0;
+                        const isApprovedOrReceived =
+                          orderData.status?.toLowerCase() === "đã duyệt" ||
+                          orderData.status?.toLowerCase() === "chờ xác nhận" ||
+                          orderData.status?.toLowerCase() === "đã nhận hàng";
+                        const receiveQty =
+                          item.receiveQuantity || item.receivedQuantity || 0;
                         const quantity = item.quantity || 0;
                         const unitPrice = item.unitPrice || 0;
                         // Nếu đã duyệt/chờ xác nhận/đã nhận hàng và có receiveQuantity (kể cả = 0), tính theo receiveQuantity
-                        const total = isApprovedOrReceived && (receiveQty !== null && receiveQty !== undefined)
-                          ? receiveQty * unitPrice
-                          : quantity * unitPrice;
+                        const total =
+                          isApprovedOrReceived &&
+                          receiveQty !== null &&
+                          receiveQty !== undefined
+                            ? receiveQty * unitPrice
+                            : quantity * unitPrice;
 
                         return (
                           <tr key={index}>
@@ -214,12 +251,14 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
                                 )}
                               </div>
                             </td>
-                            <td className="text-center">
-                              {quantity}
-                            </td>
+                            <td className="text-center">{quantity}</td>
                             {isApprovedOrReceived && (
                               <td className="text-center">
-                                <span className={receiveQty > 0 ? "text-success fw-bold" : ""}>
+                                <span
+                                  className={
+                                    receiveQty > 0 ? "text-success fw-bold" : ""
+                                  }
+                                >
                                   {receiveQty}
                                 </span>
                               </td>
@@ -232,14 +271,14 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
                             </td>
                           </tr>
                         );
-                      }))
-                      : (
-                        <tr>
-                          <td colSpan="4" className="text-center py-4 text-muted">
-                            Không có sản phẩm
-                          </td>
-                        </tr>
-                      )}
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className="text-center py-4 text-muted">
+                          Không có sản phẩm
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -259,9 +298,7 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
                   {calculatedTax > 0 && (
                     <div className="d-flex justify-content-between mb-2">
                       <span>Thuế {isReceived ? "" : `(${taxAmount}%)`}:</span>
-                      <strong>
-                        {formatCurrency(calculatedTax)}
-                      </strong>
+                      <strong>{formatCurrency(calculatedTax)}</strong>
                     </div>
                   )}
                   <div className="d-flex justify-content-between border-top pt-2 mt-2">
@@ -308,4 +345,3 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
 };
 
 export default PurchaseOrderDetailModal;
-

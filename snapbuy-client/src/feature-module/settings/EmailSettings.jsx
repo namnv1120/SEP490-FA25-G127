@@ -5,6 +5,7 @@ import CommonFooter from "../../components/footer/CommonFooter";
 import SettingsSideBar from "../../feature-module/settings/SettingsSideBar";
 import { message } from "antd";
 import { getMyInfo, requestEmailVerification, verifyEmailOtp } from "../../services/AccountService";
+import PageLoader from "../../components/loading/PageLoader.jsx";
 
 const EmailSettings = () => {
   const [formData, setFormData] = useState({
@@ -135,9 +136,12 @@ const EmailSettings = () => {
   };
 
   return (
-    <>
-      <div className="page-wrapper">
-        <div className="content settings-content">
+    isLoading ? (
+      <PageLoader />
+    ) : (
+      <>
+        <div className="page-wrapper">
+          <div className="content settings-content">
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
@@ -150,7 +154,7 @@ const EmailSettings = () => {
               <CollapesIcon />
             </ul>
           </div>
-          <div className="row">
+            <div className="row">
             <div className="col-xl-12">
               <div className="settings-wrapper d-flex">
                 <SettingsSideBar />
@@ -159,13 +163,7 @@ const EmailSettings = () => {
                     <h4 className="fs-18 fw-bold">Email</h4>
                   </div>
                   <div className="card-body">
-                    {isLoading ? (
-                      <div className="text-center py-5">
-                        <div className="spinner-border text-primary" role="status">
-                          <span className="visually-hidden">Loading...</span>
-                        </div>
-                      </div>
-                    ) : (
+                    {
                       <form onSubmit={showOtpForm ? handleVerifyOtp : handleRequestOtp} noValidate>
                         <div className="card-title-head mb-3">
                           <h6 className="fs-16 fw-bold mb-1">
@@ -285,18 +283,18 @@ const EmailSettings = () => {
                           </button>
                         </div>
                       </form>
-                    )}
+                    }
                   </div>
                 </div>
               </div>
             </div>
+            </div>
           </div>
+          <CommonFooter />
         </div>
-        <CommonFooter />
-      </div>
-    </>
+      </>
+    )
   );
 };
 
 export default EmailSettings;
-

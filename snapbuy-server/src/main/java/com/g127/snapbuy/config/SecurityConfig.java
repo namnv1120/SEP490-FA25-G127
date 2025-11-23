@@ -30,10 +30,11 @@ public class SecurityConfig {
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
+    private final com.g127.snapbuy.repository.AccountRepository accountRepository;
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtUtil, userDetailsService, tokenBlacklistService);
+        return new JwtAuthenticationFilter(jwtUtil, userDetailsService, tokenBlacklistService, accountRepository);
     }
 
     @Bean

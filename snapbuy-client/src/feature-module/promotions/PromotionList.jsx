@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { message } from "antd";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
@@ -21,22 +21,18 @@ const PromotionList = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedPromotionId, setSelectedPromotionId] = useState(null);
 
-  useEffect(() => {
-    fetchPromotions();
-  }, []);
-
   const formatDateTime = (dateString) => {
     if (!dateString) return "Không có";
     const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 
-  const fetchPromotions = async () => {
+  const fetchPromotions = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -55,13 +51,18 @@ const PromotionList = () => {
           promotionName: promo.promotionName,
           description: promo.description || "Không có",
           discountType: promo.discountType,
-          discountValue: promo.discountType === "Giảm theo phần trăm"
-            ? `${promo.discountValue}%`
-            : `${promo.discountValue?.toLocaleString()} đ`,
+          discountValue:
+            promo.discountType === "Giảm theo phần trăm"
+              ? `${promo.discountValue}%`
+              : `${promo.discountValue?.toLocaleString()} đ`,
           startDate: formatDateTime(promo.startDate),
           endDate: formatDateTime(promo.endDate),
           productCount: promo.productIds?.length || 0,
-          status: isActive ? "Hoạt động" : (isExpired ? "Hết hạn" : "Không hoạt động"),
+          status: isActive
+            ? "Hoạt động"
+            : isExpired
+            ? "Hết hạn"
+            : "Không hoạt động",
           active: isActive,
           isExpired: isExpired,
         };
@@ -70,13 +71,17 @@ const PromotionList = () => {
       setPromotions(mappedData);
       setFilteredPromotions(mappedData);
       setTotalRecords(mappedData.length);
-    } catch (err) {
+    } catch {
       setError("Lỗi khi tải danh sách khuyến mãi. Vui lòng thử lại.");
       message.error("Không thể tải danh sách khuyến mãi");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchPromotions();
+  }, [fetchPromotions]);
 
   const handleSearch = (query) => {
     if (!query || query.trim() === "") {
@@ -122,7 +127,7 @@ const PromotionList = () => {
     try {
       await exportToExcel(exportData, "Danh_sach_khuyen_mai");
       message.success("Xuất Excel thành công!");
-    } catch (error) {
+    } catch {
       message.error("Lỗi khi xuất Excel!");
     }
   };
@@ -163,7 +168,7 @@ const PromotionList = () => {
       field: "productCount",
       sortable: true,
       body: (rowData) => (
-        <div style={{ textAlign: 'center' }}>
+        <div style={{ textAlign: "center" }}>
           <span className="badge bg-info">{rowData.productCount}</span>
         </div>
       ),
@@ -175,7 +180,11 @@ const PromotionList = () => {
       body: (rowData) => (
         <span
           className={`badge ${
-            rowData.active ? "bg-success" : (rowData.isExpired ? "bg-warning" : "bg-danger")
+            rowData.active
+              ? "bg-success"
+              : rowData.isExpired
+              ? "bg-warning"
+              : "bg-danger"
           }`}
         >
           {rowData.status}
@@ -281,4 +290,3 @@ const PromotionList = () => {
 };
 
 export default PromotionList;
-

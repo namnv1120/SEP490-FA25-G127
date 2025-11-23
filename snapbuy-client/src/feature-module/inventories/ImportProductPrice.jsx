@@ -3,7 +3,6 @@ import ImportExcelModal from "../../components/ImportExcelModal";
 import { getAllProductPrices } from "../../services/ProductPriceService";
 import { getAllProducts } from "../../services/ProductService";
 import { importProductPrices } from "../../services/ProductPriceService";
-import { message } from "antd";
 
 const ImportProductPrice = ({ visible, onClose, onImportSuccess }) => {
   const [productsData, setProductsData] = useState([]);

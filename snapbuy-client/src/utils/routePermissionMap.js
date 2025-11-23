@@ -33,8 +33,10 @@ export const routeRoleMap = {
   // Transaction History - Không có @PreAuthorize
   '/transaction-history': null,
 
-  // POS - Không có @PreAuthorize
-  '/pos': null,
+  // POS - hạn chế theo role
+  '/pos': ['Quản trị viên', 'Chủ cửa hàng', 'Nhân viên bán hàng'],
+  '/pos-shift': ['Quản trị viên', 'Chủ cửa hàng', 'Nhân viên bán hàng'],
+  '/sales-dashboard': ['Quản trị viên', 'Chủ cửa hàng', 'Nhân viên bán hàng'],
 
   // Accounts - hasRole('Quản trị viên')
   '/accounts': ['Quản trị viên'],
@@ -42,11 +44,15 @@ export const routeRoleMap = {
   // Roles - hasAnyRole('Quản trị viên','Chủ cửa hàng')
   '/roles-permissions': ['Quản trị viên', 'Chủ cửa hàng'],
 
-  // Customers - Không có @PreAuthorize
-  '/customers': null,
+  // Customers - hạn chế theo role
+  '/customers': ['Quản trị viên', 'Chủ cửa hàng', 'Nhân viên bán hàng'],
 
-  // Suppliers - Không có @PreAuthorize
-  '/suppliers': null,
+  // Suppliers - hạn chế theo role
+  '/suppliers': ['Quản trị viên', 'Chủ cửa hàng', 'Nhân viên kho'],
+
+  // Staff management - hasAnyRole('Quản trị viên','Chủ cửa hàng')
+  '/staff-accounts': ['Quản trị viên', 'Chủ cửa hàng'],
+  '/staff-shifts': ['Quản trị viên', 'Chủ cửa hàng'],
 
   // Reports - hasAnyRole('Quản trị viên','Chủ cửa hàng')
   '/revenue-report': ['Quản trị viên', 'Chủ cửa hàng'],
@@ -87,4 +93,3 @@ export const getAllowedRolesForRoute = (routePath) => {
   // Default: no role required (allow access)
   return null;
 };
-

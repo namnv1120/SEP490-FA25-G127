@@ -32,7 +32,7 @@ const OrderDetailModal = ({ show, onHide, order, accountNamesMap = {} }) => {
             const account = await getAccountById(accountId);
             const name = account.fullName || account.username || account.email || "Không xác định";
             setCreatorName(name);
-          } catch (err) {
+          } catch {
             setCreatorName("Không tìm thấy");
           }
         } else {
@@ -56,7 +56,7 @@ const OrderDetailModal = ({ show, onHide, order, accountNamesMap = {} }) => {
         }));
         setLineItems(formattedItems);
 
-      } catch (error) {
+      } catch {
         message.error("Không thể tải chi tiết đơn hàng.");
         setCreatorName("Lỗi");
       } finally {

@@ -8,6 +8,6 @@ const CommonSlice = createSlice({
   reducers: {},
 });
 
-export const {} = CommonSlice.actions;
+ 
 
 export default CommonSlice.reducer;

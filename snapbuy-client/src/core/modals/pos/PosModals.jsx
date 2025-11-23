@@ -1,29 +1,53 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Modal, message, Spin } from "antd";
-import TableTopHead from "../../../components/table-top-head";
-import CommonSelect from "../../../components/select/common-select";
-import { getAllOrders, getOrderById, cancelOrder } from "../../../services/OrderService";
+import {
+  getAllOrders,
+  getOrderById,
+  cancelOrder,
+  getMyOrdersByDateTimeRange,
+} from "../../../services/OrderService";
+import { getMyInfo } from "../../../services/AccountService";
 import { getCustomerById } from "../../../services/CustomerService";
-import { logoPng, barcodeImg3 } from "../../../utils/imagepath";
+import { logoPng } from "../../../utils/imagepath";
 import "../../../assets/css/pos-sidebar.css";
 
-const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onClosePaymentMethodModal, onPaymentCompleted, onSelectPaymentMethod, showCashPaymentModal, showMomoModal, showOrderSuccessModal, onCloseOrderSuccessModal, completedOrderForPrint, onCashPaymentConfirm, onMomoModalClose, onCompleteOrder, onCashPaymentCompleted, onHandleOrderPayment, onSelectOrder }) => {
-  const [selectedTaxType, setSelectedTaxType] = useState(null);
-  const [selectedDiscountType, setSelectedDiscountType] = useState(null);
-  const [selectedWeightUnit, setSelectedWeightUnit] = useState(null);
-  const [selectedTaxRate, setSelectedTaxRate] = useState(null);
-  const [selectedCouponCode, setSelectedCouponCode] = useState(null);
-  const [selectedDiscountMode, setSelectedDiscountMode] = useState(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
-  const [selectedPaymentType, setSelectedPaymentType] = useState(null);
-  const [input, setInput] = useState("");
+const PosModals = ({
+  createdOrder,
+  totalAmount,
+  showPaymentMethodModal,
+  onClosePaymentMethodModal,
+  onPaymentCompleted,
+  onSelectPaymentMethod,
+  showCashPaymentModal,
+  showMomoModal,
+  showOrderSuccessModal,
+  onCloseOrderSuccessModal,
+  completedOrderForPrint,
+  onCashPaymentConfirm,
+  onMomoModalClose,
+  onCompleteOrder,
+  onCashPaymentCompleted,
+  onSelectOrder,
+  showShiftModal,
+  onCloseShiftModal,
+  currentShift,
+  shiftLoading,
+  onOpenShift,
+  onCloseShift,
+}) => {
+  
+  
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersSearchQuery, setOrdersSearchQuery] = useState("");
-  const [ordersFetched, setOrdersFetched] = useState(false);
+  
   const [cashReceived, setCashReceived] = useState("");
   const [momoPayUrl, setMomoPayUrl] = useState(null);
+  const [shiftAmount, setShiftAmount] = useState("");
+  const [expectedDrawer, setExpectedDrawer] = useState(null);
+  const [shiftNote, setShiftNote] = useState("");
+  const [myAccountId, setMyAccountId] = useState(null);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
   const [orderDetailLoading, setOrderDetailLoading] = useState(false);
   const [showOrderDetailModal, setShowOrderDetailModal] = useState(false);
@@ -33,79 +57,134 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
   const cashReceivedInputRef = useRef(null);
 
-  const handleButtonClick = (value) => {
-    setInput((prev) => prev + value);
-  };
+  
 
-  const handleClear = () => {
-    setInput("");
-  };
+  
 
-  const handleBackspace = () => {
-    setInput((prev) => prev.slice(0, -1));
-  };
+  
+  useEffect(() => {
+    setShiftAmount("");
+    setShiftNote("");
+  }, [showShiftModal, currentShift?.status]);
 
-  const handleSolve = () => {
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const info = await getMyInfo();
+        const u = info.result || info;
+        setMyAccountId(u?.id || null);
+      } catch { void 0; }
+    };
+    if (showShiftModal) loadUser();
+  }, [showShiftModal]);
+
+  const expectedPollingRef = useRef(null);
+  const computeExpectedDrawer = useCallback(async () => {
+    if (
+      !showShiftModal ||
+      !currentShift ||
+      currentShift.status !== "Mở" ||
+      !currentShift.openedAt
+    ) {
+      setExpectedDrawer(null);
+      return;
+    }
     try {
-      setInput(eval(input).toString());
-    } catch (error) {
-      setInput("Error");
+      const startISO = currentShift.openedAt;
+      const nowISO = new Date().toISOString();
+      let rows = (await getMyOrdersByDateTimeRange(startISO, nowISO)) || [];
+      if (!Array.isArray(rows) || rows.length === 0) {
+        try {
+          const fromDate = new Date(startISO);
+          const toDate = new Date(nowISO);
+          const formatDate = (d) =>
+            `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+              2,
+              "0"
+            )}-${String(d.getDate()).padStart(2, "0")}`;
+          const resp = await getAllOrders({
+            from: formatDate(fromDate),
+            to: formatDate(toDate),
+          });
+          const all = resp?.content || resp || [];
+          const myId = myAccountId;
+          const fromTs = fromDate.getTime();
+          const toTs = toDate.getTime();
+          rows = (Array.isArray(all) ? all : []).filter((o) => {
+            const uid =
+              o.accountId || (o.account && o.account.accountId) || null;
+            const dt = new Date(
+              o.orderDate || o.createdDate || o.createdAt || Date.now()
+            ).getTime();
+            return (
+              myId &&
+              uid &&
+              String(uid) === String(myId) &&
+              dt >= fromTs &&
+              dt <= toTs
+            );
+          });
+        } catch { void 0; }
+      }
+      const paid = (s) =>
+        (s || "").toString().toLowerCase().includes("đã thanh toán") ||
+        (s || "").toString().toUpperCase() === "PAID" ||
+        (s || "").toString().toUpperCase() === "PAYMENT_COMPLETED";
+      const done = (s) =>
+        (s || "").toString().toLowerCase().includes("hoàn tất") ||
+        (s || "").toString().toUpperCase() === "COMPLETED";
+      const methodStr = (o) =>
+        (o.payment?.paymentMethod || o.paymentMethod || "")
+          .toString()
+          .toUpperCase();
+      const isCash = (m) => m.includes("CASH") || m.includes("TIỀN MẶT");
+      const completedPaid = rows.filter(
+        (o) => paid(o.paymentStatus) && done(o.orderStatus)
+      );
+      const cashCol = completedPaid
+        .filter((o) => isCash(methodStr(o)))
+        .reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+      const changeReturned = completedPaid.reduce(
+        (sum, o) => sum + Number(o.payment?.changeAmount || 0),
+        0
+      );
+      setExpectedDrawer(
+        Number(currentShift?.initialCash || 0) + cashCol - changeReturned
+      );
+    } catch {
+      setExpectedDrawer(null);
     }
-  };
+  }, [showShiftModal, currentShift, myAccountId]);
 
-  const handleKeyPress = (event) => {
-    if (/[0-9+\-*/%.]/.test(event.key)) {
-      setInput((prev) => prev + event.key);
-    } else if (event.key === "Backspace") {
-      handleBackspace();
-    } else if (event.key === "Enter") {
-      handleSolve();
-    } else if (event.key === "c") {
-      handleClear();
+  useEffect(() => {
+    if (
+      showShiftModal &&
+      currentShift?.status === "Mở" &&
+      currentShift?.openedAt &&
+      myAccountId
+    ) {
+      computeExpectedDrawer();
+      const id = setInterval(computeExpectedDrawer, 2000);
+      expectedPollingRef.current = id;
+      return () => {
+        if (expectedPollingRef.current) {
+          clearInterval(expectedPollingRef.current);
+          expectedPollingRef.current = null;
+        }
+      };
+    } else {
+      if (expectedPollingRef.current) {
+        clearInterval(expectedPollingRef.current);
+        expectedPollingRef.current = null;
+      }
     }
-  };
-
-  const options = {
-    taxType: [
-      { value: "exclusive", label: "Exclusive" },
-      { value: "inclusive", label: "Inclusive" },
-    ],
-    discountType: [
-      { value: "percentage", label: "Percentage" },
-      { value: "early_payment", label: "Early payment discounts" },
-    ],
-    weightUnits: [
-      { value: "kg", label: "Kilogram" },
-      { value: "g", label: "Grams" },
-    ],
-    taxRates: [
-      { value: "select", label: "Select" },
-      { value: "no_tax", label: "No Tax" },
-      { value: "10", label: "@10" },
-      { value: "15", label: "@15" },
-      { value: "vat", label: "VAT" },
-      { value: "sltax", label: "SLTAX" },
-    ],
-    couponCodes: [
-      { value: "select", label: "Select" },
-    ],
-    discountMode: [
-      { value: "select", label: "Select" },
-      { value: "flat", label: "Flat" },
-      { value: "percentage", label: "Percentage" },
-    ],
-    paymentMethods: [
-      { value: "cash", label: "Cash" },
-      { value: "card", label: "Card" },
-    ],
-    paymentTypes: [
-      { value: "credit", label: "Credit Card" },
-      { value: "cash", label: "Cash" },
-      { value: "cheque", label: "Cheque" },
-      { value: "deposit", label: "Deposit" },
-      { value: "points", label: "Points" },
-    ],
-  };
+  }, [
+    showShiftModal,
+    currentShift?.openedAt,
+    currentShift?.status,
+    myAccountId,
+    computeExpectedDrawer,
+  ]);
 
   // Extract MoMo payUrl from created order
   useEffect(() => {
@@ -119,7 +198,10 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
           foundPayUrl = createdOrder.payment.payUrl;
         }
         // Check if payment notes contain PAYURL
-        else if (createdOrder.payment.notes && createdOrder.payment.notes.startsWith("PAYURL:")) {
+        else if (
+          createdOrder.payment.notes &&
+          createdOrder.payment.notes.startsWith("PAYURL:")
+        ) {
           foundPayUrl = createdOrder.payment.notes.substring("PAYURL:".length);
         }
       }
@@ -135,9 +217,7 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
   }, [createdOrder, showMomoModal]);
 
   // Handle payment method selection - will be passed from Pos.jsx
-  const handleSelectPaymentMethod = (method) => {
-    // This will be overridden by prop from Pos.jsx
-  };
+  
 
   // Calculate change amount
   const calculateChange = () => {
@@ -176,7 +256,8 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
         // Success modal will be shown by onCashPaymentCompleted handler in Pos.jsx
       } catch (error) {
         message.destroy();
-        const errorMessage = error.response?.data?.message ||
+        const errorMessage =
+          error.response?.data?.message ||
           error.message ||
           "Thanh toán thất bại. Vui lòng thử lại!";
         message.error(errorMessage);
@@ -212,8 +293,8 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
       }
       const data = await getAllOrders();
       setOrders(data || []);
-      setOrdersFetched(true);
-    } catch (error) {
+      
+    } catch {
       message.error("Không thể tải danh sách đơn hàng");
       setOrders([]);
     } finally {
@@ -226,33 +307,40 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
   // Fetch orders when modal opens - always fetch but hide loading after first time
   useEffect(() => {
     const handleModalShown = async () => {
-      const ordersModal = document.getElementById('orders');
-      if (ordersModal && ordersModal.classList.contains('show')) {
+      const ordersModal = document.getElementById("orders");
+      if (ordersModal && ordersModal.classList.contains("show")) {
         // Show loading only if no data yet
         await fetchOrders(orders.length === 0);
       }
     };
 
     // Listen for modal show event
-    const ordersModal = document.getElementById('orders');
+    const ordersModal = document.getElementById("orders");
     if (ordersModal) {
-      ordersModal.addEventListener('shown.bs.modal', handleModalShown);
+      ordersModal.addEventListener("shown.bs.modal", handleModalShown);
       return () => {
-        ordersModal.removeEventListener('shown.bs.modal', handleModalShown);
+        ordersModal.removeEventListener("shown.bs.modal", handleModalShown);
       };
     }
   }, [orders.length]);
-
 
   // Helper function to get order status
   const getOrderStatus = (order) => {
     // Map API status to Vietnamese status
     const status = order.orderStatus || order.status || "";
 
-    if (status === "Hoàn tất" || status === "Completed" || status === "COMPLETED") {
+    if (
+      status === "Hoàn tất" ||
+      status === "Completed" ||
+      status === "COMPLETED"
+    ) {
       return "Hoàn tất";
     }
-    if (status === "Đã hủy" || status === "Cancelled" || status === "CANCELLED") {
+    if (
+      status === "Đã hủy" ||
+      status === "Cancelled" ||
+      status === "CANCELLED"
+    ) {
       return "Đã hủy";
     }
     // Default to "Chờ xác nhận"
@@ -262,23 +350,37 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
   // Filter orders by status and search query, then sort by date (newest first)
   const getOrdersByStatus = (status) => {
     return orders
-      .filter(order => {
+      .filter((order) => {
         const orderStatus = getOrderStatus(order);
         return orderStatus === status;
       })
-      .filter(order => {
+      .filter((order) => {
         // Apply search filter
         if (!ordersSearchQuery) return true;
         const query = ordersSearchQuery.toLowerCase();
-        const customerName = (order.customer?.fullName || order.customer?.customerName || "").toLowerCase();
-        const orderNumber = (order.orderNumber || order.orderId || "").toString().toLowerCase();
+        const customerName = (
+          order.customer?.fullName ||
+          order.customer?.customerName ||
+          ""
+        ).toLowerCase();
+        const orderNumber = (order.orderNumber || order.orderId || "")
+          .toString()
+          .toLowerCase();
         const phone = (order.customer?.phone || "").toLowerCase();
-        return customerName.includes(query) || orderNumber.includes(query) || phone.includes(query);
+        return (
+          customerName.includes(query) ||
+          orderNumber.includes(query) ||
+          phone.includes(query)
+        );
       })
       .sort((a, b) => {
         // Sort by date, newest first
-        const dateA = new Date(a.orderDate || a.createdAt || a.createdDate || 0);
-        const dateB = new Date(b.orderDate || b.createdAt || b.createdDate || 0);
+        const dateA = new Date(
+          a.orderDate || a.createdAt || a.createdDate || 0
+        );
+        const dateB = new Date(
+          b.orderDate || b.createdAt || b.createdDate || 0
+        );
         return dateB - dateA; // Descending order (newest first)
       });
   };
@@ -296,9 +398,9 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
         try {
           const customerData = await getCustomerById(orderDetail.customerId);
           orderDetail.customer = customerData;
-        } catch (error) {
+        } catch {
           // If customer fetch fails, continue without customer data
-          console.warn("Không thể tải thông tin khách hàng:", error);
+          
         }
       }
 
@@ -306,7 +408,7 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
       setShowOrderDetailModal(true);
 
       setOrderDetailLoading(false);
-    } catch (error) {
+    } catch {
       setOrderDetailLoading(false);
       message.error("Không thể tải chi tiết đơn hàng");
     }
@@ -322,7 +424,7 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
       if (!order.orderDetails) {
         try {
           orderData = await getOrderById(order.orderId);
-        } catch (error) {
+        } catch {
           message.error("Không thể tải chi tiết đơn hàng để in");
           setPrintReceiptLoading(false);
           return;
@@ -334,9 +436,9 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
         try {
           const customerData = await getCustomerById(orderData.customerId);
           orderData.customer = customerData;
-        } catch (error) {
+        } catch {
           // If customer fetch fails, continue without customer data
-          console.warn("Không thể tải thông tin khách hàng:", error);
+          
         }
       }
 
@@ -345,38 +447,14 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
 
       // Show Ant Design Modal (similar to Order Detail Modal)
       setShowPrintReceiptModal(true);
-    } catch (error) {
+    } catch {
       setPrintReceiptLoading(false);
       message.error("Không thể mở hóa đơn in");
     }
   };
 
   // Helper function to close all modals and clean up
-  const closeAllModals = () => {
-    // Close all Bootstrap modals
-    if (window.bootstrap && window.bootstrap.Modal) {
-      const allModals = document.querySelectorAll('.modal.show');
-      allModals.forEach(modal => {
-        const bsModal = window.bootstrap.Modal.getInstance(modal);
-        if (bsModal) {
-          bsModal.hide();
-        }
-      });
-    }
-
-    // Remove all backdrops (both Bootstrap and custom)
-    const backdrops = document.querySelectorAll('.modal-backdrop, .modal-backdrop-custom');
-    backdrops.forEach(backdrop => backdrop.remove());
-
-    // Remove modal-open class from body
-    document.body.classList.remove('modal-open');
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
-
-    // Close all Ant Design modals by resetting states
-    setShowOrderDetailModal(false);
-    setSelectedOrderDetail(null);
-  };
+  
 
   // Handle select order from order list - load order into POS
   const handleSelectOrder = async (order) => {
@@ -386,15 +464,15 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
       if (!order.orderDetails || !order.customer) {
         try {
           orderData = await getOrderById(order.orderId);
-        } catch (error) {
+        } catch {
           message.error("Không thể tải thông tin đơn hàng");
           return;
         }
       }
 
       // Close orders modal first
-      const ordersModal = document.getElementById('orders');
-      if (ordersModal && ordersModal.classList.contains('show')) {
+      const ordersModal = document.getElementById("orders");
+      if (ordersModal && ordersModal.classList.contains("show")) {
         if (window.bootstrap && window.bootstrap.Modal) {
           const ordersBsModal = window.bootstrap.Modal.getInstance(ordersModal);
           if (ordersBsModal) {
@@ -402,11 +480,11 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
 
             // Clean up backdrops and body styles
             setTimeout(() => {
-              const backdrops = document.querySelectorAll('.modal-backdrop');
-              backdrops.forEach(backdrop => backdrop.remove());
-              document.body.classList.remove('modal-open');
-              document.body.style.overflow = '';
-              document.body.style.paddingRight = '';
+              const backdrops = document.querySelectorAll(".modal-backdrop");
+              backdrops.forEach((backdrop) => backdrop.remove());
+              document.body.classList.remove("modal-open");
+              document.body.style.overflow = "";
+              document.body.style.paddingRight = "";
 
               // Load order into POS
               if (onSelectOrder) {
@@ -426,7 +504,7 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
       } else {
         message.warning("Chức năng chọn đơn chưa được tích hợp");
       }
-    } catch (error) {
+    } catch {
       message.error("Không thể chọn đơn hàng này");
     }
   };
@@ -436,10 +514,12 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
     try {
       // Confirm before canceling
       Modal.confirm({
-        title: 'Xác nhận hủy đơn',
-        content: `Bạn có chắc chắn muốn hủy đơn hàng #${order.orderNumber || order.orderId}?`,
-        okText: 'Hủy đơn',
-        cancelText: 'Không',
+        title: "Xác nhận hủy đơn",
+        content: `Bạn có chắc chắn muốn hủy đơn hàng #${
+          order.orderNumber || order.orderId
+        }?`,
+        okText: "Hủy đơn",
+        cancelText: "Không",
         okButtonProps: { danger: true },
         centered: true, // Hiển thị modal ở giữa màn hình
         onOk: async () => {
@@ -452,94 +532,37 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
             try {
               const data = await getAllOrders();
               setOrders(data || []);
-            } catch (error) {
-              console.error("Không thể tải lại danh sách đơn hàng:", error);
-            }
+            } catch { void 0; }
 
             // Reset POS về trạng thái chưa tạo đơn (giống như khi thanh toán thành công)
             if (onPaymentCompleted) {
               await onPaymentCompleted();
             }
-          } catch (error) {
-            const errorMessage = error.response?.data?.message ||
-              error.message ||
-              "Hủy đơn hàng thất bại. Vui lòng thử lại!";
-            message.error(errorMessage);
+          } catch {
+            message.error("Hủy đơn hàng thất bại. Vui lòng thử lại!");
           } finally {
             setCancellingOrderId(null);
           }
-        }
+        },
       });
-    } catch (error) {
+    } catch {
       message.error("Không thể hủy đơn hàng này");
     }
   };
 
-  // Handle payment for order from order list
-  const handleOrderPayment = async (order) => {
-    try {
-      // Fetch full order details if needed
-      let orderData = order;
-      if (!order.orderDetails || !order.customer) {
-        try {
-          orderData = await getOrderById(order.orderId);
-        } catch (error) {
-          message.error("Không thể tải thông tin đơn hàng");
-          return;
-        }
-      }
-
-      // Close orders modal first, then show payment modal
-      const ordersModal = document.getElementById('orders');
-      if (ordersModal && ordersModal.classList.contains('show')) {
-        if (window.bootstrap && window.bootstrap.Modal) {
-          const ordersBsModal = window.bootstrap.Modal.getInstance(ordersModal);
-          if (ordersBsModal) {
-            // Hide the modal
-            ordersBsModal.hide();
-
-            // Clean up backdrops and body styles immediately
-            setTimeout(() => {
-              const backdrops = document.querySelectorAll('.modal-backdrop');
-              backdrops.forEach(backdrop => backdrop.remove());
-              document.body.classList.remove('modal-open');
-              document.body.style.overflow = '';
-              document.body.style.paddingRight = '';
-
-              // Show payment modal after cleanup
-              if (onHandleOrderPayment) {
-                onHandleOrderPayment(orderData);
-              } else {
-                message.warning("Chức năng thanh toán chưa được tích hợp");
-              }
-            }, 200);
-            return;
-          }
-        }
-      }
-
-      // If orders modal is not open, just show payment modal
-      if (onHandleOrderPayment) {
-        await onHandleOrderPayment(orderData);
-      } else {
-        message.warning("Chức năng thanh toán chưa được tích hợp");
-      }
-    } catch (error) {
-      message.error("Không thể xử lý thanh toán cho đơn hàng này");
-    }
-  };
+  
 
   // Format date
   const formatDate = (dateString) => {
     if (!dateString) return "-";
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+      return date.toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       });
     } catch {
       return dateString;
@@ -554,7 +577,11 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
     const method = order.payment.paymentMethod;
     if (method === "Tiền mặt" || method === "CASH" || method === "Cash") {
       return "Tiền mặt";
-    } else if (method === "MOMO" || method === "Ví điện tử" || method === "MoMo") {
+    } else if (
+      method === "MOMO" ||
+      method === "Ví điện tử" ||
+      method === "MoMo"
+    ) {
       return "MoMo";
     }
     return method;
@@ -614,7 +641,13 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
         <div className="row g-3">
           <div className="col-12">
             <div className="text-center mb-4">
-              <h5>Tổng tiền: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalAmount || createdOrder?.totalAmount || 0)}</h5>
+              <h5>
+                Tổng tiền:{" "}
+                {new Intl.NumberFormat("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                }).format(totalAmount || createdOrder?.totalAmount || 0)}
+              </h5>
             </div>
           </div>
           <div className="col-6">
@@ -624,11 +657,10 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                 if (onSelectPaymentMethod) {
                   try {
                     await onSelectPaymentMethod("cash");
-                  } catch (error) {
-                  }
+                  } catch { void 0; }
                 }
               }}
-              style={{ fontSize: '16px' }}
+              style={{ fontSize: "16px" }}
             >
               <i className="ti ti-cash-banknote fs-24 d-block mb-2" />
               Tiền mặt
@@ -641,11 +673,10 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                 if (onSelectPaymentMethod) {
                   try {
                     await onSelectPaymentMethod("momo");
-                  } catch (error) {
-                  }
+                  } catch { void 0; }
                 }
               }}
-              style={{ fontSize: '16px' }}
+              style={{ fontSize: "16px" }}
             >
               <i className="ti ti-scan fs-24 d-block mb-2" />
               MoMo
@@ -691,9 +722,16 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
               <input
                 type="text"
                 className="form-control"
-                value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalAmount || createdOrder?.totalAmount || 0)}
+                value={new Intl.NumberFormat("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                }).format(totalAmount || createdOrder?.totalAmount || 0)}
                 readOnly
-                style={{ fontSize: '18px', fontWeight: 'bold', textAlign: 'center' }}
+                style={{
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  textAlign: "center",
+                }}
               />
             </div>
           </div>
@@ -712,22 +750,40 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                   onChange={(e) => {
                     const value = e.target.value;
                     // Chỉ cho phép số dương hoặc rỗng
-                    if (value === "" || (!isNaN(value) && parseFloat(value) >= 0)) {
+                    if (
+                      value === "" ||
+                      (!isNaN(value) && parseFloat(value) >= 0)
+                    ) {
                       setCashReceived(value);
                     }
                   }}
                   min="0"
                   step="1000"
-                  style={{ fontSize: '16px', paddingLeft: '40px' }}
+                  style={{ fontSize: "16px", paddingLeft: "40px" }}
                   autoFocus
                   onKeyDown={(e) => {
                     // Chặn nhập dấu trừ, dấu cộng, và ký tự e/E
-                    if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === "E") {
+                    if (
+                      e.key === "-" ||
+                      e.key === "+" ||
+                      e.key === "e" ||
+                      e.key === "E"
+                    ) {
                       e.preventDefault();
                     }
                   }}
                 />
-                <span className="input-icon-addon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }}>
+                <span
+                  className="input-icon-addon"
+                  style={{
+                    position: "absolute",
+                    left: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    zIndex: 1,
+                    pointerEvents: "none",
+                  }}
+                >
                   <i className="ti ti-currency-dollar text-gray-9" />
                 </span>
               </div>
@@ -740,14 +796,20 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
               </label>
               <input
                 type="text"
-                className={`form-control ${calculateChange() >= 0 ? 'text-success' : 'text-danger'}`}
-                value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Math.abs(calculateChange()))}
+                className={`form-control ${
+                  calculateChange() >= 0 ? "text-success" : "text-danger"
+                }`}
+                value={new Intl.NumberFormat("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                }).format(Math.abs(calculateChange()))}
                 readOnly
                 style={{
-                  fontSize: '20px',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  backgroundColor: calculateChange() >= 0 ? '#d4edda' : '#f8d7da'
+                  fontSize: "20px",
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  backgroundColor:
+                    calculateChange() >= 0 ? "#d4edda" : "#f8d7da",
                 }}
               />
             </div>
@@ -757,7 +819,7 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
               <button
                 className="btn btn-success w-100"
                 onClick={handleCashPaymentConfirm}
-                style={{ fontSize: '16px', padding: '10px' }}
+                style={{ fontSize: "16px", padding: "10px" }}
               >
                 Xác nhận thanh toán
               </button>
@@ -788,20 +850,28 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
           <div className="mb-3">
             <h5 className="mb-2">Số tiền cần thanh toán</h5>
             <h3 className="text-primary">
-              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalAmount || createdOrder?.totalAmount || 0)}
+              {new Intl.NumberFormat("vi-VN", {
+                style: "currency",
+                currency: "VND",
+              }).format(totalAmount || createdOrder?.totalAmount || 0)}
             </h3>
           </div>
           {momoPayUrl ? (
             <>
               <div className="mb-3 p-3 bg-light rounded d-flex justify-content-center">
-                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(momoPayUrl)}`} alt="MoMo QR Code" />
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+                    momoPayUrl
+                  )}`}
+                  alt="MoMo QR Code"
+                />
               </div>
               <p className="text-muted mb-3">
                 Quét mã QR bằng ứng dụng MoMo để thanh toán
               </p>
               <button
                 className="btn btn-primary"
-                onClick={() => window.open(momoPayUrl, '_blank')}
+                onClick={() => window.open(momoPayUrl, "_blank")}
               >
                 <i className="ti ti-external-link me-2" />
                 Mở MoMo App
@@ -809,7 +879,9 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
             </>
           ) : (
             <div className="text-center py-4">
-              <p className="text-danger">Chưa có QR code thanh toán. Vui lòng thử lại.</p>
+              <p className="text-danger">
+                Chưa có QR code thanh toán. Vui lòng thử lại.
+              </p>
             </div>
           )}
         </div>
@@ -834,13 +906,22 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
       >
         <div className="text-center py-4">
           <div className="mb-4">
-            <div className="mb-3" style={{ fontSize: '64px', color: '#52c41a' }}>
+            <div
+              className="mb-3"
+              style={{ fontSize: "64px", color: "#52c41a" }}
+            >
               <i className="ti ti-circle-check" />
             </div>
             <h4 className="mb-2 text-success">Thanh toán thành công!</h4>
             {(completedOrderForPrint || createdOrder) && (
               <p className="text-muted mb-0">
-                Mã đơn: <strong>#{(completedOrderForPrint || createdOrder)?.orderNumber || (completedOrderForPrint || createdOrder)?.orderId || '-'}</strong>
+                Mã đơn:{" "}
+                <strong>
+                  #
+                  {(completedOrderForPrint || createdOrder)?.orderNumber ||
+                    (completedOrderForPrint || createdOrder)?.orderId ||
+                    "-"}
+                </strong>
               </p>
             )}
           </div>
@@ -906,18 +987,26 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
               <div className="row">
                 <div className="col-sm-12 col-md-6">
                   <div className="invoice-user-name">
-                    <span>Mã đơn: </span>#{orderToPrint.orderNumber || orderToPrint.orderId || "-"}
+                    <span>Mã đơn: </span>#
+                    {orderToPrint.orderNumber || orderToPrint.orderId || "-"}
                   </div>
                   <div className="invoice-user-name">
-                    <span>Tên khách hàng: </span>{getCustomerName(orderToPrint)}
+                    <span>Tên khách hàng: </span>
+                    {getCustomerName(orderToPrint)}
                   </div>
                 </div>
                 <div className="col-sm-12 col-md-6">
                   <div className="invoice-user-name">
-                    <span>Ngày: </span>{formatDate(orderToPrint.orderDate || orderToPrint.createdAt || orderToPrint.createdDate)}
+                    <span>Ngày: </span>
+                    {formatDate(
+                      orderToPrint.orderDate ||
+                        orderToPrint.createdAt ||
+                        orderToPrint.createdDate
+                    )}
                   </div>
                   <div className="invoice-user-name">
-                    <span>SĐT: </span>{getCustomerPhone(orderToPrint)}
+                    <span>SĐT: </span>
+                    {getCustomerPhone(orderToPrint)}
                   </div>
                 </div>
               </div>
@@ -925,27 +1014,74 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
             <table className="table-borderless w-100 table-fit mb-3">
               <thead>
                 <tr>
-                  <th style={{ width: '45%' }}># Sản phẩm</th>
-                  <th style={{ width: '25%', textAlign: 'right', paddingRight: '5px' }}>Đơn giá</th>
-                  <th style={{ width: '5%', textAlign: 'center', paddingLeft: '10px', paddingRight: '5px' }}>SL</th>
-                  <th style={{ width: '25%' }} className="text-end">Thành tiền</th>
+                  <th style={{ width: "45%" }}># Sản phẩm</th>
+                  <th
+                    style={{
+                      width: "25%",
+                      textAlign: "right",
+                      paddingRight: "5px",
+                    }}
+                  >
+                    Đơn giá
+                  </th>
+                  <th
+                    style={{
+                      width: "5%",
+                      textAlign: "center",
+                      paddingLeft: "10px",
+                      paddingRight: "5px",
+                    }}
+                  >
+                    SL
+                  </th>
+                  <th style={{ width: "25%" }} className="text-end">
+                    Thành tiền
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {orderToPrint.orderDetails && orderToPrint.orderDetails.length > 0 ? (
+                {orderToPrint.orderDetails &&
+                orderToPrint.orderDetails.length > 0 ? (
                   <>
                     {orderToPrint.orderDetails.map((item, index) => {
                       const unitPrice = item.unitPrice || 0;
                       const quantity = item.quantity || 0;
                       const discount = item.discount || 0;
-                      const total = (unitPrice * quantity) - discount;
+                      const total = unitPrice * quantity - discount;
 
                       return (
                         <tr key={item.orderDetailId || index}>
-                          <td style={{ width: '45%' }}>{item.productName || "N/A"}</td>
-                          <td style={{ width: '25%', textAlign: 'right', paddingRight: '5px' }}>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(unitPrice)}</td>
-                          <td style={{ width: '5%', textAlign: 'center', paddingLeft: '10px', paddingRight: '5px' }}>{quantity}</td>
-                          <td style={{ width: '25%' }} className="text-end">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}</td>
+                          <td style={{ width: "45%" }}>
+                            {item.productName || "N/A"}
+                          </td>
+                          <td
+                            style={{
+                              width: "25%",
+                              textAlign: "right",
+                              paddingRight: "5px",
+                            }}
+                          >
+                            {new Intl.NumberFormat("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            }).format(unitPrice)}
+                          </td>
+                          <td
+                            style={{
+                              width: "5%",
+                              textAlign: "center",
+                              paddingLeft: "10px",
+                              paddingRight: "5px",
+                            }}
+                          >
+                            {quantity}
+                          </td>
+                          <td style={{ width: "25%" }} className="text-end">
+                            {new Intl.NumberFormat("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            }).format(total)}
+                          </td>
                         </tr>
                       );
                     })}
@@ -955,54 +1091,103 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                           <tbody>
                             {(() => {
                               // Tính subtotal từ orderDetails
-                              const subtotal = orderToPrint.orderDetails?.reduce((sum, item) => {
-                                const unitPrice = item.unitPrice || 0;
-                                const quantity = item.quantity || 0;
-                                const itemDiscount = item.discount || 0;
-                                return sum + (unitPrice * quantity - itemDiscount);
-                              }, 0) || 0;
+                              const subtotal =
+                                orderToPrint.orderDetails?.reduce(
+                                  (sum, item) => {
+                                    const unitPrice = item.unitPrice || 0;
+                                    const quantity = item.quantity || 0;
+                                    const itemDiscount = item.discount || 0;
+                                    return (
+                                      sum +
+                                      (unitPrice * quantity - itemDiscount)
+                                    );
+                                  },
+                                  0
+                                ) || 0;
 
                               // Lấy các giá trị từ order
-                              const discountAmount = orderToPrint.discountAmount || 0;
+                              const discountAmount =
+                                orderToPrint.discountAmount || 0;
                               const taxAmount = orderToPrint.taxAmount || 0;
-                              const pointsRedeemed = orderToPrint.pointsRedeemed || 0;
+                              const pointsRedeemed =
+                                orderToPrint.pointsRedeemed || 0;
                               const totalAmount = orderToPrint.totalAmount || 0;
 
                               // Tính phần trăm chiết khấu và thuế
-                              const discountPercent = subtotal > 0 ? ((discountAmount / subtotal) * 100).toFixed(2) : 0;
+                              const discountPercent =
+                                subtotal > 0
+                                  ? ((discountAmount / subtotal) * 100).toFixed(
+                                      2
+                                    )
+                                  : 0;
                               const afterDiscount = subtotal - discountAmount;
-                              const taxPercent = afterDiscount > 0 ? ((taxAmount / afterDiscount) * 100).toFixed(2) : 0;
+                              const taxPercent =
+                                afterDiscount > 0
+                                  ? ((taxAmount / afterDiscount) * 100).toFixed(
+                                      2
+                                    )
+                                  : 0;
 
                               return (
                                 <>
                                   <tr>
                                     <td className="fw-bold">Tạm tính:</td>
-                                    <td className="text-end">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(subtotal)}</td>
+                                    <td className="text-end">
+                                      {new Intl.NumberFormat("vi-VN", {
+                                        style: "currency",
+                                        currency: "VND",
+                                      }).format(subtotal)}
+                                    </td>
                                   </tr>
                                   <tr>
                                     <td className="fw-bold">Chiết khấu:</td>
-                                    <td className="text-end">{discountPercent > 0 ? `${discountPercent}%` : '0%'}</td>
+                                    <td className="text-end">
+                                      {discountPercent > 0
+                                        ? `${discountPercent}%`
+                                        : "0%"}
+                                    </td>
                                   </tr>
                                   <tr>
                                     <td className="fw-bold">Thuế:</td>
-                                    <td className="text-end">{taxPercent > 0 ? `${taxPercent}%` : '0%'}</td>
+                                    <td className="text-end">
+                                      {taxPercent > 0 ? `${taxPercent}%` : "0%"}
+                                    </td>
                                   </tr>
                                   {pointsRedeemed > 0 && (
                                     <tr>
-                                      <td className="fw-bold">Điểm đã sử dụng:</td>
-                                      <td className="text-end text-success">-{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(pointsRedeemed)}</td>
+                                      <td className="fw-bold">
+                                        Điểm đã sử dụng:
+                                      </td>
+                                      <td className="text-end text-success">
+                                        -
+                                        {new Intl.NumberFormat("vi-VN", {
+                                          style: "currency",
+                                          currency: "VND",
+                                        }).format(pointsRedeemed)}
+                                      </td>
                                     </tr>
                                   )}
                                   <tr>
                                     <td className="fw-bold">Tổng cộng:</td>
-                                    <td className="text-end fw-bold">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalAmount)}</td>
+                                    <td className="text-end fw-bold">
+                                      {new Intl.NumberFormat("vi-VN", {
+                                        style: "currency",
+                                        currency: "VND",
+                                      }).format(totalAmount)}
+                                    </td>
                                   </tr>
                                 </>
                               );
                             })()}
                             <tr>
-                              <td className="fw-bold">Trạng thái thanh toán:</td>
-                              <td className="text-end">{orderToPrint.paymentStatus || orderToPrint.orderStatus || "Chưa thanh toán"}</td>
+                              <td className="fw-bold">
+                                Trạng thái thanh toán:
+                              </td>
+                              <td className="text-end">
+                                {orderToPrint.paymentStatus ||
+                                  orderToPrint.orderStatus ||
+                                  "Chưa thanh toán"}
+                              </td>
                             </tr>
                           </tbody>
                         </table>
@@ -1020,9 +1205,7 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
             </table>
             <div className="text-center invoice-bar">
               <div className="border-bottom border-dashed mb-3">
-                <p>
-                  Cảm ơn quý khách đã mua hàng!
-                </p>
+                <p>Cảm ơn quý khách đã mua hàng!</p>
               </div>
               <button
                 className="btn btn-md btn-primary"
@@ -1043,352 +1226,6 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
       </Modal>
       {/* /Print Receipt Modal */}
 
-      {/* Products */}
-      {/* Create Customer */}
-      <div
-        className="modal fade"
-        id="create"
-        tabIndex={-1}
-        aria-labelledby="create"
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-lg modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Create</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="row">
-                  <div className="col-lg-6 col-sm-12 col-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Customer Name <span className="text-danger">*</span>
-                      </label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-lg-6 col-sm-12 col-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Phone <span className="text-danger">*</span>
-                      </label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-lg-12">
-                    <div className="mb-3">
-                      <label className="form-label">Email</label>
-                      <input type="email" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-lg-12">
-                    <div className="mb-3">
-                      <label className="form-label">Address</label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-lg-6 col-sm-12 col-12">
-                    <div className="mb-3">
-                      <label className="form-label">City</label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-lg-6 col-sm-12 col-12">
-                    <div className="mb-3">
-                      <label className="form-label">Country</label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end gap-2 flex-wrap">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {/* /Create Customer */}
-
-      {/* Hold */}
-      <div
-        className="modal fade modal-default pos-modal"
-        id="hold-order"
-        aria-labelledby="hold-order"
-      >
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Hold order</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body">
-                <div className="bg-light br-10 p-4 text-center mb-3">
-                  <h2 className="display-1">0.00</h2>
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">
-                    Order Reference <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    className="form-control"
-                    type="text"
-                    placeholder="Enter order reference"
-                  />
-                </div>
-                <p>
-                  The current order will be set on hold. You can retreive this
-                  order from the pending order button. Providing a reference to
-                  it might help you to identify the order more quickly.
-                </p>
-              </div>
-              <div className="modal-footer d-flex justify-content-end gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Confirm
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {/* /Hold */}
-
-      {/* Edit Product */}
-      <div
-        className="modal fade modal-default pos-modal"
-        id="edit-product"
-        aria-labelledby="edit-product"
-      >
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Edit Product</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="row">
-                  <div className="col-lg-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Product Name <span className="text-danger">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Enter product name"
-                      />
-                    </div>
-                  </div>
-                  <div className="col-lg-6 col-sm-12 col-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Product Price <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-lg-6 col-sm-12 col-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Tax Type <span className="text-danger">*</span>
-                      </label>
-                      <CommonSelect
-                        className="w-100"
-                        options={options.taxType}
-                        value={selectedTaxType}
-                        onChange={(e) => setSelectedTaxType(e.value)}
-                        placeholder="Select Tax Type"
-                        filter={false}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-lg-6 col-sm-12 col-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Tax <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-percentage" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-lg-6 col-sm-12 col-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Discount Type <span className="text-danger">*</span>
-                      </label>
-                      <CommonSelect
-                        className="w-100"
-                        options={options.discountType}
-                        value={selectedDiscountType}
-                        onChange={(e) => setSelectedDiscountType(e.value)}
-                        placeholder="Select Discount Type"
-                        filter={false}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-lg-6 col-sm-12 col-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Discount <span className="text-danger">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-                  <div className="col-lg-6 col-sm-12 col-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Sale Unit <span className="text-danger">*</span>
-                      </label>
-                      <CommonSelect
-                        className="w-100"
-                        options={options.weightUnits}
-                        value={selectedWeightUnit}
-                        onChange={(e) => setSelectedWeightUnit(e.value)}
-                        placeholder="Select Sale Unit"
-                        filter={false}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {/* /Edit Product */}
-
-      {/* Delete Product */}
-      <div
-        className="modal fade modal-default"
-        id="delete"
-        aria-labelledby="payment-completed"
-      >
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-body p-0">
-              <div className="success-wrap text-center">
-                <form>
-                  <div className="icon-success bg-danger-transparent text-danger mb-2">
-                    <i className="ti ti-trash" />
-                  </div>
-                  <h3 className="mb-2">Are you Sure!</h3>
-                  <p className="fs-16 mb-3">
-                    The current order will be deleted as no payment has been
-                    made so far.
-                  </p>
-                  <div className="d-flex align-items-center justify-content-center gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      className="btn btn-md btn-secondary"
-                      data-bs-dismiss="modal"
-                    >
-                      No, Cancel
-                    </button>
-                    <button
-                      type="button"
-                      data-bs-dismiss="modal"
-                      className="btn btn-md btn-primary"
-                    >
-                      Yes, Delete
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* /Delete Product */}
-
       {/* Orders */}
       <div
         className="modal fade pos-modal pos-orders-sidebar"
@@ -1396,10 +1233,7 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
         tabIndex={-1}
         aria-hidden="true"
       >
-        <div
-          className="modal-dialog modal-dialog-sidebar"
-          role="document"
-        >
+        <div className="modal-dialog modal-dialog-sidebar" role="document">
           <div className="modal-content modal-content-sidebar">
             <div className="modal-header">
               <h5 className="modal-title">Danh sách đơn hàng</h5>
@@ -1411,7 +1245,11 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                   disabled={ordersLoading}
                   title="Làm mới danh sách"
                 >
-                  <i className={`ti ti-refresh ${ordersLoading ? 'spinning' : ''}`} />
+                  <i
+                    className={`ti ti-refresh ${
+                      ordersLoading ? "spinning" : ""
+                    }`}
+                  />
                 </button>
                 <button
                   type="button"
@@ -1477,9 +1315,19 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                         placeholder="Tìm kiếm đơn hàng..."
                         value={ordersSearchQuery}
                         onChange={(e) => setOrdersSearchQuery(e.target.value)}
-                        style={{ paddingLeft: '40px' }}
+                        style={{ paddingLeft: "40px" }}
                       />
-                      <span className="input-icon-addon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }}>
+                      <span
+                        className="input-icon-addon"
+                        style={{
+                          position: "absolute",
+                          left: "12px",
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          zIndex: 1,
+                          pointerEvents: "none",
+                        }}
+                      >
                         <i className="ti ti-search" />
                       </span>
                     </div>
@@ -1494,7 +1342,10 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                         </div>
                       ) : (
                         getOrdersByStatus("Chờ xác nhận").map((order) => (
-                          <div key={order.orderId} className="card bg-light mb-3">
+                          <div
+                            key={order.orderId}
+                            className="card bg-light mb-3"
+                          >
                             <div className="card-body">
                               <span className="badge bg-warning fs-12 mb-2">
                                 Mã đơn: #{order.orderNumber || order.orderId}
@@ -1502,18 +1353,37 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                               <div className="row g-3">
                                 <div className="col-md-6">
                                   <p className="fs-15 mb-1">
-                                    <span className="fs-14 fw-bold text-gray-9">Khách hàng:</span> {getCustomerName(order)}
+                                    <span className="fs-14 fw-bold text-gray-9">
+                                      Khách hàng:
+                                    </span>{" "}
+                                    {getCustomerName(order)}
                                   </p>
                                   <p className="fs-15">
-                                    <span className="fs-14 fw-bold text-gray-9">Tổng tiền:</span> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount || 0)}
+                                    <span className="fs-14 fw-bold text-gray-9">
+                                      Tổng tiền:
+                                    </span>{" "}
+                                    {new Intl.NumberFormat("vi-VN", {
+                                      style: "currency",
+                                      currency: "VND",
+                                    }).format(order.totalAmount || 0)}
                                   </p>
                                 </div>
                                 <div className="col-md-6">
                                   <p className="fs-15 mb-1">
-                                    <span className="fs-14 fw-bold text-gray-9">Phương thức thanh toán:</span> {getPaymentMethodText(order)}
+                                    <span className="fs-14 fw-bold text-gray-9">
+                                      Phương thức thanh toán:
+                                    </span>{" "}
+                                    {getPaymentMethodText(order)}
                                   </p>
                                   <p className="fs-15">
-                                    <span className="fs-14 fw-bold text-gray-9">Ngày:</span> {formatDate(order.orderDate || order.createdAt || order.createdDate)}
+                                    <span className="fs-14 fw-bold text-gray-9">
+                                      Ngày:
+                                    </span>{" "}
+                                    {formatDate(
+                                      order.orderDate ||
+                                        order.createdAt ||
+                                        order.createdDate
+                                    )}
                                   </p>
                                 </div>
                               </div>
@@ -1539,16 +1409,22 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                                     <button
                                       className="btn btn-sm btn-danger"
                                       onClick={() => handleCancelOrder(order)}
-                                      disabled={cancellingOrderId === order.orderId}
+                                      disabled={
+                                        cancellingOrderId === order.orderId
+                                      }
                                     >
                                       <i className="ti ti-x me-1" />
-                                      {cancellingOrderId === order.orderId ? 'Đang hủy...' : 'Hủy đơn'}
+                                      {cancellingOrderId === order.orderId
+                                        ? "Đang hủy..."
+                                        : "Hủy đơn"}
                                     </button>
                                   </>
                                 )}
                                 <button
                                   className="btn btn-sm btn-info"
-                                  onClick={() => handleViewOrderDetail(order.orderId)}
+                                  onClick={() =>
+                                    handleViewOrderDetail(order.orderId)
+                                  }
                                   disabled={orderDetailLoading}
                                 >
                                   <i className="ti ti-eye me-1" />
@@ -1571,9 +1447,19 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                         placeholder="Tìm kiếm đơn hàng..."
                         value={ordersSearchQuery}
                         onChange={(e) => setOrdersSearchQuery(e.target.value)}
-                        style={{ paddingLeft: '40px' }}
+                        style={{ paddingLeft: "40px" }}
                       />
-                      <span className="input-icon-addon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }}>
+                      <span
+                        className="input-icon-addon"
+                        style={{
+                          position: "absolute",
+                          left: "12px",
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          zIndex: 1,
+                          pointerEvents: "none",
+                        }}
+                      >
                         <i className="ti ti-search" />
                       </span>
                     </div>
@@ -1588,7 +1474,10 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                         </div>
                       ) : (
                         getOrdersByStatus("Hoàn tất").map((order) => (
-                          <div key={order.orderId} className="card bg-light mb-3">
+                          <div
+                            key={order.orderId}
+                            className="card bg-light mb-3"
+                          >
                             <div className="card-body">
                               <span className="badge bg-success fs-12 mb-2">
                                 Mã đơn: #{order.orderNumber || order.orderId}
@@ -1596,18 +1485,37 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                               <div className="row g-3">
                                 <div className="col-md-6">
                                   <p className="fs-15 mb-1">
-                                    <span className="fs-14 fw-bold text-gray-9">Khách hàng:</span> {getCustomerName(order)}
+                                    <span className="fs-14 fw-bold text-gray-9">
+                                      Khách hàng:
+                                    </span>{" "}
+                                    {getCustomerName(order)}
                                   </p>
                                   <p className="fs-15">
-                                    <span className="fs-14 fw-bold text-gray-9">Tổng tiền:</span> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount || 0)}
+                                    <span className="fs-14 fw-bold text-gray-9">
+                                      Tổng tiền:
+                                    </span>{" "}
+                                    {new Intl.NumberFormat("vi-VN", {
+                                      style: "currency",
+                                      currency: "VND",
+                                    }).format(order.totalAmount || 0)}
                                   </p>
                                 </div>
                                 <div className="col-md-6">
                                   <p className="fs-15 mb-1">
-                                    <span className="fs-14 fw-bold text-gray-9">Phương thức thanh toán:</span> {getPaymentMethodText(order)}
+                                    <span className="fs-14 fw-bold text-gray-9">
+                                      Phương thức thanh toán:
+                                    </span>{" "}
+                                    {getPaymentMethodText(order)}
                                   </p>
                                   <p className="fs-15">
-                                    <span className="fs-14 fw-bold text-gray-9">Ngày:</span> {formatDate(order.orderDate || order.createdAt || order.createdDate)}
+                                    <span className="fs-14 fw-bold text-gray-9">
+                                      Ngày:
+                                    </span>{" "}
+                                    {formatDate(
+                                      order.orderDate ||
+                                        order.createdAt ||
+                                        order.createdDate
+                                    )}
                                   </p>
                                 </div>
                               </div>
@@ -1632,7 +1540,9 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                                 )}
                                 <button
                                   className="btn btn-sm btn-info"
-                                  onClick={() => handleViewOrderDetail(order.orderId)}
+                                  onClick={() =>
+                                    handleViewOrderDetail(order.orderId)
+                                  }
                                   disabled={orderDetailLoading}
                                 >
                                   <i className="ti ti-eye me-1" />
@@ -1655,9 +1565,19 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                         placeholder="Tìm kiếm đơn hàng..."
                         value={ordersSearchQuery}
                         onChange={(e) => setOrdersSearchQuery(e.target.value)}
-                        style={{ paddingLeft: '40px' }}
+                        style={{ paddingLeft: "40px" }}
                       />
-                      <span className="input-icon-addon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }}>
+                      <span
+                        className="input-icon-addon"
+                        style={{
+                          position: "absolute",
+                          left: "12px",
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          zIndex: 1,
+                          pointerEvents: "none",
+                        }}
+                      >
                         <i className="ti ti-search" />
                       </span>
                     </div>
@@ -1672,7 +1592,10 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                         </div>
                       ) : (
                         getOrdersByStatus("Đã hủy").map((order) => (
-                          <div key={order.orderId} className="card bg-light mb-3">
+                          <div
+                            key={order.orderId}
+                            className="card bg-light mb-3"
+                          >
                             <div className="card-body">
                               <span className="badge bg-danger fs-12 mb-2">
                                 Mã đơn: #{order.orderNumber || order.orderId}
@@ -1680,18 +1603,37 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                               <div className="row g-3">
                                 <div className="col-md-6">
                                   <p className="fs-15 mb-1">
-                                    <span className="fs-14 fw-bold text-gray-9">Khách hàng:</span> {getCustomerName(order)}
+                                    <span className="fs-14 fw-bold text-gray-9">
+                                      Khách hàng:
+                                    </span>{" "}
+                                    {getCustomerName(order)}
                                   </p>
                                   <p className="fs-15">
-                                    <span className="fs-14 fw-bold text-gray-9">Tổng tiền:</span> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount || 0)}
+                                    <span className="fs-14 fw-bold text-gray-9">
+                                      Tổng tiền:
+                                    </span>{" "}
+                                    {new Intl.NumberFormat("vi-VN", {
+                                      style: "currency",
+                                      currency: "VND",
+                                    }).format(order.totalAmount || 0)}
                                   </p>
                                 </div>
                                 <div className="col-md-6">
                                   <p className="fs-15 mb-1">
-                                    <span className="fs-14 fw-bold text-gray-9">Phương thức thanh toán:</span> {getPaymentMethodText(order)}
+                                    <span className="fs-14 fw-bold text-gray-9">
+                                      Phương thức thanh toán:
+                                    </span>{" "}
+                                    {getPaymentMethodText(order)}
                                   </p>
                                   <p className="fs-15">
-                                    <span className="fs-14 fw-bold text-gray-9">Ngày:</span> {formatDate(order.orderDate || order.createdAt || order.createdDate)}
+                                    <span className="fs-14 fw-bold text-gray-9">
+                                      Ngày:
+                                    </span>{" "}
+                                    {formatDate(
+                                      order.orderDate ||
+                                        order.createdAt ||
+                                        order.createdDate
+                                    )}
                                   </p>
                                 </div>
                               </div>
@@ -1716,7 +1658,9 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                                 )}
                                 <button
                                   className="btn btn-sm btn-info"
-                                  onClick={() => handleViewOrderDetail(order.orderId)}
+                                  onClick={() =>
+                                    handleViewOrderDetail(order.orderId)
+                                  }
                                   disabled={orderDetailLoading}
                                 >
                                   <i className="ti ti-eye me-1" />
@@ -1736,723 +1680,6 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
         </div>
       </div>
       {/* /Orders */}
-
-      {/* Scan Payment */}
-      <div className="modal fade modal-default" id="scan-payment">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-body p-0">
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-              <div className="success-wrap scan-wrap text-center">
-                <h5>
-                  <span className="text-gray-6">Amount to Pay :</span> $0.00
-                </h5>
-                <div className="scan-img">
-                  <div className="scan-placeholder">QR Code</div>
-                </div>
-                <p className="mb-3">
-                  Scan your Phone or UPI App to Complete the payment
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* /Scan Payment */}
-
-      {/* Payment Cash */}
-      <div className="modal fade modal-default" id="payment-cash">
-        <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Finalize Sale</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="row">
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Received Amount <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Paying Amount <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="change-item mb-3">
-                      <label className="form-label">Change</label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          placeholder="0.00"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Payment Type <span className="text-danger">*</span>
-                      </label>
-                      <CommonSelect
-                        className="w-100"
-                        options={options.paymentTypes}
-                        value={selectedPaymentType}
-                        onChange={(e) => setSelectedPaymentType(e.value)}
-                        placeholder="Select Payment Type"
-                        filter={false}
-                      />
-                    </div>
-                    <div className="quick-cash payment-content bg-light d-block mb-3">
-                      <div className="d-flex align-items-center flex-wra gap-4">
-                        <h5 className="text-nowrap">Quick Cash</h5>
-                        <div className="d-flex align-items-center flex-wrap gap-3">
-                          {[10, 20, 50, 100, 500, 1000].map((amount) => (
-                            <div key={amount} className="form-check">
-                              <input
-                                type="radio"
-                                className="btn-check"
-                                name="cash"
-                                id={`cash${amount}`}
-                              />
-                              <label className="btn btn-white" htmlFor={`cash${amount}`}>
-                                {amount}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Payment Receiver</label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Payment Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Sale Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Staff Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {/* /Payment Cash */}
-
-      {/* Payment Card */}
-      <div className="modal fade modal-default" id="payment-card">
-        <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Finalize Sale</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-1">
-                <div className="row">
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Received Amount <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Paying Amount <span className="text-danger">*</span>
-                      </label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-4">
-                    <div className="change-item mb-3">
-                      <label className="form-label">Change</label>
-                      <div className="input-icon-start position-relative">
-                        <span className="input-icon-addon text-gray-9">
-                          <i className="ti ti-currency-dollar" />
-                        </span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          placeholder="0.00"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">
-                        Payment Type <span className="text-danger">*</span>
-                      </label>
-                      <CommonSelect
-                        className="w-100"
-                        options={options.paymentTypes}
-                        value={selectedPaymentType}
-                        onChange={(e) => setSelectedPaymentType(e.value)}
-                        placeholder="Select Payment Type"
-                        filter={false}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Payment Receiver</label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-md-12">
-                    <div className="mb-3">
-                      <label className="form-label">Payment Note</label>
-                      <textarea
-                        className="form-control"
-                        rows={3}
-                        placeholder="Type your message"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer d-flex justify-content-end flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-md btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  data-bs-dismiss="modal"
-                  className="btn btn-md btn-primary"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {/* /Payment Card */}
-
-      {/* Calculator */}
-      <div
-        className="modal fade pos-modal"
-        id="calculator"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-md modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-body p-0" onKeyDown={handleKeyPress}>
-              <div className="calculator-wrap">
-                <div className="p-3">
-                  <div className="d-flex align-items-center">
-                    <h3>Calculator</h3>
-                    <button
-                      type="button"
-                      className="close"
-                      data-bs-dismiss="modal"
-                      aria-label="Close"
-                    >
-                      <span aria-hidden="true">×</span>
-                    </button>
-                  </div>
-                  <div>
-                    <input
-                      className="input"
-                      type="text"
-                      placeholder="0"
-                      value={input}
-                      readOnly
-                    />
-                  </div>
-                </div>
-                <div className="calculator-body d-flex justify-content-between">
-                  <div className="text-center">
-                    <button className="btn btn-clear" onClick={handleClear}>
-                      C
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("7")}
-                    >
-                      7
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("4")}
-                    >
-                      4
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("1")}
-                    >
-                      1
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick(",")}
-                    >
-                      ,
-                    </button>
-                  </div>
-                  <div className="text-center">
-                    <button
-                      className="btn btn-expression"
-                      onClick={() => handleButtonClick("/")}
-                    >
-                      ÷
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("8")}
-                    >
-                      8
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("5")}
-                    >
-                      5
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("2")}
-                    >
-                      2
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("00")}
-                    >
-                      00
-                    </button>
-                  </div>
-                  <div className="text-center">
-                    <button
-                      className="btn btn-expression"
-                      onClick={() => handleButtonClick("%")}
-                    >
-                      %
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("9")}
-                    >
-                      9
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("6")}
-                    >
-                      6
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick("3")}
-                    >
-                      3
-                    </button>
-                    <button
-                      className="btn btn-number"
-                      onClick={() => handleButtonClick(".")}
-                    >
-                      .
-                    </button>
-                  </div>
-                  <div className="text-center">
-                    <button className="btn btn-clear" onClick={handleBackspace}>
-                      <i className="ti ti-backspace" />
-                    </button>
-                    <button
-                      className="btn btn-expression"
-                      onClick={() => handleButtonClick("*")}
-                    >
-                      x
-                    </button>
-                    <button
-                      className="btn btn-expression"
-                      onClick={() => handleButtonClick("-")}
-                    >
-                      -
-                    </button>
-                    <button
-                      className="btn btn-expression"
-                      onClick={() => handleButtonClick("+")}
-                    >
-                      +
-                    </button>
-                    <button className="btn btn-clear" onClick={handleSolve}>
-                      =
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* /Calculator */}
-
-      {/* Cash Register Details */}
-      <div
-        className="modal fade pos-modal"
-        id="cash-register"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-md modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Cash Register Details</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="table-responsive">
-                <table className="table table-striped border">
-                  <tbody>
-                    <tr>
-                      <td>Cash in Hand</td>
-                      <td className="text-gray-9 fw-medium text-end">$0.00</td>
-                    </tr>
-                    <tr>
-                      <td>Total Sale Amount</td>
-                      <td className="text-gray-9 fw-medium text-end">$0.00</td>
-                    </tr>
-                    <tr>
-                      <td>Total Payment</td>
-                      <td className="text-gray-9 fw-medium text-end">$0.00</td>
-                    </tr>
-                    <tr>
-                      <td>Cash Payment</td>
-                      <td className="text-gray-9 fw-medium text-end">$0.00</td>
-                    </tr>
-                    <tr>
-                      <td>Total Sale Return</td>
-                      <td className="text-gray-9 fw-medium text-end">$0.00</td>
-                    </tr>
-                    <tr>
-                      <td>Total Expense</td>
-                      <td className="text-gray-9 fw-medium text-end">$0.00</td>
-                    </tr>
-                    <tr>
-                      <td className="text-gray-9 fw-bold bg-secondary-transparent">
-                        Total Cash
-                      </td>
-                      <td className="text-gray-9 fw-bold text-end bg-secondary-transparent">
-                        $0.00
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div className="modal-footer d-flex justify-content-end gap-2 flex-wrap">
-              <button
-                type="button"
-                className="btn btn-md btn-primary"
-                data-bs-dismiss="modal"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* /Cash Register Details */}
-
-      {/* Today's Sale */}
-      <div
-        className="modal fade pos-modal"
-        id="today-sale"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-md modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Today&apos;s Sale</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="table-responsive">
-                <table className="table table-striped border">
-                  <tbody>
-                    <tr>
-                      <td>Total Sale Amount</td>
-                      <td className="text-gray-9 fw-medium text-end">$0.00</td>
-                    </tr>
-                    <tr>
-                      <td>Cash Payment</td>
-                      <td className="text-gray-9 fw-medium text-end">$0.00</td>
-                    </tr>
-                    <tr>
-                      <td>Credit Card Payment</td>
-                      <td className="text-gray-9 fw-medium text-end">$0.00</td>
-                    </tr>
-                    <tr>
-                      <td>Cheque Payment:</td>
-                      <td className="text-gray-9 fw-medium text-end">$0.00</td>
-                    </tr>
-                    <tr>
-                      <td>Total Payment</td>
-                      <td className="text-gray-9 fw-medium text-end">$0.00</td>
-                    </tr>
-                    <tr>
-                      <td>Total Sale Return</td>
-                      <td className="text-gray-9 fw-medium text-end">$0.00</td>
-                    </tr>
-                    <tr>
-                      <td className="text-gray-9 fw-bold bg-secondary-transparent">
-                        Total Cash
-                      </td>
-                      <td className="text-gray-9 fw-bold text-end bg-secondary-transparent">
-                        $0.00
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div className="modal-footer d-flex justify-content-end gap-2 flex-wrap">
-              <button
-                type="button"
-                className="btn btn-md btn-primary"
-                data-bs-dismiss="modal"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* /Today's Sale */}
-
-      {/* Today's Profit */}
-      <div
-        className="modal fade pos-modal"
-        id="today-profit"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        <div
-          className="modal-dialog modal-md modal-dialog-centered"
-          role="document"
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Today&apos;s Profit</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="row justify-content-center g-3 mb-3">
-                <div className="col-lg-4 col-md-6 d-flex">
-                  <div className="border border-success bg-success-transparent br-8 p-3 flex-fill">
-                    <p className="fs-16 text-gray-9 mb-1">Total Sale</p>
-                    <h3 className="text-success">$0.00</h3>
-                  </div>
-                </div>
-                <div className="col-lg-4 col-md-6 d-flex">
-                  <div className="border border-danger bg-danger-transparent br-8 p-3 flex-fill">
-                    <p className="fs-16 text-gray-9 mb-1">Expense</p>
-                    <h3 className="text-danger">$0.00</h3>
-                  </div>
-                </div>
-                <div className="col-lg-4 col-md-6 d-flex">
-                  <div className="border border-info bg-info-transparent br-8 p-3 flex-fill">
-                    <p className="fs-16 text-gray-9 mb-1">Total Profit</p>
-                    <h3 className="text-info">$0.00</h3>
-                  </div>
-                </div>
-              </div>
-              <div className="table-responsive">
-                <table className="table table-striped border">
-                  <tbody>
-                    <tr>
-                      <td>Product Revenue</td>
-                      <td className="text-gray-9 fw-medium text-end">$0.00</td>
-                    </tr>
-                    <tr>
-                      <td>Product Cost</td>
-                      <td className="text-gray-9 fw-medium text-end">$0.00</td>
-                    </tr>
-                    <tr>
-                      <td>Expense</td>
-                      <td className="text-gray-9 fw-medium text-end">$0.00</td>
-                    </tr>
-                    <tr>
-                      <td className="text-gray-9 fw-bold bg-secondary-transparent">
-                        Total Profit
-                      </td>
-                      <td className="text-gray-9 fw-bold text-end bg-secondary-transparent">
-                        $0.00
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div className="modal-footer d-flex justify-content-end gap-2 flex-wrap">
-              <button
-                type="button"
-                className="btn btn-md btn-primary"
-                data-bs-dismiss="modal"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* /Today's Profit */}
 
       {/* Order Detail Modal */}
       <Modal
@@ -2478,25 +1705,38 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
             <div className="row mb-3">
               <div className="col-md-6">
                 <p className="mb-2">
-                  <span className="fw-bold">Mã đơn:</span> #{selectedOrderDetail.orderNumber || selectedOrderDetail.orderId}
+                  <span className="fw-bold">Mã đơn:</span> #
+                  {selectedOrderDetail.orderNumber ||
+                    selectedOrderDetail.orderId}
                 </p>
                 <p className="mb-2">
-                  <span className="fw-bold">Khách hàng:</span> {selectedOrderDetail.customerName || selectedOrderDetail.customer?.fullName || selectedOrderDetail.customer?.customerName || "Khách lẻ"}
+                  <span className="fw-bold">Khách hàng:</span>{" "}
+                  {selectedOrderDetail.customerName ||
+                    selectedOrderDetail.customer?.fullName ||
+                    selectedOrderDetail.customer?.customerName ||
+                    "Khách lẻ"}
                 </p>
               </div>
               <div className="col-md-6">
                 <p className="mb-2">
-                  <span className="fw-bold">Trạng thái:</span> {selectedOrderDetail.orderStatus || getOrderStatus(selectedOrderDetail)}
+                  <span className="fw-bold">Trạng thái:</span>{" "}
+                  {selectedOrderDetail.orderStatus ||
+                    getOrderStatus(selectedOrderDetail)}
                 </p>
                 <p className="mb-2">
-                  <span className="fw-bold">Ngày đặt:</span> {formatDate(selectedOrderDetail.orderDate || selectedOrderDetail.createdAt || selectedOrderDetail.createdDate)}
+                  <span className="fw-bold">Ngày đặt:</span>{" "}
+                  {formatDate(
+                    selectedOrderDetail.orderDate ||
+                      selectedOrderDetail.createdAt ||
+                      selectedOrderDetail.createdDate
+                  )}
                 </p>
                 <p className="mb-2">
-                  <span className="fw-bold">Trạng thái thanh toán:</span> {selectedOrderDetail.paymentStatus || "-"}
+                  <span className="fw-bold">Trạng thái thanh toán:</span>{" "}
+                  {selectedOrderDetail.paymentStatus || "-"}
                 </p>
               </div>
             </div>
-
 
             <div className="table-responsive mb-3">
               <table className="table table-bordered">
@@ -2510,66 +1750,125 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
                   </tr>
                 </thead>
                 <tbody>
-                  {selectedOrderDetail.orderDetails && selectedOrderDetail.orderDetails.length > 0 ? (
+                  {selectedOrderDetail.orderDetails &&
+                  selectedOrderDetail.orderDetails.length > 0 ? (
                     selectedOrderDetail.orderDetails.map((item, index) => (
                       <tr key={item.orderDetailId || index}>
                         <td>{item.productName || "N/A"}</td>
                         <td>{item.quantity || 0}</td>
-                        <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.unitPrice || 0)}</td>
-                        <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.discount || 0)}</td>
-                        <td className="text-end">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.totalPrice || ((item.quantity || 0) * (item.unitPrice || 0) - (item.discount || 0)))}</td>
+                        <td>
+                          {new Intl.NumberFormat("vi-VN", {
+                            style: "currency",
+                            currency: "VND",
+                          }).format(item.unitPrice || 0)}
+                        </td>
+                        <td>
+                          {new Intl.NumberFormat("vi-VN", {
+                            style: "currency",
+                            currency: "VND",
+                          }).format(item.discount || 0)}
+                        </td>
+                        <td className="text-end">
+                          {new Intl.NumberFormat("vi-VN", {
+                            style: "currency",
+                            currency: "VND",
+                          }).format(
+                            item.totalPrice ||
+                              (item.quantity || 0) * (item.unitPrice || 0) -
+                                (item.discount || 0)
+                          )}
+                        </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className="text-center">Không có sản phẩm</td>
+                      <td colSpan={5} className="text-center">
+                        Không có sản phẩm
+                      </td>
                     </tr>
                   )}
                 </tbody>
                 <tfoot>
                   {(() => {
                     // Tính subtotal từ orderDetails
-                    const subtotal = selectedOrderDetail.orderDetails?.reduce((sum, item) => {
-                      const unitPrice = item.unitPrice || 0;
-                      const quantity = item.quantity || 0;
-                      const itemDiscount = item.discount || 0;
-                      return sum + (unitPrice * quantity - itemDiscount);
-                    }, 0) || 0;
+                    const subtotal =
+                      selectedOrderDetail.orderDetails?.reduce((sum, item) => {
+                        const unitPrice = item.unitPrice || 0;
+                        const quantity = item.quantity || 0;
+                        const itemDiscount = item.discount || 0;
+                        return sum + (unitPrice * quantity - itemDiscount);
+                      }, 0) || 0;
 
-                    const discountAmount = selectedOrderDetail.discountAmount || 0;
+                    const discountAmount =
+                      selectedOrderDetail.discountAmount || 0;
                     const taxAmount = selectedOrderDetail.taxAmount || 0;
-                    const pointsRedeemed = selectedOrderDetail.pointsRedeemed || 0;
+                    const pointsRedeemed =
+                      selectedOrderDetail.pointsRedeemed || 0;
                     const totalAmount = selectedOrderDetail.totalAmount || 0;
 
                     // Tính phần trăm chiết khấu và thuế
-                    const discountPercent = subtotal > 0 ? ((discountAmount / subtotal) * 100).toFixed(2) : 0;
+                    const discountPercent =
+                      subtotal > 0
+                        ? ((discountAmount / subtotal) * 100).toFixed(2)
+                        : 0;
                     const afterDiscount = subtotal - discountAmount;
-                    const taxPercent = afterDiscount > 0 ? ((taxAmount / afterDiscount) * 100).toFixed(2) : 0;
+                    const taxPercent =
+                      afterDiscount > 0
+                        ? ((taxAmount / afterDiscount) * 100).toFixed(2)
+                        : 0;
 
                     return (
                       <>
                         <tr>
-                          <td colSpan={4} className="fw-bold text-end">Tạm tính:</td>
-                          <td className="text-end">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(subtotal)}</td>
+                          <td colSpan={4} className="fw-bold text-end">
+                            Tạm tính:
+                          </td>
+                          <td className="text-end">
+                            {new Intl.NumberFormat("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            }).format(subtotal)}
+                          </td>
                         </tr>
                         <tr>
-                          <td colSpan={4} className="fw-bold text-end">Chiết khấu:</td>
-                          <td className="text-end">{discountPercent > 0 ? `${discountPercent}%` : '0%'}</td>
+                          <td colSpan={4} className="fw-bold text-end">
+                            Chiết khấu:
+                          </td>
+                          <td className="text-end">
+                            {discountPercent > 0 ? `${discountPercent}%` : "0%"}
+                          </td>
                         </tr>
                         <tr>
-                          <td colSpan={4} className="fw-bold text-end">Thuế:</td>
-                          <td className="text-end">{taxPercent > 0 ? `${taxPercent}%` : '0%'}</td>
+                          <td colSpan={4} className="fw-bold text-end">
+                            Thuế:
+                          </td>
+                          <td className="text-end">
+                            {taxPercent > 0 ? `${taxPercent}%` : "0%"}
+                          </td>
                         </tr>
                         {pointsRedeemed > 0 && (
                           <tr>
-                            <td colSpan={4} className="fw-bold text-end">Điểm đã sử dụng:</td>
-                            <td className="text-end text-success">-{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(pointsRedeemed)}</td>
+                            <td colSpan={4} className="fw-bold text-end">
+                              Điểm đã sử dụng:
+                            </td>
+                            <td className="text-end text-success">
+                              -
+                              {new Intl.NumberFormat("vi-VN", {
+                                style: "currency",
+                                currency: "VND",
+                              }).format(pointsRedeemed)}
+                            </td>
                           </tr>
                         )}
                         <tr>
-                          <td colSpan={4} className="fw-bold text-end">Tổng tiền:</td>
+                          <td colSpan={4} className="fw-bold text-end">
+                            Tổng tiền:
+                          </td>
                           <td className="text-end fw-bold">
-                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalAmount)}
+                            {new Intl.NumberFormat("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            }).format(totalAmount)}
                           </td>
                         </tr>
                       </>
@@ -2586,9 +1885,151 @@ const PosModals = ({ createdOrder, totalAmount, showPaymentMethodModal, onCloseP
         )}
       </Modal>
       {/* /Order Detail Modal */}
+
+      <Modal
+        open={!!showShiftModal}
+        onCancel={onCloseShiftModal}
+        footer={null}
+        title="Đóng/Mở ca"
+        centered
+      >
+        <div className="modal-body">
+          {shiftLoading ? (
+            <div className="text-center py-4">
+              <Spin size="large" />
+            </div>
+          ) : currentShift && currentShift.status === "Mở" ? (
+            <div>
+              <div className="mb-2">
+                <span className="badge badge-success">Đang mở</span>
+              </div>
+              <div className="mb-2">
+                Bắt đầu:{" "}
+                {currentShift?.openedAt
+                  ? new Date(currentShift.openedAt).toLocaleString("vi-VN")
+                  : ""}
+              </div>
+              <div className="mb-3">
+                Tiền dự kiến trong két:{" "}
+                {new Intl.NumberFormat("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                }).format(
+                  Number(expectedDrawer ?? (currentShift?.initialCash || 0))
+                )}
+              </div>
+              <label className="form-label fw-bold">
+                Tiền thực tế trong két
+              </label>
+              <div className="input-icon-start position-relative">
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="Nhập số tiền hiện tại"
+                  value={shiftAmount}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === "" || (!isNaN(v) && parseFloat(v) >= 0)) {
+                      setShiftAmount(v);
+                    }
+                  }}
+                  min="0"
+                  step="1000"
+                  style={{ paddingLeft: "40px" }}
+                />
+                <span
+                  className="input-icon-addon"
+                  style={{
+                    position: "absolute",
+                    left: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    zIndex: 1,
+                    pointerEvents: "none",
+                  }}
+                >
+                  <i className="ti ti-currency-dollar text-gray-9" />
+                </span>
+              </div>
+              <div className="mt-3">
+                <label className="form-label fw-bold">Ghi chú chốt ca</label>
+                <textarea
+                  className="form-control"
+                  rows={2}
+                  placeholder="Nhập ghi chú"
+                  value={shiftNote}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setShiftNote(v);
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="mb-2">
+                {" "}
+                <span className="badge badge-secondary">Đang đóng</span>
+              </div>
+              <label className="form-label fw-bold">
+                Tiền trong két ban đầu
+              </label>
+              <div className="input-icon-start position-relative">
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="Nhập tiền mặt ban đầu"
+                  value={shiftAmount}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === "" || (!isNaN(v) && parseFloat(v) >= 0))
+                      setShiftAmount(v);
+                  }}
+                  min="0"
+                  step="1000"
+                  style={{ paddingLeft: "40px" }}
+                />
+                <span
+                  className="input-icon-addon"
+                  style={{
+                    position: "absolute",
+                    left: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    zIndex: 1,
+                    pointerEvents: "none",
+                  }}
+                >
+                  <i className="ti ti-currency-dollar text-gray-9" />
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="modal-footer d-flex justify-content-end gap-2 flex-wrap">
+          {currentShift && currentShift.status === "Mở" ? (
+            <button
+              className="btn btn-purple"
+              onClick={async () => {
+                await onCloseShift(shiftAmount, shiftNote);
+                setShiftAmount("");
+                setShiftNote("");
+              }}
+            >
+              Đóng ca
+            </button>
+          ) : (
+            <button
+              className="btn btn-teal"
+              onClick={() => onOpenShift(shiftAmount)}
+            >
+              Mở ca
+            </button>
+          )}
+        </div>
+      </Modal>
     </>
   );
 };
 
 export default PosModals;
-

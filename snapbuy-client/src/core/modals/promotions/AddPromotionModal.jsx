@@ -52,8 +52,8 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
     try {
       const data = await getAllProducts();
       setProducts(data);
-    } catch (error) {
-      message.error("Không thể tải danh sách sản phẩm");
+    } catch {
+      message.error("Không thể thêm chương trình khuyến mãi!");
     }
   };
 
@@ -83,7 +83,10 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
       newErrors.discountValue = "Giá trị giảm giá phải lớn hơn 0.";
     }
 
-    if (formData.discountType === "Giảm theo phần trăm" && parseFloat(formData.discountValue) > 100) {
+    if (
+      formData.discountType === "Giảm theo phần trăm" &&
+      parseFloat(formData.discountValue) > 100
+    ) {
       newErrors.discountValue = "Giá trị phần trăm không được vượt quá 100.";
     }
 
@@ -95,7 +98,11 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
       newErrors.endDate = "Vui lòng chọn ngày kết thúc.";
     }
 
-    if (formData.startDate && formData.endDate && new Date(formData.endDate) < new Date(formData.startDate)) {
+    if (
+      formData.startDate &&
+      formData.endDate &&
+      new Date(formData.endDate) < new Date(formData.startDate)
+    ) {
       newErrors.endDate = "Ngày kết thúc phải sau ngày bắt đầu.";
     }
 
@@ -122,8 +129,12 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
         description: formData.description.trim() || null,
         discountType: formData.discountType,
         discountValue: parseFloat(formData.discountValue),
-        startDate: formData.startDate ? dayjs(formData.startDate).toISOString() : null,
-        endDate: formData.endDate ? dayjs(formData.endDate).toISOString() : null,
+        startDate: formData.startDate
+          ? dayjs(formData.startDate).toISOString()
+          : null,
+        endDate: formData.endDate
+          ? dayjs(formData.endDate).toISOString()
+          : null,
         productIds: formData.productIds,
       };
 
@@ -132,7 +143,8 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
       onSuccess();
       onClose();
     } catch (error) {
-      const errorMsg = error.response?.data?.message || "Có lỗi xảy ra khi tạo khuyến mãi.";
+      const errorMsg =
+        error.response?.data?.message || "Có lỗi xảy ra khi tạo khuyến mãi.";
       message.error(errorMsg);
     } finally {
       setLoading(false);
@@ -143,7 +155,7 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
     if (!formData.productIds || formData.productIds.length === 0) {
       return [];
     }
-    return products.filter(p => formData.productIds.includes(p.productId));
+    return products.filter((p) => formData.productIds.includes(p.productId));
   };
 
   return (
@@ -166,7 +178,9 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
               <input
                 type="text"
                 name="promotionName"
-                className={`form-control ${errors.promotionName ? "is-invalid" : ""}`}
+                className={`form-control ${
+                  errors.promotionName ? "is-invalid" : ""
+                }`}
                 value={formData.promotionName}
                 onChange={handleInputChange}
                 placeholder="Nhập tên khuyến mãi"
@@ -191,7 +205,9 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
                 disabled={loading}
               >
                 <option value="Giảm theo phần trăm">Giảm theo phần trăm</option>
-                <option value="Giảm trực tiếp số tiền">Giảm trực tiếp số tiền</option>
+                <option value="Giảm trực tiếp số tiền">
+                  Giảm trực tiếp số tiền
+                </option>
               </select>
             </div>
           </div>
@@ -204,10 +220,16 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
               <input
                 type="number"
                 name="discountValue"
-                className={`form-control ${errors.discountValue ? "is-invalid" : ""}`}
+                className={`form-control ${
+                  errors.discountValue ? "is-invalid" : ""
+                }`}
                 value={formData.discountValue}
                 onChange={handleInputChange}
-                placeholder={formData.discountType === "Giảm theo phần trăm" ? "Nhập % giảm giá" : "Nhập số tiền giảm"}
+                placeholder={
+                  formData.discountType === "Giảm theo phần trăm"
+                    ? "Nhập % giảm giá"
+                    : "Nhập số tiền giảm"
+                }
                 disabled={loading}
                 step="0.01"
                 min="0"
@@ -252,7 +274,10 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
                 status={errors.startDate ? "error" : ""}
               />
               {errors.startDate && (
-                <div className="text-danger" style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                <div
+                  className="text-danger"
+                  style={{ fontSize: "0.875rem", marginTop: "0.25rem" }}
+                >
                   {errors.startDate}
                 </div>
               )}
@@ -278,7 +303,10 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
                 status={errors.endDate ? "error" : ""}
               />
               {errors.endDate && (
-                <div className="text-danger" style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                <div
+                  className="text-danger"
+                  style={{ fontSize: "0.875rem", marginTop: "0.25rem" }}
+                >
                   {errors.endDate}
                 </div>
               )}
@@ -293,7 +321,9 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
               <div className="input-group">
                 <input
                   type="text"
-                  className={`form-control ${errors.productIds ? "is-invalid" : ""}`}
+                  className={`form-control ${
+                    errors.productIds ? "is-invalid" : ""
+                  }`}
                   value={
                     formData.productIds.length > 0
                       ? `Đã chọn ${formData.productIds.length} sản phẩm`
@@ -314,14 +344,22 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
                 </button>
               </div>
               {errors.productIds && (
-                <div className="text-danger small mt-1">{errors.productIds}</div>
+                <div className="text-danger small mt-1">
+                  {errors.productIds}
+                </div>
               )}
               {formData.productIds.length > 0 && (
                 <div className="mt-2">
                   <small className="text-muted">Sản phẩm đã chọn:</small>
-                  <div className="mt-1" style={{ maxHeight: '80px', overflowY: 'auto' }}>
+                  <div
+                    className="mt-1"
+                    style={{ maxHeight: "80px", overflowY: "auto" }}
+                  >
                     {getSelectedProductsDisplay().map((product) => (
-                      <span key={product.productId} className="badge bg-info me-1 mb-1">
+                      <span
+                        key={product.productId}
+                        className="badge bg-info me-1 mb-1"
+                      >
                         {product.productCode} - {product.productName}
                       </span>
                     ))}
@@ -332,7 +370,7 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
         </div>
 
-        <div className="modal-footer" style={{ gap: '0.5rem' }}>
+        <div className="modal-footer" style={{ gap: "0.5rem" }}>
           <button
             type="button"
             className="btn btn-secondary"
@@ -341,11 +379,7 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
           >
             Hủy
           </button>
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={loading}
-          >
+          <button type="submit" className="btn btn-primary" disabled={loading}>
             {loading ? "Đang xử lý..." : "Tạo khuyến mãi"}
           </button>
         </div>
@@ -363,4 +397,3 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
 };
 
 export default AddPromotionModal;
-

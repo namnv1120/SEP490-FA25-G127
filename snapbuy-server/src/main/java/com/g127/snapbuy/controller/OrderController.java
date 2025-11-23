@@ -73,6 +73,55 @@ public class OrderController {
         return response;
     }
 
+    @GetMapping("/my/today-count")
+    public ApiResponse<Long> getMyTodayOrderCount(@RequestParam(required = false) String paymentStatus) {
+        ApiResponse<Long> res = new ApiResponse<>();
+        Long count = orderService.getMyTodayOrderCount(paymentStatus == null || paymentStatus.isBlank() ? null : paymentStatus.trim());
+        res.setResult(count);
+        res.setMessage("Lấy số đơn đã bán hôm nay thành công.");
+        return res;
+    }
+
+    @GetMapping("/my/today-revenue")
+    public ApiResponse<java.math.BigDecimal> getMyTodayRevenue(@RequestParam(required = false) String paymentStatus) {
+        ApiResponse<java.math.BigDecimal> res = new ApiResponse<>();
+        java.math.BigDecimal revenue = orderService.getMyTodayRevenue(paymentStatus == null || paymentStatus.isBlank() ? null : paymentStatus.trim());
+        res.setResult(revenue);
+        res.setMessage("Lấy doanh thu hôm nay thành công.");
+        return res;
+    }
+
+    @GetMapping("/my/by-range")
+    public ApiResponse<java.util.List<OrderResponse>> getMyOrdersByRange(@RequestParam String from,
+                                                                         @RequestParam String to) {
+        ApiResponse<java.util.List<OrderResponse>> res = new ApiResponse<>();
+        java.time.LocalDateTime fromDt = parseFlexible(from);
+        java.time.LocalDateTime toDt = parseFlexible(to);
+        if (fromDt == null || toDt == null) {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            fromDt = today.atStartOfDay();
+            toDt = today.atTime(java.time.LocalTime.MAX);
+        }
+        res.setResult(orderService.getMyOrdersByDateTimeRange(fromDt, toDt));
+        res.setMessage("Lấy đơn theo khoảng thời gian thành công.");
+        return res;
+    }
+
+    private java.time.LocalDateTime parseFlexible(String s) {
+        if (s == null || s.isBlank()) return null;
+        try { return java.time.LocalDateTime.parse(s); } catch (Exception ignored) {}
+        try { return java.time.OffsetDateTime.parse(s, java.time.format.DateTimeFormatter.ISO_DATE_TIME).toLocalDateTime(); } catch (Exception ignored) {}
+        try { return java.time.LocalDateTime.ofInstant(java.time.Instant.parse(s), java.time.ZoneId.systemDefault()); } catch (Exception ignored) {}
+        // Try trimming milliseconds and Z
+        try {
+            String t = s.replace("Z", "");
+            int dot = t.indexOf('.');
+            if (dot > 0) t = t.substring(0, dot);
+            return java.time.LocalDateTime.parse(t);
+        } catch (Exception ignored) {}
+        return null;
+    }
+
     @PostMapping("/{id}/hold")
     public ApiResponse<OrderResponse> holdOrder(@PathVariable UUID id) {
         ApiResponse<OrderResponse> response = new ApiResponse<>();
@@ -95,5 +144,23 @@ public class OrderController {
         response.setResult(orderService.cancelOrder(id));
         response.setMessage("Hủy đơn hàng thành công.");
         return response;
+    }
+
+    @GetMapping("/by-account/{accountId}/by-range")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    public ApiResponse<java.util.List<OrderResponse>> getOrdersByAccountAndRange(@PathVariable UUID accountId,
+                                                                                @RequestParam String from,
+                                                                                @RequestParam String to) {
+        ApiResponse<java.util.List<OrderResponse>> res = new ApiResponse<>();
+        java.time.LocalDateTime fromDt = parseFlexible(from);
+        java.time.LocalDateTime toDt = parseFlexible(to);
+        if (fromDt == null || toDt == null) {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            fromDt = today.atStartOfDay();
+            toDt = today.atTime(java.time.LocalTime.MAX);
+        }
+        res.setResult(orderService.getOrdersByAccountAndDateTimeRange(accountId, fromDt, toDt));
+        res.setMessage("Lấy đơn theo khoảng thời gian thành công.");
+        return res;
     }
 }

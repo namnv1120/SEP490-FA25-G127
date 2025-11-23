@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { message, DatePicker, ConfigProvider } from "antd";
 import viVN from "antd/locale/vi_VN";
 import dayjs from "dayjs";
@@ -13,7 +13,6 @@ import {
   getProductRevenue,
 } from "../../services/RevenueService";
 import { getAccountsByRoleName } from "../../services/AccountService";
-import { exportToExcel } from "../../utils/excelUtils";
 import ExcelJS from "exceljs";
 import CommonFooter from "../../components/footer/CommonFooter";
 import PrimeDataTable from "../../components/data-table";
@@ -55,31 +54,49 @@ const RevenueReport = () => {
     loadSalesAccounts();
   }, []);
 
-  const fetchProductRevenueData = async (startDateTime, endDateTime, accountId) => {
-    try {
-      const fromDateStr = startDateTime.toISOString();
-      const toDateStr = endDateTime.toISOString();
-      console.log("Fetching product revenue from:", fromDateStr, "to:", toDateStr, "accountId:", accountId);
-      const productRevenue = await getProductRevenue(fromDateStr, toDateStr, accountId);
-      console.log("Product revenue data received:", productRevenue);
-      setProductRevenueData(productRevenue || []);
-    } catch (productError) {
-      console.error("Lỗi khi tải dữ liệu doanh thu sản phẩm:", productError);
-      console.error("Error details:", productError.response?.data || productError.message);
-      message.error(
-        productError.response?.data?.message ||
-        "Lỗi khi tải dữ liệu doanh thu sản phẩm. Vui lòng thử lại."
-      );
-      setProductRevenueData([]);
-    }
-  };
+  const fetchProductRevenueData = useCallback(
+    async (startDateTime, endDateTime, accountId) => {
+      try {
+        const fromDateStr = startDateTime.toISOString();
+        const toDateStr = endDateTime.toISOString();
+        const productRevenue = await getProductRevenue(
+          fromDateStr,
+          toDateStr,
+          accountId
+        );
+        setProductRevenueData(productRevenue || []);
+      } catch (productError) {
+        console.error("Lỗi khi tải dữ liệu doanh thu sản phẩm:", productError);
+        console.error(
+          "Error details:",
+          productError.response?.data || productError.message
+        );
+        message.error(
+          productError.response?.data?.message ||
+            "Lỗi khi tải dữ liệu doanh thu sản phẩm. Vui lòng thử lại."
+        );
+        setProductRevenueData([]);
+      }
+    },
+    []
+  );
 
   // Auto fetch product revenue when account filter changes (if data already loaded)
   useEffect(() => {
     if (savedStartDateTime && savedEndDateTime && revenueData) {
-      fetchProductRevenueData(savedStartDateTime, savedEndDateTime, selectedAccountId);
+      fetchProductRevenueData(
+        savedStartDateTime,
+        savedEndDateTime,
+        selectedAccountId
+      );
     }
-  }, [selectedAccountId]);
+  }, [
+    selectedAccountId,
+    fetchProductRevenueData,
+    savedEndDateTime,
+    savedStartDateTime,
+    revenueData,
+  ]);
 
   const fetchRevenueData = async () => {
     try {
@@ -91,7 +108,7 @@ const RevenueReport = () => {
       let endDateTime = null;
 
       switch (periodType) {
-        case "daily":
+        case "daily": {
           const year = selectedDate.getFullYear();
           const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
           const day = String(selectedDate.getDate()).padStart(2, "0");
@@ -102,22 +119,27 @@ const RevenueReport = () => {
           endDateTime = new Date(selectedDate);
           endDateTime.setHours(23, 59, 59, 999);
           break;
-        case "monthly":
+        }
+        case "monthly": {
           data = await getMonthlyRevenue(selectedYear, selectedMonth);
           startDateTime = new Date(selectedYear, selectedMonth - 1, 1);
           startDateTime.setHours(0, 0, 0, 0);
-          const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
+          const daysInMonth = new Date(
+            selectedYear,
+            selectedMonth,
+            0
+          ).getDate();
           endDateTime = new Date(selectedYear, selectedMonth - 1, daysInMonth);
           endDateTime.setHours(23, 59, 59, 999);
           const dailyPromises = [];
           for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(selectedYear, selectedMonth - 1, day);
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, "0");
-            const dayStr = String(date.getDate()).padStart(2, "0");
-            const dateStr = `${year}-${month}-${dayStr}`;
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, "0");
+            const dStr = String(date.getDate()).padStart(2, "0");
+            const ds = `${y}-${m}-${dStr}`;
             dailyPromises.push(
-              getDailyRevenue(dateStr).catch(() => ({
+              getDailyRevenue(ds).catch(() => ({
                 totalRevenue: 0,
                 orderCount: 0,
                 startDate: date.toISOString(),
@@ -132,7 +154,8 @@ const RevenueReport = () => {
             label: `${index + 1}`,
           }));
           break;
-        case "yearly":
+        }
+        case "yearly": {
           data = await getYearlyRevenue(selectedYear);
           startDateTime = new Date(selectedYear, 0, 1);
           startDateTime.setHours(0, 0, 0, 0);
@@ -169,7 +192,8 @@ const RevenueReport = () => {
             label: monthNames[index],
           }));
           break;
-        case "custom":
+        }
+        case "custom": {
           if (!dateRange || !dateRange[0] || !dateRange[1]) {
             message.warning("Vui lòng chọn khoảng thời gian");
             setLoading(false);
@@ -189,12 +213,12 @@ const RevenueReport = () => {
           const currentDate = new Date(startDate);
 
           while (currentDate <= endDate) {
-            const year = currentDate.getFullYear();
-            const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-            const day = String(currentDate.getDate()).padStart(2, "0");
-            const dateStr = `${year}-${month}-${day}`;
+            const y = currentDate.getFullYear();
+            const m = String(currentDate.getMonth() + 1).padStart(2, "0");
+            const d = String(currentDate.getDate()).padStart(2, "0");
+            const ds = `${y}-${m}-${d}`;
             customDailyPromises.push(
-              getDailyRevenue(dateStr).catch(() => ({
+              getDailyRevenue(ds).catch(() => ({
                 totalRevenue: 0,
                 orderCount: 0,
                 startDate: currentDate.toISOString(),
@@ -218,8 +242,10 @@ const RevenueReport = () => {
             };
           });
           break;
-        default:
+        }
+        default: {
           break;
+        }
       }
 
       setRevenueData(data);
@@ -234,13 +260,17 @@ const RevenueReport = () => {
 
       // Fetch product revenue data
       if (startDateTime && endDateTime) {
-        await fetchProductRevenueData(startDateTime, endDateTime, selectedAccountId);
+        await fetchProductRevenueData(
+          startDateTime,
+          endDateTime,
+          selectedAccountId
+        );
       }
     } catch (error) {
       console.error("Lỗi khi tải dữ liệu doanh thu:", error);
       message.error(
         error.response?.data?.message ||
-        "Lỗi khi tải dữ liệu doanh thu. Vui lòng thử lại."
+          "Lỗi khi tải dữ liệu doanh thu. Vui lòng thử lại."
       );
       setRevenueData(null);
       setDetailedData([]);
@@ -275,8 +305,13 @@ const RevenueReport = () => {
       const worksheet = workbook.addWorksheet("Danh sách sản phẩm");
 
       // Định nghĩa headers
-      const headers = ["STT", "Tên sản phẩm", "Giá bán (VNĐ)", "Số lượng", "Tổng tiền (VNĐ)"];
-      const centerColumns = ["STT", "Giá bán (VNĐ)", "Số lượng", "Tổng tiền (VNĐ)"];
+      const headers = [
+        "STT",
+        "Tên sản phẩm",
+        "Giá bán (VNĐ)",
+        "Số lượng",
+        "Tổng tiền (VNĐ)",
+      ];
 
       // Thêm header row
       const headerRow = worksheet.addRow(headers);
@@ -286,9 +321,8 @@ const RevenueReport = () => {
 
       // Thêm dữ liệu
       productRevenueData.forEach((item, index) => {
-        const sellingPrice = item.totalSold > 0
-          ? item.totalRevenue / item.totalSold
-          : 0;
+        const sellingPrice =
+          item.totalSold > 0 ? item.totalRevenue / item.totalSold : 0;
 
         const row = worksheet.addRow([
           index + 1,
@@ -313,7 +347,8 @@ const RevenueReport = () => {
 
       // Thêm dòng tổng tiền
       const accountName = selectedAccountId
-        ? salesAccounts.find((acc) => acc.id === selectedAccountId)?.fullName || ""
+        ? salesAccounts.find((acc) => acc.id === selectedAccountId)?.fullName ||
+          ""
         : "Tất cả nhân viên";
 
       const totalRow = worksheet.addRow([
@@ -326,8 +361,14 @@ const RevenueReport = () => {
 
       // Format dòng tổng
       totalRow.font = { bold: true };
-      totalRow.getCell(2).alignment = { horizontal: "right", vertical: "middle" };
-      totalRow.getCell(5).alignment = { horizontal: "center", vertical: "middle" };
+      totalRow.getCell(2).alignment = {
+        horizontal: "right",
+        vertical: "middle",
+      };
+      totalRow.getCell(5).alignment = {
+        horizontal: "center",
+        vertical: "middle",
+      };
 
       // Set column widths
       worksheet.columns = [
@@ -345,7 +386,9 @@ const RevenueReport = () => {
       const filename = `Bao_cao_san_pham_${safePeriodLabel}_${safeAccountName}`;
 
       const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -360,35 +403,31 @@ const RevenueReport = () => {
     }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-  };
-
   const getPeriodLabel = () => {
     switch (periodType) {
-      case "daily":
+      case "daily": {
         const day = String(selectedDate.getDate()).padStart(2, "0");
         const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
         const year = selectedDate.getFullYear();
         return `Ngày ${day}/${month}/${year}`;
-      case "monthly":
+      }
+      case "monthly": {
         return `Tháng ${selectedMonth}/${selectedYear}`;
-      case "yearly":
+      }
+      case "yearly": {
         return `Năm ${selectedYear}`;
-      case "custom":
+      }
+      case "custom": {
         if (!dateRange || !dateRange[0] || !dateRange[1]) {
           return "Chưa chọn khoảng thời gian";
         }
-        return `Từ ${dateRange[0].format("DD/MM/YYYY")} đến ${dateRange[1].format("DD/MM/YYYY")}`;
-      default:
-
+        return `Từ ${dateRange[0].format(
+          "DD/MM/YYYY"
+        )} đến ${dateRange[1].format("DD/MM/YYYY")}`;
+      }
+      default: {
         return "";
+      }
     }
   };
 
@@ -472,7 +511,8 @@ const RevenueReport = () => {
                 colors: "#6B7280",
                 fontSize: "12px",
               },
-              rotate: periodType === "monthly" || periodType === "custom" ? -45 : 0,
+              rotate:
+                periodType === "monthly" || periodType === "custom" ? -45 : 0,
               rotateAlways: periodType === "monthly" || periodType === "custom",
             },
           },
@@ -531,8 +571,8 @@ const RevenueReport = () => {
               periodType === "monthly"
                 ? "Biểu đồ doanh thu và số đơn hàng theo ngày trong tháng"
                 : periodType === "yearly"
-                  ? "Biểu đồ doanh thu và số đơn hàng theo tháng trong năm"
-                  : "Biểu đồ doanh thu và số đơn hàng theo ngày",
+                ? "Biểu đồ doanh thu và số đơn hàng theo tháng trong năm"
+                : "Biểu đồ doanh thu và số đơn hàng theo ngày",
             align: "center",
             style: {
               fontSize: "16px",
@@ -566,10 +606,7 @@ const RevenueReport = () => {
       series: [
         {
           name: "Doanh thu",
-          data: [
-            revenueData.totalRevenue || 0,
-            averageRevenuePerOrder,
-          ],
+          data: [revenueData.totalRevenue || 0, averageRevenuePerOrder],
         },
       ],
       options: {
@@ -876,9 +913,31 @@ const RevenueReport = () => {
                                   {formatCurrency(revenueData.totalRevenue)}
                                 </h3>
                               </div>
-                              <div className="avatar-lg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <span className="avatar-title bg-light text-primary rounded-circle" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '60px', height: '60px' }}>
-                                  <i className="ti ti-currency-dollar fs-2" style={{ fontSize: '2rem', lineHeight: '1' }}></i>
+                              <div
+                                className="avatar-lg"
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <span
+                                  className="avatar-title bg-light text-primary rounded-circle"
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: "60px",
+                                    height: "60px",
+                                  }}
+                                >
+                                  <i
+                                    className="ti ti-currency-dollar fs-2"
+                                    style={{
+                                      fontSize: "2rem",
+                                      lineHeight: "1",
+                                    }}
+                                  ></i>
                                 </span>
                               </div>
                             </div>
@@ -898,9 +957,31 @@ const RevenueReport = () => {
                                   {revenueData.orderCount || 0}
                                 </h3>
                               </div>
-                              <div className="avatar-lg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <span className="avatar-title bg-light text-success rounded-circle" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '60px', height: '60px' }}>
-                                  <i className="ti ti-shopping-cart fs-2" style={{ fontSize: '2rem', lineHeight: '1' }}></i>
+                              <div
+                                className="avatar-lg"
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <span
+                                  className="avatar-title bg-light text-success rounded-circle"
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: "60px",
+                                    height: "60px",
+                                  }}
+                                >
+                                  <i
+                                    className="ti ti-shopping-cart fs-2"
+                                    style={{
+                                      fontSize: "2rem",
+                                      lineHeight: "1",
+                                    }}
+                                  ></i>
                                 </span>
                               </div>
                             </div>
@@ -919,15 +1000,37 @@ const RevenueReport = () => {
                                 <h3 className="text-white mb-0">
                                   {revenueData.orderCount > 0
                                     ? formatCurrency(
-                                      revenueData.totalRevenue /
-                                      revenueData.orderCount
-                                    )
+                                        revenueData.totalRevenue /
+                                          revenueData.orderCount
+                                      )
                                     : "0 đ"}
                                 </h3>
                               </div>
-                              <div className="avatar-lg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <span className="avatar-title bg-light text-info rounded-circle" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '60px', height: '60px' }}>
-                                  <i className="ti ti-chart-line fs-2" style={{ fontSize: '2rem', lineHeight: '1' }}></i>
+                              <div
+                                className="avatar-lg"
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <span
+                                  className="avatar-title bg-light text-info rounded-circle"
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: "60px",
+                                    height: "60px",
+                                  }}
+                                >
+                                  <i
+                                    className="ti ti-chart-line fs-2"
+                                    style={{
+                                      fontSize: "2rem",
+                                      lineHeight: "1",
+                                    }}
+                                  ></i>
                                 </span>
                               </div>
                             </div>
@@ -966,8 +1069,8 @@ const RevenueReport = () => {
                                           {periodType === "monthly"
                                             ? "Doanh thu từng ngày trong tháng (cột)"
                                             : periodType === "yearly"
-                                              ? "Doanh thu từng tháng trong năm (cột)"
-                                              : "Doanh thu từng ngày trong khoảng thời gian (cột)"}
+                                            ? "Doanh thu từng tháng trong năm (cột)"
+                                            : "Doanh thu từng ngày trong khoảng thời gian (cột)"}
                                         </span>
                                       </div>
                                     </div>
@@ -987,8 +1090,8 @@ const RevenueReport = () => {
                                           {periodType === "monthly"
                                             ? "Số đơn hàng từng ngày trong tháng (đường)"
                                             : periodType === "yearly"
-                                              ? "Số đơn hàng từng tháng trong năm (đường)"
-                                              : "Số đơn hàng từng ngày trong khoảng thời gian (đường)"}
+                                            ? "Số đơn hàng từng tháng trong năm (đường)"
+                                            : "Số đơn hàng từng ngày trong khoảng thời gian (đường)"}
                                         </span>
                                       </div>
                                     </div>
@@ -1008,8 +1111,8 @@ const RevenueReport = () => {
                                         ></div>
                                         <span className="text-muted">
                                           <strong>Tổng doanh thu:</strong> Tổng
-                                          số tiền thu được từ tất cả các đơn hàng
-                                          trong khoảng thời gian đã chọn
+                                          số tiền thu được từ tất cả các đơn
+                                          hàng trong khoảng thời gian đã chọn
                                         </span>
                                       </div>
                                     </div>
@@ -1025,9 +1128,9 @@ const RevenueReport = () => {
                                           }}
                                         ></div>
                                         <span className="text-muted">
-                                          <strong>Trung bình mỗi đơn:</strong> Giá
-                                          trị trung bình của mỗi đơn hàng (Tổng
-                                          doanh thu / Số lượng đơn hàng)
+                                          <strong>Trung bình mỗi đơn:</strong>{" "}
+                                          Giá trị trung bình của mỗi đơn hàng
+                                          (Tổng doanh thu / Số lượng đơn hàng)
                                         </span>
                                       </div>
                                     </div>
@@ -1045,15 +1148,21 @@ const RevenueReport = () => {
                         <div className="card">
                           <div className="card-header">
                             <div className="d-flex justify-content-between align-items-center">
-                              <h5 className="card-title mb-0">Danh sách sản phẩm đã bán</h5>
+                              <h5 className="card-title mb-0">
+                                Danh sách sản phẩm đã bán
+                              </h5>
                               <div className="d-flex align-items-center gap-3">
-                                {productRevenueData && productRevenueData.length > 0 && (
-                                  <TableTopHead
-                                    onExportExcel={handleExportExcel}
-                                    showRefresh={false}
-                                  />
-                                )}
-                                <div className="form-group mb-0" style={{ minWidth: "250px" }}>
+                                {productRevenueData &&
+                                  productRevenueData.length > 0 && (
+                                    <TableTopHead
+                                      onExportExcel={handleExportExcel}
+                                      showRefresh={false}
+                                    />
+                                  )}
+                                <div
+                                  className="form-group mb-0"
+                                  style={{ minWidth: "250px" }}
+                                >
                                   <select
                                     className="form-select"
                                     value={selectedAccountId || ""}
@@ -1065,7 +1174,10 @@ const RevenueReport = () => {
                                   >
                                     <option value="">Tất cả nhân viên</option>
                                     {salesAccounts.map((account) => (
-                                      <option key={account.id} value={account.id}>
+                                      <option
+                                        key={account.id}
+                                        value={account.id}
+                                      >
                                         {account.fullName}
                                       </option>
                                     ))}
@@ -1075,25 +1187,31 @@ const RevenueReport = () => {
                             </div>
                           </div>
                           <div className="card-body">
-                            {selectedAccountId && productRevenueData.length > 0 && (
-                              <div className="alert alert-info mb-3">
-                                <strong>Tổng tiền của nhân viên: </strong>
-                                {formatCurrency(
-                                  productRevenueData.reduce(
-                                    (sum, item) => sum + (item.totalRevenue || 0),
-                                    0
-                                  )
-                                )}
-                              </div>
-                            )}
-                            {productRevenueData && Array.isArray(productRevenueData) && productRevenueData.length > 0 ? (
+                            {selectedAccountId &&
+                              productRevenueData.length > 0 && (
+                                <div className="alert alert-info mb-3">
+                                  <strong>Tổng tiền của nhân viên: </strong>
+                                  {formatCurrency(
+                                    productRevenueData.reduce(
+                                      (sum, item) =>
+                                        sum + (item.totalRevenue || 0),
+                                      0
+                                    )
+                                  )}
+                                </div>
+                              )}
+                            {productRevenueData &&
+                            Array.isArray(productRevenueData) &&
+                            productRevenueData.length > 0 ? (
                               <PrimeDataTable
                                 column={[
                                   {
                                     header: "STT",
                                     field: "index",
                                     body: (rowData, { rowIndex }) => {
-                                      return (currentPage - 1) * rows + rowIndex + 1;
+                                      return (
+                                        (currentPage - 1) * rows + rowIndex + 1
+                                      );
                                     },
                                     sortable: false,
                                     className: "text-start",
@@ -1107,9 +1225,11 @@ const RevenueReport = () => {
                                     header: "Giá bán",
                                     field: "sellingPrice",
                                     body: (rowData) => {
-                                      const sellingPrice = rowData.totalSold > 0
-                                        ? rowData.totalRevenue / rowData.totalSold
-                                        : 0;
+                                      const sellingPrice =
+                                        rowData.totalSold > 0
+                                          ? rowData.totalRevenue /
+                                            rowData.totalSold
+                                          : 0;
                                       return formatCurrency(sellingPrice);
                                     },
                                     sortable: false,
@@ -1119,9 +1239,9 @@ const RevenueReport = () => {
                                     header: "Số lượng",
                                     field: "totalSold",
                                     body: (rowData) => {
-                                      return new Intl.NumberFormat("vi-VN").format(
-                                        rowData.totalSold || 0
-                                      );
+                                      return new Intl.NumberFormat(
+                                        "vi-VN"
+                                      ).format(rowData.totalSold || 0);
                                     },
                                     sortable: true,
                                     className: "text-start",
@@ -1130,7 +1250,8 @@ const RevenueReport = () => {
                                     header: "Tổng tiền",
                                     field: "totalRevenue",
                                     body: (rowData) => {
-                                      return formatCurrency(rowData.totalRevenue || 0
+                                      return formatCurrency(
+                                        rowData.totalRevenue || 0
                                       );
                                     },
                                     sortable: true,
@@ -1148,7 +1269,10 @@ const RevenueReport = () => {
                               />
                             ) : (
                               <div className="text-center text-muted py-4">
-                                <p>Không có sản phẩm nào được bán trong khoảng thời gian đã chọn.</p>
+                                <p>
+                                  Không có sản phẩm nào được bán trong khoảng
+                                  thời gian đã chọn.
+                                </p>
                               </div>
                             )}
                           </div>
@@ -1178,4 +1302,3 @@ const RevenueReport = () => {
 };
 
 export default RevenueReport;
-

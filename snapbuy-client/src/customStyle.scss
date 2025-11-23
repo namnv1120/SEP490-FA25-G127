@@ -195,9 +195,18 @@ ul.tabs.owl-carousel.pos-category {
 
 .tabs_wrapper ul.tabs li:last-child {
   margin-right: 0;
+.pos-design .tabs_wrapper .slick-arrow.slick-prev::before {
 }
 
-.pos-design .tabs_wrapper .slick-arrow.slick-prev::before {
+.spinner-border,
+.spinner-grow {
+  display: none !important;
+}
+
+.ant-spin,
+.ant-spin-spinning {
+  display: none !important;
+}
   content: "\f053";
   width: 12px;
   height: 12px;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import CommonFooter from "../../components/footer/CommonFooter";
 import TooltipIcons from "../../components/tooltip-content/tooltipIcons";
@@ -14,7 +14,6 @@ import OrderDetailModal from "../../core/modals/sales/OrderDetailModal";
 const OrderHistory = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
   const [selectedStatus, setSelectedStatus] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -59,7 +58,7 @@ const OrderHistory = () => {
     return Number(item.total) || 0;
   };
 
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     if (isInitialLoad) setLoading(true);
     setError("");
     try {
@@ -93,7 +92,7 @@ const OrderHistory = () => {
           item.payment?.paymentMethod ||
           item.paymentMethod ||
           (item.paymentStatus === "PAID" ||
-            item.paymentStatus === "PAYMENT_COMPLETED"
+          item.paymentStatus === "PAYMENT_COMPLETED"
             ? "Tiền mặt"
             : "-");
         return {
@@ -139,9 +138,11 @@ const OrderHistory = () => {
       );
 
       // Update normalizedData with account names (use accountName from backend if available, otherwise fetch)
-      const dataWithAccountNames = normalizedData.map(item => ({
+      const dataWithAccountNames = normalizedData.map((item) => ({
         ...item,
-        accountName: item.accountName || (item.accountId ? (accountNames[item.accountId] || "-") : "-"),
+        accountName:
+          item.accountName ||
+          (item.accountId ? accountNames[item.accountId] || "-" : "-"),
       }));
 
       // Sắp xếp theo ngày đặt hàng giảm dần (đơn mới nhất ở trên)
@@ -153,37 +154,31 @@ const OrderHistory = () => {
 
       setAccountNamesMap(accountNames);
       setFilteredData(sortedData);
-      setTotalRecords(sortedData.length);
+
       setIsInitialLoad(false);
     } catch (err) {
       console.error("=== Lỗi khi gọi API ===", err);
       setError(
         err.response?.data?.message ||
-        err.message ||
-        "Không thể tải dữ liệu đơn hàng."
+          err.message ||
+          "Không thể tải dữ liệu đơn hàng."
       );
       setFilteredData([]);
-      setTotalRecords(0);
+
       setIsInitialLoad(false);
     } finally {
       setLoading(false);
     }
-  };
+  }, [debouncedSearchTerm, selectedStatus, dateRange, isInitialLoad]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearchTerm(searchTerm), 500);
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const dateRangeKey = useMemo(() => {
-    return dateRange[0] && dateRange[1]
-      ? `${dateRange[0].getTime()}-${dateRange[1].getTime()}`
-      : "no-date";
-  }, [dateRange]);
-
   useEffect(() => {
     loadOrders();
-  }, [currentPage, rows, selectedStatus, debouncedSearchTerm, dateRangeKey]);
+  }, [loadOrders]);
 
   // Hàm mở modal chi tiết
   const handleViewDetail = (order) => {
@@ -266,7 +261,9 @@ const OrderHistory = () => {
       field: "accountName",
       key: "accountName",
       sortable: true,
-      body: (data) => <span className="text-muted">{data.accountName || "-"}</span>,
+      body: (data) => (
+        <span className="text-muted">{data.accountName || "-"}</span>
+      ),
     },
     {
       header: "Ngày đặt hàng",
@@ -276,12 +273,12 @@ const OrderHistory = () => {
       body: (data) =>
         data.orderDate
           ? new Date(data.orderDate).toLocaleString("vi-VN", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
           : "-",
     },
     {

@@ -6,6 +6,7 @@ import CommonFooter from "../../components/footer/CommonFooter";
 import SettingsSideBar from "../../feature-module/settings/SettingsSideBar";
 import { message } from "antd";
 import { getPosSettings, updatePosSettings } from "../../services/PosSettingsService";
+import PageLoader from "../../components/loading/PageLoader.jsx";
 
 const PosSystemSettings = () => {
   const [formData, setFormData] = useState({
@@ -82,9 +83,12 @@ const PosSystemSettings = () => {
   }, []);
 
   return (
-    <>
-      <div className="page-wrapper">
-        <div className="content settings-content">
+    isLoading ? (
+      <PageLoader />
+    ) : (
+      <>
+        <div className="page-wrapper">
+          <div className="content settings-content">
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
@@ -106,13 +110,6 @@ const PosSystemSettings = () => {
                     <h4 className="fs-18 fw-bold">Cài đặt hệ thống</h4>
                   </div>
                   <div className="card-body">
-                    {isLoading ? (
-                      <div className="text-center py-5">
-                        <div className="spinner-border text-primary" role="status">
-                          <span className="visually-hidden">Đang tải...</span>
-                        </div>
-                      </div>
-                    ) : (
                       <form onSubmit={handleSubmit}>
                         <div className="card-title-head mb-4">
                           <h6 className="fs-16 fw-bold mb-1">
@@ -184,18 +181,17 @@ const PosSystemSettings = () => {
                           </button>
                         </div>
                       </form>
-                    )}
                   </div>
                 </div>
               </div>
             </div>
+            </div>
           </div>
+          <CommonFooter />
         </div>
-        <CommonFooter />
-      </div>
-    </>
+      </>
+    )
   );
 };
 
 export default PosSystemSettings;
-

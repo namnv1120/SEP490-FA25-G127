@@ -17,8 +17,6 @@ const Suppliers = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
-  const [searchQuery, setSearchQuery] = useState(undefined);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [editSupplierId, setEditSupplierId] = useState(null);
@@ -31,7 +29,6 @@ const Suppliers = () => {
 
   const fetchSuppliers = async () => {
     try {
-      setLoading(true);
       setError(null);
       const data = await getAllSuppliers();
       const mappedData = data.map((supplier) => ({
@@ -41,10 +38,10 @@ const Suppliers = () => {
       }));
       setListData(mappedData);
       setTotalRecords(mappedData.length);
-    } catch (err) {
+    } catch {
       setError("Lỗi khi tải danh sách nhà cung cấp. Vui lòng thử lại.");
     } finally {
-      setLoading(false);
+      void 0;
     }
   };
 
@@ -67,7 +64,7 @@ const Suppliers = () => {
 
     try {
       await exportToExcel(exportData, "Danh sách nhà cung cấp");
-    } catch (error) {
+    } catch {
       message.error("Lỗi khi xuất file Excel!");
     }
   };
@@ -77,9 +74,7 @@ const Suppliers = () => {
     message.success("Làm mới danh sách thành công!");
   }
 
-  const handleSearch = (value) => {
-    setSearchQuery(value);
-  };
+  const handleSearch = () => {};
 
   const handleEditClick = (supplier) => {
     setEditSupplierId(supplier.supplierId);
@@ -117,7 +112,7 @@ const Suppliers = () => {
 
       await fetchSuppliers();
       message.success("Xoá nhà cung cấp thành công!");
-    } catch (err) {
+    } catch {
       message.error("Lỗi khi xoá nhà cung cấp. Vui lòng thử lại.");
     } finally {
       setSelectedSupplier(null);

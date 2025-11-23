@@ -8,8 +8,8 @@ export default function ResetPassword() {
   const navigate = useNavigate();
   const { state } = useLocation();
   const initialEmail = state?.email || "";
-  const [email, setEmail] = useState(initialEmail);
-  const [code, setCode] = useState(state?.code || "");
+  const email = initialEmail;
+  const code = state?.code || "";
   const [newPassword, setNewPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
