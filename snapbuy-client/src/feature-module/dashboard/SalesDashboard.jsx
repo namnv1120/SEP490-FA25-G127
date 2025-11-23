@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { message, Modal, Spin } from "antd";
+import { message, Spin } from "antd";
 import Chart from "react-apexcharts";
 import {
   Chart as ChartJS,
@@ -19,18 +19,14 @@ import {
   getMyTodayOrderCount,
 } from "../../services/OrderService";
 import {
-  openShift,
-  closeShift,
   getCurrentShift,
 } from "../../services/ShiftService";
 
-const SalesOverview = () => {
+const SalesDashboard = () => {
   const [user, setUser] = useState(null);
   const [loadingOrders, setLoadingOrders] = useState(false);
   
   const [shift, setShift] = useState(null);
-  const [shiftModalOpen, setShiftModalOpen] = useState(false);
-  const [shiftAmount, setShiftAmount] = useState("");
   const [shiftLoading, setShiftLoading] = useState(false);
   const [myTodayCount, setMyTodayCount] = useState(0);
   const [todayRevenue, setTodayRevenue] = useState(0);
@@ -214,37 +210,7 @@ const SalesOverview = () => {
 
   
 
-  const handleOpenShift = async () => {
-    if (!shiftAmount || Number(shiftAmount) < 0) {
-      message.error("Nhập số tiền mặt hợp lệ");
-      return;
-    }
-    try {
-      const res = await openShift(Number(shiftAmount));
-      setShift(res);
-      setShiftModalOpen(false);
-      window.dispatchEvent(new CustomEvent("shiftUpdated", { detail: res }));
-      message.success("Đã mở ca");
-    } catch {
-      message.error("Không thể mở ca");
-    }
-  };
 
-  const handleCloseShift = async () => {
-    if (shiftAmount === undefined || Number(shiftAmount) < 0) {
-      message.error("Nhập số tiền mặt hiện tại hợp lệ");
-      return;
-    }
-    try {
-      const res = await closeShift(Number(shiftAmount));
-      setShift(res);
-      setShiftModalOpen(false);
-      window.dispatchEvent(new CustomEvent("shiftUpdated", { detail: res }));
-      message.success("Đã đóng ca");
-    } catch {
-      message.error("Không thể đóng ca");
-    }
-  };
 
   return (
     <div className="page-wrapper">
@@ -388,9 +354,7 @@ const SalesOverview = () => {
                         ? new Date(shift.openedAt).toLocaleString("vi-VN")
                         : ""}
                     </div>
-                    <div className="col-12">
-                      Tiền mặt ban đầu: {formatCurrency(shift.initialCash)}
-                    </div>
+
                   </div>
                 ) : (
                   <div>
@@ -474,68 +438,10 @@ const SalesOverview = () => {
           </div>
         </div>
 
-        <Modal
-          open={shiftModalOpen}
-          onCancel={() => setShiftModalOpen(false)}
-          footer={null}
-          title="Đóng/Mở ca"
-          centered
-        >
-          {shiftLoading ? (
-            <div className="text-center py-4">
-              <Spin size="large" />
-            </div>
-          ) : shift && shift.status === "Mở" ? (
-            <div>
-              <div className="mb-2">
-                Trạng thái: <span className="badge badge-success">Đang mở</span>
-              </div>
-              <div className="mb-2">
-                Bắt đầu:{" "}
-                {shift.openedAt
-                  ? new Date(shift.openedAt).toLocaleString("vi-VN")
-                  : ""}
-              </div>
-              <div className="mb-3">
-                Tiền mặt ban đầu: {formatCurrency(shift.initialCash)}
-              </div>
-              <label className="form-label fw-bold">Tiền mặt hiện tại</label>
-              <input
-                type="number"
-                className="form-control"
-                value={shiftAmount}
-                onChange={(e) => setShiftAmount(e.target.value)}
-              />
-              <div className="text-end mt-3">
-                <button className="btn btn-purple" onClick={handleCloseShift}>
-                  Đóng ca
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <div className="mb-2">
-                Trạng thái:{" "}
-                <span className="badge badge-secondary">Đang đóng</span>
-              </div>
-              <label className="form-label fw-bold">Tiền mặt ban đầu</label>
-              <input
-                type="number"
-                className="form-control"
-                value={shiftAmount}
-                onChange={(e) => setShiftAmount(e.target.value)}
-              />
-              <div className="text-end mt-3">
-                <button className="btn btn-teal" onClick={handleOpenShift}>
-                  Mở ca
-                </button>
-              </div>
-            </div>
-          )}
-        </Modal>
+
       </div>
     </div>
   );
 };
 
-export default SalesOverview;
+export default SalesDashboard;

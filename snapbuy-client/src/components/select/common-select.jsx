@@ -8,7 +8,7 @@ const CommonSelect = ({
   className = "",
   disabled = false,
   filter = true,
-  width = 170,
+  width = 220,
 }) => {
   return (
     <Dropdown

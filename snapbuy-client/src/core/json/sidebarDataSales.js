@@ -9,7 +9,7 @@ export const SidebarDataSales = [
         tittle: "Thống kê nhân viên",
         hasSubRoute: false,
         showSubRoute: false,
-        route: "/sales-overview",
+        route: "/sales-dashboard",
         subRoutes: [],
       },
       {

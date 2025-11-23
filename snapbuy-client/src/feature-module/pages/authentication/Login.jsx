@@ -19,7 +19,7 @@ const Login = () => {
       await login(username, password);
       const role = localStorage.getItem("role");
       if (role === "Nhân viên bán hàng") {
-        window.location.href = "/sales-overview";
+        window.location.href = "/sales-dashboard";
       } else {
         window.location.href = "/dashboard";
       }

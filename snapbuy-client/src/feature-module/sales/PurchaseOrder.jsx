@@ -23,7 +23,6 @@ import DeleteModal from "../../components/delete-modal";
 import { Modal as BootstrapModal } from "bootstrap";
 import PurchaseOrderDetailModal from "../../core/modals/sales/PurchaseOrderDetailModal";
 
-
 const PurchaseOrder = () => {
   const route = allRoutes;
   const [listData, setListData] = useState([]);
@@ -45,12 +44,12 @@ const PurchaseOrder = () => {
 
   const isAdmin = () => {
     const role = getAccountRole();
-    return role === "Quản trị viên"
+    return role === "Quản trị viên";
   };
 
   const isOwner = () => {
     const role = getAccountRole();
-    return role === "Chủ cửa hàng"
+    return role === "Chủ cửa hàng";
   };
 
   const canApprove = () => {
@@ -81,7 +80,14 @@ const PurchaseOrder = () => {
       case "đã duyệt":
         return <span className="badge bg-info">Đã duyệt</span>;
       case "chờ xác nhận":
-        return <span className="badge text-white" style={{ backgroundColor: '#ff9800' }}>Chờ xác nhận</span>;
+        return (
+          <span
+            className="badge text-white"
+            style={{ backgroundColor: "#ff9800" }}
+          >
+            Chờ xác nhận
+          </span>
+        );
       case "đã nhận hàng":
         return <span className="badge bg-success">Đã nhận hàng</span>;
       default:
@@ -98,12 +104,12 @@ const PurchaseOrder = () => {
     try {
       setLoading(true);
 
-      const backendSortField = sortField || 'orderDate';
-      const backendSortDir = sortOrder === 'asc' ? 'ASC' : 'DESC';
+      const backendSortField = sortField || "orderDate";
+      const backendSortDir = sortOrder === "asc" ? "ASC" : "DESC";
       const backendPage = currentPage - 1;
 
       const result = await searchPurchaseOrders(
-        searchQuery || '',
+        searchQuery || "",
         backendPage,
         rows,
         backendSortField,
@@ -133,17 +139,19 @@ const PurchaseOrder = () => {
 
   const handleSort = (field) => {
     if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortOrder('asc');
+      setSortOrder("asc");
     }
     setCurrentPage(1);
   };
 
   const handleBulkAction = async (action) => {
     try {
-      const checkboxes = document.querySelectorAll('.table-list-card input[type="checkbox"]:checked');
+      const checkboxes = document.querySelectorAll(
+        '.table-list-card input[type="checkbox"]:checked'
+      );
       const selectedIds = [];
 
       checkboxes.forEach((cb) => {
@@ -157,7 +165,9 @@ const PurchaseOrder = () => {
       }
 
       if (action === "approve" && !canApprove()) {
-        message.error("Chỉ Chủ cửa hàng và Quản trị viên mới có quyền duyệt đơn!");
+        message.error(
+          "Chỉ Chủ cửa hàng và Quản trị viên mới có quyền duyệt đơn!"
+        );
         return;
       }
 
@@ -165,7 +175,7 @@ const PurchaseOrder = () => {
       const invalidOrders = [];
 
       for (const id of selectedIds) {
-        const order = listData.find(o => o.purchaseOrderId === id);
+        const order = listData.find((o) => o.purchaseOrderId === id);
 
         if (!order) {
           invalidOrders.push(id);
@@ -177,43 +187,60 @@ const PurchaseOrder = () => {
           if (status === "chờ duyệt") {
             validOrders.push(id);
           } else {
-            invalidOrders.push(`${order.purchaseOrderNumber} (${order.status})`);
+            invalidOrders.push(
+              `${order.purchaseOrderNumber} (${order.status})`
+            );
           }
-        }
-        else if (action === "cancel") {
-          if (status === "chờ duyệt" || status === "đã duyệt" || status === "chờ xác nhận") {
+        } else if (action === "cancel") {
+          if (
+            status === "chờ duyệt" ||
+            status === "đã duyệt" ||
+            status === "chờ xác nhận"
+          ) {
             validOrders.push(id);
           } else {
-            invalidOrders.push(`${order.purchaseOrderNumber} (${order.status})`);
+            invalidOrders.push(
+              `${order.purchaseOrderNumber} (${order.status})`
+            );
           }
-        }
-        else if (action === "receive") {
+        } else if (action === "receive") {
           if (status === "chờ xác nhận") {
             validOrders.push(id);
           } else if (status === "chờ duyệt") {
-            invalidOrders.push(`${order.purchaseOrderNumber} - Chưa được duyệt`);
+            invalidOrders.push(
+              `${order.purchaseOrderNumber} - Chưa được duyệt`
+            );
           } else if (status === "đã duyệt") {
-            invalidOrders.push(`${order.purchaseOrderNumber} - Chưa cập nhật số lượng thực nhận`);
+            invalidOrders.push(
+              `${order.purchaseOrderNumber} - Chưa cập nhật số lượng thực nhận`
+            );
           } else {
-            invalidOrders.push(`${order.purchaseOrderNumber} (${order.status})`);
+            invalidOrders.push(
+              `${order.purchaseOrderNumber} (${order.status})`
+            );
           }
-        }
-        else if (action === "revert") {
+        } else if (action === "revert") {
           if (status === "chờ xác nhận") {
             validOrders.push(id);
           } else {
-            invalidOrders.push(`${order.purchaseOrderNumber} (${order.status})`);
+            invalidOrders.push(
+              `${order.purchaseOrderNumber} (${order.status})`
+            );
           }
         }
       }
 
       if (invalidOrders.length > 0) {
         const actionText =
-          action === "approve" ? "duyệt" :
-            action === "cancel" ? "huỷ" :
-              action === "receive" ? "xác nhận nhận hàng" :
-                action === "revert" ? "huỷ xác nhận" :
-                  "xử lý";
+          action === "approve"
+            ? "duyệt"
+            : action === "cancel"
+            ? "huỷ"
+            : action === "receive"
+            ? "xác nhận nhận hàng"
+            : action === "revert"
+            ? "huỷ xác nhận"
+            : "xử lý";
 
         message.warning({
           content: (
@@ -223,7 +250,9 @@ const PurchaseOrder = () => {
                 {invalidOrders.slice(0, 5).map((item, idx) => (
                   <li key={idx}>{item}</li>
                 ))}
-                {invalidOrders.length > 5 && <li>... và {invalidOrders.length - 5} đơn khác</li>}
+                {invalidOrders.length > 5 && (
+                  <li>... và {invalidOrders.length - 5} đơn khác</li>
+                )}
               </ul>
             </div>
           ),
@@ -247,32 +276,39 @@ const PurchaseOrder = () => {
             const orderDetail = await getPurchaseOrderById(id);
 
             // Cho phép receiveQuantity = 0 (nhà cung cấp hết hàng), chỉ cần có giá trị (không null)
-            const allHaveReceivedQty = orderDetail.details?.every(d => {
+            const allHaveReceivedQty = orderDetail.details?.every((d) => {
               const qty = d.receiveQuantity ?? d.receivedQuantity;
               return qty !== null && qty !== undefined;
             });
 
             if (!allHaveReceivedQty) {
-              const order = listData.find(o => o.purchaseOrderId === id);
-              errorMessages.push(`${order?.purchaseOrderNumber || id}: Chưa cập nhật số lượng thực nhận`);
+              const order = listData.find((o) => o.purchaseOrderId === id);
+              errorMessages.push(
+                `${
+                  order?.purchaseOrderNumber || id
+                }: Chưa cập nhật số lượng thực nhận`
+              );
               errorCount++;
               continue;
             }
 
             await confirmPurchaseOrder(id, {
-              notes: "Xác nhận nhận hàng loạt"
+              notes: "Xác nhận nhận hàng loạt",
             });
           } else if (action === "revert") {
             await revertPurchaseOrder(id, {
-              notes: "Quay lại trạng thái đã duyệt"
+              notes: "Quay lại trạng thái đã duyệt",
             });
           }
           successCount++;
         } catch (err) {
           errorCount++;
-          const order = listData.find(o => o.purchaseOrderId === id);
-          const errorMsg = err.response?.data?.message || err.message || "Lỗi không xác định";
-          errorMessages.push(`${order?.purchaseOrderNumber || id}: ${errorMsg}`);
+          const order = listData.find((o) => o.purchaseOrderId === id);
+          const errorMsg =
+            err.response?.data?.message || err.message || "Lỗi không xác định";
+          errorMessages.push(
+            `${order?.purchaseOrderNumber || id}: ${errorMsg}`
+          );
         }
       }
 
@@ -284,11 +320,20 @@ const PurchaseOrder = () => {
           content: (
             <div>
               <p>Có {errorCount} đơn hàng xử lý thất bại:</p>
-              <ul style={{ marginTop: 8, paddingLeft: 20, maxHeight: 200, overflowY: 'auto' }}>
+              <ul
+                style={{
+                  marginTop: 8,
+                  paddingLeft: 20,
+                  maxHeight: 200,
+                  overflowY: "auto",
+                }}
+              >
                 {errorMessages.slice(0, 5).map((msg, idx) => (
                   <li key={idx}>{msg}</li>
                 ))}
-                {errorMessages.length > 5 && <li>... và {errorMessages.length - 5} lỗi khác</li>}
+                {errorMessages.length > 5 && (
+                  <li>... và {errorMessages.length - 5} lỗi khác</li>
+                )}
               </ul>
             </div>
           ),
@@ -298,10 +343,11 @@ const PurchaseOrder = () => {
 
       await fetchPurchaseOrders();
 
-      document.querySelectorAll('.table-list-card input[type="checkbox"]:checked').forEach(cb => {
-        cb.checked = false;
-      });
-
+      document
+        .querySelectorAll('.table-list-card input[type="checkbox"]:checked')
+        .forEach((cb) => {
+          cb.checked = false;
+        });
     } catch (err) {
       message.error("Có lỗi xảy ra khi cập nhật!");
     } finally {
@@ -338,7 +384,6 @@ const PurchaseOrder = () => {
     }
   };
 
-
   const handleDeleteCancel = () => {
     setSelectedItem(null);
   };
@@ -347,7 +392,9 @@ const PurchaseOrder = () => {
     const selectAllCheckbox = document.getElementById("select-all");
     if (selectAllCheckbox) {
       selectAllCheckbox.addEventListener("change", (e) => {
-        const checkboxes = document.querySelectorAll('.table-list-card input[type="checkbox"][data-id]');
+        const checkboxes = document.querySelectorAll(
+          '.table-list-card input[type="checkbox"][data-id]'
+        );
         checkboxes.forEach((cb) => {
           cb.checked = e.target.checked;
         });
@@ -357,7 +404,7 @@ const PurchaseOrder = () => {
 
   const generateEmailTemplate = async (orderIds) => {
     const orders = await Promise.all(
-      orderIds.map(id => getPurchaseOrderById(id))
+      orderIds.map((id) => getPurchaseOrderById(id))
     );
 
     const escapeHtml = (text) => {
@@ -442,12 +489,20 @@ tr:hover { background-color: #f5f5f5; }
       const firstOrder = orders[0];
       html += `
 <div class='header-info'>
-<p><strong>Kính gửi:</strong> ${escapeHtml(firstOrder?.supplierName || "")}</p>`;
+<p><strong>Kính gửi:</strong> ${escapeHtml(
+        firstOrder?.supplierName || ""
+      )}</p>`;
       if (firstOrder?.supplierCode) {
-        html += `<p><strong>Mã nhà cung cấp:</strong> ${escapeHtml(firstOrder.supplierCode)}</p>`;
+        html += `<p><strong>Mã nhà cung cấp:</strong> ${escapeHtml(
+          firstOrder.supplierCode
+        )}</p>`;
       }
-      html += `<p><strong>Đơn hàng:</strong> ${escapeHtml(order.purchaseOrderNumber || "")}</p>
-<p><strong>Ngày tạo đơn:</strong> ${formatDateTime(order.orderDate || order.createdAt)}</p>
+      html += `<p><strong>Đơn hàng:</strong> ${escapeHtml(
+        order.purchaseOrderNumber || ""
+      )}</p>
+<p><strong>Ngày tạo đơn:</strong> ${formatDateTime(
+        order.orderDate || order.createdAt
+      )}</p>
 </div>`;
 
       html += `
@@ -471,7 +526,13 @@ tr:hover { background-color: #f5f5f5; }
           html += `
 <tr>
 <td>${idx + 1}</td>
-<td>${escapeHtml(detail.productName || "")}${detail.productCode ? `<br><small style='color: #7f8c8d;'>Mã: ${escapeHtml(detail.productCode)}</small>` : ""}</td>
+<td>${escapeHtml(detail.productName || "")}${
+            detail.productCode
+              ? `<br><small style='color: #7f8c8d;'>Mã: ${escapeHtml(
+                  detail.productCode
+                )}</small>`
+              : ""
+          }</td>
 <td class='text-center'>${detail.quantity || 0}</td>
 <td class='text-right'>${formatCurrency(detail.unitPrice || 0)}</td>
 <td class='text-right'>${formatCurrency(itemTotal)}</td>
@@ -484,17 +545,24 @@ tr:hover { background-color: #f5f5f5; }
       html += `</tbody></table>`;
 
       const taxAmount = order.taxAmount || 0;
-      const totalAmount = order.totalAmount || subtotal + (subtotal * taxAmount / 100);
+      const totalAmount =
+        order.totalAmount || subtotal + (subtotal * taxAmount) / 100;
 
       html += `
 <div class='total-section'>
-<div class='total-row'><span>Tổng tiền hàng:</span><span>${formatCurrency(subtotal)}</span></div>`;
+<div class='total-row'><span>Tổng tiền hàng:</span><span>${formatCurrency(
+        subtotal
+      )}</span></div>`;
       if (taxAmount > 0) {
         const taxRate = subtotal > 0 ? (taxAmount / subtotal) * 100 : 0;
-        html += `<div class='total-row'><span>Thuế (${taxRate.toFixed(1)}%):</span><span>${formatCurrency(taxAmount)}</span></div>`;
+        html += `<div class='total-row'><span>Thuế (${taxRate.toFixed(
+          1
+        )}%):</span><span>${formatCurrency(taxAmount)}</span></div>`;
       }
       html += `
-<div class='total-row'><span class='total-amount'>Tổng cộng:</span><span class='total-amount'>${formatCurrency(totalAmount)}</span></div>
+<div class='total-row'><span class='total-amount'>Tổng cộng:</span><span class='total-amount'>${formatCurrency(
+        totalAmount
+      )}</span></div>
 </div>`;
     });
 
@@ -512,7 +580,9 @@ tr:hover { background-color: #f5f5f5; }
 
   const handleSendEmail = async () => {
     try {
-      const checkboxes = document.querySelectorAll('.table-list-card input[type="checkbox"]:checked');
+      const checkboxes = document.querySelectorAll(
+        '.table-list-card input[type="checkbox"]:checked'
+      );
       const selectedIds = [];
 
       checkboxes.forEach((cb) => {
@@ -530,7 +600,7 @@ tr:hover { background-color: #f5f5f5; }
       const invalidOrders = [];
 
       for (const id of selectedIds) {
-        const order = listData.find(o => o.purchaseOrderId === id);
+        const order = listData.find((o) => o.purchaseOrderId === id);
         if (!order) {
           invalidOrders.push(id);
           continue;
@@ -547,12 +617,17 @@ tr:hover { background-color: #f5f5f5; }
         message.warning({
           content: (
             <div>
-              <p>Chỉ có thể gửi email cho các đơn hàng ở trạng thái "Đã duyệt". Các đơn sau không thể gửi:</p>
+              <p>
+                Chỉ có thể gửi email cho các đơn hàng ở trạng thái "Đã duyệt".
+                Các đơn sau không thể gửi:
+              </p>
               <ul style={{ marginTop: 8, paddingLeft: 20 }}>
                 {invalidOrders.slice(0, 5).map((item, idx) => (
                   <li key={idx}>{item}</li>
                 ))}
-                {invalidOrders.length > 5 && <li>... và {invalidOrders.length - 5} đơn khác</li>}
+                {invalidOrders.length > 5 && (
+                  <li>... và {invalidOrders.length - 5} đơn khác</li>
+                )}
               </ul>
             </div>
           ),
@@ -561,7 +636,9 @@ tr:hover { background-color: #f5f5f5; }
       }
 
       if (validOrders.length === 0) {
-        message.error("Không có đơn hàng nào ở trạng thái 'Đã duyệt' để gửi email!");
+        message.error(
+          "Không có đơn hàng nào ở trạng thái 'Đã duyệt' để gửi email!"
+        );
         return;
       }
 
@@ -570,9 +647,10 @@ tr:hover { background-color: #f5f5f5; }
       try {
         // Tạo template HTML
         const htmlContent = await generateEmailTemplate(validOrders);
-        const subject = validOrders.length === 1
-          ? "Phiếu nhập kho"
-          : `Phiếu nhập kho - ${validOrders.length} đơn hàng`;
+        const subject =
+          validOrders.length === 1
+            ? "Phiếu nhập kho"
+            : `Phiếu nhập kho - ${validOrders.length} đơn hàng`;
 
         // Gửi email
         await sendPurchaseOrderEmail({
@@ -582,32 +660,41 @@ tr:hover { background-color: #f5f5f5; }
           forceResend: false,
         });
 
-        message.success(`Đã gửi email thành công cho ${validOrders.length} đơn hàng!`);
-        
+        message.success(
+          `Đã gửi email thành công cho ${validOrders.length} đơn hàng!`
+        );
+
         // Uncheck tất cả checkbox
-        document.querySelectorAll('.table-list-card input[type="checkbox"]:checked').forEach(cb => {
-          cb.checked = false;
-        });
+        document
+          .querySelectorAll('.table-list-card input[type="checkbox"]:checked')
+          .forEach((cb) => {
+            cb.checked = false;
+          });
 
         // Refresh data để cập nhật emailSentAt
         fetchPurchaseOrders();
       } catch (err) {
-        const errorMsg = err.response?.data?.message || err.message || "Lỗi không xác định";
-        
+        const errorMsg =
+          err.response?.data?.message || err.message || "Lỗi không xác định";
+
         // Kiểm tra xem có phải lỗi đơn đã được gửi không
-        if (errorMsg.includes("đã được gửi email") && errorMsg.includes("Bạn có muốn gửi lại không")) {
+        if (
+          errorMsg.includes("đã được gửi email") &&
+          errorMsg.includes("Bạn có muốn gửi lại không")
+        ) {
           Modal.confirm({
-            title: 'Xác nhận gửi lại email',
+            title: "Xác nhận gửi lại email",
             content: errorMsg,
-            okText: 'Gửi lại',
-            cancelText: 'Hủy',
+            okText: "Gửi lại",
+            cancelText: "Hủy",
             onOk: async () => {
               try {
                 setLoading(true);
                 const htmlContent = await generateEmailTemplate(validOrders);
-                const subject = validOrders.length === 1
-                  ? "Phiếu nhập kho"
-                  : `Phiếu nhập kho - ${validOrders.length} đơn hàng`;
+                const subject =
+                  validOrders.length === 1
+                    ? "Phiếu nhập kho"
+                    : `Phiếu nhập kho - ${validOrders.length} đơn hàng`;
 
                 await sendPurchaseOrderEmail({
                   purchaseOrderIds: validOrders,
@@ -616,17 +703,26 @@ tr:hover { background-color: #f5f5f5; }
                   forceResend: true,
                 });
 
-                message.success(`Đã gửi lại email thành công cho ${validOrders.length} đơn hàng!`);
-                
+                message.success(
+                  `Đã gửi lại email thành công cho ${validOrders.length} đơn hàng!`
+                );
+
                 // Uncheck tất cả checkbox
-                document.querySelectorAll('.table-list-card input[type="checkbox"]:checked').forEach(cb => {
-                  cb.checked = false;
-                });
+                document
+                  .querySelectorAll(
+                    '.table-list-card input[type="checkbox"]:checked'
+                  )
+                  .forEach((cb) => {
+                    cb.checked = false;
+                  });
 
                 // Refresh data
                 fetchPurchaseOrders();
               } catch (retryErr) {
-                const retryErrorMsg = retryErr.response?.data?.message || retryErr.message || "Lỗi không xác định";
+                const retryErrorMsg =
+                  retryErr.response?.data?.message ||
+                  retryErr.message ||
+                  "Lỗi không xác định";
                 message.error(`Không thể gửi lại email: ${retryErrorMsg}`);
               } finally {
                 setLoading(false);
@@ -644,7 +740,6 @@ tr:hover { background-color: #f5f5f5; }
       setLoading(false);
     }
   };
-
 
   const columns = [
     {
@@ -683,8 +778,18 @@ tr:hover { background-color: #f5f5f5; }
         </button>
       ),
     },
-    { header: "Nhà cung cấp", field: "supplierName", key: "supplierName", sortable: true },
-    { header: "Người tạo đơn", field: "fullName", key: "fullName", sortable: true },
+    {
+      header: "Nhà cung cấp",
+      field: "supplierName",
+      key: "supplierName",
+      sortable: true,
+    },
+    {
+      header: "Người tạo đơn",
+      field: "fullName",
+      key: "fullName",
+      sortable: true,
+    },
     {
       header: "Ngày tạo phiếu",
       body: (row) => formatDateTime(row.orderDate),
@@ -761,8 +866,8 @@ tr:hover { background-color: #f5f5f5; }
                 <h6>Quản lý danh sách đơn đặt hàng về kho</h6>
               </div>
             </div>
-            <TableTopHead 
-              onRefresh={fetchPurchaseOrders} 
+            <TableTopHead
+              onRefresh={fetchPurchaseOrders}
               onSendEmail={handleSendEmail}
               showExcel={false}
               showMail={true}
@@ -814,13 +919,15 @@ tr:hover { background-color: #f5f5f5; }
                 Tạo đơn đặt hàng
               </Link>
             </div>
-
-
           </div>
 
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <SearchFromApi callback={handleSearch} rows={rows} setRows={setRows} />
+              <SearchFromApi
+                callback={handleSearch}
+                rows={rows}
+                setRows={setRows}
+              />
             </div>
 
             <div className="card-body p-0">

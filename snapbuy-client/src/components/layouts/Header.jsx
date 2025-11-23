@@ -305,13 +305,13 @@ const Header = () => {
           onMouseLeave={expandMenu}
           onMouseOver={expandMenuOpen}
         >
-          <Link to={userRole === 'Nhân viên bán hàng' ? route.salesoverview : route.dashboard} className="logo logo-normal">
+          <Link to={userRole === 'Nhân viên bán hàng' ? route.salesdashboard : route.dashboard} className="logo logo-normal">
             <img src={logoPng} alt="img" />
           </Link>
-          <Link to={userRole === 'Nhân viên bán hàng' ? route.salesoverview : route.dashboard} className="logo logo-white">
+          <Link to={userRole === 'Nhân viên bán hàng' ? route.salesdashboard : route.dashboard} className="logo logo-white">
             <img src={logoWhitePng} alt="img" />
           </Link>
-          <Link to={userRole === 'Nhân viên bán hàng' ? route.salesoverview : route.dashboard} className="logo-small">
+          <Link to={userRole === 'Nhân viên bán hàng' ? route.salesdashboard : route.dashboard} className="logo-small">
             <img src={logoSmallPng} alt="img" />
           </Link>
           <Link

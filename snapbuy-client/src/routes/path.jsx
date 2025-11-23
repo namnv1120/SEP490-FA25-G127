@@ -197,10 +197,10 @@ export const authRoutes = [
     protected: true,
   },
   {
-    id: 23.2,
+    id: 35,
     path: routes.staffshiftreport,
-    name: "staff-shift-report",
-    componentKey: "StaffShiftReport",
+    name: "staff-shift-management",
+    componentKey: "StaffShiftManagement",
     protected: true,
   },
   {
@@ -219,9 +219,9 @@ export const authRoutes = [
   },
   {
     id: 27,
-    path: routes.salesoverview,
-    name: "sales-overview",
-    componentKey: "SalesOverview",
+    path: routes.salesdashboard,
+    name: "sales-dashboard",
+    componentKey: "SalesDashboard",
     protected: true,
   },
   {

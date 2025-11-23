@@ -36,7 +36,7 @@ export const routeRoleMap = {
   // POS - hạn chế theo role
   '/pos': ['Quản trị viên', 'Chủ cửa hàng', 'Nhân viên bán hàng'],
   '/pos-shift': ['Quản trị viên', 'Chủ cửa hàng', 'Nhân viên bán hàng'],
-  '/sales-overview': ['Quản trị viên', 'Chủ cửa hàng', 'Nhân viên bán hàng'],
+  '/sales-dashboard': ['Quản trị viên', 'Chủ cửa hàng', 'Nhân viên bán hàng'],
 
   // Accounts - hasRole('Quản trị viên')
   '/accounts': ['Quản trị viên'],
@@ -49,6 +49,10 @@ export const routeRoleMap = {
 
   // Suppliers - hạn chế theo role
   '/suppliers': ['Quản trị viên', 'Chủ cửa hàng', 'Nhân viên kho'],
+
+  // Staff management - hasAnyRole('Quản trị viên','Chủ cửa hàng')
+  '/staff-accounts': ['Quản trị viên', 'Chủ cửa hàng'],
+  '/staff-shifts': ['Quản trị viên', 'Chủ cửa hàng'],
 
   // Reports - hasAnyRole('Quản trị viên','Chủ cửa hàng')
   '/revenue-report': ['Quản trị viên', 'Chủ cửa hàng'],

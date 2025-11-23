@@ -65,6 +65,7 @@ const ProductList = () => {
             dimensions: product.dimensions || "Không có",
             imageUrl: imageUrl,
             unitprice: `${product.unitPrice?.toLocaleString() || "0.00"} đ`,
+            rawUnitPrice: product.unitPrice || 0,
             unit: product.unit || "Không có",
             qty: product.quantityInStock?.toString() || "0",
             status: product.active === 1 || product.active === true ? "Hoạt động" : "Không hoạt động",
@@ -259,6 +260,7 @@ const ProductList = () => {
       field: "unitprice",
       key: "unitprice",
       sortable: true,
+      sortField: "rawUnitPrice",
     },
     {
       header: "Đơn vị",

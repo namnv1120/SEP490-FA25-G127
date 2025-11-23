@@ -26,6 +26,8 @@ public interface AccountService {
 
     AccountResponse updateStaffByOwner(UUID staffId, StaffOwnerUpdateRequest req);
     AccountResponse updateStaffRolesByOwner(UUID staffId, StaffRoleUpdateRequest req);
+    AccountResponse getStaffByIdForOwner(UUID staffId);
+
 
     AccountResponse adminUpdateAccount(UUID accountId, AccountUpdateRequest req);
 

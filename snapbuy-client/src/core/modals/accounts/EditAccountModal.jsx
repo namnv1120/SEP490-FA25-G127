@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Modal, message, Spin } from "antd";
 import { Dropdown } from "primereact/dropdown";
-import { getAccountById, updateAccount } from "../../../services/AccountService";
+import { getStaffAccountByIdForOwner, updateAccount } from "../../../services/AccountService";
 import { getAllRoles } from "../../../services/RoleService";
 
 const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose, allowedRoles, onUpdate, onUpdateRole }) => {
@@ -96,7 +96,7 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose, allowed
   const loadAccountData = async () => {
     try {
       setLoading(true);
-      const account = await getAccountById(accountId);
+      const account = await getStaffAccountByIdForOwner(accountId);
       const accountData = account.result || account;
 
       // Lấy role đầu tiên nếu có (roles là mảng string roleName)
@@ -260,7 +260,7 @@ const EditAccount = ({ isOpen, accountId, onSuccess, onUpdated, onClose, allowed
           <Spin size="large" />
         </div>
       ) : (
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} noValidate>
           {/* Họ và tên */}
           <div className="mb-3">
             <label className="form-label">Họ và tên</label>

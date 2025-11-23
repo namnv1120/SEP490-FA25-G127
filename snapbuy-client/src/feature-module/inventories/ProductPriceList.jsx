@@ -159,12 +159,14 @@ const ProductPriceList = () => {
       field: "unitPrice",
       key: "unitPrice",
       sortable: true,
+      sortField: "rawUnitPrice",
     },
     {
       header: "Giá nhập",
       field: "costPrice",
       key: "costPrice",
       sortable: true,
+      sortField: "rawCostPrice",
     },
     // {
     //   header: "Valid From",

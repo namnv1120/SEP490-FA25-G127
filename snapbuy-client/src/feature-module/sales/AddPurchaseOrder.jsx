@@ -198,6 +198,7 @@ const AddPurchaseOrder = () => {
                   ]);
                 }}
                 placeholder="Chọn nhà cung cấp"
+                width={350}
               />
             </div>
 
@@ -222,6 +223,7 @@ const AddPurchaseOrder = () => {
                           value={item.product}
                           onChange={(opt) => updateItem(index, "product", opt)}
                           placeholder="Chọn sản phẩm"
+                          width={350}
                         />
                       </td>
                       <td>

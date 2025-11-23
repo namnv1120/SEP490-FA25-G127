@@ -190,6 +190,17 @@ export const createStaff = async (userData) => {
   }
 };
 
+export const getStaffAccountByIdForOwner = async (staffId) => {
+  try {
+    const response = await axios.get(`${REST_API_BASE_URL}/staff/${staffId}`, {
+      headers: getAuthHeader(),
+    });
+    return response.data.result || response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch staff account for owner!');
+  }
+};
+
 export const updateStaffByOwner = async (staffId, updatedData) => {
   try {
     const response = await axios.put(`${REST_API_BASE_URL}/staff/${staffId}`, updatedData, {

@@ -127,7 +127,7 @@ CREATE TABLE product_price
 CREATE TABLE purchase_order
 (
     purchase_order_id     UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    purchase_order_number NVARCHAR(10) UNIQUE NOT NULL,
+    purchase_order_number NVARCHAR(20) UNIQUE NOT NULL,
     supplier_id           UNIQUEIDENTIFIER    NOT NULL,
     account_id            UNIQUEIDENTIFIER    NOT NULL,
     order_date            DATETIME2                    DEFAULT GETDATE(),

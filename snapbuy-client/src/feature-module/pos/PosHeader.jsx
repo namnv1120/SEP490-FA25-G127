@@ -20,7 +20,7 @@ const PosHeader = () => {
     role: 'Role',
     avatarUrl: null
   });
-  const homeRoute = userInfo.role === 'Nhân viên bán hàng' ? allRoutes.salesoverview : allRoutes.dashboard;
+  const homeRoute = userInfo.role === 'Nhân viên bán hàng' ? allRoutes.salesdashboard : allRoutes.dashboard;
 
   // Update time every second
   useEffect(() => {

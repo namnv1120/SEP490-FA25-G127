@@ -121,7 +121,7 @@ const PosShift = () => {
         setPolling(null);
       }
     }
-  }, [currentShift, polling, fetchOrdersForRange]);
+  }, [currentShift, fetchOrdersForRange]);
 
   const handleOpen = async () => {
     try {

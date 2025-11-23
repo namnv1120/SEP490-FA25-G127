@@ -19,7 +19,7 @@ const EditProduct = lazy(() => import("./feature-module/inventories/EditProduct"
 const ProductPriceList = lazy(() => import("./feature-module/inventories/ProductPriceList"));
 const EditProductPrice = lazy(() => import("./feature-module/inventories/EditProductPrice"));
 const PosShift = lazy(() => import("./feature-module/pos/PosShift"));
-const SalesOverview = lazy(() => import("./feature-module/sales/SalesOverview"));
+const SalesDashboard = lazy(() => import("./feature-module/dashboard/SalesDashboard"));
 const InventoryList = lazy(() => import("./feature-module/inventories/InventoryList"));
 const CategoryList = lazy(() => import("./feature-module/inventories/CategoryList"));
 const SubCategoryList = lazy(() => import("./feature-module/inventories/SubCategoryList"));
@@ -41,6 +41,7 @@ const OrderHistory = lazy(() => import("./feature-module/sales/OrderHistory"));
 const PosSystemSettings = lazy(() => import("./feature-module/pos/PosSystemSettings"));
 const FormHorizontal = lazy(() => import("./feature-module/uiinterface/forms/formelements/layouts/form-horizontal"));
 const OwnerStaffAccountList = lazy(() => import("./feature-module/owner/StaffAccountList"));
+const StaffShiftManagement = lazy(() => import("./feature-module/owner/StaffShiftManagement"));
 const StaffShiftReport = lazy(() => import("./feature-module/owner/StaffShiftReport"));
 
 const componentsMap = {
@@ -77,8 +78,9 @@ const componentsMap = {
   OrderHistory,
   PosSystemSettings,
   FormHorizontal,
-  SalesOverview,
+  SalesDashboard,
   OwnerStaffAccountList,
+  StaffShiftManagement,
   StaffShiftReport,
 };
 

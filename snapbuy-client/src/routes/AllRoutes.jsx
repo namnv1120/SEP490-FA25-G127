@@ -14,7 +14,7 @@ export const allRoutes = {
   pos: "/pos",
   posshift: "/pos-shift",
   transactionhistory: "/transaction-history",
-  salesoverview: "/sales-overview",
+  salesdashboard: "/sales-dashboard",
 
   purchaseorders: "/purchase-orders",
   addpurchaseorder: "/purchase-orders/add",
