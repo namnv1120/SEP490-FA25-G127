@@ -134,6 +134,63 @@ public class PromotionServiceImpl implements PromotionService {
         return bestPercent.setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public com.g127.snapbuy.dto.response.DiscountInfoResponse computeBestDiscountInfo(UUID productId, BigDecimal unitPrice, LocalDateTime at) {
+        List<Promotion> promos = promotionRepository.findActivePromotionsForProductAt(productId, at);
+        if (promos.isEmpty()) {
+            return com.g127.snapbuy.dto.response.DiscountInfoResponse.builder()
+                    .discountType(null)
+                    .discountValue(BigDecimal.ZERO)
+                    .discountPercent(BigDecimal.ZERO)
+                    .build();
+        }
+
+        // CỘNG TẤT CẢ các loại giảm giá lại
+        BigDecimal totalDiscountAmount = BigDecimal.ZERO;
+
+        for (Promotion p : promos) {
+            BigDecimal discountAmount = BigDecimal.ZERO;
+            switch (p.getDiscountType()) {
+                case PERCENT -> {
+                    if (p.getDiscountValue() != null && unitPrice != null) {
+                        // Tính số tiền giảm từ phần trăm
+                        discountAmount = unitPrice.multiply(p.getDiscountValue()).divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
+                    }
+                }
+                case FIXED -> {
+                    if (p.getDiscountValue() != null) {
+                        // Số tiền giảm trực tiếp
+                        discountAmount = p.getDiscountValue();
+                    }
+                }
+            }
+            // Cộng dồn tất cả các loại giảm giá
+            totalDiscountAmount = totalDiscountAmount.add(discountAmount);
+        }
+
+        // Giới hạn tối đa không vượt quá giá gốc (tránh giá âm)
+        if (unitPrice != null && totalDiscountAmount.compareTo(unitPrice) > 0) {
+            totalDiscountAmount = unitPrice;
+        }
+
+        // Tính phần trăm tương đương để hiển thị
+        BigDecimal discountPercent = BigDecimal.ZERO;
+        if (unitPrice != null && unitPrice.compareTo(BigDecimal.ZERO) > 0) {
+            discountPercent = totalDiscountAmount.divide(unitPrice, 4, java.math.RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
+            if (discountPercent.compareTo(BigDecimal.valueOf(100)) > 0) {
+                discountPercent = BigDecimal.valueOf(100);
+            }
+        }
+
+        return com.g127.snapbuy.dto.response.DiscountInfoResponse.builder()
+                .discountType(null) // Không có loại cụ thể vì là tổng hợp
+                .discountValue(totalDiscountAmount) // Tổng số tiền giảm
+                .discountPercent(discountPercent.setScale(2, java.math.RoundingMode.HALF_UP))
+                .build();
+    }
+
     private Set<Product> resolveProducts(List<UUID> productIds) {
         Set<Product> products = new HashSet<>();
         for (UUID id : productIds) {

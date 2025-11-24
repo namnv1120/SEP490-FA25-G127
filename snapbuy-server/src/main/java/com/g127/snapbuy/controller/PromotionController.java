@@ -63,6 +63,14 @@ public class PromotionController {
         response.setResult(promotionService.computeBestDiscountPercent(productId, unitPrice, LocalDateTime.now()));
         return response;
     }
+
+    @GetMapping("/product/{productId}/discount-info")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
+    public ApiResponse<com.g127.snapbuy.dto.response.DiscountInfoResponse> getBestDiscountInfo(@PathVariable UUID productId, @RequestParam BigDecimal unitPrice) {
+        ApiResponse<com.g127.snapbuy.dto.response.DiscountInfoResponse> response = new ApiResponse<>();
+        response.setResult(promotionService.computeBestDiscountInfo(productId, unitPrice, LocalDateTime.now()));
+        return response;
+    }
 }
 
 

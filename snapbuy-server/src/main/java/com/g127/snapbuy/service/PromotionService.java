@@ -2,6 +2,7 @@ package com.g127.snapbuy.service;
 
 import com.g127.snapbuy.dto.request.PromotionCreateRequest;
 import com.g127.snapbuy.dto.request.PromotionUpdateRequest;
+import com.g127.snapbuy.dto.response.DiscountInfoResponse;
 import com.g127.snapbuy.dto.response.PromotionResponse;
 
 import java.math.BigDecimal;
@@ -17,6 +18,7 @@ public interface PromotionService {
     void deactivateExpired();
 
     BigDecimal computeBestDiscountPercent(UUID productId, BigDecimal unitPrice, LocalDateTime at);
+    DiscountInfoResponse computeBestDiscountInfo(UUID productId, BigDecimal unitPrice, LocalDateTime at);
 }
 
 

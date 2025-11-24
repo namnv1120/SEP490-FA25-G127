@@ -65,6 +65,20 @@ export const getBestDiscountForProduct = async (productId, unitPrice) => {
   }
 };
 
+// Lấy thông tin giảm giá chi tiết (loại + giá trị)
+export const getBestDiscountInfoForProduct = async (productId, unitPrice) => {
+  try {
+    const url = unitPrice
+      ? `${REST_API_BASE_URL}/product/${productId}/discount-info?unitPrice=${unitPrice}`
+      : `${REST_API_BASE_URL}/product/${productId}/discount-info`;
+    const response = await axios.get(url, getAuthHeaders());
+    return response.data?.result || { discountType: null, discountValue: 0, discountPercent: 0 };
+  } catch (error) {
+    console.error("Error getting discount info for product:", error);
+    return { discountType: null, discountValue: 0, discountPercent: 0 };
+  }
+};
+
 // Xóa khuyến mãi (nếu backend có API này)
 export const deletePromotion = async (id) => {
   const response = await axios.delete(

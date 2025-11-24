@@ -23,7 +23,7 @@ import {
   getOrderById,
 } from "../../services/OrderService";
 import { getPosSettings } from "../../services/PosSettingsService";
-import { getBestDiscountForProduct } from "../../services/PromotionService";
+import { getBestDiscountForProduct, getBestDiscountInfoForProduct } from "../../services/PromotionService";
 import { getImageUrl } from "../../utils/imageUtils";
 import usePermission from "../../hooks/usePermission";
 import {
@@ -252,15 +252,14 @@ const Pos = () => {
         .filter((product) => product.active)
         .map(async (product) => {
           const originalPrice = product.unitPrice || 0;
-          // Lấy % giảm giá tốt nhất cho sản phẩm (truyền unitPrice để tính cho FIXED discount)
-          const discountPercent = await getBestDiscountForProduct(
+          // Lấy thông tin giảm giá chi tiết (tổng hợp tất cả promotion)
+          const discountInfo = await getBestDiscountInfoForProduct(
             product.productId,
             originalPrice
           );
-          const discountedPrice =
-            discountPercent > 0
-              ? originalPrice * (1 - discountPercent / 100)
-              : originalPrice;
+
+          // Tính giá sau giảm: Trừ thẳng tổng số tiền giảm
+          const discountedPrice = Math.max(0, originalPrice - discountInfo.discountValue);
 
           return {
             id: product.productId,
@@ -272,7 +271,8 @@ const Pos = () => {
             barcode: product.barcode || null,
             price: discountedPrice, // Giá sau khuyến mãi
             originalPrice: originalPrice, // Giá gốc
-            discountPercent: discountPercent, // % giảm giá
+            discountPercent: discountInfo.discountPercent, // % giảm giá (để hiển thị)
+            discountValue: discountInfo.discountValue, // Tổng số tiền giảm
             stock: product.quantityInStock,
             quantityInStock: product.quantityInStock,
             categoryId: product.categoryId,
@@ -593,6 +593,16 @@ const Pos = () => {
         setIsScanning(true);
         const product = await getProductByBarcode(barcode.trim());
 
+        const originalPrice = product.unitPrice || 0;
+        // Lấy thông tin giảm giá chi tiết (tổng hợp tất cả promotion)
+        const discountInfo = await getBestDiscountInfoForProduct(
+          product.productId,
+          originalPrice
+        );
+
+        // Tính giá sau giảm: Trừ thẳng tổng số tiền giảm
+        const discountedPrice = Math.max(0, originalPrice - discountInfo.discountValue);
+
         const mappedProduct = {
           id: product.productId,
           productId: product.productId,
@@ -600,9 +610,10 @@ const Pos = () => {
           productName: product.productName,
           code: product.productCode,
           productCode: product.productCode,
-          price: product.price, // Note: check if this needs to be calculated or if getProductByBarcode returns it
-          originalPrice: product.originalPrice,
-          discountPercent: product.discountPercent || 0,
+          price: discountedPrice,
+          originalPrice: originalPrice,
+          discountPercent: discountInfo.discountPercent,
+          discountValue: discountInfo.discountValue,
           stock: product.quantityInStock || 0,
           quantityInStock: product.quantityInStock || 0,
           categoryId: product.categoryId,
