@@ -5,9 +5,44 @@ const routes = allRoutes;
 export const authRoutes = [
   {
     id: 1,
-    path: routes.dashboard,
-    name: "dashboard",
-    componentKey: "Dashboard",
+    path: routes.admindashboard,
+    name: "admin-dashboard",
+    componentKey: "AdminDashboard",
+    protected: true,
+  },
+  {
+    id: 1.1,
+    path: routes.shopownerdashboard,
+    name: "shopowner-dashboard",
+    componentKey: "ShopOwnerDashboard",
+    protected: true,
+  },
+  {
+    id: 1.2,
+    path: routes.salesdashboard,
+    name: "sales-dashboard-owner",
+    componentKey: "SalesOwnerDashboard",
+    protected: true,
+  },
+  {
+    id: 1.3,
+    path: routes.warehousesdashboard,
+    name: "warehouses-dashboard",
+    componentKey: "WarehousesOwnerDashboard",
+    protected: true,
+  },
+  {
+    id: 1.4,
+    path: routes.warehousedashboard,
+    name: "warehouse-dashboard",
+    componentKey: "WarehouseDashboard",
+    protected: true,
+  },
+  {
+    id: 1.5,
+    path: routes.saledashboard,
+    name: "sale-dashboard",
+    componentKey: "SaleDashboard",
     protected: true,
   },
   {
@@ -57,14 +92,6 @@ export const authRoutes = [
     path: routes.rolespermission,
     name: "rolespermission",
     componentKey: "RoleList",
-    protected: true,
-  },
-
-  {
-    id: 6,
-    path: routes.formhorizontal,
-    name: "formhorizontal",
-    componentKey: "FormHorizontal",
     protected: true,
   },
   {
@@ -214,15 +241,9 @@ export const authRoutes = [
     componentKey: "OrderHistory",
     protected: true,
   },
+
   {
     id: 27,
-    path: routes.salesdashboard,
-    name: "sales-dashboard",
-    componentKey: "SalesDashboard",
-    protected: true,
-  },
-  {
-    id: 28,
     path: routes.posshift,
     name: "pos-shift",
     componentKey: "PosShift",

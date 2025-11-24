@@ -19,9 +19,15 @@ const Login = () => {
       await login(username, password);
       const role = localStorage.getItem("role");
       if (role === "Nhân viên bán hàng") {
-        window.location.href = "/sales-dashboard";
+        window.location.href = "/sale-dashboard";
+      } else if (role === "Chủ cửa hàng") {
+        window.location.href = "/shopowner-dashboard";
+      } else if (role === "Quản trị viên") {
+        window.location.href = "/admin-dashboard";
+      } else if (role === "Nhân viên kho") {
+        window.location.href = "/warehouse-dashboard";
       } else {
-        window.location.href = "/dashboard";
+        window.location.href = "/shopowner-dashboard";
       }
     } catch (err) {
       setError(err.message);

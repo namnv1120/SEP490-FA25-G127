@@ -48,12 +48,6 @@ const EditPurchaseOrder = () => {
     fetchSuppliers();
   }, []);
 
-  useEffect(() => {
-    if (id && suppliers.length > 0) {
-      fetchOrderDetail();
-    }
-  }, [id, suppliers, fetchOrderDetail]);
-
   const fetchOrderDetail = useCallback(async () => {
     try {
       setLoading(true);
@@ -80,17 +74,17 @@ const EditPurchaseOrder = () => {
 
           const total =
             (isApproved || isWaitingConfirmation || isReceived) &&
-            receiveQty > 0
+              receiveQty > 0
               ? receiveQty * unitPrice
               : quantity * unitPrice;
 
           return {
             product: item.productId
               ? {
-                  value: item.productId,
-                  label: item.productName,
-                  unitPrice: unitPrice,
-                }
+                value: item.productId,
+                label: item.productName,
+                unitPrice: unitPrice,
+              }
               : null,
             quantity: quantity,
             unitPrice: unitPrice,
@@ -102,14 +96,14 @@ const EditPurchaseOrder = () => {
           formattedItems.length > 0
             ? formattedItems
             : [
-                {
-                  product: null,
-                  quantity: 1,
-                  unitPrice: 0,
-                  total: 0,
-                  receiveQuantity: 0,
-                },
-              ]
+              {
+                product: null,
+                quantity: 1,
+                unitPrice: 0,
+                total: 0,
+                receiveQuantity: 0,
+              },
+            ]
         );
       } else {
         setItems([
@@ -132,6 +126,13 @@ const EditPurchaseOrder = () => {
       setLoading(false);
     }
   }, [id, suppliers, navigate, route.purchaseorders]);
+
+  // ✅ Gọi fetchOrderDetail khi có id và suppliers
+  useEffect(() => {
+    if (id && suppliers.length > 0) {
+      fetchOrderDetail();
+    }
+  }, [id, suppliers, fetchOrderDetail]);
 
   // ✅ Load sản phẩm theo nhà cung cấp
   useEffect(() => {
@@ -173,7 +174,7 @@ const EditPurchaseOrder = () => {
 
             const total =
               (isApproved || isWaitingConfirmation || isReceived) &&
-              receiveQty > 0
+                receiveQty > 0
                 ? receiveQty * unitPrice
                 : quantity * unitPrice;
 
@@ -194,14 +195,14 @@ const EditPurchaseOrder = () => {
             mappedItems.length > 0
               ? mappedItems
               : [
-                  {
-                    product: null,
-                    quantity: 1,
-                    unitPrice: 0,
-                    total: 0,
-                    receiveQuantity: 0,
-                  },
-                ]
+                {
+                  product: null,
+                  quantity: 1,
+                  unitPrice: 0,
+                  total: 0,
+                  receiveQuantity: 0,
+                },
+              ]
           );
         }
       } catch {
@@ -323,14 +324,14 @@ const EditPurchaseOrder = () => {
       newItems.length
         ? newItems
         : [
-            {
-              product: null,
-              quantity: 1,
-              unitPrice: 0,
-              total: 0,
-              receiveQuantity: 0,
-            },
-          ]
+          {
+            product: null,
+            quantity: 1,
+            unitPrice: 0,
+            total: 0,
+            receiveQuantity: 0,
+          },
+        ]
     );
   };
 
@@ -454,7 +455,7 @@ const EditPurchaseOrder = () => {
                       style={{
                         width:
                           orderStatus?.toLowerCase() === "đã duyệt" ||
-                          orderStatus?.toLowerCase() === "chờ xác nhận"
+                            orderStatus?.toLowerCase() === "chờ xác nhận"
                             ? "30%"
                             : "35%",
                       }}
@@ -464,8 +465,8 @@ const EditPurchaseOrder = () => {
                     <th style={{ width: "15%" }}>Số lượng</th>
                     {(orderStatus?.toLowerCase() === "đã duyệt" ||
                       orderStatus?.toLowerCase() === "chờ xác nhận") && (
-                      <th style={{ width: "15%" }}>Số lượng thực nhận</th>
-                    )}
+                        <th style={{ width: "15%" }}>Số lượng thực nhận</th>
+                      )}
                     <th style={{ width: "20%" }}>Đơn giá</th>
                     <th style={{ width: "20%" }}>Thành tiền</th>
                     <th style={{ width: "10%" }}>#</th>
@@ -504,39 +505,39 @@ const EditPurchaseOrder = () => {
                       </td>
                       {(orderStatus?.toLowerCase() === "đã duyệt" ||
                         orderStatus?.toLowerCase() === "chờ xác nhận") && (
-                        <td>
-                          <input
-                            type="number"
-                            min="0"
-                            max={item.quantity}
-                            step="1"
-                            className="form-control"
-                            value={item.receiveQuantity || 0}
-                            onChange={(e) => {
-                              const val = parseFloat(e.target.value) || 0;
-                              const maxVal = item.quantity || 0;
-                              if (val > maxVal) {
-                                message.warning(
-                                  `Số lượng thực nhận không được vượt quá ${maxVal}`
+                          <td>
+                            <input
+                              type="number"
+                              min="0"
+                              max={item.quantity}
+                              step="1"
+                              className="form-control"
+                              value={item.receiveQuantity || 0}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value) || 0;
+                                const maxVal = item.quantity || 0;
+                                if (val > maxVal) {
+                                  message.warning(
+                                    `Số lượng thực nhận không được vượt quá ${maxVal}`
+                                  );
+                                }
+                                updateItem(
+                                  index,
+                                  "receiveQuantity",
+                                  e.target.value
                                 );
+                              }}
+                              placeholder={`Tối đa: ${item.quantity}`}
+                              title={`Số lượng thực nhận (tối đa ${item.quantity})`}
+                              disabled={
+                                orderStatus?.toLowerCase() === "chờ xác nhận"
                               }
-                              updateItem(
-                                index,
-                                "receiveQuantity",
-                                e.target.value
-                              );
-                            }}
-                            placeholder={`Tối đa: ${item.quantity}`}
-                            title={`Số lượng thực nhận (tối đa ${item.quantity})`}
-                            disabled={
-                              orderStatus?.toLowerCase() === "chờ xác nhận"
-                            }
-                            readOnly={
-                              orderStatus?.toLowerCase() === "chờ xác nhận"
-                            }
-                          />
-                        </td>
-                      )}
+                              readOnly={
+                                orderStatus?.toLowerCase() === "chờ xác nhận"
+                              }
+                            />
+                          </td>
+                        )}
                       <td>
                         <input
                           type="number"
@@ -661,7 +662,7 @@ const EditPurchaseOrder = () => {
                 onClick={() => navigate(route.purchaseorders)}
               >
                 {orderStatus?.toLowerCase() === "đã hủy" ||
-                orderStatus?.toLowerCase() === "đã nhận hàng"
+                  orderStatus?.toLowerCase() === "đã nhận hàng"
                   ? "Quay lại"
                   : "Huỷ"}
               </button>

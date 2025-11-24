@@ -3,8 +3,13 @@
 // Format: ['Quản trị viên', 'Chủ cửa hàng'] hoặc null (ai cũng có thể truy cập)
 
 export const routeRoleMap = {
-  // Dashboard - Không có @PreAuthorize, ai cũng có thể xem
-  '/dashboard': null,
+  // Dashboards - Mỗi role có dashboard riêng
+  '/admin-dashboard': ['Quản trị viên'],
+  '/shopowner-dashboard': ['Quản trị viên', 'Chủ cửa hàng'],
+  '/warehouses-dashboard': ['Quản trị viên', 'Chủ cửa hàng'],
+  '/sales-dashboard': ['Quản trị viên', 'Chủ cửa hàng'],
+  '/warehouse-dashboard': ['Quản trị viên', 'Chủ cửa hàng', 'Nhân viên kho'],
+  '/sale-dashboard': ['Quản trị viên', 'Chủ cửa hàng', 'Nhân viên bán hàng'],
 
   // Products - Một số endpoint có @PreAuthorize, nhưng list không có
   '/products': null,

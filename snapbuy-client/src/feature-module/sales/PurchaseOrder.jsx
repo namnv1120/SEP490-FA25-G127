@@ -6,11 +6,9 @@ import TableTopHead from "../../components/table-top-head";
 import PrimeDataTable from "../../components/data-table";
 import SearchFromApi from "../../components/data-table/search";
 import {
-  getAllPurchaseOrders,
   deletePurchaseOrder,
   approvePurchaseOrder,
   cancelPurchaseOrder,
-  receivePurchaseOrder,
   getPurchaseOrderById,
   searchPurchaseOrders,
   confirmPurchaseOrder,
@@ -22,6 +20,7 @@ import { allRoutes } from "../../routes/AllRoutes";
 import DeleteModal from "../../components/delete-modal";
 import { Modal as BootstrapModal } from "bootstrap";
 import PurchaseOrderDetailModal from "../../core/modals/sales/PurchaseOrderDetailModal";
+import { getMyInfo } from "../../services/AccountService";
 
 const PurchaseOrder = () => {
   const route = allRoutes;
@@ -171,6 +170,24 @@ const PurchaseOrder = () => {
         return;
       }
 
+      // Lấy accountId từ API để đảm bảo đúng và tồn tại trong database
+      let currentAccountId = null;
+      if (action === "approve" || action === "revert") {
+        try {
+          const userInfo = await getMyInfo();
+          currentAccountId = (userInfo.result || userInfo)?.id;
+          console.log("Current accountId from API:", currentAccountId);
+          
+          if (!currentAccountId) {
+            message.error("Không tìm thấy thông tin tài khoản. Vui lòng đăng nhập lại!");
+            return;
+          }
+        } catch (error) {
+          message.error("Không thể lấy thông tin tài khoản. Vui lòng đăng nhập lại!");
+          return;
+        }
+      }
+
       const validOrders = [];
       const invalidOrders = [];
 
@@ -269,7 +286,10 @@ const PurchaseOrder = () => {
       for (const id of validOrders) {
         try {
           if (action === "approve") {
-            await approvePurchaseOrder(id, { notes: "Duyệt hàng loạt" });
+            await approvePurchaseOrder(id, { 
+              ownerAccountId: currentAccountId,
+              notes: "Duyệt hàng loạt" 
+            });
           } else if (action === "cancel") {
             await cancelPurchaseOrder(id);
           } else if (action === "receive") {
@@ -292,11 +312,19 @@ const PurchaseOrder = () => {
               continue;
             }
 
+            // Chuẩn bị items array cho confirm request
+            const items = orderDetail.details.map((detail) => ({
+              purchaseOrderDetailId: detail.purchaseOrderDetailId || detail.id,
+              receivedQuantity: detail.receiveQuantity ?? detail.receivedQuantity ?? 0,
+            }));
+
             await confirmPurchaseOrder(id, {
+              items,
               notes: "Xác nhận nhận hàng loạt",
             });
           } else if (action === "revert") {
             await revertPurchaseOrder(id, {
+              ownerAccountId: currentAccountId,
               notes: "Quay lại trạng thái đã duyệt",
             });
           }
