@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Modal, message, Spin } from "antd";
 import { Dropdown } from "primereact/dropdown";
 import {
-  getStaffAccountByIdForOwner,
+  getAccountById,
   updateAccount,
 } from "../../../services/AccountService";
 import { getAllRoles } from "../../../services/RoleService";
@@ -58,7 +58,7 @@ const EditAccount = ({
   const loadAccountData = useCallback(async () => {
     try {
       setLoading(true);
-      const account = await getStaffAccountByIdForOwner(accountId);
+      const account = await getAccountById(accountId);
       const accountData = account.result || account;
 
       // Lấy role đầu tiên nếu có (roles là mảng string roleName)
@@ -77,10 +77,6 @@ const EditAccount = ({
       // Set selectedRole value (string) để Dropdown có thể hiển thị
       if (firstRoleName) {
         setSelectedRoleValue(firstRoleName);
-        // Tìm và set selectedRole object để giữ reference
-        if (roles.length > 0) {
-          void 0;
-        }
       }
     } catch (error) {
       console.error("Không thể tải dữ liệu tài khoản", error);
@@ -89,21 +85,21 @@ const EditAccount = ({
     } finally {
       setLoading(false);
     }
-  }, [accountId, roles, onClose]);
+  }, [accountId, onClose]);
 
-  // Load roles khi modal mở
+  // Load roles và account data khi modal mở
   useEffect(() => {
     if (isOpen) {
       loadRoles();
     }
   }, [isOpen, loadRoles]);
 
-  // Load account data khi modal mở và roles đã sẵn sàng
+  // Load account data khi modal mở
   useEffect(() => {
-    if (isOpen && accountId && roles.length > 0) {
+    if (isOpen && accountId) {
       loadAccountData();
     }
-  }, [isOpen, accountId, roles, loadAccountData]);
+  }, [isOpen, accountId, loadAccountData]);
 
   // Map selectedRole sau khi formData.roles đã được set
   useEffect(() => {

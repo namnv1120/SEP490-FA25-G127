@@ -21,12 +21,6 @@ const EditSubCategory = ({
   });
   const [errors, setErrors] = useState({});
 
-  useEffect(() => {
-    if (isOpen && categoryId) {
-      loadCategoryData();
-    }
-  }, [isOpen, categoryId, loadCategoryData]);
-
   const loadCategoryData = useCallback(async () => {
     try {
       setLoading(true);
@@ -45,6 +39,12 @@ const EditSubCategory = ({
       setLoading(false);
     }
   }, [categoryId, onClose]);
+
+  useEffect(() => {
+    if (isOpen && categoryId) {
+      loadCategoryData();
+    }
+  }, [isOpen, categoryId, loadCategoryData]);
 
   // 🧩 Validate dữ liệu
   const validateForm = () => {

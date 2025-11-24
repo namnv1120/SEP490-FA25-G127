@@ -19,12 +19,6 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
   });
   const [errors, setErrors] = useState({});
 
-  useEffect(() => {
-    if (isOpen && supplierId) {
-      loadSupplierData();
-    }
-  }, [isOpen, supplierId, loadSupplierData]);
-
   const loadSupplierData = useCallback(async () => {
     try {
       setLoading(true);
@@ -47,6 +41,12 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
       setLoading(false);
     }
   }, [supplierId, onClose]);
+
+  useEffect(() => {
+    if (isOpen && supplierId) {
+      loadSupplierData();
+    }
+  }, [isOpen, supplierId, loadSupplierData]);
 
   // 🧩 Validate dữ liệu
   const validateForm = () => {

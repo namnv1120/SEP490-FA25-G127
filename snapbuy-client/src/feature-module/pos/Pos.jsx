@@ -560,6 +560,8 @@ const Pos = () => {
             name: product.name,
             code: product.code,
             price: product.price,
+            originalPrice: product.originalPrice || product.price,
+            discountPercent: product.discountPercent || 0,
             quantity: 1,
             stock: availableStock,
             image: product.image,
@@ -1776,31 +1778,53 @@ const Pos = () => {
                               </h6>
                               {item.discountPercent > 0 ? (
                                 <div>
-                                  <p className="fw-bold text-danger mb-0">
-                                    {new Intl.NumberFormat("vi-VN", {
-                                      style: "currency",
-                                      currency: "VND",
-                                    }).format(item.price)}
+                                  {/* Dòng 1: Giá sau giảm + Badge giảm giá */}
+                                  <div className="d-flex align-items-center gap-2 mb-1">
                                     <span
-                                      className="badge bg-danger ms-1"
-                                      style={{ fontSize: "10px" }}
+                                      className="fw-bold price-text"
+                                      style={{
+                                        fontSize: "16px",
+                                        color: "#ff4d4f",
+                                        background: "transparent",
+                                        padding: "0",
+                                        minWidth: "auto",
+                                      }}
+                                    >
+                                      {new Intl.NumberFormat("vi-VN").format(item.price)} đ
+                                    </span>
+                                    <span
+                                      className="badge"
+                                      style={{
+                                        fontSize: "11px",
+                                        padding: "3px 8px",
+                                        backgroundColor: "#ff4d4f",
+                                        color: "white",
+                                        fontWeight: "600",
+                                        borderRadius: "4px",
+                                      }}
                                     >
                                       -{item.discountPercent}%
                                     </span>
-                                  </p>
-                                  <small className="text-muted text-decoration-line-through">
-                                    {new Intl.NumberFormat("vi-VN", {
-                                      style: "currency",
-                                      currency: "VND",
-                                    }).format(item.originalPrice)}
-                                  </small>
+                                  </div>
+                                  {/* Dòng 2: Giá gốc gạch ngang */}
+                                  <div>
+                                    <small
+                                      className="text-muted text-decoration-line-through"
+                                      style={{ fontSize: "13px" }}
+                                    >
+                                      {new Intl.NumberFormat("vi-VN").format(item.originalPrice)} đ
+                                    </small>
+                                  </div>
                                 </div>
                               ) : (
-                                <p className="fw-bold text-teal">
-                                  {new Intl.NumberFormat("vi-VN", {
-                                    style: "currency",
-                                    currency: "VND",
-                                  }).format(item.price)}
+                                <p
+                                  className="mb-0 fw-semibold"
+                                  style={{
+                                    fontSize: "16px",
+                                    color: "#1f1f1f",
+                                  }}
+                                >
+                                  {new Intl.NumberFormat("vi-VN").format(item.price)} đ
                                 </p>
                               )}
                             </div>
