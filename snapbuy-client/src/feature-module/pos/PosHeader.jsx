@@ -1,26 +1,34 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Tooltip } from 'antd';
-import { Settings, User } from 'react-feather';
-import { allRoutes } from '../../routes/AllRoutes';
-import { getMyInfo } from '../../services/AccountService';
-import { getImageUrl } from '../../utils/imageUtils';
-import { avator1 } from '../../utils/imagepath';
-import { getCurrentShift } from '../../services/ShiftService';
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Tooltip } from "antd";
+import { Settings, User } from "react-feather";
+import { allRoutes } from "../../routes/AllRoutes";
+import { getMyInfo } from "../../services/AccountService";
+import { getImageUrl } from "../../utils/imageUtils";
+import { avator1 } from "../../utils/imagepath";
+import { getCurrentShift } from "../../services/ShiftService";
 
 const PosHeader = () => {
-  
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentShift, setCurrentShift] = useState(null);
-  const [shiftTimeText, setShiftTimeText] = useState('');
+  const [shiftTimeText, setShiftTimeText] = useState("");
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState({
-    fullName: 'User Name',
-    role: 'Role',
-    avatarUrl: null
+    fullName: "User Name",
+    role: "Role",
+    avatarUrl: null,
   });
-  const homeRoute = userInfo.role === 'Nhân viên bán hàng' ? allRoutes.salesdashboard : allRoutes.dashboard;
+  const homeRoute =
+    userInfo.role === "Nhân viên bán hàng"
+      ? allRoutes.saledashboard
+      : userInfo.role === "Chủ cửa hàng"
+        ? allRoutes.shopownerdashboard
+        : userInfo.role === "Quản trị viên"
+          ? allRoutes.admindashboard
+          : userInfo.role === "Nhân viên kho"
+            ? allRoutes.warehousedashboard
+            : allRoutes.shopownerdashboard;
 
   // Update time every second
   useEffect(() => {
@@ -41,28 +49,28 @@ const PosHeader = () => {
       const data = e.detail;
       setCurrentShift(data);
     };
-    window.addEventListener('shiftUpdated', onShiftUpdated);
+    window.addEventListener("shiftUpdated", onShiftUpdated);
     return () => {
-      window.removeEventListener('shiftUpdated', onShiftUpdated);
+      window.removeEventListener("shiftUpdated", onShiftUpdated);
     };
   }, []);
 
   useEffect(() => {
     let interval;
-    if (currentShift && currentShift.status === 'Mở' && currentShift.openedAt) {
+    if (currentShift && currentShift.status === "Mở" && currentShift.openedAt) {
       const update = () => {
         const start = new Date(currentShift.openedAt).getTime();
         const now = new Date().getTime();
         const diff = Math.max(0, now - start);
-        const h = String(Math.floor(diff / 3600000)).padStart(2, '0');
-        const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
-        const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+        const h = String(Math.floor(diff / 3600000)).padStart(2, "0");
+        const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, "0");
+        const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, "0");
         setShiftTimeText(`${h}:${m}:${s}`);
       };
       update();
       interval = setInterval(update, 1000);
     } else {
-      setShiftTimeText('');
+      setShiftTimeText("");
     }
     return () => {
       if (interval) clearInterval(interval);
@@ -71,23 +79,23 @@ const PosHeader = () => {
 
   // Format time as 24h
   const formatTime24h = (date) => {
-    return date.toLocaleTimeString('en-US', {
+    return date.toLocaleTimeString("en-US", {
       hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     });
   };
 
   // Handle logout
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('authTokenType');
-    localStorage.removeItem('role');
-    localStorage.removeItem('roleName');
-    localStorage.removeItem('fullName');
-    localStorage.removeItem('accountId');
-    localStorage.removeItem('username');
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("authTokenType");
+    localStorage.removeItem("role");
+    localStorage.removeItem("roleName");
+    localStorage.removeItem("fullName");
+    localStorage.removeItem("accountId");
+    localStorage.removeItem("username");
     setDropdownVisible(false);
     navigate(allRoutes.login);
   };
@@ -100,20 +108,26 @@ const PosHeader = () => {
         const userData = data.result || data;
 
         // Roles là List<String>, lấy role đầu tiên và bỏ prefix ROLE_ nếu có
-        let roleName = 'Role';
-        if (userData.roles && Array.isArray(userData.roles) && userData.roles.length > 0) {
-          roleName = userData.roles[0].replace('ROLE_', '');
+        let roleName = "Role";
+        if (
+          userData.roles &&
+          Array.isArray(userData.roles) &&
+          userData.roles.length > 0
+        ) {
+          roleName = userData.roles[0].replace("ROLE_", "");
         }
 
-        const avatarUrl = userData.avatarUrl ? getImageUrl(userData.avatarUrl) : null;
+        const avatarUrl = userData.avatarUrl
+          ? getImageUrl(userData.avatarUrl)
+          : null;
 
         setUserInfo({
-          fullName: userData.fullName || 'User Name',
+          fullName: userData.fullName || "User Name",
           role: roleName,
-          avatarUrl: avatarUrl
+          avatarUrl: avatarUrl,
         });
       } catch (error) {
-        console.error('Lỗi khi lấy thông tin user:', error);
+        console.error("Lỗi khi lấy thông tin user:", error);
       }
     };
 
@@ -121,42 +135,48 @@ const PosHeader = () => {
 
     const handleProfileUpdate = (event) => {
       const userData = event.detail;
-      let roleName = 'Role';
-      if (userData.roles && Array.isArray(userData.roles) && userData.roles.length > 0) {
-        roleName = userData.roles[0].replace('ROLE_', '');
+      let roleName = "Role";
+      if (
+        userData.roles &&
+        Array.isArray(userData.roles) &&
+        userData.roles.length > 0
+      ) {
+        roleName = userData.roles[0].replace("ROLE_", "");
       }
 
-      const avatarUrl = userData.avatarUrl ? getImageUrl(userData.avatarUrl) : null;
+      const avatarUrl = userData.avatarUrl
+        ? getImageUrl(userData.avatarUrl)
+        : null;
 
       setUserInfo({
-        fullName: userData.fullName || 'User Name',
+        fullName: userData.fullName || "User Name",
         role: roleName,
-        avatarUrl: avatarUrl
+        avatarUrl: avatarUrl,
       });
     };
 
-    window.addEventListener('profileUpdated', handleProfileUpdate);
+    window.addEventListener("profileUpdated", handleProfileUpdate);
 
     return () => {
-      window.removeEventListener('profileUpdated', handleProfileUpdate);
+      window.removeEventListener("profileUpdated", handleProfileUpdate);
     };
   }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      const dropdown = document.querySelector('.profile-nav');
+      const dropdown = document.querySelector(".profile-nav");
       if (dropdown && !dropdown.contains(event.target)) {
         setDropdownVisible(false);
       }
     };
 
     if (dropdownVisible) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [dropdownVisible]);
 
@@ -213,7 +233,7 @@ const PosHeader = () => {
               className="btn btn-teal btn-md d-inline-flex align-items-center"
               onClick={(e) => {
                 e.preventDefault();
-                window.dispatchEvent(new CustomEvent('openShiftModal'));
+                window.dispatchEvent(new CustomEvent("openShiftModal"));
               }}
             >
               <i className="ti ti-cash me-1" />
@@ -314,7 +334,10 @@ const PosHeader = () => {
               </Link>
             </Tooltip>
           </li> */}
-          <li className="nav-item dropdown has-arrow main-drop profile-nav" style={{ position: 'relative', marginBottom: 0, paddingBottom: 0 }}>
+          <li
+            className="nav-item dropdown has-arrow main-drop profile-nav"
+            style={{ position: "relative", marginBottom: 0, paddingBottom: 0 }}
+          >
             <Link
               to="#"
               className="nav-link userset"
@@ -340,20 +363,20 @@ const PosHeader = () => {
               <div
                 className="dropdown-menu menu-drop-user show pos-user-dropdown"
                 style={{
-                  position: 'absolute',
+                  position: "absolute",
                   right: 0,
-                  top: '100%',
-                  left: 'auto',
-                  margin: '0 !important',
-                  marginTop: '0 !important',
-                  marginBottom: '0 !important',
-                  paddingTop: '8px',
-                  paddingBottom: '8px',
+                  top: "100%",
+                  left: "auto",
+                  margin: "0 !important",
+                  marginTop: "0 !important",
+                  marginBottom: "0 !important",
+                  paddingTop: "8px",
+                  paddingBottom: "8px",
                   zIndex: 1050,
-                  minWidth: '240px',
-                  display: 'block',
-                  transform: 'translate(0, 0) !important',
-                  transition: 'none !important'
+                  minWidth: "240px",
+                  display: "block",
+                  transform: "translate(0, 0) !important",
+                  transition: "none !important",
                 }}
               >
                 <div className="profilename">
@@ -368,9 +391,30 @@ const PosHeader = () => {
                       />
                       <span className="status online" />
                     </span>
-                    <div className="profilesets" style={{ minWidth: 0, flex: 1 }}>
-                      <h6 style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{userInfo.fullName}</h6>
-                      <h5 style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{userInfo.role}</h5>
+                    <div
+                      className="profilesets"
+                      style={{ minWidth: 0, flex: 1 }}
+                    >
+                      <h6
+                        style={{
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          margin: 0,
+                        }}
+                      >
+                        {userInfo.fullName}
+                      </h6>
+                      <h5
+                        style={{
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          margin: 0,
+                        }}
+                      >
+                        {userInfo.role}
+                      </h5>
                     </div>
                   </div>
                   <hr className="m-0" />
@@ -403,7 +447,7 @@ const PosHeader = () => {
                       src="src/assets/img/icons/log-out.svg"
                       className="me-2"
                       alt="img"
-                      style={{ width: '16px', height: '16px' }}
+                      style={{ width: "16px", height: "16px" }}
                     />
                     Đăng xuất
                   </Link>

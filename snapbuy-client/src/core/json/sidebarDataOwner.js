@@ -6,17 +6,24 @@ export const SidebarDataOwner = [
     showSubRoute: false,
     subRoutes: [
       {
-        tittle: "Thống kê phần mềm",
+        tittle: "Thống kê cửa hàng",
         hasSubRoute: false,
         showSubRoute: false,
-        route: "/dashboard",
+        route: "/shopowner-dashboard",
         subRoutes: [],
       },
       {
         tittle: "Thống kê bán hàng",
         hasSubRoute: false,
         showSubRoute: false,
-        route: "/admin-dashboard",
+        route: "/sales-dashboard",
+        subRoutes: [],
+      },
+      {
+        tittle: "Thống kê kho hàng",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/warehouses-dashboard",
         subRoutes: [],
       },
     ],
@@ -102,7 +109,7 @@ export const SidebarDataOwner = [
       },
     ],
   },
-  
+
   {
     tittle: "Đối tác",
     hasSubRoute: true,

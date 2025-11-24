@@ -1,5 +1,9 @@
 export const allRoutes = {
-  dashboard: "/dashboard",
+  admindashboard: "/admin-dashboard",
+  shopownerdashboard: "/shopowner-dashboard",
+  salesdashboard: "/sales-dashboard",
+  warehousesdashboard: "/warehouses-dashboard", // Cho Chủ cửa hàng
+  warehousedashboard: "/warehouse-dashboard", // Cho Nhân viên kho
 
   products: "/products",
   addproduct: "/products/add",
@@ -14,7 +18,7 @@ export const allRoutes = {
   pos: "/pos",
   posshift: "/pos-shift",
   transactionhistory: "/transaction-history",
-  salesdashboard: "/sales-dashboard",
+  saledashboard: "/sale-dashboard",
   promotions: "/promotions",
 
   purchaseorders: "/purchase-orders",

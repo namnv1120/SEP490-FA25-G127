@@ -18,7 +18,19 @@ const ResetPassword = lazy(() =>
   import("./feature-module/pages/authentication/ResetPassword")
 );
 const Suppliers = lazy(() => import("./feature-module/people/SupplierList"));
-const Dashboard = lazy(() => import("./feature-module/dashboard/Dashboard"));
+const AdminDashboard = lazy(() => import("./feature-module/dashboard/AdminDashboard"));
+const ShopOwnerDashboard = lazy(() =>
+  import("./feature-module/dashboard/ShopOwnerDashboard")
+);
+const SalesOwnerDashboard = lazy(() =>
+  import("./feature-module/dashboard/SalesOwnerDashboard")
+);
+const WarehousesOwnerDashboard = lazy(() =>
+  import("./feature-module/dashboard/WarehousesOwnerDashboard")
+);
+const WarehouseDashboard = lazy(() =>
+  import("./feature-module/dashboard/WarehouseDashboard")
+);
 const ProductList = lazy(() =>
   import("./feature-module/inventories/ProductList")
 );
@@ -35,8 +47,8 @@ const EditProductPrice = lazy(() =>
   import("./feature-module/inventories/EditProductPrice")
 );
 const PosShift = lazy(() => import("./feature-module/pos/PosShift"));
-const SalesDashboard = lazy(() =>
-  import("./feature-module/dashboard/SalesDashboard")
+const SaleDashboard = lazy(() =>
+  import("./feature-module/dashboard/SaleDashboard")
 );
 const InventoryList = lazy(() =>
   import("./feature-module/inventories/InventoryList")
@@ -85,11 +97,6 @@ const OrderHistory = lazy(() => import("./feature-module/sales/OrderHistory"));
 const PosSystemSettings = lazy(() =>
   import("./feature-module/pos/PosSystemSettings")
 );
-const FormHorizontal = lazy(() =>
-  import(
-    "./feature-module/uiinterface/forms/formelements/layouts/form-horizontal"
-  )
-);
 const OwnerStaffAccountList = lazy(() =>
   import("./feature-module/owner/StaffAccountList")
 );
@@ -108,7 +115,11 @@ const componentsMap = {
   VerifyOtp,
   ResetPassword,
   Suppliers,
-  Dashboard,
+  AdminDashboard,
+  ShopOwnerDashboard,
+  SalesOwnerDashboard,
+  WarehousesOwnerDashboard,
+  WarehouseDashboard,
   ProductList,
   AddProduct,
   EditProduct,
@@ -133,8 +144,7 @@ const componentsMap = {
   TransactionHistory,
   OrderHistory,
   PosSystemSettings,
-  FormHorizontal,
-  SalesDashboard,
+  SaleDashboard,
   OwnerStaffAccountList,
   StaffShiftManagement,
   PromotionList,

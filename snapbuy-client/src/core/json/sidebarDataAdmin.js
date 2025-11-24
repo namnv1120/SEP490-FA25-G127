@@ -6,14 +6,7 @@ export const SidebarDataAdmin = [
     showSubRoute: false,
     subRoutes: [
       {
-        tittle: "Thống kê phần mềm",
-        hasSubRoute: false,
-        showSubRoute: false,
-        route: "/dashboard",
-        subRoutes: [],
-      },
-      {
-        tittle: "Thống kê bán hàng",
+        tittle: "Thống kê cửa hàng",
         hasSubRoute: false,
         showSubRoute: false,
         route: "/admin-dashboard",

@@ -1244,14 +1244,6 @@ export const SidebarData = [
               },
             ],
           },
-          {
-            label: "Layouts",
-            submenu: true,
-            showSubRoute: false,
-            submenuItems: [
-              { label: "Horizontal Form", link: "/form-horizontal" },
-            ],
-          },
           { label: "Form Validation", link: "/form-validation" },
           { label: "Select", link: "/form-select2" },
           { label: "Form Wizard", link: "/form-wizard" },

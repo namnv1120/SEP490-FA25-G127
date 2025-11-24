@@ -21,10 +21,10 @@ const UnauthorizedAccess = () => {
         </p>
         <button
           className="btn btn-primary btn-lg"
-          onClick={() => navigate(allRoutes.dashboard)}
+          onClick={() => navigate("/login")}
         >
           <i className="ti ti-arrow-left me-2"></i>
-          Quay về trang chủ
+          Quay về đăng nhập
         </button>
       </div>
     </div>

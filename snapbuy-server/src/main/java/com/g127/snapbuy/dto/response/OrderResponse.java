@@ -19,6 +19,7 @@ public class OrderResponse {
     private String customerName;
     private UUID accountId;
     private String accountName;
+    private AccountResponse account; // Full account object with roles
     private LocalDateTime orderDate;
     private String orderStatus;
     private String paymentStatus;

@@ -19,6 +19,7 @@ import {
   getMyTodayOrderCount,
 } from "../../services/OrderService";
 import { getCurrentShift } from "../../services/ShiftService";
+import CommonFooter from "../../components/footer/CommonFooter";
 
 const SalesDashboard = () => {
   const [user, setUser] = useState(null);
@@ -446,6 +447,7 @@ const SalesDashboard = () => {
           </div>
         </div>
       </div>
+      <CommonFooter />
     </div>
   );
 };

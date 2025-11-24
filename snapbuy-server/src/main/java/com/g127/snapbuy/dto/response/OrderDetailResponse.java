@@ -13,6 +13,7 @@ public class OrderDetailResponse {
     private UUID orderDetailId;
     private UUID productId;
     private String productName;
+    private String categoryName;
     private Integer quantity;
     private BigDecimal unitPrice;
     private BigDecimal discount;
