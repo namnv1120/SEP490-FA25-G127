@@ -15,8 +15,8 @@ import java.util.UUID;
 @Builder
 public class PromotionCreateRequest {
 
-    @NotBlank
-    @Pattern(regexp = "^[\\p{L}\\d ]+$", message = "Tên khuyến mãi chỉ cho phép chữ, số và khoảng trắng")
+    @NotBlank(message = "Tên khuyến mãi không được để trống")
+    @Size(max = 200, message = "Tên khuyến mãi không được vượt quá 200 ký tự")
     private String promotionName;
 
     private String description;

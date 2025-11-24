@@ -1,5 +1,6 @@
 package com.g127.snapbuy.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.g127.snapbuy.service.TokenBlacklistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -20,7 +21,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Configuration
 @RequiredArgsConstructor
@@ -100,8 +103,13 @@ public class SecurityConfig {
     public AuthenticationEntryPoint jwtAuthenticationEntryPoint() {
         return (req, res, ex) -> {
             res.setStatus(401);
-            res.setContentType("application/json");
-            res.getWriter().write("{\"code\":\"UNAUTHENTICATED\",\"message\":\"Unauthenticated\"}");
+            res.setContentType("application/json; charset=UTF-8");
+            res.setCharacterEncoding("UTF-8");
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("code", "UNAUTHENTICATED");
+            errorResponse.put("message", "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại");
+            ObjectMapper objectMapper = new ObjectMapper();
+            res.getWriter().write(objectMapper.writeValueAsString(errorResponse));
         };
     }
 }

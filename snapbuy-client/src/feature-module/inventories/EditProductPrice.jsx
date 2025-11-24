@@ -28,11 +28,6 @@ const EditProductPrice = () => {
 
   const [errors, setErrors] = useState({});
 
-  useEffect(() => {
-    fetchProducts();
-    fetchProductPrice();
-  }, [fetchProducts, fetchProductPrice]);
-
   const fetchProducts = useCallback(async () => {
     try {
       setLoadingProducts(true);
@@ -70,6 +65,11 @@ const EditProductPrice = () => {
       setInitialLoading(false);
     }
   }, [id, navigate, route.productprices]);
+
+  useEffect(() => {
+    fetchProducts();
+    fetchProductPrice();
+  }, [fetchProducts, fetchProductPrice]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
