@@ -1046,8 +1046,8 @@ const PosModals = ({
                     {orderToPrint.orderDetails.map((item, index) => {
                       const unitPrice = item.unitPrice || 0;
                       const quantity = item.quantity || 0;
-                      const discount = item.discount || 0;
-                      const total = unitPrice * quantity - discount;
+                      const discountPercent = item.discount || 0;
+                      const total = unitPrice * quantity * (1 - discountPercent / 100);
 
                       return (
                         <tr key={item.orderDetailId || index}>
@@ -1090,17 +1090,15 @@ const PosModals = ({
                         <table className="table-borderless w-100 table-fit">
                           <tbody>
                             {(() => {
-                              // Tính subtotal từ orderDetails
+                              // Tính subtotal từ orderDetails (sau khi đã trừ giảm giá sản phẩm)
                               const subtotal =
                                 orderToPrint.orderDetails?.reduce(
                                   (sum, item) => {
                                     const unitPrice = item.unitPrice || 0;
                                     const quantity = item.quantity || 0;
-                                    const itemDiscount = item.discount || 0;
-                                    return (
-                                      sum +
-                                      (unitPrice * quantity - itemDiscount)
-                                    );
+                                    const discountPercent = item.discount || 0;
+                                    const itemTotal = unitPrice * quantity * (1 - discountPercent / 100);
+                                    return sum + itemTotal;
                                   },
                                   0
                                 ) || 0;
@@ -1752,34 +1750,34 @@ const PosModals = ({
                 <tbody>
                   {selectedOrderDetail.orderDetails &&
                   selectedOrderDetail.orderDetails.length > 0 ? (
-                    selectedOrderDetail.orderDetails.map((item, index) => (
-                      <tr key={item.orderDetailId || index}>
-                        <td>{item.productName || "N/A"}</td>
-                        <td>{item.quantity || 0}</td>
-                        <td>
-                          {new Intl.NumberFormat("vi-VN", {
-                            style: "currency",
-                            currency: "VND",
-                          }).format(item.unitPrice || 0)}
-                        </td>
-                        <td>
-                          {new Intl.NumberFormat("vi-VN", {
-                            style: "currency",
-                            currency: "VND",
-                          }).format(item.discount || 0)}
-                        </td>
-                        <td className="text-end">
-                          {new Intl.NumberFormat("vi-VN", {
-                            style: "currency",
-                            currency: "VND",
-                          }).format(
-                            item.totalPrice ||
-                              (item.quantity || 0) * (item.unitPrice || 0) -
-                                (item.discount || 0)
-                          )}
-                        </td>
-                      </tr>
-                    ))
+                    selectedOrderDetail.orderDetails.map((item, index) => {
+                      const unitPrice = item.unitPrice || 0;
+                      const quantity = item.quantity || 0;
+                      const discountPercent = item.discount || 0;
+                      const itemTotal = unitPrice * quantity * (1 - discountPercent / 100);
+
+                      return (
+                        <tr key={item.orderDetailId || index}>
+                          <td>{item.productName || "N/A"}</td>
+                          <td>{quantity}</td>
+                          <td>
+                            {new Intl.NumberFormat("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            }).format(unitPrice)}
+                          </td>
+                          <td>
+                            {discountPercent > 0 ? `${discountPercent}%` : "0%"}
+                          </td>
+                          <td className="text-end">
+                            {new Intl.NumberFormat("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            }).format(item.totalPrice || itemTotal)}
+                          </td>
+                        </tr>
+                      );
+                    })
                   ) : (
                     <tr>
                       <td colSpan={5} className="text-center">
@@ -1790,13 +1788,14 @@ const PosModals = ({
                 </tbody>
                 <tfoot>
                   {(() => {
-                    // Tính subtotal từ orderDetails
+                    // Tính subtotal từ orderDetails (sau khi đã trừ giảm giá sản phẩm)
                     const subtotal =
                       selectedOrderDetail.orderDetails?.reduce((sum, item) => {
                         const unitPrice = item.unitPrice || 0;
                         const quantity = item.quantity || 0;
-                        const itemDiscount = item.discount || 0;
-                        return sum + (unitPrice * quantity - itemDiscount);
+                        const discountPercent = item.discount || 0;
+                        const itemTotal = unitPrice * quantity * (1 - discountPercent / 100);
+                        return sum + itemTotal;
                       }, 0) || 0;
 
                     const discountAmount =
