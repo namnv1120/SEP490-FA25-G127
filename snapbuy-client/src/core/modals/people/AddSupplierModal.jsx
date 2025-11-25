@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Modal, message } from "antd";
+import { Modal, message, Select } from "antd";
 import { createSupplier } from "../../../services/SupplierService";
+import { getProvinces, getWardsByProvince } from "../../../services/LocationService";
 
 const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -16,6 +17,20 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
   });
   const [errors, setErrors] = useState({});
 
+  // State cho dropdown địa phương
+  const [provinces, setProvinces] = useState([]);
+  const [wards, setWards] = useState([]);
+  const [selectedProvinceCode, setSelectedProvinceCode] = useState(null);
+  const [loadingProvinces, setLoadingProvinces] = useState(false);
+  const [loadingWards, setLoadingWards] = useState(false);
+
+  // Load danh sách tỉnh/thành khi modal mở
+  useEffect(() => {
+    if (isOpen) {
+      loadProvinces();
+    }
+  }, [isOpen]);
+
   // Reset form khi modal đóng
   useEffect(() => {
     if (!isOpen) {
@@ -30,8 +45,36 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
         active: true,
       });
       setErrors({});
+      setSelectedProvinceCode(null);
+      setWards([]);
     }
   }, [isOpen]);
+
+  // Load danh sách tỉnh/thành phố
+  const loadProvinces = async () => {
+    try {
+      setLoadingProvinces(true);
+      const data = await getProvinces();
+      setProvinces(data || []);
+    } catch (error) {
+      message.error("Không thể tải danh sách tỉnh/thành phố");
+    } finally {
+      setLoadingProvinces(false);
+    }
+  };
+
+  // Load danh sách xã/phường khi chọn tỉnh
+  const loadWards = async (provinceCode) => {
+    try {
+      setLoadingWards(true);
+      const data = await getWardsByProvince(provinceCode);
+      setWards(data || []);
+    } catch (error) {
+      message.error("Không thể tải danh sách xã/phường");
+    } finally {
+      setLoadingWards(false);
+    }
+  };
 
   // 🧩 Validate dữ liệu
   const validateForm = () => {
@@ -86,7 +129,33 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  
+  // Xử lý khi chọn tỉnh/thành phố
+  const handleProvinceChange = (value, option) => {
+    setFormData((prev) => ({
+      ...prev,
+      city: option.label,
+      ward: "", // Reset xã/phường
+    }));
+    setSelectedProvinceCode(value);
+    setWards([]);
+    setErrors((prev) => ({ ...prev, city: "", ward: "" }));
+
+    // Load danh sách xã/phường
+    if (value) {
+      loadWards(value);
+    }
+  };
+
+  // Xử lý khi chọn xã/phường
+  const handleWardChange = (value, option) => {
+    setFormData((prev) => ({
+      ...prev,
+      ward: option.label,
+    }));
+    setErrors((prev) => ({ ...prev, ward: "" }));
+  };
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -243,6 +312,74 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
             </div>
           </div>
 
+          {/* Thành phố */}
+          <div className="col-lg-6">
+            <div className="mb-3">
+              <label className="form-label">Thành phố</label>
+              <Select
+                showSearch
+                placeholder="Chọn tỉnh/thành phố"
+                value={selectedProvinceCode}
+                onChange={handleProvinceChange}
+                loading={loadingProvinces}
+                disabled={loading || loadingProvinces}
+                style={{ width: '100%' }}
+                filterOption={(input, option) =>
+                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+                options={provinces.map(province => ({
+                  value: province.code,
+                  label: province.name,
+                }))}
+                allowClear
+                onClear={() => {
+                  setSelectedProvinceCode(null);
+                  setWards([]);
+                  setFormData((prev) => ({ ...prev, city: "", ward: "" }));
+                }}
+              />
+              {errors.city && (
+                <div className="text-danger mt-1" style={{ fontSize: '0.875rem' }}>
+                  {errors.city}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Xã/Phường */}
+          <div className="col-lg-6">
+            <div className="mb-3">
+              <label className="form-label">Xã/Phường</label>
+              <Select
+                showSearch
+                placeholder="Chọn xã/phường"
+                value={formData.ward || undefined}
+                onChange={handleWardChange}
+                loading={loadingWards}
+                disabled={loading || !selectedProvinceCode || loadingWards}
+                style={{ width: '100%' }}
+                filterOption={(input, option) =>
+                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+                options={wards.map(ward => ({
+                  value: ward.name,
+                  label: ward.name,
+                }))}
+                allowClear
+                onClear={() => {
+                  setFormData((prev) => ({ ...prev, ward: "" }));
+                }}
+              />
+              {errors.ward && (
+                <div className="text-danger mt-1" style={{ fontSize: '0.875rem' }}>
+                  {errors.ward}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Địa chỉ */}
+
           <div className="col-lg-12">
             <div className="mb-3">
               <label className="form-label">
@@ -260,46 +397,6 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
               {errors.address && (
                 <div className="invalid-feedback">
                   {errors.address}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="col-lg-6">
-            <div className="mb-3">
-              <label className="form-label">Quận/Phường</label>
-              <input
-                type="text"
-                name="ward"
-                className={`form-control ${errors.ward ? "is-invalid" : ""}`}
-                value={formData.ward}
-                onChange={handleInputChange}
-                placeholder="Nhập quận/phường"
-                disabled={loading}
-              />
-              {errors.ward && (
-                <div className="invalid-feedback">
-                  {errors.ward}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="col-lg-6">
-            <div className="mb-3">
-              <label className="form-label">Thành phố</label>
-              <input
-                type="text"
-                name="city"
-                className={`form-control ${errors.city ? "is-invalid" : ""}`}
-                value={formData.city}
-                onChange={handleInputChange}
-                placeholder="Nhập thành phố"
-                disabled={loading}
-              />
-              {errors.city && (
-                <div className="invalid-feedback">
-                  {errors.city}
                 </div>
               )}
             </div>

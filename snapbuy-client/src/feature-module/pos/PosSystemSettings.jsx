@@ -12,6 +12,7 @@ const PosSystemSettings = () => {
   const [formData, setFormData] = useState({
     taxPercent: 0,
     discountPercent: 0,
+    loyaltyPointsPercent: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -39,11 +40,17 @@ const PosSystemSettings = () => {
       return;
     }
 
+    if (formData.loyaltyPointsPercent < 0 || formData.loyaltyPointsPercent > 100) {
+      message.error("Phần trăm điểm tích lũy phải trong khoảng 0-100");
+      return;
+    }
+
     try {
       setSaving(true);
       await updatePosSettings({
         taxPercent: formData.taxPercent,
         discountPercent: formData.discountPercent,
+        loyaltyPointsPercent: formData.loyaltyPointsPercent,
       });
       message.success("Cập nhật cài đặt thành công!");
       // Reload settings
@@ -66,6 +73,7 @@ const PosSystemSettings = () => {
       setFormData({
         taxPercent: settings.taxPercent || 0,
         discountPercent: settings.discountPercent || 0,
+        loyaltyPointsPercent: settings.loyaltyPointsPercent || 0,
       });
     } catch (error) {
       message.error(
@@ -89,27 +97,27 @@ const PosSystemSettings = () => {
       <>
         <div className="page-wrapper">
           <div className="content settings-content">
-          <div className="page-header">
-            <div className="add-item d-flex">
-              <div className="page-title">
-                <h4 className="fw-bold">Cài đặt hệ thống POS</h4>
-                <h6>Quản lý cài đặt thuế và chiết khấu cho hệ thống POS</h6>
+            <div className="page-header">
+              <div className="add-item d-flex">
+                <div className="page-title">
+                  <h4 className="fw-bold">Cài đặt hệ thống POS</h4>
+                  <h6>Quản lý cài đặt thuế và chiết khấu cho hệ thống POS</h6>
+                </div>
               </div>
+              <ul className="table-top-head">
+                <RefreshIcon />
+                <CollapesIcon />
+              </ul>
             </div>
-            <ul className="table-top-head">
-              <RefreshIcon />
-              <CollapesIcon />
-            </ul>
-          </div>
-          <div className="row">
-            <div className="col-xl-12">
-              <div className="settings-wrapper d-flex">
-                <SettingsSideBar />
-                <div className="card flex-fill mb-0">
-                  <div className="card-header">
-                    <h4 className="fs-18 fw-bold">Cài đặt hệ thống</h4>
-                  </div>
-                  <div className="card-body">
+            <div className="row">
+              <div className="col-xl-12">
+                <div className="settings-wrapper d-flex">
+                  <SettingsSideBar />
+                  <div className="card flex-fill mb-0">
+                    <div className="card-header">
+                      <h4 className="fs-18 fw-bold">Cài đặt hệ thống</h4>
+                    </div>
+                    <div className="card-body">
                       <form onSubmit={handleSubmit}>
                         <div className="card-title-head mb-4">
                           <h6 className="fs-16 fw-bold mb-1">
@@ -164,6 +172,29 @@ const PosSystemSettings = () => {
                               <span className="input-group-text">%</span>
                             </div>
                           </div>
+                          <div className="mb-3">
+                            <label className="form-label">
+                              Phần trăm điểm tích lũy (%) <span className="text-danger"></span>
+                            </label>
+                            <div className="input-group">
+                              <input
+                                type="number"
+                                className="form-control"
+                                value={formData.loyaltyPointsPercent}
+                                onChange={handleInputChange("loyaltyPointsPercent")}
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                required
+                                disabled={saving}
+                                placeholder="0.00"
+                              />
+                              <span className="input-group-text">%</span>
+                            </div>
+                            <small className="text-muted">
+                              Ví dụ: 0.20% = 1 điểm cho mỗi 500đ, 5% = 50 điểm cho mỗi 1.000đ. Để 0% nếu không muốn tích điểm.
+                            </small>
+                          </div>
                         </div>
 
                         <div className="alert alert-info mt-4">
@@ -181,10 +212,10 @@ const PosSystemSettings = () => {
                           </button>
                         </div>
                       </form>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
             </div>
           </div>
           <CommonFooter />

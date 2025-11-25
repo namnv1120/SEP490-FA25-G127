@@ -25,5 +25,10 @@ public class PosSettingsUpdateRequest {
     @DecimalMin(value = "0.00", message = "Phần trăm chiết khấu phải >= 0")
     @DecimalMax(value = "100.00", message = "Phần trăm chiết khấu phải <= 100")
     private BigDecimal discountPercent;
+
+    @NotNull(message = "Phần trăm điểm tích lũy không được để trống")
+    @DecimalMin(value = "0.00", message = "Phần trăm điểm tích lũy phải >= 0")
+    @DecimalMax(value = "100.00", message = "Phần trăm điểm tích lũy phải <= 100")
+    private BigDecimal loyaltyPointsPercent;
 }
 

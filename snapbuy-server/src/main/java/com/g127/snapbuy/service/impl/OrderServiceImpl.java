@@ -39,6 +39,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
     private final OrderMapper orderMapper;
     private final MoMoService moMoService;
     private final PromotionService promotionService;
+    private final PosSettingsRepository posSettingsRepository;
 
     private UUID resolveCurrentAccountId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -176,8 +177,18 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         if (payable.signum() < 0) payable = BigDecimal.ZERO;
 
         if (!isGuest) {
-            pointsEarned = payable.divide(BigDecimal.valueOf(500), 0, RoundingMode.FLOOR).intValue();
-            
+            // Lấy % điểm tích lũy từ POS settings
+            BigDecimal loyaltyPointsPercent = BigDecimal.ZERO; // Mặc định 0%
+            PosSettings posSettings = posSettingsRepository.findByAccount(creator).orElse(null);
+            if (posSettings != null && posSettings.getLoyaltyPointsPercent() != null) {
+                loyaltyPointsPercent = posSettings.getLoyaltyPointsPercent();
+            }
+
+            // Tính điểm tích lũy: payable × loyaltyPointsPercent / 100
+            pointsEarned = payable.multiply(loyaltyPointsPercent)
+                    .divide(BigDecimal.valueOf(100), 0, RoundingMode.FLOOR)
+                    .intValue();
+
             if (pointsRedeemed > 0) {
                 int currentPoints = customer.getPoints() == null ? 0 : customer.getPoints();
                 int newPoints = Math.max(0, currentPoints - pointsRedeemed);
@@ -360,11 +371,11 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                     .equals("00000000-0000-0000-0000-000000000001");
             if (!isGuest) {
                 int cur = c.getPoints() == null ? 0 : c.getPoints();
-                
+
                 int pointsRedeemed = order.getPointsRedeemed() == null ? 0 : order.getPointsRedeemed();
-                
-                int earned = order.getTotalAmount() == null ? 0
-                        : order.getTotalAmount().divide(BigDecimal.valueOf(500), 0, RoundingMode.FLOOR).intValue();
+
+                // Sử dụng pointsEarned đã lưu trong order thay vì tính lại
+                int earned = order.getPointsEarned() == null ? 0 : order.getPointsEarned();
                 long next = (long) cur - Math.max(0, earned) + pointsRedeemed;
                 if (next < 0) next = 0;
                 c.setPoints((int) next);
@@ -486,12 +497,23 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         if (!isGuest) {
             int pointsRedeemed = order.getPointsRedeemed() == null ? 0 : order.getPointsRedeemed();
             int pointsEarned = order.getPointsEarned() == null ? 0 : order.getPointsEarned();
-            
+
+            // Nếu chưa có pointsEarned, tính lại theo settings
             if (pointsEarned == 0 && order.getTotalAmount() != null) {
-                pointsEarned = order.getTotalAmount().divide(BigDecimal.valueOf(500), 0, RoundingMode.FLOOR).intValue();
+                BigDecimal loyaltyPointsPercent = BigDecimal.ZERO; // Mặc định 0%
+                Account account = order.getAccount();
+                if (account != null) {
+                    PosSettings posSettings = posSettingsRepository.findByAccount(account).orElse(null);
+                    if (posSettings != null && posSettings.getLoyaltyPointsPercent() != null) {
+                        loyaltyPointsPercent = posSettings.getLoyaltyPointsPercent();
+                    }
+                }
+                pointsEarned = order.getTotalAmount().multiply(loyaltyPointsPercent)
+                        .divide(BigDecimal.valueOf(100), 0, RoundingMode.FLOOR)
+                        .intValue();
                 order.setPointsEarned(pointsEarned);
             }
-            
+
             int currentPoints = customer.getPoints() == null ? 0 : customer.getPoints();
             long newPoints = (long) currentPoints - pointsRedeemed + pointsEarned;
             if (newPoints < 0) newPoints = 0;

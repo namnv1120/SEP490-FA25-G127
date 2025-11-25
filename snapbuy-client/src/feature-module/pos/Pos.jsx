@@ -77,39 +77,161 @@ const Pos = () => {
   const handleBarcodeScanRef = useRef(null);
   const lastMessageRef = useRef({ type: null, content: null, timestamp: 0 });
 
+  const sliderRef = useRef(null);
+
   const settings = {
     dots: false,
+    infinite: false, // Không lặp vô hạn
     autoplay: false,
     slidesToShow: 6,
-    margin: 0,
+    slidesToScroll: 1,
     speed: 500,
+    arrows: true, // Hiển thị mũi tên
+    nextArrow: <SampleNextArrow />,
+    prevArrow: <SamplePrevArrow />,
+    variableWidth: false, // Đảm bảo width đồng đều
+    centerMode: false, // Không center
+    adaptiveHeight: false,
     responsive: [
       {
         breakpoint: 992,
         settings: {
           slidesToShow: 6,
+          slidesToScroll: 1,
         },
       },
       {
         breakpoint: 800,
         settings: {
           slidesToShow: 5,
+          slidesToScroll: 1,
         },
       },
       {
         breakpoint: 776,
         settings: {
           slidesToShow: 2,
+          slidesToScroll: 1,
         },
       },
       {
         breakpoint: 567,
         settings: {
           slidesToShow: 1,
+          slidesToScroll: 1,
         },
       },
     ],
   };
+
+  // Custom arrow components
+  function SampleNextArrow(props) {
+    const { className, onClick } = props;
+    return (
+      <button
+        className={`custom-arrow custom-arrow-next ${className}`}
+        onClick={onClick}
+        style={{
+          position: "absolute",
+          right: "-15px",
+          top: "40%",
+          transform: "translateY(-50%)",
+          zIndex: 10,
+          width: "30px",
+          height: "30px",
+          borderRadius: "50%",
+          background: "#ff9f43",
+          border: "none",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+        }}
+      >
+        <i className="fa fa-chevron-right" style={{ color: "white", fontSize: "12px" }}></i>
+      </button>
+    );
+  }
+
+  function SamplePrevArrow(props) {
+    const { className, onClick } = props;
+    return (
+      <button
+        className={`custom-arrow custom-arrow-prev ${className}`}
+        onClick={onClick}
+        style={{
+          position: "absolute",
+          left: "-15px",
+          top: "40%",
+          transform: "translateY(-50%)",
+          zIndex: 10,
+          width: "30px",
+          height: "30px",
+          borderRadius: "50%",
+          background: "#ff9f43",
+          border: "none",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+        }}
+      >
+        <i className="fa fa-chevron-left" style={{ color: "white", fontSize: "12px" }}></i>
+      </button>
+    );
+  }
+
+  // Xử lý cuộn chuột cho slider - chỉ cuộn slider, không cuộn trang
+  const lastWheelTimeRef = useRef(0);
+
+  const handleWheel = useCallback((e) => {
+    if (sliderRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const now = Date.now();
+      const timeSinceLastWheel = now - lastWheelTimeRef.current;
+
+      // Debounce để tránh cuộn quá nhanh, nhưng vẫn nhạy
+      if (timeSinceLastWheel < 100) {
+        return;
+      }
+
+      lastWheelTimeRef.current = now;
+
+      // Cuộn dựa trên hướng, không cần deltaY lớn
+      if (e.deltaY < 0) {
+        // Cuộn lên = đi về trước
+        sliderRef.current.slickPrev();
+      } else if (e.deltaY > 0) {
+        // Cuộn xuống = đi về sau
+        sliderRef.current.slickNext();
+      }
+    }
+  }, []);
+
+  // Ref cho container của slider
+  const sliderContainerRef = useRef(null);
+
+  // Thêm event listener để ngăn cuộn trang khi hover vào slider
+  useEffect(() => {
+    const container = sliderContainerRef.current;
+    if (!container) return;
+
+    const preventScroll = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleWheel(e);
+    };
+
+    container.addEventListener('wheel', preventScroll, { passive: false });
+
+    return () => {
+      container.removeEventListener('wheel', preventScroll);
+    };
+  }, [handleWheel]);
 
   // Config message để giới hạn số lượng hiển thị
   useEffect(() => {
@@ -1220,15 +1342,16 @@ const Pos = () => {
                     <Spin size="large" />
                   </div>
                 ) : (
-                  <Slider
-                    {...settings}
-                    className="tabs owl-carousel pos-category"
-                  >
+                  <div ref={sliderContainerRef} style={{ position: 'relative' }}>
+                    <Slider
+                      ref={sliderRef}
+                      {...settings}
+                      className={`tabs owl-carousel pos-category ${categories.length + 1 < 6 ? 'center-mode' : ''}`}
+                    >
                     <div
                       onClick={() => setActiveTab("all")}
-                      className={`owl-item ${
-                        activeTab === "all" ? "active" : ""
-                      }`}
+                      className={`owl-item ${activeTab === "all" ? "active" : ""
+                        }`}
                       id="all"
                     >
                       <Link to="#">
@@ -1255,9 +1378,8 @@ const Pos = () => {
                         <div
                           key={category.id}
                           onClick={() => setActiveTab(category.id)}
-                          className={`owl-item ${
-                            activeTab === category.id ? "active" : ""
-                          }`}
+                          className={`owl-item ${activeTab === category.id ? "active" : ""
+                            }`}
                           id={category.id}
                         >
                           <Link to="#">
@@ -1273,6 +1395,7 @@ const Pos = () => {
                       );
                     })}
                   </Slider>
+                  </div>
                 )}
                 <div className="pos-products">
                   <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
@@ -1933,7 +2056,7 @@ const Pos = () => {
                             )}
                             {createdOrder &&
                               createdOrder.paymentStatus ===
-                                "Chưa thanh toán" && (
+                              "Chưa thanh toán" && (
                                 <tr>
                                   <td className="fw-bold">Còn nợ:</td>
                                   <td className="text-end fw-bold text-danger">
@@ -1946,7 +2069,7 @@ const Pos = () => {
                               )}
                             {createdOrder &&
                               createdOrder.paymentStatus ===
-                                "Đã thanh toán" && (
+                              "Đã thanh toán" && (
                                 <tr>
                                   <td className="fw-bold">Còn nợ:</td>
                                   <td className="text-end fw-bold text-success">

@@ -141,6 +141,107 @@
   z-index: 10;
 }
 
+/* Category Slider Arrows */
+.custom-arrow {
+  transition: all 0.3s ease;
+}
+
+.custom-arrow:hover {
+  background: #ff8c1a !important;
+  transform: translateY(-50%) scale(1.1) !important;
+}
+
+.custom-arrow.slick-disabled {
+  opacity: 0.3 !important;
+  cursor: not-allowed !important;
+  background: #ccc !important;
+  pointer-events: none;
+}
+
+.custom-arrow.slick-disabled:hover {
+  transform: translateY(-50%) !important;
+  background: #ccc !important;
+}
+
+/* Ẩn mũi tên mặc định của slick */
+.pos-category .slick-prev:before,
+.pos-category .slick-next:before {
+  display: none;
+}
+
+/* Đảm bảo container có position relative */
+.pos-category .slick-slider {
+  position: relative;
+}
+
+.pos-category .slick-list {
+  overflow: hidden !important; /* Ẩn phần thừa */
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Đảm bảo các slide có width đồng đều */
+.pos-category .slick-slide {
+  float: left;
+  height: auto;
+  min-height: 1px;
+  padding: 0 5px; /* Khoảng cách giữa các slide */
+}
+
+/* Loại bỏ khoảng trống thừa ở cuối */
+.pos-category .slick-track {
+  display: flex !important;
+  align-items: stretch;
+  margin-left: 0 !important;
+}
+
+/* Căn giữa khi có ít hơn 6 danh mục */
+.pos-category.center-mode .slick-track {
+  justify-content: center !important;
+  margin: 0 auto !important;
+}
+
+.pos-category.center-mode .slick-list {
+  overflow: visible !important;
+}
+
+.pos-category .slick-slide > div {
+  height: 100%;
+  width: 100%;
+}
+
+/* Ẩn slide trống */
+.pos-category .slick-slide:empty {
+  display: none !important;
+}
+
+.pos-category .slick-slide.slick-cloned {
+  display: none !important;
+}
+
+/* Khoảng cách cho danh mục không dùng slider */
+.pos-category-static .owl-item {
+  margin: 0 8px;
+}
+
+.pos-category-static .owl-item:first-child {
+  margin-left: 0;
+}
+
+.pos-category-static .owl-item:last-child {
+  margin-right: 0;
+}
+
+/* Category slider container - cho phép cuộn chuột */
+.pos-category {
+  cursor: grab;
+  user-select: none;
+}
+
+.pos-category:active {
+  cursor: grabbing;
+}
+
 /* Responsive */
 @media (max-width: 991px) {
   .pos-products .product-info {
@@ -159,6 +260,14 @@
 
   .pos-products .product-info .pro-img .product-image-placeholder {
     aspect-ratio: 1;
+  }
+
+  .pos-category .slick-prev {
+    left: -5px;
+  }
+
+  .pos-category .slick-next {
+    right: -5px;
   }
 }
 
