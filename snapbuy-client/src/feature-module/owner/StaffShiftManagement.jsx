@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { message, Modal, Table, Tag, Descriptions, Spin, Input, InputNumber, Button } from "antd";
+import { message, Modal, Table, Tag, Spin, Input, InputNumber, Button } from "antd";
 import PrimeDataTable from "../../components/data-table";
 import { getShiftsByAccountId, openShiftForEmployee, getAllActiveShifts } from "../../services/ShiftService";
 import { searchStaffAccountsPaged } from "../../services/AccountService";
@@ -265,6 +265,17 @@ const StaffShiftManagement = () => {
     return new Date(isoString).toLocaleString("vi-VN");
   };
 
+  // Calculate shift duration in hours and minutes
+  const calculateShiftDuration = (openedAt, closedAt) => {
+    if (!openedAt) return "-";
+    const startTime = new Date(openedAt).getTime();
+    const endTime = closedAt ? new Date(closedAt).getTime() : new Date().getTime();
+    const diffMs = endTime - startTime;
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours} giờ ${minutes} phút`;
+  };
+
   // Open shift for employee
   const handleOpenShiftForEmployee = (employee) => {
     setSelectedEmployee(employee);
@@ -346,18 +357,11 @@ const StaffShiftManagement = () => {
       body: (row) => formatDateTime(row.closedAt),
     },
     {
-      header: "Tiền ban đầu",
-      field: "initialCash",
-      key: "initialCash",
-      sortable: true,
-      body: (row) => formatCurrency(row.initialCash),
-    },
-    {
-      header: "Tiền chốt ca",
-      field: "closingCash",
-      key: "closingCash",
-      sortable: true,
-      body: (row) => (row.closingCash ? formatCurrency(row.closingCash) : "-"),
+      header: "Thời gian ca",
+      field: "shiftDuration",
+      key: "shiftDuration",
+      sortable: false,
+      body: (row) => calculateShiftDuration(row.openedAt, row.closedAt),
     },
     {
       header: "Thao tác",
@@ -381,38 +385,61 @@ const StaffShiftManagement = () => {
       title: "Mã đơn",
       dataIndex: "orderNumber",
       key: "orderNumber",
-      render: (text, record) => <strong>{text || record.orderId}</strong>,
+      render: (text, record) => (
+        <span style={{ color: '#E67E22', fontWeight: 600 }}>
+          {text || record.orderId}
+        </span>
+      ),
     },
     {
       title: "Thời gian",
       dataIndex: "orderDate",
       key: "orderDate",
-      render: (text, record) => (
-        <small>{formatDateTime(text || record.createdDate)}</small>
-      ),
+      render: (text, record) => formatDateTime(text || record.createdDate),
     },
     {
       title: "Tổng tiền",
       dataIndex: "totalAmount",
       key: "totalAmount",
-      align: "right",
-      render: (value) => (
-        <strong className="text-success">{formatCurrency(value)}</strong>
-      ),
+      render: (value) => formatCurrency(value),
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "paymentStatus",
+      key: "paymentStatus",
+      render: (status, record) => {
+        const paymentStatus = status || record.payment?.status || "-";
+        const isPaid = paymentStatus?.toLowerCase().includes('đã thanh toán') ||
+                       paymentStatus?.toLowerCase().includes('paid');
+        return (
+          <Tag color={isPaid ? "success" : "warning"}>
+            {paymentStatus}
+          </Tag>
+        );
+      },
     },
     {
       title: "Thanh toán",
       dataIndex: "paymentMethod",
       key: "paymentMethod",
-      render: (text, record) => (
-        <Tag color="default">
-          {record.payment?.paymentMethod || text || "-"}
-        </Tag>
-      ),
+      render: (text, record) => record.payment?.paymentMethod || text || "-",
     },
   ];
 
-  const totalRevenue = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+  // Calculate total revenue only from successfully paid orders
+  const totalRevenue = orders
+    .filter((o) => {
+      const status = o.paymentStatus || o.payment?.status || "";
+      return status.toLowerCase().includes('đã thanh toán') ||
+             status.toLowerCase().includes('paid');
+    })
+    .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
+  const paidOrdersCount = orders.filter((o) => {
+    const status = o.paymentStatus || o.payment?.status || "";
+    return status.toLowerCase().includes('đã thanh toán') ||
+           status.toLowerCase().includes('paid');
+  }).length;
 
   return (
     <div className="page-wrapper">
@@ -533,61 +560,6 @@ const StaffShiftManagement = () => {
         >
           {selectedShift && (
             <div>
-              {/* Shift Info */}
-              <Descriptions
-                title="Thông tin ca"
-                bordered
-                column={2}
-                className="mb-4"
-              >
-                <Descriptions.Item label="Nhân viên">
-                  {selectedShift.accountName}
-                </Descriptions.Item>
-                <Descriptions.Item label="Trạng thái">
-                  <Tag
-                    color={
-                      selectedShift.status === "Mở" ? "success" : "default"
-                    }
-                  >
-                    {selectedShift.status === "Mở"
-                      ? "🟢 Đang mở"
-                      : "⚪ Đã đóng"}
-                  </Tag>
-                </Descriptions.Item>
-                <Descriptions.Item label="Mở ca">
-                  {formatDateTime(selectedShift.openedAt)}
-                </Descriptions.Item>
-                <Descriptions.Item label="Đóng ca">
-                  {formatDateTime(selectedShift.closedAt)}
-                </Descriptions.Item>
-                <Descriptions.Item label="Tiền ban đầu">
-                  <span className="text-success fw-bold">
-                    {formatCurrency(selectedShift.initialCash)}
-                  </span>
-                </Descriptions.Item>
-                <Descriptions.Item label="Tiền chốt ca">
-                  <span className="text-primary fw-bold">
-                    {selectedShift.closingCash
-                      ? formatCurrency(selectedShift.closingCash)
-                      : "-"}
-                  </span>
-                </Descriptions.Item>
-                <Descriptions.Item label="Chênh lệch" span={2}>
-                  <span className="text-danger fw-bold">
-                    {selectedShift.closingCash
-                      ? formatCurrency(
-                        selectedShift.closingCash - selectedShift.initialCash
-                      )
-                      : "-"}
-                  </span>
-                </Descriptions.Item>
-                {selectedShift.closingNote && (
-                  <Descriptions.Item label="Ghi chú" span={2}>
-                    <em>{selectedShift.closingNote}</em>
-                  </Descriptions.Item>
-                )}
-              </Descriptions>
-
               {/* Cash Denominations Comparison - So sánh mệnh giá tiền */}
               {((selectedShift.initialCashDenominations && selectedShift.initialCashDenominations.length > 0) ||
                 (selectedShift.cashDenominations && selectedShift.cashDenominations.length > 0)) && (
@@ -609,14 +581,15 @@ const StaffShiftManagement = () => {
               {/* Orders Summary Cards - Styled with solid colors for better visibility */}
               <div className="row g-3 mb-4">
                 <div className="col-md-6">
-                  <div className="card bg-success text-white mb-0">
-                    <div className="card-body p-3">
-                      <div className="d-flex justify-content-between align-items-center">
+                  <div className="card bg-success text-white mb-0" style={{ height: '100%' }}>
+                    <div className="card-body p-3 d-flex align-items-center">
+                      <div className="d-flex justify-content-between align-items-center w-100">
                         <div>
                           <h6 className="text-white mb-1">Tổng doanh thu</h6>
                           <h4 className="text-white mb-0">
                             {formatCurrency(totalRevenue)}
                           </h4>
+                          <small className="text-white-50">({paidOrdersCount} đơn thanh toán thành công)</small>
                         </div>
                         <i className="feather icon-dollar-sign fs-2 text-white-50"></i>
                       </div>
@@ -624,12 +597,13 @@ const StaffShiftManagement = () => {
                   </div>
                 </div>
                 <div className="col-md-6">
-                  <div className="card bg-primary text-white mb-0">
-                    <div className="card-body p-3">
-                      <div className="d-flex justify-content-between align-items-center">
+                  <div className="card bg-primary text-white mb-0" style={{ height: '100%' }}>
+                    <div className="card-body p-3 d-flex align-items-center">
+                      <div className="d-flex justify-content-between align-items-center w-100">
                         <div>
-                          <h6 className="text-white mb-1">Số đơn hàng</h6>
+                          <h6 className="text-white mb-1">Tổng số đơn hàng</h6>
                           <h4 className="text-white mb-0">{orders.length}</h4>
+                          <small className="text-white-50">&nbsp;</small>
                         </div>
                         <i className="feather icon-shopping-cart fs-2 text-white-50"></i>
                       </div>
