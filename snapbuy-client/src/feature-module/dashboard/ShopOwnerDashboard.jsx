@@ -577,7 +577,7 @@ const ShopOwnerDashboard = () => {
         </div>
 
         {/* Low Stock Alert */}
-        {stats.lowStockItems > 0 && (
+        {/* {stats.lowStockItems > 0 && (
           <div className="alert alert-warning alert-dismissible fade show mb-4">
             <div>
               <i className="ti ti-alert-triangle me-2" />
@@ -598,7 +598,7 @@ const ShopOwnerDashboard = () => {
               aria-label="Close"
             />
           </div>
-        )}
+        )} */}
 
         {/* Charts Row 1 */}
         <div className="row">

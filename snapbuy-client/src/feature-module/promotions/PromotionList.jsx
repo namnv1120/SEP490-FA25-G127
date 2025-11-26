@@ -4,9 +4,10 @@ import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
 import CommonFooter from "../../components/footer/CommonFooter";
 import SearchFromApi from "../../components/data-table/search";
-import { getAllPromotions } from "../../services/PromotionService";
+import { getAllPromotions, togglePromotionStatus, deletePromotion } from "../../services/PromotionService";
 import AddPromotionModal from "../../core/modals/promotions/AddPromotionModal";
 import EditPromotionModal from "../../core/modals/promotions/EditPromotionModal";
+import DeleteModal from "../../components/delete-modal";
 import { exportToExcel } from "../../utils/excelUtils";
 
 const PromotionList = () => {
@@ -15,11 +16,12 @@ const PromotionList = () => {
   const [rows, setRows] = useState(10);
   const [promotions, setPromotions] = useState([]);
   const [filteredPromotions, setFilteredPromotions] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedPromotionId, setSelectedPromotionId] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedPromotion, setSelectedPromotion] = useState(null);
 
   const formatDateTime = (dateString) => {
     if (!dateString) return "Không có";
@@ -34,7 +36,6 @@ const PromotionList = () => {
 
   const fetchPromotions = useCallback(async () => {
     try {
-      setLoading(true);
       setError(null);
       const data = await getAllPromotions();
 
@@ -55,16 +56,18 @@ const PromotionList = () => {
             promo.discountType === "Giảm theo phần trăm"
               ? `${promo.discountValue}%`
               : `${promo.discountValue?.toLocaleString()} đ`,
+          discountValueRaw: promo.discountValue, // Lưu giá trị số thực tế để sort
           startDate: formatDateTime(promo.startDate),
           endDate: formatDateTime(promo.endDate),
           productCount: promo.productIds?.length || 0,
           status: isActive
             ? "Hoạt động"
             : isExpired
-            ? "Hết hạn"
-            : "Không hoạt động",
+              ? "Hết hạn"
+              : "Không hoạt động",
           active: isActive,
           isExpired: isExpired,
+          originalActive: promo.active, // Lưu giá trị active gốc từ backend
         };
       });
 
@@ -74,8 +77,6 @@ const PromotionList = () => {
     } catch {
       setError("Lỗi khi tải danh sách khuyến mãi. Vui lòng thử lại.");
       message.error("Không thể tải danh sách khuyến mãi");
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -137,6 +138,41 @@ const PromotionList = () => {
     setEditModalOpen(true);
   };
 
+  const handleDeleteClick = (promotion) => {
+    setSelectedPromotion(promotion);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async (promotionId) => {
+    try {
+      await deletePromotion(promotionId);
+      await fetchPromotions();
+      message.success("Khuyến mãi đã được xoá thành công!");
+      setDeleteModalOpen(false);
+      setSelectedPromotion(null);
+    } catch (err) {
+      console.error("❌ Lỗi khi xoá khuyến mãi:", err);
+      const errorMsg = err.response?.data?.message || "Lỗi khi xoá khuyến mãi. Vui lòng thử lại.";
+      message.error(errorMsg);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
+    setSelectedPromotion(null);
+  };
+
+  const handleToggleStatus = async (promotion) => {
+    try {
+      await togglePromotionStatus(promotion.promotionId);
+      await fetchPromotions();
+      message.success("Đã cập nhật trạng thái khuyến mãi thành công!");
+    } catch (err) {
+      console.error("❌ Lỗi khi chuyển đổi trạng thái khuyến mãi:", err);
+      message.error("Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại.");
+    }
+  };
+
   // Handle select-all checkbox
   useEffect(() => {
     const selectAllCheckbox = document.getElementById("select-all");
@@ -190,8 +226,9 @@ const PromotionList = () => {
     },
     {
       header: "Giá trị",
-      field: "discountValue",
+      field: "discountValueRaw", // Sort theo giá trị số thực tế
       sortable: true,
+      body: (rowData) => rowData.discountValue, // Hiển thị giá trị đã format
     },
     {
       header: "Ngày bắt đầu",
@@ -218,30 +255,51 @@ const PromotionList = () => {
       field: "status",
       sortable: true,
       body: (rowData) => (
-        <span
-          className={`badge ${
-            rowData.active
+        <div className="d-flex align-items-center gap-2">
+          <span
+            className={`badge fw-medium fs-10 ${rowData.active
               ? "bg-success"
               : rowData.isExpired
-              ? "bg-warning"
-              : "bg-danger"
-          }`}
-        >
-          {rowData.status}
-        </span>
+                ? "bg-warning"
+                : "bg-danger"
+              }`}
+          >
+            {rowData.status}
+          </span>
+          {!rowData.isExpired && (
+            <div className="form-check form-switch">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                role="switch"
+                checked={rowData.originalActive || false}
+                onChange={() => handleToggleStatus(rowData)}
+                style={{ cursor: "pointer" }}
+              />
+            </div>
+          )}
+        </div>
       ),
     },
     {
-      header: "Thao tác",
+      header: "",
+      sortable: false,
       body: (rowData) => (
         <div className="action-table-data">
-          <div className="edit-delete-action">
+          <div className="edit-delete-action d-flex align-items-center">
             <button
-              className="btn btn-sm btn-icon bg-light me-2"
+              className="me-2 p-2 border rounded bg-transparent"
               onClick={() => handleEdit(rowData.promotionId)}
               title="Chỉnh sửa"
             >
-              <i className="ti ti-edit text-primary" />
+              <i className="feather icon-edit"></i>
+            </button>
+            <button
+              className="p-2 border rounded bg-transparent"
+              onClick={() => handleDeleteClick(rowData)}
+              title="Xóa"
+            >
+              <i className="feather icon-trash-2"></i>
             </button>
           </div>
         </div>
@@ -324,6 +382,14 @@ const PromotionList = () => {
         }}
         onSuccess={fetchPromotions}
         promotionId={selectedPromotionId}
+      />
+
+      <DeleteModal
+        open={deleteModalOpen}
+        itemId={selectedPromotion?.promotionId}
+        itemName={selectedPromotion?.promotionName}
+        onDelete={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
       />
     </>
   );

@@ -3,6 +3,7 @@ package com.g127.snapbuy.service.impl;
 import com.g127.snapbuy.dto.request.RoleCreateRequest;
 import com.g127.snapbuy.dto.request.RolePermissionUpdateRequest;
 import com.g127.snapbuy.dto.request.RoleUpdateRequest;
+import com.g127.snapbuy.dto.response.PageResponse;
 import com.g127.snapbuy.dto.response.PermissionResponse;
 import com.g127.snapbuy.dto.response.RoleResponse;
 import com.g127.snapbuy.entity.Permission;
@@ -16,6 +17,7 @@ import com.g127.snapbuy.service.RoleService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -285,5 +287,25 @@ public class RoleServiceImpl implements RoleService {
         role.setActive(currentActive == null || !currentActive);
         Role savedRole = roleRepository.save(role);
         return toResponse(savedRole);
+    }
+
+    @Override
+    public PageResponse<RoleResponse> searchRolesPaged(String keyword, Boolean active, Pageable pageable) {
+        var page = roleRepository.searchRolesPage(
+                keyword == null || keyword.isBlank() ? null : keyword.trim(),
+                active,
+                pageable
+        );
+        var content = page.getContent().stream().map(this::toResponse).toList();
+        return PageResponse.<RoleResponse>builder()
+                .content(content)
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .size(page.getSize())
+                .number(page.getNumber())
+                .first(page.isFirst())
+                .last(page.isLast())
+                .empty(page.isEmpty())
+                .build();
     }
 }

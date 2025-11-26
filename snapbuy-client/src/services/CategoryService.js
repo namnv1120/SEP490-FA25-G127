@@ -103,3 +103,37 @@ export const toggleCategoryStatus = async (categoryId) => {
     throw error;
   }
 };
+
+export const searchParentCategories = async (keyword, page = 0, size = 10, sortBy = 'createdDate', sortDir = 'DESC') => {
+  try {
+    const params = new URLSearchParams();
+    if (keyword) params.append('keyword', keyword);
+    params.append('page', page);
+    params.append('size', size);
+    params.append('sortBy', sortBy);
+    params.append('sortDir', sortDir);
+    const url = `${REST_API_BASE_URL}/search-parent-categories?${params}`;
+    const response = await axios.get(url, getAuthHeaders());
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("Lỗi khi tìm kiếm danh mục:", error);
+    throw error;
+  }
+};
+
+export const searchSubCategories = async (keyword, page = 0, size = 10, sortBy = 'createdDate', sortDir = 'DESC') => {
+  try {
+    const params = new URLSearchParams();
+    if (keyword) params.append('keyword', keyword);
+    params.append('page', page);
+    params.append('size', size);
+    params.append('sortBy', sortBy);
+    params.append('sortDir', sortDir);
+    const url = `${REST_API_BASE_URL}/search-sub-categories?${params}`;
+    const response = await axios.get(url, getAuthHeaders());
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("Lỗi khi tìm kiếm danh mục con:", error);
+    throw error;
+  }
+};

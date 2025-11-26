@@ -95,14 +95,6 @@ DECLARE @salesId UNIQUEIDENTIFIER = (SELECT account_id FROM accounts WHERE usern
 DECLARE @roleSales UNIQUEIDENTIFIER = (SELECT role_id FROM roles WHERE role_name = N'Nhân viên bán hàng');
 INSERT INTO account_roles (account_id, role_id) VALUES (@salesId, @roleSales);
 
-
-INSERT INTO customers (customer_code, full_name, phone, gender)
-VALUES
-    ('CUST-1762182123562', N'Nguyễn Văn A', '0905123456', N'Male'),
-    ('CUST-1762182121256', N'Trần Thị B', '0905789123', N'Female'),
-    ('CUST-1762182127965', N'Lê Minh C', '0912345678', N'Male'),
-    ('CUST-1762182128978', N'Phạm Ngọc D', '0987456123', N'Female'),
-    ('CUST-1762182122345', N'Hoàng Anh E', '0932123456', N'Male');
 INSERT INTO customers (customer_id, customer_code, full_name, phone)
 VALUES
     (
@@ -218,29 +210,3 @@ VALUES
     ((SELECT product_id FROM products WHERE product_code = 'PRD009'), 30, 5, 150, 15),
     ((SELECT product_id FROM products WHERE product_code = 'PRD010'), 30, 5, 150, 15);
 
-
-INSERT INTO promotions (promotion_name, [description], discount_type, discount_value, [start_date], [end_date])
-VALUES
-    (N'Giảm 10% Toàn Bộ Sản Phẩm', N'Áp dụng cho toàn bộ sản phẩm trong tháng 10', N'PERCENT', 10, '2025-10-01', '2025-10-31'),
-    (N'Mua 2 Tặng 1', N'Áp dụng cho nồi & chảo', N'FIXED', 650000, '2025-09-01', '2025-10-15'),
-    (N'Giảm 5% Cho Đơn Hàng Trên 5 Triệu', N'Tự động áp dụng khi thanh toán', N'PERCENT', 5, '2025-10-05', '2025-12-31'),
-    (N'Ưu Đãi 1 Triệu Cho Máy Lọc Nước', N'Giảm giá đặc biệt cho model SHR76210CK', N'FIXED', 1000000, '2025-10-01', '2025-10-31'),
-    (N'Khuyến Mãi Mở Bán Bếp Từ Mới', N'Giảm trực tiếp 500K khi mua bếp từ Sunhouse', N'FIXED', 500000, '2025-09-15', '2025-11-01');
-
-
-INSERT INTO promotion_product (promotion_id, product_id)
-VALUES
-    ((SELECT TOP 1 promotion_id FROM promotions WHERE promotion_name = N'Giảm 10% Toàn Bộ Sản Phẩm'),
-     (SELECT product_id FROM products WHERE product_code = 'PRD001')),
-
-    ((SELECT TOP 1 promotion_id FROM promotions WHERE promotion_name = N'Giảm 10% Toàn Bộ Sản Phẩm'),
-     (SELECT product_id FROM products WHERE product_code = 'PRD002')),
-
-    ((SELECT TOP 1 promotion_id FROM promotions WHERE promotion_name = N'Mua 2 Tặng 1'),
-     (SELECT product_id FROM products WHERE product_code = 'PRD003')),
-
-    ((SELECT TOP 1 promotion_id FROM promotions WHERE promotion_name = N'Ưu Đãi 1 Triệu Cho Máy Lọc Nước'),
-     (SELECT product_id FROM products WHERE product_code = 'PRD005')),
-
-    ((SELECT TOP 1 promotion_id FROM promotions WHERE promotion_name = N'Khuyến Mãi Mở Bán Bếp Từ Mới'),
-     (SELECT product_id FROM products WHERE product_code = 'PRD001'));

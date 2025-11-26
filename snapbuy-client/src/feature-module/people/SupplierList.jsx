@@ -10,7 +10,6 @@ import {
   toggleSupplierStatus,
 } from "../../services/SupplierService";
 import { message } from "antd";
-import { Modal } from "bootstrap";
 import { exportToExcel } from "../../utils/excelUtils";
 
 import AddSupplier from "../../core/modals/people/AddSupplierModal";
@@ -23,6 +22,7 @@ const Suppliers = () => {
   const [rows, setRows] = useState(10);
   const [error, setError] = useState(null);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [editSupplierId, setEditSupplierId] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -80,7 +80,7 @@ const Suppliers = () => {
     message.success("Làm mới danh sách thành công!");
   };
 
-  const handleSearch = () => {};
+  const handleSearch = () => { };
 
   const handleEditClick = (supplier) => {
     setEditSupplierId(supplier.supplierId);
@@ -89,45 +89,23 @@ const Suppliers = () => {
 
   const handleDeleteClick = (supplier) => {
     setSelectedSupplier(supplier);
-    setTimeout(() => {
-      const modalElement = document.getElementById("delete-modal");
-      if (modalElement) {
-        const modal = new Modal(modalElement);
-        modal.show();
-      }
-    }, 0);
+    setDeleteModalOpen(true);
   };
 
   const handleDeleteConfirm = async (supplierId) => {
     try {
       await deleteSupplier(supplierId);
-
-      const modalElement = document.getElementById("delete-modal");
-      const modal = Modal.getInstance(modalElement);
-
-      if (modal) {
-        modal.hide();
-      }
-
-      setTimeout(() => {
-        document
-          .querySelectorAll(".modal-backdrop")
-          .forEach((el) => el.remove());
-        document.body.classList.remove("modal-open");
-        document.body.style.removeProperty("overflow");
-        document.body.style.removeProperty("padding-right");
-      }, 0);
-
       await fetchSuppliers();
       message.success("Xoá nhà cung cấp thành công!");
+      setDeleteModalOpen(false);
+      setSelectedSupplier(null);
     } catch {
       message.error("Lỗi khi xoá nhà cung cấp. Vui lòng thử lại.");
-    } finally {
-      setSelectedSupplier(null);
     }
   };
 
   const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
     setSelectedSupplier(null);
   };
 
@@ -200,9 +178,8 @@ const Suppliers = () => {
       body: (data) => (
         <div className="d-flex align-items-center gap-2">
           <span
-            className={`badge fw-medium fs-10 ${
-              data.status === "Hoạt động" ? "bg-success" : "bg-danger"
-            }`}
+            className={`badge fw-medium fs-10 ${data.status === "Hoạt động" ? "bg-success" : "bg-danger"
+              }`}
           >
             {data.status}
           </span>
@@ -325,6 +302,7 @@ const Suppliers = () => {
         />
       )}
       <DeleteModal
+        open={deleteModalOpen}
         itemId={selectedSupplier?.supplierId}
         itemName={selectedSupplier?.supplierName}
         onDelete={handleDeleteConfirm}

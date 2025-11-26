@@ -15,6 +15,7 @@ public class PurchaseOrderUpdateRequest {
 
     @NotEmpty
     private List<Item> items;
+    @Size(max = 500, message = "Ghi chú không được vượt quá 500 ký tự")
     private String notes;
     @PositiveOrZero
     private BigDecimal taxAmount;
@@ -29,7 +30,8 @@ public class PurchaseOrderUpdateRequest {
         private int quantity;
         @Positive
         private BigDecimal unitPrice;
-        @PositiveOrZero
+        @Min(value = 0, message = "Số lượng thực nhận phải lớn hơn hoặc bằng 0")
+        @PositiveOrZero(message = "Số lượng thực nhận phải lớn hơn hoặc bằng 0")
         private Integer receiveQuantity;
     }
 }

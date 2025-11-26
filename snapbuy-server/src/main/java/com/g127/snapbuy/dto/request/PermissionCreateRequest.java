@@ -9,7 +9,6 @@ public class PermissionCreateRequest {
     @Size(max = 50, message = "Tên quyền không được vượt quá 50 ký tự.")
     private String permissionName;
 
-    @Size(max = 200, message = "Mô tả không được vượt quá 200 ký tự.")
     private String description;
 
     @Size(max = 50, message = "Module không được vượt quá 50 ký tự.")

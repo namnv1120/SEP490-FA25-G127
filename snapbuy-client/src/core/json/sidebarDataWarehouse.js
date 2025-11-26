@@ -1,11 +1,18 @@
 export const SidebarDataWarehouse = [
   {
     tittle: "Tổng quan",
-    hasSubRoute: false,
+    hasSubRoute: true,
     icon: "layout-grid",
     showSubRoute: false,
-    route: "/warehouse-dashboard",
-    subRoutes: [],
+    subRoutes: [
+      {
+        tittle: "Thống kê kho hàng",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/warehouse-dashboard",
+        subRoutes: [],
+      },
+    ],
   },
   {
     tittle: "Hàng hoá",

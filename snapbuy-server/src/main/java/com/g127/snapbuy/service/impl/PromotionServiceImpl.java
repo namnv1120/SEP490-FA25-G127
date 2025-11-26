@@ -38,6 +38,11 @@ public class PromotionServiceImpl implements PromotionService {
             throw new AppException(ErrorCode.INVALID_DATE_RANGE);
         }
 
+        // Check duplicate promotion name
+        if (promotionRepository.existsByPromotionNameIgnoreCase(request.getPromotionName())) {
+            throw new AppException(ErrorCode.NAME_EXISTED);
+        }
+
         Promotion entity = promotionMapper.toEntity(request);
         entity.setActive(true);
         entity.setCreatedDate(LocalDateTime.now());
@@ -58,6 +63,14 @@ public class PromotionServiceImpl implements PromotionService {
         if (request.getStartDate() != null && request.getEndDate() != null
                 && request.getEndDate().isBefore(request.getStartDate())) {
             throw new AppException(ErrorCode.INVALID_DATE_RANGE);
+        }
+
+        // Check duplicate promotion name if name is being updated
+        if (request.getPromotionName() != null && !request.getPromotionName().trim().isEmpty()) {
+            if (promotionRepository.existsByPromotionNameIgnoreCase(request.getPromotionName())
+                    && !p.getPromotionName().equalsIgnoreCase(request.getPromotionName())) {
+                throw new AppException(ErrorCode.NAME_EXISTED);
+            }
         }
 
         promotionMapper.updateEntity(p, request);
@@ -97,6 +110,25 @@ public class PromotionServiceImpl implements PromotionService {
         if (!expired.isEmpty()) {
             promotionRepository.saveAll(expired);
         }
+    }
+
+    @Override
+    @Transactional
+    public PromotionResponse togglePromotionStatus(UUID id) {
+        Promotion promotion = promotionRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
+        Boolean currentActive = promotion.getActive();
+        promotion.setActive(currentActive == null || !currentActive);
+        Promotion saved = promotionRepository.save(promotion);
+        return promotionMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public void delete(UUID id) {
+        Promotion promotion = promotionRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
+        promotionRepository.delete(promotion);
     }
 
     @Scheduled(cron = "0 0 * * * *")

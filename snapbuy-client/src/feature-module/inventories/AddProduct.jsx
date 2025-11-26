@@ -7,7 +7,6 @@ import { createProduct } from "../../services/ProductService";
 import { getAllCategories } from "../../services/CategoryService";
 import { getAllSuppliers } from "../../services/SupplierService";
 import CommonSelect from "../../components/select/common-select";
-import DeleteModal from "../../components/delete-modal";
 import RefreshIcon from "../../components/tooltip-content/refresh";
 import CollapesIcon from "../../components/tooltip-content/collapes";
 import { generateRandomBarcode, downloadBarcode, displayBarcodePreview } from "../../utils/barcodeUtils";
@@ -658,7 +657,6 @@ const AddProduct = () => {
         </div>
       </div>
 
-      <DeleteModal />
     </>
   );
 };

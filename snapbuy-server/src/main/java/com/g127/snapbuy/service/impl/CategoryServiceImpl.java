@@ -3,6 +3,7 @@ package com.g127.snapbuy.service.impl;
 import com.g127.snapbuy.dto.request.CategoryCreateRequest;
 import com.g127.snapbuy.dto.request.CategoryUpdateRequest;
 import com.g127.snapbuy.dto.response.CategoryResponse;
+import com.g127.snapbuy.dto.response.PageResponse;
 import com.g127.snapbuy.entity.Category;
 import com.g127.snapbuy.exception.AppException;
 import com.g127.snapbuy.exception.ErrorCode;
@@ -11,6 +12,8 @@ import com.g127.snapbuy.repository.CategoryRepository;
 import com.g127.snapbuy.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -167,6 +170,46 @@ public class CategoryServiceImpl implements CategoryService {
                 }
             }
         }
+    }
+
+    @Override
+    public PageResponse<CategoryResponse> searchParentCategoriesByKeyword(String keyword, Pageable pageable) {
+        Page<Category> categoryPage = categoryRepository.searchParentCategoriesByKeyword(keyword, pageable);
+        
+        List<CategoryResponse> responseList = categoryPage.getContent().stream()
+                .map(categoryMapper::toResponse)
+                .collect(Collectors.toList());
+        
+        return PageResponse.<CategoryResponse>builder()
+                .content(responseList)
+                .totalElements(categoryPage.getTotalElements())
+                .totalPages(categoryPage.getTotalPages())
+                .size(categoryPage.getSize())
+                .number(categoryPage.getNumber())
+                .first(categoryPage.isFirst())
+                .last(categoryPage.isLast())
+                .empty(categoryPage.isEmpty())
+                .build();
+    }
+
+    @Override
+    public PageResponse<CategoryResponse> searchSubCategoriesByKeyword(String keyword, Pageable pageable) {
+        Page<Category> categoryPage = categoryRepository.searchSubCategoriesByKeyword(keyword, pageable);
+        
+        List<CategoryResponse> responseList = categoryPage.getContent().stream()
+                .map(categoryMapper::toResponse)
+                .collect(Collectors.toList());
+        
+        return PageResponse.<CategoryResponse>builder()
+                .content(responseList)
+                .totalElements(categoryPage.getTotalElements())
+                .totalPages(categoryPage.getTotalPages())
+                .size(categoryPage.getSize())
+                .number(categoryPage.getNumber())
+                .first(categoryPage.isFirst())
+                .last(categoryPage.isLast())
+                .empty(categoryPage.isEmpty())
+                .build();
     }
     
 }

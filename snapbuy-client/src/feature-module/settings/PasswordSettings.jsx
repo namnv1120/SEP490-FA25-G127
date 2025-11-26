@@ -4,17 +4,8 @@ import CollapesIcon from "../../components/tooltip-content/collapes";
 import CommonFooter from "../../components/footer/CommonFooter";
 import SettingsSideBar from "../../feature-module/settings/SettingsSideBar";
 import { message } from "antd";
-import axios from "axios";
+import { changePassword } from "../../services/AccountService";
 import PageLoader from "../../components/loading/PageLoader.jsx";
-
-const REST_API_BASE_URL = 'http://localhost:8080/api/accounts';
-
-const getAuthHeader = () => {
-  const token = localStorage.getItem('authToken');
-  const tokenType = localStorage.getItem('authTokenType') || 'Bearer';
-  if (!token) throw new Error('Unauthorized: No token found');
-  return { Authorization: `${tokenType} ${token}` };
-};
 
 const PasswordSettings = () => {
   const [formData, setFormData] = useState({
@@ -71,6 +62,12 @@ const PasswordSettings = () => {
       return;
     }
 
+    if (formData.oldPassword === formData.newPassword) {
+      setPasswordErrors({ newPassword: "Mật khẩu mới không được giống mật khẩu cũ" });
+      message.error("Mật khẩu mới không được giống mật khẩu cũ");
+      return;
+    }
+
     if (formData.newPassword !== formData.confirmPassword) {
       setPasswordErrors({ confirmPassword: "Mật khẩu xác nhận không khớp" });
       message.error("Mật khẩu xác nhận không khớp");
@@ -91,11 +88,7 @@ const PasswordSettings = () => {
         confirmNewPassword: formData.confirmPassword,
       };
 
-      await axios.put(
-        `${REST_API_BASE_URL}/me/change-password`,
-        passwordData,
-        { headers: getAuthHeader() }
-      );
+      await changePassword(passwordData);
 
       message.success("Đổi mật khẩu thành công!");
       setFormData({
@@ -105,10 +98,12 @@ const PasswordSettings = () => {
       });
       setPasswordErrors({});
     } catch (error) {
-      const errorMsg = error.response?.data?.message || "Không thể đổi mật khẩu. Vui lòng kiểm tra lại mật khẩu cũ.";
+      const errorMsg = error.message || "Không thể đổi mật khẩu. Vui lòng kiểm tra lại mật khẩu cũ.";
       message.error(errorMsg);
-      if (errorMsg.includes("mật khẩu cũ")) {
+      if (errorMsg.includes("mật khẩu cũ") || errorMsg.includes("Mật khẩu cũ")) {
         setPasswordErrors({ oldPassword: errorMsg });
+      } else if (errorMsg.includes("giống mật khẩu cũ") || errorMsg.includes("Mật khẩu mới không được giống")) {
+        setPasswordErrors({ newPassword: errorMsg });
       }
     } finally {
       setSavingPassword(false);
@@ -122,28 +117,28 @@ const PasswordSettings = () => {
       <>
         <div className="page-wrapper">
           <div className="content settings-content">
-          <div className="page-header">
-            <div className="add-item d-flex">
-              <div className="page-title">
-                <h4 className="fw-bold">Cài đặt</h4>
-                <h6>Quản lý cài đặt phần mềm</h6>
+            <div className="page-header">
+              <div className="add-item d-flex">
+                <div className="page-title">
+                  <h4 className="fw-bold">Cài đặt</h4>
+                  <h6>Quản lý cài đặt phần mềm</h6>
+                </div>
               </div>
+              <ul className="table-top-head">
+                <RefreshIcon />
+                <CollapesIcon />
+              </ul>
             </div>
-            <ul className="table-top-head">
-              <RefreshIcon />
-              <CollapesIcon />
-            </ul>
-          </div>
             <div className="row">
-            <div className="col-xl-12">
-              <div className="settings-wrapper d-flex">
-                <SettingsSideBar />
-                <div className="card flex-fill mb-0">
-                  <div className="card-header">
-                    <h4 className="fs-18 fw-bold">Mật khẩu</h4>
-                  </div>
-                  <div className="card-body">
-                    <form onSubmit={handleChangePassword} noValidate>
+              <div className="col-xl-12">
+                <div className="settings-wrapper d-flex">
+                  <SettingsSideBar />
+                  <div className="card flex-fill mb-0">
+                    <div className="card-header">
+                      <h4 className="fs-18 fw-bold">Mật khẩu</h4>
+                    </div>
+                    <div className="card-body">
+                      <form onSubmit={handleChangePassword} noValidate>
                         <div className="card-title-head mb-3">
                           <h6 className="fs-16 fw-bold mb-1">
                             <span className="fs-16 me-2">
@@ -247,11 +242,11 @@ const PasswordSettings = () => {
                             {savingPassword ? "Đang lưu..." : "Đổi Mật khẩu"}
                           </button>
                         </div>
-                    </form>
+                      </form>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
             </div>
           </div>
           <CommonFooter />

@@ -2,8 +2,8 @@ export const allRoutes = {
   admindashboard: "/admin-dashboard",
   shopownerdashboard: "/shopowner-dashboard",
   salesdashboard: "/sales-dashboard",
-  warehousesdashboard: "/warehouses-dashboard", // Cho Chủ cửa hàng
-  warehousedashboard: "/warehouse-dashboard", // Cho Nhân viên kho
+  warehousesdashboard: "/warehouses-dashboard",
+  warehousedashboard: "/warehouse-dashboard",
 
   products: "/products",
   addproduct: "/products/add",

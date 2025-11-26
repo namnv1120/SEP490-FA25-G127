@@ -4,11 +4,14 @@ import com.g127.snapbuy.dto.ApiResponse;
 import com.g127.snapbuy.dto.request.RoleCreateRequest;
 import com.g127.snapbuy.dto.request.RolePermissionUpdateRequest;
 import com.g127.snapbuy.dto.request.RoleUpdateRequest;
+import com.g127.snapbuy.dto.response.PageResponse;
 import com.g127.snapbuy.dto.response.PermissionResponse;
 import com.g127.snapbuy.dto.response.RoleResponse;
 import com.g127.snapbuy.service.RoleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -59,7 +62,7 @@ public class RoleController {
     }
 
     @PutMapping("/{roleId}")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    @PreAuthorize("hasAnyRole('Quản trị viên')")
     public ApiResponse<RoleResponse> update(@PathVariable UUID roleId,
                                             @Valid @RequestBody RoleUpdateRequest req) {
         ApiResponse<RoleResponse> response = new ApiResponse<>();
@@ -69,7 +72,7 @@ public class RoleController {
     }
 
     @DeleteMapping("/{roleId}")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    @PreAuthorize("hasAnyRole('Quản trị viên')")
     public ApiResponse<Void> delete(@PathVariable UUID roleId) {
         roleService.deleteRole(roleId);
         ApiResponse<Void> response = new ApiResponse<>();
@@ -124,6 +127,29 @@ public class RoleController {
         ApiResponse<RoleResponse> response = new ApiResponse<>();
         response.setResult(roleService.toggleRoleStatus(roleId));
         response.setMessage("Đã cập nhật trạng thái vai trò thành công");
+        return response;
+    }
+
+    @GetMapping("/search-paged")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    public ApiResponse<PageResponse<RoleResponse>> searchRolesPaged(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "roleName") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDir) {
+        var direction = "DESC".equalsIgnoreCase(sortDir)
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
+        var pageable = PageRequest.of(
+                Math.max(page, 0),
+                Math.min(Math.max(size, 1), 200),
+                Sort.by(direction, sortBy)
+        );
+        ApiResponse<PageResponse<RoleResponse>> response = new ApiResponse<>();
+        response.setResult(roleService.searchRolesPaged(keyword, active, pageable));
+        response.setMessage("Tìm kiếm vai trò (phân trang) thành công.");
         return response;
     }
 }

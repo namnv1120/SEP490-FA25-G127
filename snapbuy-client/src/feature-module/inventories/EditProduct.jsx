@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { allRoutes } from "../../routes/AllRoutes";
-import DeleteModal from "../../components/delete-modal";
 import CommonFooter from "../../components/footer/CommonFooter";
 import CommonSelect from "../../components/select/common-select";
 import RefreshIcon from "../../components/tooltip-content/refresh";
@@ -681,7 +680,6 @@ const EditProduct = () => {
         </div>
         <CommonFooter />
       </div>
-      <DeleteModal />
     </>
   );
 };

@@ -71,7 +71,7 @@ const ProductSelectionModal = ({ isOpen, onClose, products, selectedProductIds, 
       centered
       okText="Xác nhận"
       cancelText="Hủy"
-      bodyStyle={{ maxHeight: '500px', overflowY: 'auto' }}
+      styles={{ body: { maxHeight: '500px', overflowY: 'auto' } }}
     >
       <div className="mb-3">
         <Search

@@ -1,6 +1,7 @@
 package com.g127.snapbuy.dto.request;
 
 import com.g127.snapbuy.entity.Promotion;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -18,7 +19,10 @@ public class PromotionUpdateRequest {
     private String promotionName;
     private String description;
     private Promotion.DiscountType discountType;
+    
+    @DecimalMin(value = "0.0", inclusive = false, message = "Giá trị giảm giá phải lớn hơn 0")
     private BigDecimal discountValue;
+    
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private Boolean active;

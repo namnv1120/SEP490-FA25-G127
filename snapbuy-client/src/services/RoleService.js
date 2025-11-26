@@ -126,3 +126,19 @@ export const toggleRoleStatus = async (roleId) => {
     throw new Error(error.response?.data?.message || 'Lỗi khi chuyển đổi trạng thái vai trò!');
   }
 };
+
+// Search roles với pagination
+export const searchRolesPaged = async ({ keyword, active, page = 0, size = 10, sortBy = 'roleName', sortDir = 'ASC' }) => {
+  try {
+    const params = { page, size, sortBy, sortDir };
+    if (keyword && keyword.trim()) params.keyword = keyword.trim();
+    if (typeof active === 'boolean') params.active = active;
+    const response = await axios.get(`${REST_API_BASE_URL}/search-paged`, {
+      headers: getAuthHeader(),
+      params,
+    });
+    return response.data.result || response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to search roles (paged)!');
+  }
+};

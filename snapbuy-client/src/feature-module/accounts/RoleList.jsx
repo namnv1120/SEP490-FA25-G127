@@ -1,40 +1,64 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import AddRole from "../../core/modals/accounts/AddRoleModal";
 import EditRole from "../../core/modals/accounts/EditRoleModal";
 import DeleteModal from "../../components/delete-modal";
 import TableTopHead from "../../components/table-top-head";
 import PrimeDataTable from "../../components/data-table";
+import SearchFromApi from "../../components/data-table/search";
+import CommonSelect from "../../components/select/common-select";
 
 import {
-  getAllRoles,
   deleteRole,
-  createRole,
   toggleRoleStatus,
+  searchRolesPaged,
 } from "../../services/RoleService";
 import { message } from "antd";
+import CommonFooter from "../../components/footer/CommonFooter";
 
 const RoleList = () => {
-  const [roles, setRoles] = useState([]);
+  const [dataSource, setDataSource] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState(null); // null=Tất cả, true=Hoạt động, false=Không hoạt động
 
   const [selectedRole, setSelectedRole] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [rows, setRows] = useState(10);
+  const [totalRecords, setTotalRecords] = useState(0);
 
-  const fetchRoles = async () => {
+  const StatusOptions = useMemo(
+    () => [
+      { value: null, label: "Tất cả" },
+      { value: true, label: "Hoạt động" },
+      { value: false, label: "Không hoạt động" },
+    ],
+    []
+  );
+
+  const fetchRoles = useCallback(async () => {
     try {
-      // Giống như Account, gọi getAllRoles không cần tham số, trả về tất cả roles
-      const response = await getAllRoles();
-      const data = Array.isArray(response)
-        ? response
-        : response.data || response.result || [];
-      const mappedData = data.map((role) => ({
+      const backendPage = Math.max(0, (currentPage || 1) - 1);
+      const sortBy = "roleName";
+      const sortDir = "ASC";
+      const params = {
+        keyword: searchQuery,
+        active: statusFilter,
+        page: backendPage,
+        size: rows,
+        sortBy,
+        sortDir,
+      };
+      const result = await searchRolesPaged(params);
+      const rawList = result?.content || result || [];
+      const mappedData = (rawList || []).map((role) => ({
         ...role,
         active: role.active === true || role.active === 1,
       }));
-      setRoles(mappedData);
+      setDataSource(mappedData);
+      setTotalRecords(result?.totalElements ?? mappedData.length);
     } catch (error) {
       console.error("❌ Error fetching roles:", error);
       if (error.response?.status === 403) {
@@ -46,14 +70,14 @@ const RoleList = () => {
       } else {
         message.error(
           error.response?.data?.message ||
-            error.message ||
-            "Lỗi khi lấy danh sách vai trò"
+          error.message ||
+          "Lỗi khi lấy danh sách vai trò"
         );
       }
     } finally {
       void 0;
     }
-  };
+  }, [currentPage, rows, searchQuery, statusFilter]);
 
   const handleToggleStatus = async (role) => {
     try {
@@ -64,31 +88,47 @@ const RoleList = () => {
       console.error("❌ Lỗi khi chuyển đổi trạng thái vai trò:", err);
       message.error(
         err.response?.data?.message ||
-          "Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại."
+        "Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại."
       );
     }
   };
 
   useEffect(() => {
     fetchRoles();
-  }, []);
+  }, [fetchRoles]);
 
-  const handleDeleteRole = async () => {
-    if (!selectedRole) return;
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
+
+  const handleDeleteRole = async (roleId) => {
     try {
-      await deleteRole(selectedRole.id || selectedRole.roleId);
-      fetchRoles();
-    } catch {
-      void 0;
+      await deleteRole(roleId);
+      await fetchRoles();
+      message.success("Vai trò đã được xoá thành công!");
+      setDeleteModalOpen(false);
+      setSelectedRole(null);
+    } catch (err) {
+      console.error("❌ Lỗi khi xoá vai trò:", err);
+      message.error("Lỗi khi xoá vai trò. Vui lòng thử lại.");
     }
   };
 
-  const handleAddRole = async (roleData) => {
+  const handleDeleteClick = (role) => {
+    setSelectedRole(role);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
+    setSelectedRole(null);
+  };
+
+  const handleAddRole = async () => {
     try {
-      await createRole(roleData);
-      fetchRoles();
-    } catch {
-      void 0;
+      await fetchRoles();
+    } catch (err) {
+      console.error("❌ Lỗi khi tải lại danh sách vai trò:", err);
     }
   };
 
@@ -99,6 +139,10 @@ const RoleList = () => {
       void 0;
     }
   };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
 
   // Handle select-all checkbox
   useEffect(() => {
@@ -122,7 +166,7 @@ const RoleList = () => {
         selectAllCheckbox.removeEventListener("change", handleSelectAll);
       }
     };
-  }, [roles]);
+  }, [dataSource]);
 
   const columns = [
     {
@@ -164,9 +208,8 @@ const RoleList = () => {
         return (
           <div className="d-flex align-items-center gap-2">
             <span
-              className={`badge fw-medium fs-10 ${
-                active ? "bg-success" : "bg-danger"
-              }`}
+              className={`badge fw-medium fs-10 ${active ? "bg-success" : "bg-danger"
+                }`}
             >
               {active ? "Hoạt động" : "Không hoạt động"}
             </span>
@@ -203,15 +246,12 @@ const RoleList = () => {
             >
               <i data-feather="edit" className="feather-edit"></i>
             </Link>
-            <Link
-              className="confirm-text p-2"
-              to="#"
-              data-bs-toggle="modal"
-              data-bs-target="#delete-modal"
-              onClick={() => setSelectedRole(data)}
+            <button
+              className="confirm-text p-2 border rounded bg-transparent"
+              onClick={() => handleDeleteClick(data)}
             >
               <i data-feather="trash-2" className="feather-trash-2"></i>
-            </Link>
+            </button>
           </div>
         </div>
       ),
@@ -244,28 +284,29 @@ const RoleList = () => {
 
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <div className="search-set"></div>
+              <div className="search-set">
+                <SearchFromApi
+                  callback={(value) => {
+                    setSearchQuery(value || "");
+                  }}
+                />
+              </div>
               <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                <div className="dropdown me-2">
-                  <Link
-                    to="#"
-                    className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                    data-bs-toggle="dropdown"
-                  >
-                    Trạng thái
-                  </Link>
-                  <ul className="dropdown-menu dropdown-menu-end p-3">
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Đang hoạt động
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="#" className="dropdown-item rounded-1">
-                        Ngừng hoạt động
-                      </Link>
-                    </li>
-                  </ul>
+                <div className="me-2">
+                  <CommonSelect
+                    options={StatusOptions}
+                    value={
+                      StatusOptions.find((o) => o.value === statusFilter) ||
+                      StatusOptions[0]
+                    }
+                    onChange={(s) => {
+                      const v = s?.value;
+                      setStatusFilter(v === true || v === false ? v : null);
+                    }}
+                    placeholder="Trạng thái"
+                    width={220}
+                    className=""
+                  />
                 </div>
               </div>
             </div>
@@ -274,20 +315,21 @@ const RoleList = () => {
               <div className="table-responsive">
                 <PrimeDataTable
                   column={columns}
-                  data={roles}
+                  data={dataSource}
                   rows={rows}
                   setRows={setRows}
                   currentPage={currentPage}
                   setCurrentPage={setCurrentPage}
-                  totalRecords={roles.length}
+                  totalRecords={totalRecords}
                   dataKey="id"
                   loading={false}
-                  serverSidePagination={false}
+                  serverSidePagination={true}
                 />
               </div>
             </div>
           </div>
         </div>
+        <CommonFooter />
       </div>
 
       <AddRole
@@ -304,7 +346,13 @@ const RoleList = () => {
           setSelectedRole(null);
         }}
       />
-      <DeleteModal onConfirm={handleDeleteRole} />
+      <DeleteModal
+        open={deleteModalOpen}
+        itemId={selectedRole?.id || selectedRole?.roleId}
+        itemName={selectedRole?.roleName}
+        onDelete={handleDeleteRole}
+        onCancel={handleDeleteCancel}
+      />
     </div>
   );
 };

@@ -16,6 +16,8 @@ public interface PromotionService {
     PromotionResponse getById(UUID id);
     List<PromotionResponse> getAll();
     void deactivateExpired();
+    PromotionResponse togglePromotionStatus(UUID id);
+    void delete(UUID id);
 
     BigDecimal computeBestDiscountPercent(UUID productId, BigDecimal unitPrice, LocalDateTime at);
     DiscountInfoResponse computeBestDiscountInfo(UUID productId, BigDecimal unitPrice, LocalDateTime at);

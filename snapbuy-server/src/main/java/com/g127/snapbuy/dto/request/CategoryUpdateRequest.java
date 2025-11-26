@@ -11,7 +11,6 @@ public class CategoryUpdateRequest {
     @Pattern(regexp = "^[\\p{L}\\d ]+$", message = "Tên danh mục chỉ cho phép chữ, số và khoảng trắng")
     private String categoryName;
 
-    @Size(max = 1000, message = "Mô tả không được vượt quá 1000 ký tự.")
     private String description;
 
     private UUID parentCategoryId;

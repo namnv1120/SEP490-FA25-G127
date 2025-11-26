@@ -16,7 +16,6 @@ import {
 import ImportProductModal from "./ImportProduct";
 import ProductDetailModal from "../../core/modals/inventories/ProductDetailModal";
 import { message } from "antd";
-import { Modal } from "bootstrap";
 import { exportToExcel } from "../../utils/excelUtils";
 import { getImageUrl } from "../../utils/imageUtils";
 
@@ -29,6 +28,7 @@ const ProductList = () => {
 
   const [error, setError] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
@@ -161,34 +161,23 @@ const ProductList = () => {
 
   const handleDeleteClick = (product) => {
     setSelectedProduct(product);
-    setTimeout(() => {
-      const modalElement = document.getElementById("delete-modal");
-      if (modalElement) {
-        const modal = new Modal(modalElement);
-        modal.show();
-      }
-    }, 0);
+    setDeleteModalOpen(true);
   };
 
   const handleDeleteConfirm = async (productId) => {
     try {
       await deleteProduct(productId);
       await fetchProducts();
-      setSelectedProduct(null);
-
-      const modalElement = document.getElementById("delete-modal");
-      if (modalElement) {
-        const modal = Modal.getInstance(modalElement);
-        if (modal) modal.hide();
-      }
-
       message.success("Sản phẩm đã được xoá thành công!");
+      setDeleteModalOpen(false);
+      setSelectedProduct(null);
     } catch {
       message.error("Lỗi khi xoá sản phẩm. Vui lòng thử lại.");
     }
   };
 
   const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
     setSelectedProduct(null);
   };
 
@@ -312,9 +301,8 @@ const ProductList = () => {
       body: (data) => (
         <div className="d-flex align-items-center gap-2">
           <span
-            className={`badge fw-medium fs-10 ${
-              data.status === "Hoạt động" ? "bg-success" : "bg-danger"
-            }`}
+            className={`badge fw-medium fs-10 ${data.status === "Hoạt động" ? "bg-success" : "bg-danger"
+              }`}
           >
             {data.status}
           </span>
@@ -491,6 +479,7 @@ const ProductList = () => {
         <CommonFooter />
       </div>
       <DeleteModal
+        open={deleteModalOpen}
         itemId={selectedProduct?.productId}
         itemName={selectedProduct?.productName}
         onDelete={handleDeleteConfirm}

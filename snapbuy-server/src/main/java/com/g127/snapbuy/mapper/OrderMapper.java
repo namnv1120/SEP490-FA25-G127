@@ -8,27 +8,23 @@ import com.g127.snapbuy.entity.Order;
 import com.g127.snapbuy.entity.OrderDetail;
 import com.g127.snapbuy.entity.Payment;
 import org.mapstruct.*;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring")
-public abstract class OrderMapper {
-
-    @Autowired
-    protected AccountMapper accountMapper;
+@Mapper(componentModel = "spring", uses = {AccountMapper.class})
+public interface OrderMapper {
 
     @Mapping(source = "customer.customerId", target = "customerId")
     @Mapping(source = "customer.fullName", target = "customerName", defaultValue = "Guest Customer")
     @Mapping(source = "account.accountId", target = "accountId")
     @Mapping(target = "accountName", expression = "java(order.getAccount() != null ? (order.getAccount().getFullName() != null ? order.getAccount().getFullName() : order.getAccount().getUsername()) : null)")
-    @Mapping(target = "account", expression = "java(mapAccount(order))")
-    public abstract OrderResponse toBaseResponse(Order order);
+    @Mapping(target = "account", expression = "java(mapAccount(order, accountMapper))")
+    OrderResponse toBaseResponse(Order order, @Context AccountMapper accountMapper);
 
-    protected AccountResponse mapAccount(Order order) {
+    default AccountResponse mapAccount(Order order, @Context AccountMapper accountMapper) {
         if (order == null || order.getAccount() == null) {
             return null;
         }
@@ -36,7 +32,7 @@ public abstract class OrderMapper {
     }
 
     @Named("toOrderDetailResponseList")
-    public List<OrderDetailResponse> toOrderDetailResponseList(List<OrderDetail> details) {
+    default List<OrderDetailResponse> toOrderDetailResponseList(List<OrderDetail> details) {
         if (details == null) return List.of();
         return details.stream()
                 .map(d -> OrderDetailResponse.builder()
@@ -53,7 +49,7 @@ public abstract class OrderMapper {
     }
 
     @Named("toPaymentResponse")
-    public PaymentResponse toPaymentResponse(Payment payment) {
+    default PaymentResponse toPaymentResponse(Payment payment) {
         if (payment == null) return null;
         return PaymentResponse.builder()
                 .paymentId(payment.getPaymentId())
@@ -67,14 +63,14 @@ public abstract class OrderMapper {
     }
 
     @Named("toResponse")
-    public OrderResponse toResponse(Order order, List<OrderDetail> details, Payment payment) {
-        OrderResponse base = toBaseResponse(order);
+    default OrderResponse toResponse(Order order, List<OrderDetail> details, Payment payment, @Context AccountMapper accountMapper) {
+        OrderResponse base = toBaseResponse(order, accountMapper);
         base.setOrderDetails(toOrderDetailResponseList(details));
         base.setPayment(toPaymentResponse(payment));
         return base;
     }
 
-    public BigDecimal calcTotal(BigDecimal unitPrice, Integer quantity, BigDecimal discount) {
+    default BigDecimal calcTotal(BigDecimal unitPrice, Integer quantity, BigDecimal discount) {
         if (unitPrice == null || quantity == null) return BigDecimal.ZERO;
         BigDecimal disc = (discount != null) ? discount : BigDecimal.ZERO;
         return unitPrice

@@ -195,9 +195,8 @@ const EditPromotionModal = ({ isOpen, onClose, onSuccess, promotionId }) => {
               <input
                 type="text"
                 name="promotionName"
-                className={`form-control ${
-                  errors.promotionName ? "is-invalid" : ""
-                }`}
+                className={`form-control ${errors.promotionName ? "is-invalid" : ""
+                  }`}
                 value={formData.promotionName}
                 onChange={handleInputChange}
                 placeholder="Nhập tên khuyến mãi"
@@ -237,9 +236,8 @@ const EditPromotionModal = ({ isOpen, onClose, onSuccess, promotionId }) => {
               <input
                 type="number"
                 name="discountValue"
-                className={`form-control ${
-                  errors.discountValue ? "is-invalid" : ""
-                }`}
+                className={`form-control ${errors.discountValue ? "is-invalid" : ""
+                  }`}
                 value={formData.discountValue}
                 onChange={handleInputChange}
                 placeholder={
@@ -338,9 +336,8 @@ const EditPromotionModal = ({ isOpen, onClose, onSuccess, promotionId }) => {
               <div className="input-group">
                 <input
                   type="text"
-                  className={`form-control ${
-                    errors.productIds ? "is-invalid" : ""
-                  }`}
+                  className={`form-control ${errors.productIds ? "is-invalid" : ""
+                    }`}
                   value={
                     formData.productIds.length > 0
                       ? `Đã chọn ${formData.productIds.length} sản phẩm`
@@ -386,24 +383,6 @@ const EditPromotionModal = ({ isOpen, onClose, onSuccess, promotionId }) => {
             </div>
           </div>
 
-          <div className="col-lg-12">
-            <div className="mb-3">
-              <div className="form-check">
-                <input
-                  type="checkbox"
-                  name="active"
-                  className="form-check-input"
-                  id="activeCheck"
-                  checked={formData.active}
-                  onChange={handleInputChange}
-                  disabled={loading}
-                />
-                <label className="form-check-label" htmlFor="activeCheck">
-                  Kích hoạt khuyến mãi
-                </label>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="modal-footer" style={{ gap: "0.5rem" }}>

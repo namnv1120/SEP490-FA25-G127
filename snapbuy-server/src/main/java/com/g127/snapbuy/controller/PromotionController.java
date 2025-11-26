@@ -71,6 +71,24 @@ public class PromotionController {
         response.setResult(promotionService.computeBestDiscountInfo(productId, unitPrice, LocalDateTime.now()));
         return response;
     }
+
+    @PatchMapping("/{id}/toggle-status")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    public ApiResponse<PromotionResponse> toggleStatus(@PathVariable UUID id) {
+        ApiResponse<PromotionResponse> response = new ApiResponse<>();
+        response.setResult(promotionService.togglePromotionStatus(id));
+        response.setMessage("Đã cập nhật trạng thái khuyến mãi thành công");
+        return response;
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    public ApiResponse<Void> delete(@PathVariable UUID id) {
+        promotionService.delete(id);
+        ApiResponse<Void> response = new ApiResponse<>();
+        response.setMessage("Xóa khuyến mãi thành công");
+        return response;
+    }
 }
 
 

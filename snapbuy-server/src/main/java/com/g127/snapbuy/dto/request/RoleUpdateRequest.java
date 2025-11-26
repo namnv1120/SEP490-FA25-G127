@@ -10,7 +10,6 @@ public class RoleUpdateRequest {
     @Pattern(regexp = "^[\\p{L}\\d ]+$", message = "Tên vai trò chỉ cho phép chữ, số và khoảng trắng")
     private String roleName;
 
-    @Size(max = 4000)
     private String description;
 
     private Boolean active;

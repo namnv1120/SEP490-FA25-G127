@@ -111,7 +111,6 @@ const WarehouseDashboard = () => {
     inventories.forEach((inv) => {
       const qty = Number(inv.quantityInStock || inv.stockQuantity || 0);
       const minStock = Number(inv.minimumStock || 0);
-      const maxStock = Number(inv.maximumStock || Infinity);
       const reorderPoint = Number(inv.reorderPoint || minStock || 10);
 
       const product = products.find(p => p.productId === inv.productId);
@@ -616,7 +615,7 @@ const WarehouseDashboard = () => {
         </div>
 
         {/* Alert if any stock issues */}
-        {(inventoryStats.outOfStock > 0 || inventoryStats.criticalStock > 0 || inventoryStats.lowStock > 0) && (
+        {/* {(inventoryStats.outOfStock > 0 || inventoryStats.criticalStock > 0 || inventoryStats.lowStock > 0) && (
           <div className={`alert ${inventoryStats.outOfStock > 0 || inventoryStats.criticalStock > 0 ? 'alert-danger' : 'alert-warning'} alert-dismissible fade show mb-4`}>
             <div>
               <i className="ti ti-alert-circle me-2" />
@@ -656,7 +655,7 @@ const WarehouseDashboard = () => {
               aria-label="Close"
             />
           </div>
-        )}
+        )} */}
 
         {/* Charts Row 1 - Phân bố mức tồn kho và Cảnh báo */}
         <div className="row">

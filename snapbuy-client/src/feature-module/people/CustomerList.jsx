@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Modal as AntdModal, message, Spin } from "antd";
-import { Modal as BootstrapModal } from "bootstrap";
 import PrimeDataTable from "../../components/data-table";
 import SearchFromApi from "../../components/data-table/search";
 import TableTopHead from "../../components/table-top-head";
@@ -15,6 +14,7 @@ import {
 
 const Customers = () => {
   const [customerToDelete, setCustomerToDelete] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [listData, setListData] = useState([]);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -98,8 +98,17 @@ const Customers = () => {
     try {
       setModalLoading(true);
 
+      const trimmedPhone = formData.phone?.trim() || "";
+
+      // Validate phone if provided
+      if (trimmedPhone && !/^\+?[0-9]{10,15}$/.test(trimmedPhone)) {
+        message.error("Số điện thoại không đúng định dạng. Vui lòng nhập 10-15 chữ số.");
+        return;
+      }
+
       const updateData = {
         fullName: trimmedFullName,
+        phone: trimmedPhone || null,
         gender: formData.gender,
       };
 
@@ -201,13 +210,7 @@ const Customers = () => {
             className="p-2 border rounded bg-transparent"
             onClick={() => {
               setCustomerToDelete(row);
-              setTimeout(() => {
-                const modalElement = document.getElementById("delete-modal");
-                if (modalElement) {
-                  const modal = new BootstrapModal(modalElement);
-                  modal.show();
-                }
-              }, 0);
+              setDeleteModalOpen(true);
             }}
           >
             <i className="feather icon-trash-2"></i>
@@ -258,6 +261,7 @@ const Customers = () => {
 
       <CommonFooter />
       <DeleteModal
+        open={deleteModalOpen}
         itemId={customerToDelete?.customerId}
         itemName={customerToDelete?.fullName}
         onDelete={async (id) => {
@@ -265,26 +269,18 @@ const Customers = () => {
             await import("../../services/CustomerService").then(
               ({ deleteCustomer }) => deleteCustomer(id)
             );
-            const modalElement = document.getElementById("delete-modal");
-            const modal = BootstrapModal.getInstance(modalElement);
-            if (modal) modal.hide();
-            setTimeout(() => {
-              document
-                .querySelectorAll(".modal-backdrop")
-                .forEach((el) => el.remove());
-              document.body.classList.remove("modal-open");
-              document.body.style.removeProperty("overflow");
-              document.body.style.removeProperty("padding-right");
-            }, 0);
             await fetchCustomers();
             message.success("Xoá khách hàng thành công!");
+            setDeleteModalOpen(false);
+            setCustomerToDelete(null);
           } catch {
             message.error("Lỗi khi xoá khách hàng. Vui lòng thử lại.");
-          } finally {
-            setCustomerToDelete(null);
           }
         }}
-        onCancel={() => setCustomerToDelete(null)}
+        onCancel={() => {
+          setDeleteModalOpen(false);
+          setCustomerToDelete(null);
+        }}
       />
 
       <AntdModal
@@ -327,12 +323,12 @@ const Customers = () => {
                 name="phone"
                 className="form-control"
                 value={formData.phone}
-                disabled={true}
-                readOnly
-                style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
+                onChange={handleInputChange}
+                disabled={modalLoading}
+                placeholder="Nhập số điện thoại (10-15 chữ số)"
               />
               <small className="text-muted">
-                Số điện thoại không thể thay đổi
+                Định dạng: 10-15 chữ số, có thể bắt đầu bằng dấu +
               </small>
             </div>
 

@@ -175,6 +175,11 @@ public class AccountServiceImpl implements AccountService {
         if (!passwordEncoder.matches(req.getOldPassword(), acc.getPasswordHash()))
             throw new IllegalArgumentException("Mật khẩu cũ không đúng");
 
+        // Kiểm tra mật khẩu mới không được giống mật khẩu cũ
+        if (passwordEncoder.matches(req.getNewPassword(), acc.getPasswordHash())) {
+            throw new IllegalArgumentException("Mật khẩu mới không được giống mật khẩu cũ");
+        }
+
         acc.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
         acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         return accountMapper.toResponse(accountRepository.save(acc));
@@ -191,6 +196,11 @@ public class AccountServiceImpl implements AccountService {
 
         if (!passwordEncoder.matches(req.getOldPassword(), acc.getPasswordHash()))
             throw new IllegalArgumentException("Mật khẩu cũ không đúng");
+
+        // Kiểm tra mật khẩu mới không được giống mật khẩu cũ
+        if (passwordEncoder.matches(req.getNewPassword(), acc.getPasswordHash())) {
+            throw new IllegalArgumentException("Mật khẩu mới không được giống mật khẩu cũ");
+        }
 
         acc.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
         acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);

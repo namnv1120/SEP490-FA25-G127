@@ -1189,8 +1189,8 @@ const RevenueReport = () => {
                           <div className="card-body">
                             {selectedAccountId &&
                               productRevenueData.length > 0 && (
-                                <div className="alert alert-info mb-3">
-                                  <strong>Tổng tiền của nhân viên: </strong>
+                                <div className="alert alert-info mb-3 text-center">
+                                  <strong>Tổng tiền: </strong>
                                   {formatCurrency(
                                     productRevenueData.reduce(
                                       (sum, item) =>
@@ -1247,7 +1247,7 @@ const RevenueReport = () => {
                                     className: "text-start",
                                   },
                                   {
-                                    header: "Tổng tiền",
+                                    header: "Thành tiền",
                                     field: "totalRevenue",
                                     body: (rowData) => {
                                       return formatCurrency(

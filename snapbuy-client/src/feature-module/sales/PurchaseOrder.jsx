@@ -18,7 +18,6 @@ import {
 import { message, Spin, Modal } from "antd";
 import { allRoutes } from "../../routes/AllRoutes";
 import DeleteModal from "../../components/delete-modal";
-import { Modal as BootstrapModal } from "bootstrap";
 import PurchaseOrderDetailModal from "../../core/modals/sales/PurchaseOrderDetailModal";
 import { getMyInfo } from "../../services/AccountService";
 
@@ -31,6 +30,7 @@ const PurchaseOrder = () => {
   const [rows, setRows] = useState(10);
   const [searchQuery, setSearchQuery] = useState(undefined);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [sortField, setSortField] = useState(null);
@@ -385,34 +385,23 @@ const PurchaseOrder = () => {
 
   const handleDeleteClick = (item) => {
     setSelectedItem(item);
-    setTimeout(() => {
-      const modalElement = document.getElementById("delete-modal");
-      if (modalElement) {
-        const modal = new Modal(modalElement);
-        modal.show();
-      }
-    }, 0);
+    setDeleteModalOpen(true);
   };
 
   const handleDeleteConfirm = async (purchaseOrderId) => {
     try {
       await deletePurchaseOrder(purchaseOrderId);
       await fetchPurchaseOrders();
-      setSelectedItem(null);
-
-      const modalElement = document.getElementById("delete-modal");
-      if (modalElement) {
-        const modal = BootstrapModal.getInstance(modalElement);
-        if (modal) modal.hide();
-      }
-
       message.success("Đã xoá đơn đặt hàng thành công!");
+      setDeleteModalOpen(false);
+      setSelectedItem(null);
     } catch (error) {
       message.error("Không thể xoá đơn đặt hàng!");
     }
   };
 
   const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
     setSelectedItem(null);
   };
 
@@ -997,6 +986,7 @@ tr:hover { background-color: #f5f5f5; }
 
         {/* Modal xác nhận xoá */}
         <DeleteModal
+          open={deleteModalOpen}
           itemId={selectedItem?.purchaseOrderId}
           itemName={selectedItem?.purchaseOrderNumber}
           onDelete={handleDeleteConfirm}

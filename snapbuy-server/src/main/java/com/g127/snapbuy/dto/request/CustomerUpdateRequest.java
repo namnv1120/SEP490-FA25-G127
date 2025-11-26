@@ -16,6 +16,10 @@ public class CustomerUpdateRequest {
     @Pattern(regexp = "^[\\p{L}\\d ]+$", message = "Họ và tên chỉ cho phép chữ, số và khoảng trắng")
     private String fullName;
 
+    @Size(max = 20, message = "Số điện thoại không được vượt quá 20 ký tự.")
+    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Số điện thoại không đúng định dạng.")
+    private String phone;
+
     private Customer.Gender gender;
 
 }

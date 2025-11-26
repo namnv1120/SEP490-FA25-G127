@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import CommonFooter from "../../components/footer/CommonFooter";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
@@ -6,11 +6,11 @@ import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
 import {
   getAllCategories,
+  searchSubCategories,
   deleteCategory,
   toggleCategoryStatus,
 } from "../../services/CategoryService";
 import { message } from "antd";
-import { Modal } from "bootstrap";
 
 import AddSubCategory from "../../core/modals/inventories/AddSubCategoryModal";
 import EditSubCategory from "../../core/modals/inventories/EditSubCategoryModal";
@@ -19,34 +19,57 @@ const SubCategoryList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
+  const [searchQuery, setSearchQuery] = useState(undefined);
   const [subCategories, setSubCategories] = useState([]);
   const [parentCategories, setParentCategories] = useState([]);
   const [error, setError] = useState(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [editSubCategoryId, setEditSubCategoryId] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
-  // Fetch categories
+  // Fetch parent categories once for dropdowns
   useEffect(() => {
-    fetchSubCategories();
+    const fetchParentCategories = async () => {
+      try {
+        const data = await getAllCategories();
+        const parents = data.filter(
+          (cat) => !cat.parentCategoryId || cat.parentCategoryId === null
+        );
+        setParentCategories(parents);
+      } catch (err) {
+        console.error("❌ Lỗi khi tải danh mục cha:", err);
+      }
+    };
+    fetchParentCategories();
   }, []);
 
-  const fetchSubCategories = async () => {
+  const fetchSubCategories = useCallback(async () => {
     try {
       setError(null);
-      const data = await getAllCategories();
-      const parents = data.filter(
-        (cat) => !cat.parentCategoryId || cat.parentCategoryId === null
+
+      const backendPage = currentPage - 1;
+
+      const result = await searchSubCategories(
+        searchQuery || "",
+        backendPage,
+        rows,
+        "createdDate",
+        "DESC"
       );
 
-      const subs = data.filter(
-        (cat) => cat.parentCategoryId && cat.parentCategoryId !== null
-      );
+      // Use parentCategories state if available, otherwise fetch
+      let parents = parentCategories;
+      if (parents.length === 0) {
+        const allCategories = await getAllCategories();
+        parents = allCategories.filter(
+          (cat) => !cat.parentCategoryId || cat.parentCategoryId === null
+        );
+        setParentCategories(parents);
+      }
 
-      setParentCategories(parents);
-
-      const mapped = subs.map((cat) => {
+      const mapped = (result.content || []).map((cat) => {
         const parent = parents.find(
           (p) => p.categoryId === cat.parentCategoryId
         );
@@ -86,16 +109,29 @@ const SubCategoryList = () => {
       });
 
       setSubCategories(mapped);
-      setTotalRecords(mapped.length);
+      setTotalRecords(result.totalElements || 0);
     } catch (err) {
       console.error("❌ Lỗi khi tải danh sách danh mục con:", err);
       setError("Lỗi khi tải danh sách danh mục con. Vui lòng thử lại.");
     } finally {
       void 0;
     }
+  }, [currentPage, rows, searchQuery, parentCategories]);
+
+  useEffect(() => {
+    fetchSubCategories();
+  }, [fetchSubCategories]);
+
+  const handleSearch = (value) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
   };
 
-  const handleSearch = () => {};
+  const handleRefresh = () => {
+    setSearchQuery(undefined);
+    setCurrentPage(1);
+    message.success("Danh sách danh mục con đã được làm mới!");
+  };
 
   const handleEditClick = (subCategory) => {
     setEditSubCategoryId(subCategory.categoryId);
@@ -104,46 +140,24 @@ const SubCategoryList = () => {
 
   const handleDeleteClick = (subCategory) => {
     setSelectedSubCategory(subCategory);
-    setTimeout(() => {
-      const modalElement = document.getElementById("delete-modal");
-      if (modalElement) {
-        const modal = new Modal(modalElement);
-        modal.show();
-      }
-    }, 0);
+    setDeleteModalOpen(true);
   };
 
   const handleDeleteConfirm = async (categoryId) => {
     try {
       await deleteCategory(categoryId);
-
-      const modalElement = document.getElementById("delete-modal");
-      const modal = Modal.getInstance(modalElement);
-
-      if (modal) {
-        modal.hide();
-      }
-
-      setTimeout(() => {
-        document
-          .querySelectorAll(".modal-backdrop")
-          .forEach((el) => el.remove());
-        document.body.classList.remove("modal-open");
-        document.body.style.removeProperty("overflow");
-        document.body.style.removeProperty("padding-right");
-      }, 300);
-
       await fetchSubCategories();
       message.success("Xoá danh mục con thành công!");
+      setDeleteModalOpen(false);
+      setSelectedSubCategory(null);
     } catch (err) {
       console.error("❌ Lỗi khi xoá danh mục con:", err);
       message.error("Không thể xoá danh mục con. Vui lòng thử lại.");
-    } finally {
-      setSelectedSubCategory(null);
     }
   };
 
   const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
     setSelectedSubCategory(null);
   };
 
@@ -278,7 +292,9 @@ const SubCategoryList = () => {
                 <h6>Quản lý danh sách danh mục con</h6>
               </div>
             </div>
-            <TableTopHead />
+            <TableTopHead
+              onRefresh={handleRefresh}
+            />
             <div className="page-btn">
               <button
                 type="button"
@@ -316,6 +332,7 @@ const SubCategoryList = () => {
                   setCurrentPage={setCurrentPage}
                   totalRecords={totalRecords}
                   dataKey="categoryId"
+                  serverSidePagination={true}
                 />
               </div>
             </div>
@@ -352,6 +369,7 @@ const SubCategoryList = () => {
 
       {/* ✅ Delete Modal */}
       <DeleteModal
+        open={deleteModalOpen}
         itemId={selectedSubCategory?.categoryId}
         itemName={selectedSubCategory?.categoryName}
         onDelete={handleDeleteConfirm}

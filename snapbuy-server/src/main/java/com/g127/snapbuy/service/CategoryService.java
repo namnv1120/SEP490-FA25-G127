@@ -3,6 +3,7 @@ package com.g127.snapbuy.service;
 import com.g127.snapbuy.dto.request.CategoryCreateRequest;
 import com.g127.snapbuy.dto.request.CategoryUpdateRequest;
 import com.g127.snapbuy.dto.response.CategoryResponse;
+import com.g127.snapbuy.dto.response.PageResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -14,4 +15,6 @@ public interface CategoryService {
     CategoryResponse updateCategory(UUID id, CategoryUpdateRequest request);
     void deleteCategory(UUID id);
     CategoryResponse toggleCategoryStatus(UUID id);
+    PageResponse<CategoryResponse> searchParentCategoriesByKeyword(String keyword, org.springframework.data.domain.Pageable pageable);
+    PageResponse<CategoryResponse> searchSubCategoriesByKeyword(String keyword, org.springframework.data.domain.Pageable pageable);
 }

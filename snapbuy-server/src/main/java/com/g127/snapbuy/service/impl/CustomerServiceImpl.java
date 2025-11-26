@@ -75,6 +75,16 @@ public class CustomerServiceImpl implements CustomerService {
     public CustomerResponse updateCustomer(UUID id, CustomerUpdateRequest request) {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
+        
+        // Check if phone is being updated and if it already exists for another customer
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            String newPhone = request.getPhone().trim();
+            Customer existingCustomer = customerRepository.getCustomerByPhone(newPhone);
+            if (existingCustomer != null && !existingCustomer.getCustomerId().equals(id)) {
+                throw new AppException(ErrorCode.PHONE_EXISTED);
+            }
+        }
+        
         customerMapper.updateFromDto(request, customer);
         customer.setUpdatedDate(LocalDateTime.now());
         return customerMapper.toResponse(customerRepository.save(customer));

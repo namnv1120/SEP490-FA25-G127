@@ -232,3 +232,21 @@ export const updateStaffRolesByOwner = async (staffId, roles) => {
     throw new Error(error.response?.data?.message || 'Failed to update staff roles!');
   }
 };
+
+export const changePassword = async (passwordData) => {
+  try {
+    const response = await axios.put(
+      `${REST_API_BASE_URL}/me/change-password`,
+      passwordData,
+      {
+        headers: {
+          ...getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Không thể đổi mật khẩu. Vui lòng kiểm tra lại mật khẩu cũ.');
+  }
+};

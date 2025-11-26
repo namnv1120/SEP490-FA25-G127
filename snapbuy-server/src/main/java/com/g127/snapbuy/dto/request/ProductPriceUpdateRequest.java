@@ -29,6 +29,4 @@ public class ProductPriceUpdateRequest {
         return unitPrice.compareTo(costPrice) >= 0;
     }
 
-//    private LocalDateTime validFrom;
-//    private LocalDateTime validTo;
 }

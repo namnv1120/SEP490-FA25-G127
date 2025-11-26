@@ -370,14 +370,37 @@ const EditPurchaseOrder = () => {
       taxAmount: parseFloat(taxAmount || 0),
     };
 
+    // Validate notes length
+    if (notes && notes.length > 500) {
+      message.error("Ghi chú không được vượt quá 500 ký tự. Vui lòng rút ngắn ghi chú.");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       await updatePurchaseOrder(id, request);
       message.success("Cập nhật phiếu nhập hàng thành công!");
       navigate(route.purchaseorders);
     } catch (err) {
+      console.error("❌ Lỗi cập nhật phiếu nhập:", err);
       const res = err.response?.data;
-      message.error(res?.message || "Không thể cập nhật phiếu nhập hàng.");
+      let errorMessage = "Không thể cập nhật phiếu nhập hàng.";
+
+      // Xử lý lỗi validation từ backend
+      if (res?.message) {
+        errorMessage = res.message;
+      } else if (res?.errors && Array.isArray(res.errors)) {
+        // Lỗi validation từ Bean Validation
+        const validationErrors = res.errors
+          .map((e) => e.defaultMessage || e.message)
+          .join(", ");
+        errorMessage = validationErrors || errorMessage;
+      } else if (err.message && err.message.includes("truncated")) {
+        // Lỗi SQL truncation
+        errorMessage = "Ghi chú quá dài. Vui lòng nhập tối đa 500 ký tự.";
+      }
+
+      message.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -597,12 +620,22 @@ const EditPurchaseOrder = () => {
             {/* THUẾ & GHI CHÚ */}
             <div className="row mb-4">
               <div className="col-md-6">
-                <label className="form-label">Ghi chú</label>
+                <label className="form-label">
+                  Ghi chú <small className="text-muted">(tối đa 500 ký tự)</small>
+                </label>
                 <textarea
                   className="form-control"
                   rows={4}
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= 500) {
+                      setNotes(value);
+                    } else {
+                      message.warning("Ghi chú không được vượt quá 500 ký tự.");
+                    }
+                  }}
+                  placeholder="Nhập ghi chú (tối đa 500 ký tự)"
                   disabled={
                     orderStatus?.toLowerCase() === "đã hủy" ||
                     orderStatus?.toLowerCase() === "đã nhận hàng" ||
@@ -614,6 +647,9 @@ const EditPurchaseOrder = () => {
                     orderStatus?.toLowerCase() === "chờ xác nhận"
                   }
                 />
+                <small className="text-muted">
+                  {notes.length}/500 ký tự
+                </small>
               </div>
               <div className="col-md-6">
                 <div className="d-flex flex-column align-items-end">

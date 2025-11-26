@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import CommonFooter from "../../components/footer/CommonFooter";
 import PrimeDataTable from "../../components/data-table";
@@ -6,12 +6,11 @@ import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
 import {
-  getAllCategories,
+  searchParentCategories,
   deleteCategory,
   toggleCategoryStatus,
 } from "../../services/CategoryService";
 import { message } from "antd";
-import { Modal } from "bootstrap";
 
 import AddCategory from "../../core/modals/inventories/AddCategoryModal";
 import EditCategory from "../../core/modals/inventories/EditCategoryModal";
@@ -20,27 +19,30 @@ const CategoryList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
+  const [searchQuery, setSearchQuery] = useState(undefined);
   const [categories, setCategories] = useState([]);
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [editCategoryId, setEditCategoryId] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       setError(null);
-      const data = await getAllCategories();
 
-      const parentCategories = data.filter(
-        (cat) => !cat.parentCategoryId || cat.parentCategoryId === null
+      const backendPage = currentPage - 1;
+
+      const result = await searchParentCategories(
+        searchQuery || "",
+        backendPage,
+        rows,
+        "createdDate",
+        "DESC"
       );
 
-      const mapped = parentCategories.map((cat) => ({
+      const mapped = (result.content || []).map((cat) => ({
         categoryId: cat.categoryId,
         categoryName: cat.name || cat.categoryName || "Không có",
         description: cat.description || "Không có",
@@ -70,16 +72,29 @@ const CategoryList = () => {
       }));
 
       setCategories(mapped);
-      setTotalRecords(mapped.length);
+      setTotalRecords(result.totalElements || 0);
     } catch (err) {
       console.error("❌ Lỗi khi tải danh sách danh mục:", err);
       setError("Không thể tải danh sách danh mục. Vui lòng thử lại.");
     } finally {
       void 0;
     }
+  }, [currentPage, rows, searchQuery]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  const handleSearch = (value) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
   };
 
-  const handleSearch = () => {};
+  const handleRefresh = () => {
+    setSearchQuery(undefined);
+    setCurrentPage(1);
+    message.success("Danh sách danh mục đã được làm mới!");
+  };
 
   const handleEditClick = (category) => {
     setEditCategoryId(category.categoryId);
@@ -89,48 +104,24 @@ const CategoryList = () => {
   // Xử lý khi click delete
   const handleDeleteClick = (category) => {
     setSelectedCategory(category);
-    setTimeout(() => {
-      const modalElement = document.getElementById("delete-modal");
-      if (modalElement) {
-        const modal = new Modal(modalElement);
-        modal.show();
-      } else {
-        console.error("❌ Không tìm thấy phần tử modal xoá.");
-      }
-    }, 0);
+    setDeleteModalOpen(true);
   };
 
   const handleDeleteConfirm = async (categoryId) => {
     try {
       await deleteCategory(categoryId);
-
-      const modalElement = document.getElementById("delete-modal");
-      const modal = Modal.getInstance(modalElement);
-
-      if (modal) {
-        modal.hide();
-      }
-
-      setTimeout(() => {
-        document
-          .querySelectorAll(".modal-backdrop")
-          .forEach((el) => el.remove());
-        document.body.classList.remove("modal-open");
-        document.body.style.removeProperty("overflow");
-        document.body.style.removeProperty("padding-right");
-      }, 0);
-
       await fetchCategories();
-      message.success("Danh muc đã được xoá thành công!");
+      message.success("Danh mục đã được xoá thành công!");
+      setDeleteModalOpen(false);
+      setSelectedCategory(null);
     } catch (err) {
       console.error("❌ Lỗi khi xoá danh sách danh mục:", err);
       message.error("Lỗi khi xoá danh mục. Vui lòng thử lại.");
-    } finally {
-      setSelectedCategory(null);
     }
   };
 
   const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
     setSelectedCategory(null);
   };
 
@@ -259,7 +250,9 @@ const CategoryList = () => {
                 <h6>Quản lý danh mục</h6>
               </div>
             </div>
-            <TableTopHead />
+            <TableTopHead
+              onRefresh={handleRefresh}
+            />
             <div className="page-btn">
               <button
                 type="button"
@@ -297,6 +290,7 @@ const CategoryList = () => {
                   setCurrentPage={setCurrentPage}
                   totalRecords={totalRecords}
                   dataKey="categoryId"
+                  serverSidePagination={true}
                 />
               </div>
             </div>
@@ -327,6 +321,7 @@ const CategoryList = () => {
       )}
 
       <DeleteModal
+        open={deleteModalOpen}
         itemId={selectedCategory?.categoryId}
         itemName={selectedCategory?.categoryName}
         onDelete={handleDeleteConfirm}

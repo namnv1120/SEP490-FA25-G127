@@ -11,6 +11,8 @@ import java.util.UUID;
 
 public interface PromotionRepository extends JpaRepository<Promotion, UUID> {
 
+    boolean existsByPromotionNameIgnoreCase(String promotionName);
+
     @Query("""
         select p from Promotion p
         join p.products prod

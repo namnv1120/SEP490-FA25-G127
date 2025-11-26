@@ -5,6 +5,7 @@ import com.g127.snapbuy.dto.request.OrderCreateRequest;
 import com.g127.snapbuy.dto.response.OrderResponse;
 import com.g127.snapbuy.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +19,7 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
     public ApiResponse<OrderResponse> createOrder(@RequestBody OrderCreateRequest req) {
         ApiResponse<OrderResponse> response = new ApiResponse<>();
         response.setResult(orderService.createOrder(req));
@@ -26,6 +28,7 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
     public ApiResponse<OrderResponse> getOrder(@PathVariable UUID id) {
         ApiResponse<OrderResponse> response = new ApiResponse<>();
         response.setResult(orderService.getOrder(id));
@@ -34,6 +37,7 @@ public class OrderController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
     public ApiResponse<List<OrderResponse>> getAllOrders(
             @RequestParam(required = false) String searchTerm,
             @RequestParam(required = false) String orderStatus,
@@ -74,6 +78,7 @@ public class OrderController {
     }
 
     @GetMapping("/my/today-count")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
     public ApiResponse<Long> getMyTodayOrderCount(@RequestParam(required = false) String paymentStatus) {
         ApiResponse<Long> res = new ApiResponse<>();
         Long count = orderService.getMyTodayOrderCount(paymentStatus == null || paymentStatus.isBlank() ? null : paymentStatus.trim());
@@ -92,6 +97,7 @@ public class OrderController {
     }
 
     @GetMapping("/my/by-range")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
     public ApiResponse<java.util.List<OrderResponse>> getMyOrdersByRange(@RequestParam String from,
                                                                          @RequestParam String to) {
         ApiResponse<java.util.List<OrderResponse>> res = new ApiResponse<>();
@@ -131,6 +137,7 @@ public class OrderController {
     }
 
     @PostMapping("/{id}/complete")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
     public ApiResponse<OrderResponse> completeOrder(@PathVariable UUID id) {
         ApiResponse<OrderResponse> response = new ApiResponse<>();
         response.setResult(orderService.completeOrder(id));
@@ -139,6 +146,7 @@ public class OrderController {
     }
 
     @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
     public ApiResponse<OrderResponse> cancelOrder(@PathVariable UUID id) {
         ApiResponse<OrderResponse> response = new ApiResponse<>();
         response.setResult(orderService.cancelOrder(id));
@@ -147,7 +155,7 @@ public class OrderController {
     }
 
     @GetMapping("/by-account/{accountId}/by-range")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<java.util.List<OrderResponse>> getOrdersByAccountAndRange(@PathVariable UUID accountId,
                                                                                 @RequestParam String from,
                                                                                 @RequestParam String to) {

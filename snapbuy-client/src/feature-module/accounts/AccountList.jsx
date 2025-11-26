@@ -14,7 +14,7 @@ import {
 } from "../../services/AccountService";
 import { getAllRoles } from "../../services/RoleService";
 import { message } from "antd";
-import { Modal } from "bootstrap";
+import CommonFooter from "../../components/footer/CommonFooter";
 
 const AccountList = () => {
   const [dataSource, setDataSource] = useState([]);
@@ -35,6 +35,7 @@ const AccountList = () => {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [rows, setRows] = useState(10);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -75,8 +76,8 @@ const AccountList = () => {
       } else {
         message.error(
           error.response?.data?.message ||
-            error.message ||
-            "Lỗi khi lấy danh sách tài khoản"
+          error.message ||
+          "Lỗi khi lấy danh sách tài khoản"
         );
       }
     } finally {
@@ -116,58 +117,34 @@ const AccountList = () => {
       console.error("❌ Lỗi khi chuyển đổi trạng thái tài khoản:", err);
       message.error(
         err.response?.data?.message ||
-          "Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại."
+        "Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại."
       );
     }
   };
 
   const handleDeleteClick = (account) => {
     setAccountToDelete(account);
-    setTimeout(() => {
-      const modalElement = document.getElementById("delete-modal");
-      if (modalElement) {
-        const modal = new Modal(modalElement);
-        modal.show();
-      } else {
-        console.error("❌ Không tìm thấy phần tử modal xoá.");
-      }
-    }, 0);
+    setDeleteModalOpen(true);
   };
 
   const handleDeleteConfirm = async (accountId) => {
     try {
       await deleteAccount(accountId);
-
-      const modalElement = document.getElementById("delete-modal");
-      const modal = Modal.getInstance(modalElement);
-
-      if (modal) {
-        modal.hide();
-      }
-
-      setTimeout(() => {
-        document
-          .querySelectorAll(".modal-backdrop")
-          .forEach((el) => el.remove());
-        document.body.classList.remove("modal-open");
-        document.body.style.removeProperty("overflow");
-        document.body.style.removeProperty("padding-right");
-      }, 0);
-
       await fetchAccounts();
       message.success("Tài khoản đã được xoá thành công!");
+      setDeleteModalOpen(false);
+      setAccountToDelete(null);
     } catch (err) {
       console.error("❌ Lỗi khi xoá tài khoản:", err);
       message.error(
         err.response?.data?.message ||
-          "Lỗi khi xoá tài khoản. Vui lòng thử lại."
+        "Lỗi khi xoá tài khoản. Vui lòng thử lại."
       );
-    } finally {
-      setAccountToDelete(null);
     }
   };
 
   const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
     setAccountToDelete(null);
   };
 
@@ -255,9 +232,8 @@ const AccountList = () => {
         return (
           <div className="d-flex align-items-center gap-2">
             <span
-              className={`badge fw-medium fs-10 ${
-                active ? "bg-success" : "bg-danger"
-              }`}
+              className={`badge fw-medium fs-10 ${active ? "bg-success" : "bg-danger"
+                }`}
             >
               {active ? "Hoạt động" : "Không hoạt động"}
             </span>
@@ -369,7 +345,8 @@ const AccountList = () => {
                       ) || { value: "", label: "Tất cả" }
                     }
                     onChange={(s) => {
-                      setRoleFilter(s?.value || "");
+                      const v = s?.value || "";
+                      setRoleFilter(v);
                     }}
                     placeholder="Vai trò"
                     width={220}
@@ -391,12 +368,13 @@ const AccountList = () => {
                   totalRecords={totalRecords}
                   dataKey="id"
                   loading={false}
-                  serverSidePagination={false}
+                  serverSidePagination={true}
                 />
               </div>
             </div>
           </div>
         </div>
+        <CommonFooter />
       </div>
 
       <AddAccount
@@ -415,6 +393,7 @@ const AccountList = () => {
       />
 
       <DeleteModal
+        open={deleteModalOpen}
         itemId={accountToDelete?.id}
         itemName={accountToDelete?.fullName}
         onDelete={handleDeleteConfirm}

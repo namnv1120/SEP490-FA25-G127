@@ -4,6 +4,7 @@ import com.g127.snapbuy.dto.request.OrderCreateRequest;
 import com.g127.snapbuy.dto.request.OrderDetailRequest;
 import com.g127.snapbuy.dto.response.OrderResponse;
 import com.g127.snapbuy.entity.*;
+import com.g127.snapbuy.mapper.AccountMapper;
 import com.g127.snapbuy.mapper.OrderMapper;
 import com.g127.snapbuy.repository.*;
 import com.g127.snapbuy.service.MoMoService;
@@ -37,6 +38,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
     private final CustomerRepository customerRepository;
     private final ProductPriceRepository productPriceRepository;
     private final OrderMapper orderMapper;
+    private final AccountMapper accountMapper;
     private final MoMoService moMoService;
     private final PromotionService promotionService;
 
@@ -231,7 +233,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
             subtotal = subtotal.add(up.multiply(BigDecimal.valueOf(i.getQuantity())));
         }
 
-        OrderResponse resp = orderMapper.toResponse(order, orderDetails, payment);
+        OrderResponse resp = orderMapper.toResponse(order, orderDetails, payment, accountMapper);
         resp.setSubtotal(subtotal);
         resp.setPointsRedeemed(pointsRedeemed);
         resp.setPointsEarned(pointsEarned);
@@ -245,7 +247,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
         Payment payment = paymentRepository.findByOrder(order);
 
-        OrderResponse resp = orderMapper.toResponse(order, details, payment);
+        OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
         BigDecimal subtotal = details.stream()
                 .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -261,7 +263,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                 .map(order -> {
                     List<OrderDetail> details = orderDetailRepository.findByOrder(order);
                     Payment payment = paymentRepository.findByOrder(order);
-                    OrderResponse resp = orderMapper.toResponse(order, details, payment);
+                    OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
                     BigDecimal subtotal = details.stream()
                             .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -301,7 +303,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                 .map(order -> {
                     List<OrderDetail> details = orderDetailRepository.findByOrder(order);
                     Payment payment = paymentRepository.findByOrder(order);
-                    OrderResponse resp = orderMapper.toResponse(order, details, payment);
+                    OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
                     BigDecimal subtotal = details.stream()
                             .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -380,7 +382,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         orderRepository.save(order);
         paymentRepository.save(payment);
 
-        OrderResponse resp = orderMapper.toResponse(order, details, payment);
+        OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
         BigDecimal subtotal = details.stream()
                 .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -400,7 +402,8 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         OrderResponse resp = orderMapper.toResponse(
                 order,
                 orderDetailRepository.findByOrder(order),
-                paymentRepository.findByOrder(order)
+                paymentRepository.findByOrder(order),
+                accountMapper
         );
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
         BigDecimal subtotal = details.stream()
@@ -415,12 +418,26 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
     @Override
     @Transactional
     public OrderResponse completeOrder(UUID id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
+
+        // Kiểm tra nếu đơn hàng đã hoàn tất thì không cho phép complete lại
+        if ("Hoàn tất".equalsIgnoreCase(order.getOrderStatus())) {
+            throw new IllegalArgumentException("Đơn hàng đã hoàn tất, không thể thực hiện thao tác này.");
+        }
+
+        // Kiểm tra nếu đơn hàng đã hủy thì không cho phép complete
+        if ("Đã hủy".equalsIgnoreCase(order.getOrderStatus())) {
+            throw new IllegalArgumentException("Đơn hàng đã hủy, không thể chuyển sang hoàn tất.");
+        }
+
         finalizePayment(id);
 
-        Order order = orderRepository.findById(id).orElseThrow();
+        // Reload order sau khi finalizePayment để lấy dữ liệu mới nhất
+        order = orderRepository.findById(id).orElseThrow();
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
         Payment payment = paymentRepository.findByOrder(order);
-        OrderResponse resp = orderMapper.toResponse(order, details, payment);
+        OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
         BigDecimal subtotal = details.stream()
                 .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -469,6 +486,16 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
     public void finalizePayment(UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
+
+        // Kiểm tra nếu đơn hàng đã hoàn tất thì không cho phép finalize lại
+        if ("Hoàn tất".equalsIgnoreCase(order.getOrderStatus())) {
+            throw new IllegalArgumentException("Đơn hàng đã hoàn tất, không thể thực hiện thao tác này.");
+        }
+
+        // Kiểm tra nếu đơn hàng đã hủy thì không cho phép finalize
+        if ("Đã hủy".equalsIgnoreCase(order.getOrderStatus())) {
+            throw new IllegalArgumentException("Đơn hàng đã hủy, không thể chuyển sang hoàn tất.");
+        }
 
         if ("Đã thanh toán".equalsIgnoreCase(order.getPaymentStatus())) {
             return;
@@ -562,7 +589,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         return orders.stream().map(order -> {
             List<OrderDetail> details = orderDetailRepository.findByOrder(order);
             Payment payment = paymentRepository.findByOrder(order);
-            return orderMapper.toResponse(order, details, payment);
+            return orderMapper.toResponse(order, details, payment, accountMapper);
         }).toList();
     }
 
@@ -576,7 +603,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         return orders.stream().map(order -> {
             List<OrderDetail> details = orderDetailRepository.findByOrder(order);
             Payment payment = paymentRepository.findByOrder(order);
-            return orderMapper.toResponse(order, details, payment);
+            return orderMapper.toResponse(order, details, payment, accountMapper);
         }).toList();
     }
 

@@ -714,7 +714,7 @@ const WarehousesOwnerDashboard = () => {
         </div>
 
         {/* Alert if any stock issues */}
-        {(inventoryStats.outOfStock > 0 || inventoryStats.criticalStock > 0 || inventoryStats.lowStock > 0) && (
+        {/* {(inventoryStats.outOfStock > 0 || inventoryStats.criticalStock > 0 || inventoryStats.lowStock > 0) && (
           <div className={`alert ${inventoryStats.outOfStock > 0 || inventoryStats.criticalStock > 0 ? 'alert-danger' : 'alert-warning'} alert-dismissible fade show mb-4`}>
             <div>
               <i className="ti ti-alert-circle me-2" />
@@ -754,7 +754,7 @@ const WarehousesOwnerDashboard = () => {
               aria-label="Close"
             />
           </div>
-        )}
+        )} */}
 
         {/* Info alert for overstock */}
         {inventoryStats.overStock > 0 && (

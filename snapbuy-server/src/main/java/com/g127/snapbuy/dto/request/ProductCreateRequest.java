@@ -24,7 +24,6 @@ public class ProductCreateRequest {
     @Pattern(regexp = "^[A-Za-z0-9]*$", message = "Barcode chỉ cho phép chữ và số.")
     private String barcode;
 
-    @Size(max = 10000, message = "Mô tả không được vượt quá 10000 ký tự.")
     private String description;
 
     @NotBlank(message = "Vui lòng chọn danh mục.")

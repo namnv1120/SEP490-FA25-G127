@@ -87,3 +87,13 @@ export const deletePromotion = async (id) => {
   );
   return response.data;
 };
+
+// Toggle trạng thái khuyến mãi
+export const togglePromotionStatus = async (id) => {
+  const response = await axios.patch(
+    `${REST_API_BASE_URL}/${id}/toggle-status`,
+    {},
+    getAuthHeaders()
+  );
+  return response.data?.result || response.data;
+};

@@ -14,7 +14,7 @@ public class AccountUpdateRequest {
     )
     private String fullName;
 
-    @Email(message = "Email không hợp lệ. Vui lòng kiểm tra lại.")
+    @Pattern(regexp = "^$|^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Email không hợp lệ. Vui lòng kiểm tra lại.")
     private String email;
 
     @Pattern(regexp = "^$|^\\d{10}$", message = "Số điện thoại phải gồm đúng 10 chữ số.")
