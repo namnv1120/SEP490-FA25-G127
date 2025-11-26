@@ -113,7 +113,21 @@ const ProductPriceList = () => {
     setShowImportModal(false);
   };
 
-  const handleSearch = () => {};
+  const handleSearch = () => { };
+
+  // Reset select-all checkbox và tất cả checkbox khi chuyển trang
+  useEffect(() => {
+    const selectAllCheckbox = document.getElementById("select-all");
+    if (selectAllCheckbox) {
+      selectAllCheckbox.checked = false;
+    }
+    const checkboxes = document.querySelectorAll(
+      '.table-list-card input[type="checkbox"][data-id]'
+    );
+    checkboxes.forEach((cb) => {
+      cb.checked = false;
+    });
+  }, [currentPage]);
 
   // Handle select-all checkbox
   useEffect(() => {
@@ -137,7 +151,7 @@ const ProductPriceList = () => {
         selectAllCheckbox.removeEventListener("change", handleSelectAll);
       }
     };
-  }, [productPrices]);
+  }, [productPrices, currentPage]);
 
   const columns = [
     {
@@ -267,70 +281,6 @@ const ProductPriceList = () => {
                 rows={rows}
                 setRows={setRows}
               />
-              {/* <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                  <div className="dropdown me-2">
-                    <Link
-                      to="#"
-                      className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                      data-bs-toggle="dropdown"
-                    >
-                      Status
-                    </Link>
-                    <ul className="dropdown-menu dropdown-menu-end p-3">
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Active
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Expired
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Upcoming
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Draft
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="dropdown">
-                    <Link
-                      to="#"
-                      className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                      data-bs-toggle="dropdown"
-                    >
-                      Sort By : Latest
-                    </Link>
-                    <ul className="dropdown-menu dropdown-menu-end p-3">
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Recently Added
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Price: Low to High
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Price: High to Low
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Expiring Soon
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                </div> */}
             </div>
             <div className="card-body">
               <div className="table-responsive">

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -154,7 +155,7 @@ public class PromotionServiceImpl implements PromotionService {
                 case FIXED -> {
                     if (p.getDiscountValue() != null && unitPrice != null && unitPrice.compareTo(BigDecimal.ZERO) > 0) {
                         BigDecimal pct = p.getDiscountValue()
-                                .divide(unitPrice, 4, java.math.RoundingMode.HALF_UP)
+                                .divide(unitPrice, 4, RoundingMode.HALF_UP)
                                 .multiply(BigDecimal.valueOf(100));
                         if (pct.compareTo(bestPercent) > 0) bestPercent = pct;
                     }
@@ -163,7 +164,7 @@ public class PromotionServiceImpl implements PromotionService {
         }
         if (bestPercent.compareTo(BigDecimal.valueOf(100)) > 0) return BigDecimal.valueOf(100);
         if (bestPercent.compareTo(BigDecimal.ZERO) < 0) return BigDecimal.ZERO;
-        return bestPercent.setScale(2, java.math.RoundingMode.HALF_UP);
+        return bestPercent.setScale(2, RoundingMode.HALF_UP);
     }
 
     @Override
@@ -187,7 +188,7 @@ public class PromotionServiceImpl implements PromotionService {
                 case PERCENT -> {
                     if (p.getDiscountValue() != null && unitPrice != null) {
                         // Tính số tiền giảm từ phần trăm
-                        discountAmount = unitPrice.multiply(p.getDiscountValue()).divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
+                        discountAmount = unitPrice.multiply(p.getDiscountValue()).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
                     }
                 }
                 case FIXED -> {
@@ -209,7 +210,7 @@ public class PromotionServiceImpl implements PromotionService {
         // Tính phần trăm tương đương để hiển thị
         BigDecimal discountPercent = BigDecimal.ZERO;
         if (unitPrice != null && unitPrice.compareTo(BigDecimal.ZERO) > 0) {
-            discountPercent = totalDiscountAmount.divide(unitPrice, 4, java.math.RoundingMode.HALF_UP)
+            discountPercent = totalDiscountAmount.divide(unitPrice, 4, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(100));
             if (discountPercent.compareTo(BigDecimal.valueOf(100)) > 0) {
                 discountPercent = BigDecimal.valueOf(100);
@@ -219,7 +220,7 @@ public class PromotionServiceImpl implements PromotionService {
         return com.g127.snapbuy.dto.response.DiscountInfoResponse.builder()
                 .discountType(null) // Không có loại cụ thể vì là tổng hợp
                 .discountValue(totalDiscountAmount) // Tổng số tiền giảm
-                .discountPercent(discountPercent.setScale(2, java.math.RoundingMode.HALF_UP))
+                .discountPercent(discountPercent.setScale(2, RoundingMode.HALF_UP))
                 .build();
     }
 

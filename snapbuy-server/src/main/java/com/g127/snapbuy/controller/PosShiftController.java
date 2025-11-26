@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/pos-shifts")
@@ -69,7 +70,7 @@ public class PosShiftController {
 
     @GetMapping("/by-account/{accountId}")
     @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
-    public ApiResponse<List<PosShiftResponse>> getByAccount(@PathVariable java.util.UUID accountId,
+    public ApiResponse<List<PosShiftResponse>> getByAccount(@PathVariable UUID accountId,
                                                             @RequestParam(required = false) String status) {
         ApiResponse<List<PosShiftResponse>> res = new ApiResponse<>();
         res.setResult(posShiftService.getShiftsByAccount(accountId, status));

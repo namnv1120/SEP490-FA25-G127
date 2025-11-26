@@ -26,7 +26,7 @@ public interface PurchaseOrderService {
 
     PageResponse<PurchaseOrderResponse> search(String status, UUID supplierId, LocalDateTime from, LocalDateTime to, Pageable pageable);
     
-    PageResponse<PurchaseOrderResponse> searchByKeyword(String keyword, Pageable pageable);
+    PageResponse<PurchaseOrderResponse> searchByKeyword(String keyword, String status, LocalDateTime orderDateFrom, LocalDateTime orderDateTo, LocalDateTime receivedDateFrom, LocalDateTime receivedDateTo, Pageable pageable);
 
     void deletePurchaseOrder(UUID poId);
 

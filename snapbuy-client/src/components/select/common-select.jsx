@@ -3,7 +3,7 @@ import { Dropdown } from "primereact/dropdown";
 const CommonSelect = ({
   value,
   options,
-  placeholder = "Select",
+  placeholder = "Chọn",
   onChange,
   className = "",
   disabled = false,

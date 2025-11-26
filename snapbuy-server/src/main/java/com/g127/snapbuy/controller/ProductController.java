@@ -11,6 +11,8 @@ import com.g127.snapbuy.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -103,16 +105,40 @@ public class ProductController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdDate") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDir) {
-        org.springframework.data.domain.Sort.Direction direction = 
-            "ASC".equalsIgnoreCase(sortDir) ? org.springframework.data.domain.Sort.Direction.ASC : org.springframework.data.domain.Sort.Direction.DESC;
+        Sort.Direction direction = 
+            "ASC".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
         
-        var pageable = org.springframework.data.domain.PageRequest.of(
+        var pageable = PageRequest.of(
             Math.max(page, 0), 
             Math.min(Math.max(size, 1), 200),
-            org.springframework.data.domain.Sort.by(direction, sortBy)
+            Sort.by(direction, sortBy)
         );
         ApiResponse<PageResponse<ProductResponse>> response = new ApiResponse<>();
         response.setResult(productService.searchByKeyword(keyword, pageable));
+        return response;
+    }
+
+    @GetMapping("/search-paged")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
+    public ApiResponse<PageResponse<ProductResponse>> searchProductsPaged(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) UUID subCategoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdDate") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir) {
+        Sort.Direction direction = 
+            "ASC".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        
+        var pageable = PageRequest.of(
+            Math.max(page, 0), 
+            Math.min(Math.max(size, 1), 200),
+            Sort.by(direction, sortBy)
+        );
+        ApiResponse<PageResponse<ProductResponse>> response = new ApiResponse<>();
+        response.setResult(productService.searchProductsPaged(keyword, active, categoryId, subCategoryId, pageable));
         return response;
     }
 

@@ -179,11 +179,20 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         if (payable.signum() < 0) payable = BigDecimal.ZERO;
 
         if (!isGuest) {
-            // Lấy % điểm tích lũy từ POS settings
+            // Lấy % điểm tích lũy từ POS settings của chủ cửa hàng (global settings)
             BigDecimal loyaltyPointsPercent = BigDecimal.ZERO; // Mặc định 0%
-            PosSettings posSettings = posSettingsRepository.findByAccount(creator).orElse(null);
-            if (posSettings != null && posSettings.getLoyaltyPointsPercent() != null) {
-                loyaltyPointsPercent = posSettings.getLoyaltyPointsPercent();
+            try {
+                List<Account> shopOwners = accountRepository.findByRoleName("Chủ cửa hàng");
+                if (shopOwners != null && !shopOwners.isEmpty()) {
+                    Account shopOwner = shopOwners.get(0);
+                    PosSettings posSettings = posSettingsRepository.findByAccount(shopOwner).orElse(null);
+                    if (posSettings != null && posSettings.getLoyaltyPointsPercent() != null) {
+                        loyaltyPointsPercent = posSettings.getLoyaltyPointsPercent();
+                    }
+                }
+            } catch (Exception e) {
+                // Nếu không tìm thấy chủ cửa hàng, dùng giá trị mặc định 0%
+                log.warn("Không tìm thấy settings của chủ cửa hàng, sử dụng giá trị mặc định: {}", e.getMessage());
             }
 
             // Tính điểm tích lũy: payable × loyaltyPointsPercent / 100
@@ -528,12 +537,19 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
             // Nếu chưa có pointsEarned, tính lại theo settings
             if (pointsEarned == 0 && order.getTotalAmount() != null) {
                 BigDecimal loyaltyPointsPercent = BigDecimal.ZERO; // Mặc định 0%
-                Account account = order.getAccount();
-                if (account != null) {
-                    PosSettings posSettings = posSettingsRepository.findByAccount(account).orElse(null);
-                    if (posSettings != null && posSettings.getLoyaltyPointsPercent() != null) {
-                        loyaltyPointsPercent = posSettings.getLoyaltyPointsPercent();
+                // Lấy settings của chủ cửa hàng (global settings)
+                try {
+                    List<Account> shopOwners = accountRepository.findByRoleName("Chủ cửa hàng");
+                    if (shopOwners != null && !shopOwners.isEmpty()) {
+                        Account shopOwner = shopOwners.get(0);
+                        PosSettings posSettings = posSettingsRepository.findByAccount(shopOwner).orElse(null);
+                        if (posSettings != null && posSettings.getLoyaltyPointsPercent() != null) {
+                            loyaltyPointsPercent = posSettings.getLoyaltyPointsPercent();
+                        }
                     }
+                } catch (Exception e) {
+                    // Nếu không tìm thấy chủ cửa hàng, dùng giá trị mặc định 0%
+                    log.warn("Không tìm thấy settings của chủ cửa hàng, sử dụng giá trị mặc định: {}", e.getMessage());
                 }
                 pointsEarned = order.getTotalAmount().multiply(loyaltyPointsPercent)
                         .divide(BigDecimal.valueOf(100), 0, RoundingMode.FLOOR)
@@ -603,7 +619,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public java.util.List<OrderResponse> getMyOrdersByDateTimeRange(LocalDateTime from, LocalDateTime to) {
+    public List<OrderResponse> getMyOrdersByDateTimeRange(LocalDateTime from, LocalDateTime to) {
         UUID accountId = resolveCurrentAccountId();
         List<Order> orders = orderRepository.findByAccountAndOrderDateBetween(accountId, from, to);
         if (orders == null || orders.isEmpty()) {
@@ -618,7 +634,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public java.util.List<OrderResponse> getOrdersByAccountAndDateTimeRange(UUID accountId, LocalDateTime from, LocalDateTime to) {
+    public List<OrderResponse> getOrdersByAccountAndDateTimeRange(UUID accountId, LocalDateTime from, LocalDateTime to) {
         List<Order> orders = orderRepository.findByAccountAndOrderDateBetween(accountId, from, to);
         if (orders == null || orders.isEmpty()) {
             orders = orderRepository.findByAccountAndCreatedDateBetween(accountId, from, to);

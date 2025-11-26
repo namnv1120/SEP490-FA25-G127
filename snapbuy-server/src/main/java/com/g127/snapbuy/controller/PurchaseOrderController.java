@@ -93,6 +93,11 @@ public class PurchaseOrderController {
     @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<PageResponse<PurchaseOrderResponse>> searchByKeyword(
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime orderDateFrom,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime orderDateTo,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime receivedDateFrom,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime receivedDateTo,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "orderDate") String sortBy,
@@ -106,7 +111,7 @@ public class PurchaseOrderController {
             org.springframework.data.domain.Sort.by(direction, sortBy)
         );
         ApiResponse<PageResponse<PurchaseOrderResponse>> response = new ApiResponse<>();
-        response.setResult(service.searchByKeyword(keyword, pageable));
+        response.setResult(service.searchByKeyword(keyword, status, orderDateFrom, orderDateTo, receivedDateFrom, receivedDateTo, pageable));
         return response;
     }
 

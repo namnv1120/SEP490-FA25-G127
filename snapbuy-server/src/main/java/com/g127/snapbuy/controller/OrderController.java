@@ -8,6 +8,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,12 +54,12 @@ public class OrderController {
         ApiResponse<List<OrderResponse>> response = new ApiResponse<>();
         
         // Parse dates if provided
-        java.time.LocalDateTime fromDate = null;
-        java.time.LocalDateTime toDate = null;
+        LocalDateTime fromDate = null;
+        LocalDateTime toDate = null;
         
         if (from != null && !from.trim().isEmpty()) {
             try {
-                fromDate = java.time.LocalDate.parse(from).atStartOfDay();
+                fromDate = LocalDate.parse(from).atStartOfDay();
             } catch (Exception e) {
                 // Ignore parse errors
             }
@@ -59,7 +67,7 @@ public class OrderController {
         
         if (to != null && !to.trim().isEmpty()) {
             try {
-                toDate = java.time.LocalDate.parse(to).atTime(23, 59, 59);
+                toDate = LocalDate.parse(to).atTime(23, 59, 59);
             } catch (Exception e) {
                 // Ignore parse errors
             }
@@ -88,9 +96,9 @@ public class OrderController {
     }
 
     @GetMapping("/my/today-revenue")
-    public ApiResponse<java.math.BigDecimal> getMyTodayRevenue(@RequestParam(required = false) String paymentStatus) {
-        ApiResponse<java.math.BigDecimal> res = new ApiResponse<>();
-        java.math.BigDecimal revenue = orderService.getMyTodayRevenue(paymentStatus == null || paymentStatus.isBlank() ? null : paymentStatus.trim());
+    public ApiResponse<BigDecimal> getMyTodayRevenue(@RequestParam(required = false) String paymentStatus) {
+        ApiResponse<BigDecimal> res = new ApiResponse<>();
+        BigDecimal revenue = orderService.getMyTodayRevenue(paymentStatus == null || paymentStatus.isBlank() ? null : paymentStatus.trim());
         res.setResult(revenue);
         res.setMessage("Lấy doanh thu hôm nay thành công.");
         return res;
@@ -98,32 +106,32 @@ public class OrderController {
 
     @GetMapping("/my/by-range")
     @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
-    public ApiResponse<java.util.List<OrderResponse>> getMyOrdersByRange(@RequestParam String from,
+    public ApiResponse<List<OrderResponse>> getMyOrdersByRange(@RequestParam String from,
                                                                          @RequestParam String to) {
-        ApiResponse<java.util.List<OrderResponse>> res = new ApiResponse<>();
-        java.time.LocalDateTime fromDt = parseFlexible(from);
-        java.time.LocalDateTime toDt = parseFlexible(to);
+        ApiResponse<List<OrderResponse>> res = new ApiResponse<>();
+        LocalDateTime fromDt = parseFlexible(from);
+        LocalDateTime toDt = parseFlexible(to);
         if (fromDt == null || toDt == null) {
-            java.time.LocalDate today = java.time.LocalDate.now();
+            LocalDate today = LocalDate.now();
             fromDt = today.atStartOfDay();
-            toDt = today.atTime(java.time.LocalTime.MAX);
+            toDt = today.atTime(LocalTime.MAX);
         }
         res.setResult(orderService.getMyOrdersByDateTimeRange(fromDt, toDt));
         res.setMessage("Lấy đơn theo khoảng thời gian thành công.");
         return res;
     }
 
-    private java.time.LocalDateTime parseFlexible(String s) {
+    private LocalDateTime parseFlexible(String s) {
         if (s == null || s.isBlank()) return null;
-        try { return java.time.LocalDateTime.parse(s); } catch (Exception ignored) {}
-        try { return java.time.OffsetDateTime.parse(s, java.time.format.DateTimeFormatter.ISO_DATE_TIME).toLocalDateTime(); } catch (Exception ignored) {}
-        try { return java.time.LocalDateTime.ofInstant(java.time.Instant.parse(s), java.time.ZoneId.systemDefault()); } catch (Exception ignored) {}
+        try { return LocalDateTime.parse(s); } catch (Exception ignored) {}
+        try { return OffsetDateTime.parse(s, DateTimeFormatter.ISO_DATE_TIME).toLocalDateTime(); } catch (Exception ignored) {}
+        try { return LocalDateTime.ofInstant(Instant.parse(s), ZoneId.systemDefault()); } catch (Exception ignored) {}
         // Try trimming milliseconds and Z
         try {
             String t = s.replace("Z", "");
             int dot = t.indexOf('.');
             if (dot > 0) t = t.substring(0, dot);
-            return java.time.LocalDateTime.parse(t);
+            return LocalDateTime.parse(t);
         } catch (Exception ignored) {}
         return null;
     }
@@ -156,16 +164,16 @@ public class OrderController {
 
     @GetMapping("/by-account/{accountId}/by-range")
     @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
-    public ApiResponse<java.util.List<OrderResponse>> getOrdersByAccountAndRange(@PathVariable UUID accountId,
+    public ApiResponse<List<OrderResponse>> getOrdersByAccountAndRange(@PathVariable UUID accountId,
                                                                                 @RequestParam String from,
                                                                                 @RequestParam String to) {
-        ApiResponse<java.util.List<OrderResponse>> res = new ApiResponse<>();
-        java.time.LocalDateTime fromDt = parseFlexible(from);
-        java.time.LocalDateTime toDt = parseFlexible(to);
+        ApiResponse<List<OrderResponse>> res = new ApiResponse<>();
+        LocalDateTime fromDt = parseFlexible(from);
+        LocalDateTime toDt = parseFlexible(to);
         if (fromDt == null || toDt == null) {
-            java.time.LocalDate today = java.time.LocalDate.now();
+            LocalDate today = LocalDate.now();
             fromDt = today.atStartOfDay();
-            toDt = today.atTime(java.time.LocalTime.MAX);
+            toDt = today.atTime(LocalTime.MAX);
         }
         res.setResult(orderService.getOrdersByAccountAndDateTimeRange(accountId, fromDt, toDt));
         res.setMessage("Lấy đơn theo khoảng thời gian thành công.");

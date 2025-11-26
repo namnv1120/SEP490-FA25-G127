@@ -26,17 +26,31 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
 
     @Query(value = "SELECT p.* FROM products p " +
             "LEFT JOIN categories c ON p.category_id = c.category_id " +
+            "LEFT JOIN categories pc ON c.parent_category_id = pc.category_id " +
             "LEFT JOIN suppliers s ON p.supplier_id = s.supplier_id " +
             "WHERE (:keyword IS NULL OR :keyword = '' OR " +
             "LOWER(p.product_code) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(p.product_name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:active IS NULL OR p.active = :active) " +
+            "AND (:categoryId IS NULL OR p.category_id = :categoryId OR " +
+            "     (c.parent_category_id IS NOT NULL AND c.parent_category_id = :categoryId)) " +
+            "AND (:subCategoryId IS NULL OR (c.parent_category_id IS NOT NULL AND p.category_id = :subCategoryId)) " +
             "ORDER BY p.created_date DESC",
             countQuery = "SELECT COUNT(p.product_id) FROM products p " +
             "LEFT JOIN categories c ON p.category_id = c.category_id " +
+            "LEFT JOIN categories pc ON c.parent_category_id = pc.category_id " +
             "LEFT JOIN suppliers s ON p.supplier_id = s.supplier_id " +
             "WHERE (:keyword IS NULL OR :keyword = '' OR " +
             "LOWER(p.product_code) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(p.product_name) LIKE LOWER(CONCAT('%', :keyword, '%')))",
+            "LOWER(p.product_name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:active IS NULL OR p.active = :active) " +
+            "AND (:categoryId IS NULL OR p.category_id = :categoryId OR " +
+            "     (c.parent_category_id IS NOT NULL AND c.parent_category_id = :categoryId)) " +
+            "AND (:subCategoryId IS NULL OR (c.parent_category_id IS NOT NULL AND p.category_id = :subCategoryId))",
             nativeQuery = true)
-    Page<Product> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
+    Page<Product> searchByKeyword(@Param("keyword") String keyword, 
+                                   @Param("active") Boolean active,
+                                   @Param("categoryId") UUID categoryId,
+                                   @Param("subCategoryId") UUID subCategoryId,
+                                   Pageable pageable);
 }

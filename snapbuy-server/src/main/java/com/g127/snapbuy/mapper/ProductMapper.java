@@ -27,6 +27,9 @@ public interface ProductMapper {
 
     @Mapping(source = "category.categoryId", target = "categoryId")
     @Mapping(source = "category.categoryName", target = "categoryName")
+    @Mapping(source = "category.parentCategoryId", target = "parentCategoryId")
+    @Mapping(target = "parentCategoryName", ignore = true)
+    @Mapping(target = "subCategoryName", ignore = true)
     @Mapping(source = "supplier.supplierId", target = "supplierId")
     @Mapping(source = "supplier.supplierName", target = "supplierName")
     ProductResponse toResponse(Product product);

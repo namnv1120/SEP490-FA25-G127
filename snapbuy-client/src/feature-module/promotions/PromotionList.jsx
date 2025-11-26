@@ -3,12 +3,12 @@ import { message } from "antd";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
 import CommonFooter from "../../components/footer/CommonFooter";
-import SearchFromApi from "../../components/data-table/search";
+import CommonSelect from "../../components/select/common-select";
+import CommonDateRangePicker from "../../components/date-range-picker/common-date-range-picker";
 import { getAllPromotions, togglePromotionStatus, deletePromotion } from "../../services/PromotionService";
 import AddPromotionModal from "../../core/modals/promotions/AddPromotionModal";
 import EditPromotionModal from "../../core/modals/promotions/EditPromotionModal";
 import DeleteModal from "../../components/delete-modal";
-import { exportToExcel } from "../../utils/excelUtils";
 
 const PromotionList = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -22,6 +22,11 @@ const PromotionList = () => {
   const [selectedPromotionId, setSelectedPromotionId] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedPromotion, setSelectedPromotion] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [discountTypeFilter, setDiscountTypeFilter] = useState(null);
+  const [startDateRange, setStartDateRange] = useState([null, null]);
+  const [endDateRange, setEndDateRange] = useState([null, null]);
+  const [statusFilter, setStatusFilter] = useState(null);
 
   const formatDateTime = (dateString) => {
     if (!dateString) return "Không có";
@@ -59,6 +64,8 @@ const PromotionList = () => {
           discountValueRaw: promo.discountValue, // Lưu giá trị số thực tế để sort
           startDate: formatDateTime(promo.startDate),
           endDate: formatDateTime(promo.endDate),
+          startDateRaw: promo.startDate, // Lưu raw date để filter
+          endDateRaw: promo.endDate, // Lưu raw date để filter
           productCount: promo.productIds?.length || 0,
           status: isActive
             ? "Hoạt động"
@@ -72,8 +79,6 @@ const PromotionList = () => {
       });
 
       setPromotions(mappedData);
-      setFilteredPromotions(mappedData);
-      setTotalRecords(mappedData.length);
     } catch {
       setError("Lỗi khi tải danh sách khuyến mãi. Vui lòng thử lại.");
       message.error("Không thể tải danh sách khuyến mãi");
@@ -84,54 +89,136 @@ const PromotionList = () => {
     fetchPromotions();
   }, [fetchPromotions]);
 
-  const handleSearch = (query) => {
-    if (!query || query.trim() === "") {
-      setFilteredPromotions(promotions);
-      setTotalRecords(promotions.length);
+  // Áp dụng tất cả filters
+  useEffect(() => {
+    if (promotions.length === 0) {
+      setFilteredPromotions([]);
+      setTotalRecords(0);
       return;
     }
 
-    const lowerQuery = query.toLowerCase();
-    const filtered = promotions.filter(
-      (promo) =>
-        promo.promotionName.toLowerCase().includes(lowerQuery) ||
-        promo.description.toLowerCase().includes(lowerQuery)
-    );
+    let filtered = [...promotions];
+
+    // Filter theo search term
+    if (searchTerm?.trim()) {
+      const lowerQuery = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (promo) =>
+          promo.promotionName.toLowerCase().includes(lowerQuery) ||
+          promo.description.toLowerCase().includes(lowerQuery)
+      );
+    }
+
+    // Filter theo loại giảm giá
+    if (discountTypeFilter) {
+      filtered = filtered.filter(
+        (promo) => promo.discountType === discountTypeFilter
+      );
+    }
+
+    // Filter theo thời gian bắt đầu
+    if (startDateRange && Array.isArray(startDateRange) && startDateRange[0] && startDateRange[1]) {
+      const fromDate = new Date(startDateRange[0]);
+      fromDate.setHours(0, 0, 0, 0);
+      const fromTimestamp = fromDate.getTime();
+
+      const toDate = new Date(startDateRange[1]);
+      toDate.setHours(23, 59, 59, 999);
+      const toTimestamp = toDate.getTime();
+
+      filtered = filtered.filter((promo) => {
+        if (!promo.startDateRaw) return false;
+
+        try {
+          const promoStartDate = new Date(promo.startDateRaw);
+          if (isNaN(promoStartDate.getTime())) return false;
+          promoStartDate.setHours(0, 0, 0, 0);
+          const promoStartTimestamp = promoStartDate.getTime();
+
+          return promoStartTimestamp >= fromTimestamp && promoStartTimestamp <= toTimestamp;
+        } catch (error) {
+          console.error("Error filtering by start date range:", error, promo);
+          return false;
+        }
+      });
+    }
+
+    // Filter theo thời gian kết thúc
+    if (endDateRange && Array.isArray(endDateRange) && endDateRange[0] && endDateRange[1]) {
+      const fromDate = new Date(endDateRange[0]);
+      fromDate.setHours(0, 0, 0, 0);
+      const fromTimestamp = fromDate.getTime();
+
+      const toDate = new Date(endDateRange[1]);
+      toDate.setHours(23, 59, 59, 999);
+      const toTimestamp = toDate.getTime();
+
+      filtered = filtered.filter((promo) => {
+        if (!promo.endDateRaw) return false;
+
+        try {
+          const promoEndDate = new Date(promo.endDateRaw);
+          if (isNaN(promoEndDate.getTime())) return false;
+          promoEndDate.setHours(0, 0, 0, 0);
+          const promoEndTimestamp = promoEndDate.getTime();
+
+          return promoEndTimestamp >= fromTimestamp && promoEndTimestamp <= toTimestamp;
+        } catch (error) {
+          console.error("Error filtering by end date range:", error, promo);
+          return false;
+        }
+      });
+    }
+
+    // Filter theo trạng thái
+    if (statusFilter) {
+      filtered = filtered.filter((promo) => promo.status === statusFilter);
+    }
 
     setFilteredPromotions(filtered);
     setTotalRecords(filtered.length);
+  }, [searchTerm, discountTypeFilter, startDateRange, endDateRange, statusFilter, promotions]);
+
+  // Reset page khi filter thay đổi
+  useEffect(() => {
     setCurrentPage(1);
-  };
+  }, [searchTerm, discountTypeFilter, startDateRange, endDateRange, statusFilter]);
 
   const handleRefresh = () => {
+    setSearchTerm("");
+    setDiscountTypeFilter(null);
+    setStartDateRange([null, null]);
+    setEndDateRange([null, null]);
+    setStatusFilter(null);
+    setCurrentPage(1);
     fetchPromotions();
-    message.success("Đã làm mới danh sách");
+    message.success("Đã làm mới danh sách khuyến mãi thành công!");
   };
 
-  const handleExportExcel = async () => {
-    if (!filteredPromotions || filteredPromotions.length === 0) {
-      message.warning("Không có dữ liệu để xuất!");
-      return;
-    }
+  // const handleExportExcel = async () => {
+  //   if (!filteredPromotions || filteredPromotions.length === 0) {
+  //     message.warning("Không có dữ liệu để xuất!");
+  //     return;
+  //   }
 
-    const exportData = filteredPromotions.map((promo) => ({
-      "Tên khuyến mãi": promo.promotionName,
-      "Mô tả": promo.description,
-      "Loại giảm giá": promo.discountType,
-      "Giá trị": promo.discountValue,
-      "Ngày bắt đầu": promo.startDate,
-      "Ngày kết thúc": promo.endDate,
-      "Số sản phẩm": promo.productCount,
-      "Trạng thái": promo.status,
-    }));
+  //   const exportData = filteredPromotions.map((promo) => ({
+  //     "Tên khuyến mãi": promo.promotionName,
+  //     "Mô tả": promo.description,
+  //     "Loại giảm giá": promo.discountType,
+  //     "Giá trị": promo.discountValue,
+  //     "Ngày bắt đầu": promo.startDate,
+  //     "Ngày kết thúc": promo.endDate,
+  //     "Số sản phẩm": promo.productCount,
+  //     "Trạng thái": promo.status,
+  //   }));
 
-    try {
-      await exportToExcel(exportData, "Danh_sach_khuyen_mai");
-      message.success("Xuất Excel thành công!");
-    } catch {
-      message.error("Lỗi khi xuất Excel!");
-    }
-  };
+  //   try {
+  //     await exportToExcel(exportData, "Danh_sach_khuyen_mai");
+  //     message.success("Xuất Excel thành công!");
+  //   } catch {
+  //     message.error("Lỗi khi xuất Excel!");
+  //   }
+  // };
 
   const handleEdit = (promotionId) => {
     setSelectedPromotionId(promotionId);
@@ -173,6 +260,20 @@ const PromotionList = () => {
     }
   };
 
+  // Reset select-all checkbox và tất cả checkbox khi chuyển trang
+  useEffect(() => {
+    const selectAllCheckbox = document.getElementById("select-all");
+    if (selectAllCheckbox) {
+      selectAllCheckbox.checked = false;
+    }
+    const checkboxes = document.querySelectorAll(
+      '.table-list-card input[type="checkbox"][data-id]'
+    );
+    checkboxes.forEach((cb) => {
+      cb.checked = false;
+    });
+  }, [currentPage]);
+
   // Handle select-all checkbox
   useEffect(() => {
     const selectAllCheckbox = document.getElementById("select-all");
@@ -195,7 +296,20 @@ const PromotionList = () => {
         selectAllCheckbox.removeEventListener("change", handleSelectAll);
       }
     };
-  }, [filteredPromotions]);
+  }, [filteredPromotions, currentPage]);
+
+  const DiscountTypeOptions = [
+    { value: null, label: "Tất cả" },
+    { value: "Giảm theo phần trăm", label: "Giảm theo phần trăm" },
+    { value: "Giảm trực tiếp số tiền", label: "Giảm trực tiếp số tiền" },
+  ];
+
+  const StatusOptions = [
+    { value: null, label: "Tất cả" },
+    { value: "Hoạt động", label: "Hoạt động" },
+    { value: "Hết hạn", label: "Hết hạn" },
+    { value: "Không hoạt động", label: "Không hoạt động" },
+  ];
 
   const columns = [
     {
@@ -319,7 +433,7 @@ const PromotionList = () => {
               </div>
             </div>
             <TableTopHead
-              onExportExcel={handleExportExcel}
+              onExportExcel={false}
               onRefresh={handleRefresh}
             />
             <div className="page-btn">
@@ -340,13 +454,105 @@ const PromotionList = () => {
             </div>
           )}
 
-          <div className="card table-list-card">
-            <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <SearchFromApi
-                callback={handleSearch}
-                rows={rows}
-                setRows={setRows}
-              />
+          {/* Bộ lọc */}
+          <div className="card mb-3 shadow-sm">
+            <div className="card-body p-4">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(1);
+                }}
+                className="row g-3 align-items-end"
+              >
+                <div className="col-12 col-md-6 col-lg-3">
+                  <label className="form-label fw-semibold text-dark mb-1">
+                    Thời gian bắt đầu
+                  </label>
+                  <CommonDateRangePicker
+                    value={startDateRange}
+                    onChange={(newRange) => {
+                      setStartDateRange(newRange);
+                      setCurrentPage(1);
+                    }}
+                    className="w-100"
+                  />
+                </div>
+                <div className="col-12 col-md-6 col-lg-3">
+                  <label className="form-label fw-semibold text-dark mb-1">
+                    Thời gian kết thúc
+                  </label>
+                  <CommonDateRangePicker
+                    value={endDateRange}
+                    onChange={(newRange) => {
+                      setEndDateRange(newRange);
+                      setCurrentPage(1);
+                    }}
+                    className="w-100"
+                  />
+                </div>
+                <div className="col-12 col-md-6 col-lg-3 ms-auto">
+                  <label className="form-label fw-semibold text-dark mb-1">
+                    Tìm kiếm
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Tên khuyến mãi, mô tả..."
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  />
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div className="card table-list-card no-search shadow-sm">
+            <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
+              <h5 className="mb-0 fw-semibold">
+                Danh sách khuyến mãi{" "}
+                <span className="text-muted small">
+                  ({filteredPromotions.length} bản ghi)
+                </span>
+              </h5>
+              <div className="d-flex gap-2 align-items-end flex-wrap">
+                <div style={{ minWidth: "180px" }}>
+                  <CommonSelect
+                    options={DiscountTypeOptions}
+                    value={
+                      DiscountTypeOptions.find(
+                        (o) => o.value === discountTypeFilter
+                      ) || DiscountTypeOptions[0]
+                    }
+                    onChange={(s) => {
+                      const v = s?.value;
+                      setDiscountTypeFilter(v || null);
+                      setCurrentPage(1);
+                    }}
+                    placeholder="Chọn loại giảm giá"
+                    className="w-100"
+                  />
+                </div>
+                <div style={{ minWidth: "180px" }}>
+                  <CommonSelect
+                    options={StatusOptions}
+                    value={
+                      StatusOptions.find(
+                        (o) => o.value === statusFilter
+                      ) || StatusOptions[0]
+                    }
+                    onChange={(s) => {
+                      const v = s?.value;
+                      setStatusFilter(v || null);
+                      setCurrentPage(1);
+                    }}
+                    placeholder="Chọn trạng thái"
+                    className="w-100"
+                  />
+                </div>
+              </div>
             </div>
             <div className="card-body p-0">
               <div className="table-responsive">

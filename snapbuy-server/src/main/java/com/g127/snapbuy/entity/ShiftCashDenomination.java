@@ -16,8 +16,8 @@ import java.util.UUID;
 @Builder
 public class ShiftCashDenomination {
 
-    public static final String TYPE_OPENING = "OPENING";
-    public static final String TYPE_CLOSING = "CLOSING";
+    public static final String TYPE_OPENING = "Mờ";
+    public static final String TYPE_CLOSING = "Đóng";
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -39,7 +39,7 @@ public class ShiftCashDenomination {
 
     @Column(name = "denomination_type", length = 10)
     @Builder.Default
-    private String denominationType = TYPE_CLOSING; // OPENING hoặc CLOSING
+    private String denominationType = TYPE_CLOSING;
 
     @Column(name = "created_date")
     private LocalDateTime createdDate;

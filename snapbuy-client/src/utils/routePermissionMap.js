@@ -26,7 +26,7 @@ export const routeRoleMap = {
     "Nhân viên kho",
   ],
 
-  "/order-history": null,
+  "/order-history": ["Quản trị viên", "Chủ cửa hàng", "Nhân viên bán hàng"],
 
   "/transaction-history": null,
 

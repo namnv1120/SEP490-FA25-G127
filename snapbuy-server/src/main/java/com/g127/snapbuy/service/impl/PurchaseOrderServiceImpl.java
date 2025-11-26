@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -425,13 +426,39 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
     @Override
     @Transactional
-    public PageResponse<PurchaseOrderResponse> searchByKeyword(String keyword, Pageable pageable) {
+    public PageResponse<PurchaseOrderResponse> searchByKeyword(String keyword, String status, LocalDateTime orderDateFrom, LocalDateTime orderDateTo, LocalDateTime receivedDateFrom, LocalDateTime receivedDateTo, Pageable pageable) {
         String orderByClause = buildOrderByClause(pageable.getSort());
         
         boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
-        String whereClause = hasKeyword 
-                ? "WHERE LOWER(po.purchase_order_number) LIKE LOWER(CONCAT('%', :keyword, '%'))"
-                : "";
+        boolean hasStatus = status != null && !status.trim().isEmpty();
+        boolean hasOrderDateFrom = orderDateFrom != null;
+        boolean hasOrderDateTo = orderDateTo != null;
+        boolean hasReceivedDateFrom = receivedDateFrom != null;
+        boolean hasReceivedDateTo = receivedDateTo != null;
+        
+        List<String> conditions = new ArrayList<>();
+        if (hasKeyword) {
+            conditions.add("LOWER(po.purchase_order_number) LIKE LOWER(CONCAT('%', :keyword, '%'))");
+        }
+        if (hasStatus) {
+            conditions.add("LOWER(po.status) = LOWER(:status)");
+        }
+        if (hasOrderDateFrom) {
+            conditions.add("po.order_date >= :orderDateFrom");
+        }
+        if (hasOrderDateTo) {
+            conditions.add("po.order_date <= :orderDateTo");
+        }
+        if (hasReceivedDateFrom) {
+            conditions.add("po.received_date >= :receivedDateFrom");
+        }
+        if (hasReceivedDateTo) {
+            conditions.add("po.received_date <= :receivedDateTo");
+        }
+        
+        String whereClause = conditions.isEmpty() 
+                ? "" 
+                : "WHERE " + String.join(" AND ", conditions);
         
         String baseQuery = "SELECT po.* FROM purchase_order po " +
                 "LEFT JOIN suppliers s ON po.supplier_id = s.supplier_id " +
@@ -448,11 +475,41 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         if (hasKeyword) {
             countQ.setParameter("keyword", keyword.trim());
         }
+        if (hasStatus) {
+            countQ.setParameter("status", status.trim());
+        }
+        if (hasOrderDateFrom) {
+            countQ.setParameter("orderDateFrom", orderDateFrom);
+        }
+        if (hasOrderDateTo) {
+            countQ.setParameter("orderDateTo", orderDateTo);
+        }
+        if (hasReceivedDateFrom) {
+            countQ.setParameter("receivedDateFrom", receivedDateFrom);
+        }
+        if (hasReceivedDateTo) {
+            countQ.setParameter("receivedDateTo", receivedDateTo);
+        }
         Long totalCount = ((Number) countQ.getSingleResult()).longValue();
         
         Query dataQ = entityManager.createNativeQuery(baseQuery, PurchaseOrder.class);
         if (hasKeyword) {
             dataQ.setParameter("keyword", keyword.trim());
+        }
+        if (hasStatus) {
+            dataQ.setParameter("status", status.trim());
+        }
+        if (hasOrderDateFrom) {
+            dataQ.setParameter("orderDateFrom", orderDateFrom);
+        }
+        if (hasOrderDateTo) {
+            dataQ.setParameter("orderDateTo", orderDateTo);
+        }
+        if (hasReceivedDateFrom) {
+            dataQ.setParameter("receivedDateFrom", receivedDateFrom);
+        }
+        if (hasReceivedDateTo) {
+            dataQ.setParameter("receivedDateTo", receivedDateTo);
         }
         dataQ.setFirstResult((int) pageable.getOffset());
         dataQ.setMaxResults(pageable.getPageSize());

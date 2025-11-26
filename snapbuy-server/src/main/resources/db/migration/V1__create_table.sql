@@ -1,13 +1,13 @@
 CREATE TABLE accounts
 (
     account_id    UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    full_name     NVARCHAR(100)        NOT NULL,
-    username      NVARCHAR(50) UNIQUE  NOT NULL,
-    password_hash NVARCHAR(255)        NOT NULL,
-    email         NVARCHAR(100)        NULL,
-    phone         NVARCHAR(15)         NULL,
-    avatar_url    NVARCHAR(500)        NULL,
-    token_version INT                  NOT NULL DEFAULT 0,
+    full_name     NVARCHAR(100)       NOT NULL,
+    username      NVARCHAR(50) UNIQUE NOT NULL,
+    password_hash NVARCHAR(255)       NOT NULL,
+    email         NVARCHAR(100)       NULL,
+    phone         NVARCHAR(15)        NULL,
+    avatar_url    NVARCHAR(500)       NULL,
+    token_version INT                 NOT NULL DEFAULT 0,
     active        BIT                          DEFAULT 1,
     created_date  DATETIME2                    DEFAULT GETDATE(),
     updated_date  DATETIME2                    DEFAULT GETDATE(),
@@ -60,7 +60,7 @@ CREATE TABLE customers
     gender        NVARCHAR(6),
     created_date  DATETIME2                    DEFAULT GETDATE(),
     updated_date  DATETIME2                    DEFAULT GETDATE(),
-    points        INT                          NOT NULL DEFAULT 0
+    points        INT NOT NULL                 DEFAULT 0
 );
 
 CREATE TABLE categories
@@ -102,7 +102,7 @@ CREATE TABLE products
     unit          NVARCHAR(20)                 DEFAULT N'Cái',
     dimensions    NVARCHAR(50),
     image_url     NVARCHAR(500),
-    barcode       NVARCHAR(20)                NULL,
+    barcode       NVARCHAR(20)        NULL,
     active        BIT                          DEFAULT 1,
     created_date  DATETIME2                    DEFAULT GETDATE(),
     updated_date  DATETIME2                    DEFAULT GETDATE(),
@@ -136,7 +136,7 @@ CREATE TABLE purchase_order
     total_amount          DECIMAL(18, 2)      NOT NULL DEFAULT 0,
     tax_amount            DECIMAL(18, 2)               DEFAULT 0,
     notes                 NVARCHAR(500),
-    email_sent_at         DATETIME2                    NULL,
+    email_sent_at         DATETIME2           NULL,
     created_date          DATETIME2                    DEFAULT GETDATE(),
     updated_date          DATETIME2                    DEFAULT GETDATE(),
 
@@ -149,8 +149,8 @@ CREATE TABLE purchase_order_detail
     purchase_order_detail_id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     purchase_order_id        UNIQUEIDENTIFIER NOT NULL,
     product_id               UNIQUEIDENTIFIER NOT NULL,
-    quantity                 INT            NOT NULL,
-    unit_price               DECIMAL(18, 2) NOT NULL,
+    quantity                 INT              NOT NULL,
+    unit_price               DECIMAL(18, 2)   NOT NULL,
     received_quantity        INT                          DEFAULT 0,
     total_price              AS (received_quantity * unit_price),
 
@@ -200,8 +200,8 @@ CREATE TABLE orders
     total_amount    DECIMAL(18, 2)      NOT NULL DEFAULT 0,
     discount_amount DECIMAL(18, 2)               DEFAULT 0,
     tax_amount      DECIMAL(18, 2)               DEFAULT 0,
-    points_redeemed INT                          NULL DEFAULT 0,
-    points_earned   INT                          NULL DEFAULT 0,
+    points_redeemed INT                 NULL     DEFAULT 0,
+    points_earned   INT                 NULL     DEFAULT 0,
     notes           NVARCHAR(500),
     created_date    DATETIME2                    DEFAULT GETDATE(),
     updated_date    DATETIME2                    DEFAULT GETDATE(),
@@ -216,7 +216,7 @@ CREATE TABLE order_detail
     order_id        UNIQUEIDENTIFIER NOT NULL,
     product_id      UNIQUEIDENTIFIER NOT NULL,
     quantity        INT              NOT NULL,
-    
+
     unit_price      DECIMAL(18, 2)   NOT NULL,
     discount        DECIMAL(5, 2)                DEFAULT 0,
     total_price     AS (quantity * unit_price * (1 - discount / 100)),
@@ -273,12 +273,12 @@ CREATE INDEX ix_order_detail_order_id ON order_detail (order_id);
 CREATE INDEX ix_order_detail_product_id ON order_detail (product_id);
 CREATE INDEX ix_payment_order_id ON payments (order_id);
 CREATE INDEX ix_account_username ON accounts (username);
-CREATE UNIQUE INDEX UX_accounts_email ON accounts(email) WHERE email IS NOT NULL;
-CREATE UNIQUE INDEX UX_accounts_phone ON accounts(phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX UX_accounts_email ON accounts (email) WHERE email IS NOT NULL;
+CREATE UNIQUE INDEX UX_accounts_phone ON accounts (phone) WHERE phone IS NOT NULL;
 CREATE INDEX ix_inventory_transaction_product_id ON inventory_transaction (product_id);
-CREATE UNIQUE INDEX UX_products_barcode ON products(barcode) WHERE barcode IS NOT NULL;
-CREATE INDEX IX_products_barcode_search ON products(barcode);
-CREATE UNIQUE INDEX UX_customers_phone ON customers(phone) WHERE phone IS NOT NULL;
-CREATE UNIQUE INDEX UX_suppliers_phone ON suppliers(phone) WHERE phone IS NOT NULL;
-CREATE UNIQUE INDEX UX_suppliers_email ON suppliers(email) WHERE email IS NOT NULL;
+CREATE UNIQUE INDEX UX_products_barcode ON products (barcode) WHERE barcode IS NOT NULL;
+CREATE INDEX IX_products_barcode_search ON products (barcode);
+CREATE UNIQUE INDEX UX_customers_phone ON customers (phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX UX_suppliers_phone ON suppliers (phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX UX_suppliers_email ON suppliers (email) WHERE email IS NOT NULL;
 

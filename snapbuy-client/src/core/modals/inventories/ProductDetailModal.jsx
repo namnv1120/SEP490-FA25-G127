@@ -55,8 +55,6 @@ const ProductDetailModal = ({ isOpen, onClose, productId }) => {
       if (!container) return;
 
       if (product?.barcode?.trim()) {
-        // Kích thước hình chữ nhật vừa với khung (350px - padding 40px = ~310px width, height ~110px)
-        // Tăng width để đảm bảo text barcode dài không bị cắt
         await displayBarcodePreview(
           product.barcode,
           "barcode-preview-detail",
@@ -84,17 +82,6 @@ const ProductDetailModal = ({ isOpen, onClose, productId }) => {
 
     updateBarcodePreview();
   }, [product?.barcode]);
-
-  const formatDateTime = (dateString) => {
-    if (!dateString) return "—";
-    return new Date(dateString).toLocaleString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
 
   const productImageUrl = product
     ? getImageUrl(product.imageUrl) || product69
@@ -197,15 +184,11 @@ const ProductDetailModal = ({ isOpen, onClose, productId }) => {
                       </li>
                       <li>
                         <h4>Danh mục</h4>
-                        <h6>{product.categoryName || "—"}</h6>
+                        <h6>{product.parentCategoryName || product.categoryName || "—"}</h6>
                       </li>
                       <li>
-                        <h4>Đơn vị</h4>
-                        <h6>{product.unit || "—"}</h6>
-                      </li>
-                      <li>
-                        <h4>Kích thước</h4>
-                        <h6>{product.dimensions || "—"}</h6>
+                        <h4>Danh mục con</h4>
+                        <h6>{product.subCategoryName || "—"}</h6>
                       </li>
                       <li>
                         <h4>Giá bán</h4>
@@ -216,16 +199,16 @@ const ProductDetailModal = ({ isOpen, onClose, productId }) => {
                         <h6>{product.costPrice?.toLocaleString() || "0"} ₫</h6>
                       </li>
                       <li>
+                        <h4>Đơn vị</h4>
+                        <h6>{product.unit || "—"}</h6>
+                      </li>
+                      <li>
+                        <h4>Kích thước</h4>
+                        <h6>{product.dimensions || "—"}</h6>
+                      </li>
+                      <li>
                         <h4>Nhà cung cấp</h4>
                         <h6>{product.supplierName || "—"}</h6>
-                      </li>
-                      <li>
-                        <h4>Ngày tạo</h4>
-                        <h6>{formatDateTime(product.createdDate)}</h6>
-                      </li>
-                      <li>
-                        <h4>Ngày cập nhật</h4>
-                        <h6>{formatDateTime(product.updatedDate)}</h6>
                       </li>
                       <li>
                         <h4>Mô tả</h4>

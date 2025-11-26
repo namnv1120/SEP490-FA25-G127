@@ -8,6 +8,7 @@ import com.g127.snapbuy.dto.response.PageResponse;
 import com.g127.snapbuy.service.CategoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -72,7 +73,7 @@ public class CategoryController {
             @RequestParam(defaultValue = "createdDate") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDir) {
         // For native query, we don't use Sort in Pageable as the query already has ORDER BY
-        var pageable = org.springframework.data.domain.PageRequest.of(
+        var pageable = PageRequest.of(
             Math.max(page, 0), 
             Math.min(Math.max(size, 1), 200)
         );
@@ -89,7 +90,7 @@ public class CategoryController {
             @RequestParam(defaultValue = "createdDate") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDir) {
         // For native query, we don't use Sort in Pageable as the query already has ORDER BY
-        var pageable = org.springframework.data.domain.PageRequest.of(
+        var pageable = PageRequest.of(
             Math.max(page, 0), 
             Math.min(Math.max(size, 1), 200)
         );

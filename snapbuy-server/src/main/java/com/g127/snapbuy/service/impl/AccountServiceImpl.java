@@ -14,6 +14,7 @@ import com.g127.snapbuy.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -104,7 +105,7 @@ public class AccountServiceImpl implements AccountService {
             acc = accountRepository.save(acc);
             acc.getRoles().addAll(staffRoles);
             acc = accountRepository.save(acc);
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+        } catch (DataIntegrityViolationException e) {
             throw new IllegalArgumentException("Tên đăng nhập/Email/SĐT đã tồn tại hoặc dữ liệu không hợp lệ");
         }
         return accountMapper.toResponse(acc);
@@ -126,7 +127,7 @@ public class AccountServiceImpl implements AccountService {
             account = accountRepository.save(account);
             account.getRoles().add(role);
             account = accountRepository.save(account);
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+        } catch (DataIntegrityViolationException e) {
             throw new IllegalArgumentException("Tên đăng nhập/Email/SĐT đã tồn tại hoặc dữ liệu không hợp lệ");
         }
         return accountMapper.toResponse(account);

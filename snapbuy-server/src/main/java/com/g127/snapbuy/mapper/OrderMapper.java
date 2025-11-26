@@ -10,6 +10,7 @@ import com.g127.snapbuy.entity.Payment;
 import org.mapstruct.*;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -76,7 +77,7 @@ public interface OrderMapper {
         return unitPrice
                 .multiply(BigDecimal.valueOf(quantity))
                 .multiply(BigDecimal.ONE.subtract(
-                        disc.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP)
+                        disc.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
                 ));
     }
 }

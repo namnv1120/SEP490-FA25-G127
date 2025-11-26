@@ -32,6 +32,23 @@ export const searchProducts = async (keyword, page = 0, size = 10, sortBy = 'cre
   return response.data?.result || response.data;
 };
 
+export const searchProductsPaged = async ({ keyword, active, categoryId, subCategoryId, page = 0, size = 10, sortBy = 'createdDate', sortDir = 'DESC' }) => {
+  try {
+    const params = { page, size, sortBy, sortDir };
+    if (keyword && keyword.trim()) params.keyword = keyword.trim();
+    if (typeof active === 'boolean') params.active = active;
+    if (categoryId) params.categoryId = categoryId;
+    if (subCategoryId) params.subCategoryId = subCategoryId;
+    const response = await axios.get(`${REST_API_BASE_URL}/search-paged`, {
+      headers: getAuthHeaders().headers,
+      params,
+    });
+    return response.data.result || response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Lỗi khi tìm kiếm sản phẩm (phân trang)!');
+  }
+};
+
 export const getProductById = async (id) => {
   const response = await axios.get(`${REST_API_BASE_URL}/${id}`, getAuthHeaders());
   return response.data?.result || response.data;

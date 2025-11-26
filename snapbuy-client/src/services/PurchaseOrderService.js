@@ -121,10 +121,15 @@ export const cancelPurchaseOrder = async (orderId) => {
   }
 };
 
-export const searchPurchaseOrders = async (keyword, page = 0, size = 10, sortBy = 'orderDate', sortDir = 'DESC') => {
+export const searchPurchaseOrders = async (keyword, page = 0, size = 10, sortBy = 'orderDate', sortDir = 'DESC', status = null, orderDateFrom = null, orderDateTo = null, receivedDateFrom = null, receivedDateTo = null) => {
   try {
     const params = new URLSearchParams();
     if (keyword) params.append('keyword', keyword);
+    if (status) params.append('status', status);
+    if (orderDateFrom) params.append('orderDateFrom', orderDateFrom);
+    if (orderDateTo) params.append('orderDateTo', orderDateTo);
+    if (receivedDateFrom) params.append('receivedDateFrom', receivedDateFrom);
+    if (receivedDateTo) params.append('receivedDateTo', receivedDateTo);
     params.append('page', page);
     params.append('size', size);
     params.append('sortBy', sortBy);

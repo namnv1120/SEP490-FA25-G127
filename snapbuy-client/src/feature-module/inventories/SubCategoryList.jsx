@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import CommonFooter from "../../components/footer/CommonFooter";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
+import CommonSelect from "../../components/select/common-select";
 import {
   getAllCategories,
   searchSubCategories,
@@ -20,6 +21,7 @@ const SubCategoryList = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
   const [searchQuery, setSearchQuery] = useState(undefined);
+  const [statusFilter, setStatusFilter] = useState(null); // null=Tất cả, true=Hoạt động, false=Không hoạt động
   const [subCategories, setSubCategories] = useState([]);
   const [parentCategories, setParentCategories] = useState([]);
   const [error, setError] = useState(null);
@@ -28,6 +30,15 @@ const SubCategoryList = () => {
   const [editSubCategoryId, setEditSubCategoryId] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+
+  const StatusOptions = useMemo(
+    () => [
+      { value: null, label: "Tất cả" },
+      { value: true, label: "Hoạt động" },
+      { value: false, label: "Không hoạt động" },
+    ],
+    []
+  );
 
   // Fetch parent categories once for dropdowns
   useEffect(() => {
@@ -84,21 +95,21 @@ const SubCategoryList = () => {
           description: cat.description || "Không có",
           createddate: cat.createdDate
             ? new Date(cat.createdDate).toLocaleDateString("vi-VN", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-              })
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
             : "Không có",
           updateddate: cat.updatedDate
             ? new Date(cat.updatedDate).toLocaleDateString("vi-VN", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-              })
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
             : "Không có",
           status:
             cat.active === 1 || cat.active === true
@@ -127,9 +138,12 @@ const SubCategoryList = () => {
     setCurrentPage(1);
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = (e) => {
+    if (e) e.preventDefault();
     setSearchQuery(undefined);
+    setStatusFilter(null);
     setCurrentPage(1);
+    fetchSubCategories();
     message.success("Danh sách danh mục con đã được làm mới!");
   };
 
@@ -172,6 +186,20 @@ const SubCategoryList = () => {
     }
   };
 
+  // Reset select-all checkbox và tất cả checkbox khi chuyển trang
+  useEffect(() => {
+    const selectAllCheckbox = document.getElementById("select-all");
+    if (selectAllCheckbox) {
+      selectAllCheckbox.checked = false;
+    }
+    const checkboxes = document.querySelectorAll(
+      '.table-list-card input[type="checkbox"][data-id]'
+    );
+    checkboxes.forEach((cb) => {
+      cb.checked = false;
+    });
+  }, [currentPage]);
+
   // Handle select-all checkbox
   useEffect(() => {
     const selectAllCheckbox = document.getElementById("select-all");
@@ -194,7 +222,7 @@ const SubCategoryList = () => {
         selectAllCheckbox.removeEventListener("change", handleSelectAll);
       }
     };
-  }, [subCategories]);
+  }, [subCategories, currentPage]);
 
   const columns = [
     {
@@ -239,9 +267,8 @@ const SubCategoryList = () => {
       body: (data) => (
         <div className="d-flex align-items-center gap-2">
           <span
-            className={`badge fw-medium fs-10 ${
-              data.status === "Hoạt động" ? "bg-success" : "bg-danger"
-            }`}
+            className={`badge fw-medium fs-10 ${data.status === "Hoạt động" ? "bg-success" : "bg-danger"
+              }`}
           >
             {data.status}
           </span>
@@ -293,6 +320,7 @@ const SubCategoryList = () => {
               </div>
             </div>
             <TableTopHead
+              showExcel={false}
               onRefresh={handleRefresh}
             />
             <div className="page-btn">
@@ -315,24 +343,52 @@ const SubCategoryList = () => {
 
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <SearchFromApi
-                callback={handleSearch}
-                rows={rows}
-                setRows={setRows}
-              />
+              <div className="search-set">
+                <SearchFromApi
+                  callback={handleSearch}
+                  rows={rows}
+                  setRows={setRows}
+                />
+              </div>
+              <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
+                <div>
+                  <CommonSelect
+                    options={StatusOptions}
+                    value={
+                      StatusOptions.find((o) => o.value === statusFilter) ||
+                      StatusOptions[0]
+                    }
+                    onChange={(s) => {
+                      const v = s?.value;
+                      setStatusFilter(v === true || v === false ? v : null);
+                      setCurrentPage(1);
+                    }}
+                    placeholder="Trạng thái"
+                    width={180}
+                    className=""
+                  />
+                </div>
+              </div>
             </div>
             <div className="card-body">
               <div className="table-responsive category-table">
                 <PrimeDataTable
                   column={columns}
-                  data={subCategories}
+                  data={subCategories.filter((cat) => {
+                    if (statusFilter === null) return true;
+                    return cat.active === statusFilter;
+                  })}
                   rows={rows}
                   setRows={setRows}
                   currentPage={currentPage}
                   setCurrentPage={setCurrentPage}
-                  totalRecords={totalRecords}
+                  totalRecords={
+                    statusFilter === null
+                      ? totalRecords
+                      : subCategories.filter((cat) => cat.active === statusFilter).length
+                  }
                   dataKey="categoryId"
-                  serverSidePagination={true}
+                  serverSidePagination={statusFilter === null}
                 />
               </div>
             </div>

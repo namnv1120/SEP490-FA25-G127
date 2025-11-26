@@ -8,12 +8,16 @@ import com.g127.snapbuy.repository.AccountRepository;
 import com.g127.snapbuy.repository.PosSettingsRepository;
 import com.g127.snapbuy.service.PosSettingsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
@@ -35,23 +39,32 @@ public class PosSettingsServiceImpl implements PosSettingsService {
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản: " + username));
     }
 
-    @Override
-    public PosSettingsResponse getSettings() {
-        UUID currentAccountId = resolveCurrentAccountId();
-        Account account = accountRepository.findById(currentAccountId)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
-
-        PosSettings settings = posSettingsRepository.findByAccount(account)
-                .orElseGet(() -> {
-                    // Nếu chưa có settings, tạo mặc định cho chủ cửa hàng này
-                    PosSettings defaultSettings = PosSettings.builder()
-                            .account(account)
-                            .taxPercent(BigDecimal.ZERO)
-                            .discountPercent(BigDecimal.ZERO)
-                            .loyaltyPointsPercent(BigDecimal.ZERO)
-                            .build();
-                    return posSettingsRepository.save(defaultSettings);
+    private boolean isShopOwnerOrAdmin() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return false;
+        return auth.getAuthorities().stream()
+                .anyMatch(a -> {
+                    String authority = a.getAuthority();
+                    return "ROLE_Chủ cửa hàng".equalsIgnoreCase(authority) ||
+                           "ROLE_Quản trị viên".equalsIgnoreCase(authority);
                 });
+    }
+
+    private Account findShopOwnerAccount() {
+        List<Account> shopOwners = accountRepository.findByRoleName("Chủ cửa hàng");
+        if (shopOwners == null || shopOwners.isEmpty()) {
+            throw new NoSuchElementException("Không tìm thấy tài khoản chủ cửa hàng. Vui lòng tạo tài khoản chủ cửa hàng trước.");
+        }
+        return shopOwners.get(0);
+    }
+
+    @Override
+    @Transactional
+    public PosSettingsResponse getSettings() {
+        // Luôn trả về settings của chủ cửa hàng (global settings)
+        Account shopOwner = findShopOwnerAccount();
+        PosSettings settings = posSettingsRepository.findByAccount(shopOwner)
+                .orElseGet(() -> createDefaultSettings(shopOwner));
 
         return PosSettingsResponse.builder()
                 .settingsId(settings.getSettingsId())
@@ -63,16 +76,40 @@ public class PosSettingsServiceImpl implements PosSettingsService {
                 .build();
     }
 
+    private PosSettings createDefaultSettings(Account shopOwner) {
+        // Kiểm tra lại một lần nữa để tránh race condition
+        return posSettingsRepository.findByAccount(shopOwner)
+                .orElseGet(() -> {
+                    // Nếu chưa có settings của chủ cửa hàng, tạo mặc định
+                    PosSettings defaultSettings = PosSettings.builder()
+                            .account(shopOwner)
+                            .taxPercent(BigDecimal.ZERO)
+                            .discountPercent(BigDecimal.ZERO)
+                            .loyaltyPointsPercent(BigDecimal.ZERO)
+                            .build();
+                    try {
+                        return posSettingsRepository.save(defaultSettings);
+                    } catch (DataIntegrityViolationException e) {
+                        // Nếu bị duplicate (do race condition), tìm lại
+                        return posSettingsRepository.findByAccount(shopOwner)
+                                .orElseThrow(() -> new IllegalStateException("Không thể tạo settings cho chủ cửa hàng"));
+                    }
+                });
+    }
+
     @Override
     @Transactional
     public PosSettingsResponse updateSettings(PosSettingsUpdateRequest request) {
-        UUID currentAccountId = resolveCurrentAccountId();
-        Account account = accountRepository.findById(currentAccountId)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
+        // Chỉ cho phép chủ cửa hàng hoặc quản trị viên update settings
+        if (!isShopOwnerOrAdmin()) {
+            throw new AccessDeniedException("Chỉ chủ cửa hàng hoặc quản trị viên mới có quyền cập nhật cài đặt POS");
+        }
 
-        PosSettings settings = posSettingsRepository.findByAccount(account)
+        // Tìm hoặc tạo settings cho chủ cửa hàng
+        Account shopOwner = findShopOwnerAccount();
+        PosSettings settings = posSettingsRepository.findByAccount(shopOwner)
                 .orElseGet(() -> PosSettings.builder()
-                        .account(account)
+                        .account(shopOwner)
                         .build());
 
         settings.setTaxPercent(request.getTaxPercent());
@@ -80,7 +117,7 @@ public class PosSettingsServiceImpl implements PosSettingsService {
         settings.setLoyaltyPointsPercent(request.getLoyaltyPointsPercent());
         // Đảm bảo account được set (nếu là record mới)
         if (settings.getAccount() == null) {
-            settings.setAccount(account);
+            settings.setAccount(shopOwner);
         }
 
         PosSettings saved = posSettingsRepository.save(settings);

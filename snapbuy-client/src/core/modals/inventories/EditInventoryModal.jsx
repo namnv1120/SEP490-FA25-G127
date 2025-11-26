@@ -56,6 +56,23 @@ const EditInventory = ({ visible, onClose, inventory, onUpdated }) => {
       }
     }
 
+    // Validate relationships between values
+    const minStock = Number(formData.minimumStock);
+    const maxStock = Number(formData.maximumStock);
+    const reorder = Number(formData.reorderPoint);
+
+    if (!isNaN(minStock) && !isNaN(maxStock) && minStock >= maxStock) {
+      newErrors.maximumStock = "Tồn kho tối đa phải lớn hơn tồn kho tối thiểu.";
+    }
+
+    if (!isNaN(minStock) && !isNaN(reorder) && reorder <= minStock) {
+      newErrors.reorderPoint = "Điểm đặt hàng lại phải lớn hơn tồn kho tối thiểu.";
+    }
+
+    if (!isNaN(maxStock) && !isNaN(reorder) && reorder >= maxStock) {
+      newErrors.reorderPoint = "Điểm đặt hàng lại phải nhỏ hơn tồn kho tối đa.";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };

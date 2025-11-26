@@ -79,11 +79,24 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
 
     const codeCount = {};
     const nameCount = {};
+    // Map để kiểm tra supplier code trùng với tên khác nhau
+    const supplierCodeToNameMap = new Map();
+
     data.forEach((row) => {
       const code = (row.productCode || "").trim().toLowerCase();
       const name = (row.productName || "").trim().toLowerCase();
       if (code) codeCount[code] = (codeCount[code] || 0) + 1;
       if (name) nameCount[name] = (nameCount[name] || 0) + 1;
+
+      // Track supplier code và name mapping
+      const supplierCode = (row.supplierCode || "").trim().toLowerCase();
+      const supplierName = (row.supplierName || "").trim().toLowerCase();
+      if (supplierCode && supplierName) {
+        if (!supplierCodeToNameMap.has(supplierCode)) {
+          supplierCodeToNameMap.set(supplierCode, new Set());
+        }
+        supplierCodeToNameMap.get(supplierCode).add(supplierName);
+      }
     });
 
     data.forEach((row, index) => {
@@ -113,11 +126,11 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
             normalizedName &&
             existingProductByCode.productName &&
             existingProductByCode.productName.trim().toLowerCase() !==
-              normalizedName
+            normalizedName
           ) {
             rowErrors.push(
               `Mã sản phẩm '${productCode}' đã tồn tại và thuộc về sản phẩm '${existingProductByCode.productName}'. ` +
-                `Tên bạn nhập '${row.productName || ""}' không khớp`
+              `Tên bạn nhập '${row.productName || ""}' không khớp`
             );
           } else {
             rowErrors.push(
@@ -130,7 +143,6 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
         }
       }
 
-      // Validate Product Name
       const productName = (row.productName || "").trim();
       if (!productName) {
         rowErrors.push("Tên sản phẩm không được để trống");
@@ -153,11 +165,11 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
             normalizedCode &&
             existingProductByName.productCode &&
             existingProductByName.productCode.trim().toLowerCase() !==
-              normalizedCode
+            normalizedCode
           ) {
             rowErrors.push(
               `Tên sản phẩm '${productName}' đã tồn tại với mã '${existingProductByName.productCode}', ` +
-                `nhưng bạn nhập mã '${row.productCode || ""}'`
+              `nhưng bạn nhập mã '${row.productCode || ""}'`
             );
           } else if (!isSameProduct) {
             rowErrors.push(
@@ -187,6 +199,15 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
         if (!/^[a-zA-Z0-9_-]+$/.test(supplierCode)) {
           rowErrors.push(
             "Mã nhà cung cấp chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang"
+          );
+        }
+
+        // Kiểm tra trùng mã nhà cung cấp với tên khác nhau trong file
+        const normalizedSupplierCode = supplierCode.toLowerCase();
+        const supplierNamesForCode = supplierCodeToNameMap.get(normalizedSupplierCode);
+        if (supplierNamesForCode && supplierNamesForCode.size > 1) {
+          rowErrors.push(
+            `Mã nhà cung cấp '${supplierCode}' được sử dụng với nhiều tên khác nhau trong file.`
           );
         }
       }
@@ -281,7 +302,7 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
                 (c) =>
                   c.categoryName &&
                   c.categoryName.trim().toLowerCase() ===
-                    subCategoryName.toLowerCase()
+                  subCategoryName.toLowerCase()
               );
               if (subCategory) {
                 if (subCategory.parentCategoryId !== category.categoryId) {

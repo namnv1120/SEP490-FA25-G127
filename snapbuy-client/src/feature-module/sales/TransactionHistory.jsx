@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Link } from "react-router-dom";
 import CommonFooter from "../../components/footer/CommonFooter";
-import TooltipIcons from "../../components/tooltip-content/tooltipIcons";
+import TableTopHead from "../../components/table-top-head";
 import PrimeDataTable from "../../components/data-table";
 import CommonSelect from "../../components/select/common-select";
 import CommonDateRangePicker from "../../components/date-range-picker/common-date-range-picker";
-import RefreshIcon from "../../components/tooltip-content/refresh";
-import CollapesIcon from "../../components/tooltip-content/collapes";
 import { getTransactions } from "../../services/InventoryTransactionsService";
+import { message } from "antd";
 
 const TransactionHistory = () => {
   const [listData, setListData] = useState([]);
@@ -155,6 +153,15 @@ const TransactionHistory = () => {
     loadTransactions();
   }, [loadTransactions]);
 
+  const handleRefresh = () => {
+    setSearchProduct("");
+    setSelectedTransactionType("");
+    setSelectedReferenceType("");
+    setDateRange([null, null]);
+    setCurrentPage(1);
+    message.success("Đã làm mới lịch sử giao dịch kho thành công!");
+  };
+
   // Handle select-all checkbox
   useEffect(() => {
     const selectAllCheckbox = document.getElementById("select-all");
@@ -266,12 +273,12 @@ const TransactionHistory = () => {
       body: (data) =>
         data.transactionDate && !isNaN(new Date(data.transactionDate).getTime())
           ? new Date(data.transactionDate).toLocaleString("vi-VN", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-            })
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
           : "-",
     },
     {
@@ -309,10 +316,11 @@ const TransactionHistory = () => {
               <h6>Theo dõi nhập, xuất, điều chỉnh hàng tồn</h6>
             </div>
           </div>
-          <ul className="table-top-head">
-            <RefreshIcon onClick={loadTransactions} loading={loading} />
-            <CollapesIcon />
-          </ul>
+          <TableTopHead
+            onRefresh={handleRefresh}
+            showExcel={false}
+            showMail={false}
+          />
         </div>
 
         <div className="card mb-3 shadow-sm">
@@ -393,14 +401,6 @@ const TransactionHistory = () => {
               Danh sách giao dịch{" "}
               <span className="text-muted small">({totalRecords} bản ghi)</span>
             </h5>
-            <ul className="table-top-head">
-              <TooltipIcons />
-              <li>
-                <Link to="#" className="text-muted">
-                  <i className="ti ti-printer fs-5" />
-                </Link>
-              </li>
-            </ul>
           </div>
 
           <div className="card-body p-0">

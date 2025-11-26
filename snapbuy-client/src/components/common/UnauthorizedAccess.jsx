@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { allRoutes } from '../../routes/AllRoutes';
 
 const UnauthorizedAccess = () => {
   const navigate = useNavigate();

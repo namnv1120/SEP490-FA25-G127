@@ -24,7 +24,7 @@ import {
   getOrderById,
 } from "../../services/OrderService";
 import { getPosSettings } from "../../services/PosSettingsService";
-import { getBestDiscountForProduct, getBestDiscountInfoForProduct } from "../../services/PromotionService";
+import { getBestDiscountInfoForProduct } from "../../services/PromotionService";
 import { getImageUrl } from "../../utils/imageUtils";
 import usePermission from "../../hooks/usePermission";
 import {
@@ -820,18 +820,31 @@ const Pos = () => {
   };
 
   useEffect(() => {
-    if (!createdOrder) {
+    if (!createdOrder && !customerSearchVisible) {
       setActiveTab("all");
       const timer = setTimeout(() => {
         const barcodeInputElement = document.getElementById("barcode-input");
-        if (barcodeInputElement) {
+        if (barcodeInputElement && !customerSearchVisible) {
           barcodeInputElement.focus({ preventScroll: true });
           setIsBarcodeInputFocused(true);
         }
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [createdOrder]);
+  }, [createdOrder, customerSearchVisible]);
+
+  // Focus vào customer search input khi chuyển sang chế độ tìm kiếm
+  useEffect(() => {
+    if (customerSearchVisible) {
+      const timer = setTimeout(() => {
+        const customerInput = document.querySelector('.customer-search-input');
+        if (customerInput) {
+          customerInput.focus();
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [customerSearchVisible]);
 
   const handleUpdateQuantity = (
     itemId,
@@ -1311,12 +1324,12 @@ const Pos = () => {
   }, []);
 
   const handlePaymentCompleted = async () => {
-    const previousCustomerId = selectedCustomer;
-    const isGuest = String(previousCustomerId) === GUEST_CUSTOMER_ID;
-
     // Reset cart và các state khác
     setCartItems([]);
     setCustomerSearchVisible(false);
+    setCustomerSearchQuery("");
+    setCustomerSearchResults([]);
+    setShowCustomerDropdown(false);
     setSelectedShipping(null);
     setCreatedOrder(null);
     setSelectedPaymentMethod(null);
@@ -1327,22 +1340,9 @@ const Pos = () => {
 
     await fetchProducts();
 
-    // Nếu không phải khách lẻ, fetch lại thông tin khách hàng để cập nhật điểm
-    if (!isGuest && previousCustomerId) {
-      try {
-        const updatedCustomerData = await getCustomerById(previousCustomerId);
-        setSelectedCustomer(previousCustomerId);
-        setSelectedCustomerData(updatedCustomerData);
-      } catch {
-        // Nếu lỗi, reset về khách lẻ
-        setSelectedCustomer(GUEST_CUSTOMER_ID);
-        setSelectedCustomerData(guestCustomer);
-      }
-    } else {
-      // Nếu là khách lẻ, reset về khách lẻ
-      setSelectedCustomer(GUEST_CUSTOMER_ID);
-      setSelectedCustomerData(guestCustomer);
-    }
+    // Luôn reset về khách lẻ sau khi thanh toán xong
+    setSelectedCustomer(GUEST_CUSTOMER_ID);
+    setSelectedCustomerData(guestCustomer);
   };
 
   // Helper functions for CloseShiftModal
@@ -1466,9 +1466,9 @@ const Pos = () => {
           }}>
             <div style={{ marginBottom: '20px' }}>
               <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="10" stroke="#faad14" strokeWidth="2"/>
-                <path d="M12 8V12" stroke="#faad14" strokeWidth="2" strokeLinecap="round"/>
-                <circle cx="12" cy="16" r="1" fill="#faad14"/>
+                <circle cx="12" cy="12" r="10" stroke="#faad14" strokeWidth="2" />
+                <path d="M12 8V12" stroke="#faad14" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="12" cy="16" r="1" fill="#faad14" />
               </svg>
             </div>
             <h2 style={{ fontSize: '24px', fontWeight: 600, color: '#262626', marginBottom: '12px' }}>
@@ -1478,7 +1478,7 @@ const Pos = () => {
               Hãy liên hệ chủ cửa hàng để được mở ca
             </p>
             <button
-              onClick={() => navigate('/sales-dashboard')}
+              onClick={() => navigate('/sale-dashboard')}
               style={{
                 padding: '10px 24px',
                 fontSize: '16px',
@@ -1819,6 +1819,7 @@ const Pos = () => {
                 onClick={(e) => {
                   if (
                     !createdOrder &&
+                    !customerSearchVisible &&
                     !e.target.closest("input") &&
                     !e.target.closest("button") &&
                     !e.target.closest("a")
@@ -1931,7 +1932,17 @@ const Pos = () => {
                       <div className="flex-grow-1">
                         <div
                           className="form-control"
-                          onClick={() => setCustomerSearchVisible(true)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCustomerSearchVisible(true);
+                            // Focus vào input sau khi render
+                            setTimeout(() => {
+                              const customerInput = document.querySelector('.customer-search-input');
+                              if (customerInput) {
+                                customerInput.focus();
+                              }
+                            }, 0);
+                          }}
                           style={{
                             cursor: "pointer",
                             display: "flex",
@@ -1950,7 +1961,7 @@ const Pos = () => {
                       <div className="flex-grow-1 position-relative">
                         <input
                           type="text"
-                          className="form-control"
+                          className="form-control customer-search-input"
                           placeholder="Nhập số điện thoại để tìm kiếm..."
                           value={customerSearchQuery}
                           onChange={(e) => handleCustomerSearch(e.target.value)}
@@ -1967,6 +1978,7 @@ const Pos = () => {
                             );
                           }}
                           autoFocus
+                          onClick={(e) => e.stopPropagation()}
                         />
                         {showCustomerDropdown &&
                           customerSearchResults.length > 0 && (

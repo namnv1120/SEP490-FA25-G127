@@ -1,4 +1,3 @@
- 
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { message } from "antd";
@@ -344,6 +343,12 @@ const AddProduct = () => {
                                   barcode: e.target.value,
                                 })
                               }
+                              onKeyDown={(e) => {
+                                // Ngăn chặn Enter key submit form khi quét barcode
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                }
+                              }}
                               placeholder="Nhập barcode hoặc tạo tự động"
                             />
                             <button

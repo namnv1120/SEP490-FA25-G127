@@ -105,6 +105,20 @@ const StaffAccountList = () => {
     }
   };
 
+  // Reset select-all checkbox và tất cả checkbox khi chuyển trang
+  useEffect(() => {
+    const selectAllCheckbox = document.getElementById("select-all");
+    if (selectAllCheckbox) {
+      selectAllCheckbox.checked = false;
+    }
+    const checkboxes = document.querySelectorAll(
+      '.table-list-card input[type="checkbox"][data-id]'
+    );
+    checkboxes.forEach((cb) => {
+      cb.checked = false;
+    });
+  }, [currentPage]);
+
   // Handle select-all checkbox
   useEffect(() => {
     const selectAllCheckbox = document.getElementById("select-all");
@@ -127,7 +141,7 @@ const StaffAccountList = () => {
         selectAllCheckbox.removeEventListener("change", handleSelectAll);
       }
     };
-  }, [data]);
+  }, [data, currentPage]);
 
   const columns = [
     {
@@ -192,9 +206,8 @@ const StaffAccountList = () => {
         return (
           <div className="d-flex align-items-center gap-2">
             <span
-              className={`badge fw-medium fs-10 ${
-                active ? "bg-success" : "bg-danger"
-              }`}
+              className={`badge fw-medium fs-10 ${active ? "bg-success" : "bg-danger"
+                }`}
             >
               {active ? "Hoạt động" : "Không hoạt động"}
             </span>

@@ -38,6 +38,25 @@ public class InventoryServiceImpl implements InventoryService {
             throw new AppException(ErrorCode.INVALID_STOCK_OPERATION);
         }
 
+        Integer minimumStock = request.getMinimumStock();
+        Integer maximumStock = request.getMaximumStock();
+        Integer reorderPoint = request.getReorderPoint();
+
+        // Validate: minimumStock < maximumStock
+        if (minimumStock != null && maximumStock != null && minimumStock >= maximumStock) {
+            throw new IllegalArgumentException("Tồn kho tối đa phải lớn hơn tồn kho tối thiểu.");
+        }
+
+        // Validate: reorderPoint > minimumStock
+        if (minimumStock != null && reorderPoint != null && reorderPoint <= minimumStock) {
+            throw new IllegalArgumentException("Điểm đặt hàng lại phải lớn hơn tồn kho tối thiểu.");
+        }
+
+        // Validate: reorderPoint < maximumStock
+        if (maximumStock != null && reorderPoint != null && reorderPoint >= maximumStock) {
+            throw new IllegalArgumentException("Điểm đặt hàng lại phải nhỏ hơn tồn kho tối đa.");
+        }
+
         Inventory inventory = inventoryMapper.toEntity(request);
         inventory.setProduct(product);
         inventory.setLastUpdated(LocalDateTime.now());
@@ -53,6 +72,31 @@ public class InventoryServiceImpl implements InventoryService {
     public InventoryResponse updateInventory(UUID id, InventoryUpdateRequest request) {
         Inventory inventory = inventoryRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.INVENTORY_NOT_FOUND));
+
+        Integer minimumStock = request.getMinimumStock() != null 
+                ? request.getMinimumStock() 
+                : inventory.getMinimumStock();
+        Integer maximumStock = request.getMaximumStock() != null 
+                ? request.getMaximumStock() 
+                : inventory.getMaximumStock();
+        Integer reorderPoint = request.getReorderPoint() != null 
+                ? request.getReorderPoint() 
+                : inventory.getReorderPoint();
+
+        // Validate: minimumStock < maximumStock
+        if (minimumStock != null && maximumStock != null && minimumStock >= maximumStock) {
+            throw new IllegalArgumentException("Tồn kho tối đa phải lớn hơn tồn kho tối thiểu.");
+        }
+
+        // Validate: reorderPoint > minimumStock
+        if (minimumStock != null && reorderPoint != null && reorderPoint <= minimumStock) {
+            throw new IllegalArgumentException("Điểm đặt hàng lại phải lớn hơn tồn kho tối thiểu.");
+        }
+
+        // Validate: reorderPoint < maximumStock
+        if (maximumStock != null && reorderPoint != null && reorderPoint >= maximumStock) {
+            throw new IllegalArgumentException("Điểm đặt hàng lại phải nhỏ hơn tồn kho tối đa.");
+        }
 
         if (request.getMinimumStock() != null) {
             inventory.setMinimumStock(request.getMinimumStock());

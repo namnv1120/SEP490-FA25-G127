@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { allRoutes } from "../../routes/AllRoutes";
 import CommonFooter from "../../components/footer/CommonFooter";
@@ -7,12 +7,14 @@ import { stockImg1 } from "../../utils/imagepath";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import SearchFromApi from "../../components/data-table/search";
+import CommonSelect from "../../components/select/common-select";
 import {
   deleteProduct,
   importProducts,
   toggleProductStatus,
-  searchProducts,
+  searchProductsPaged,
 } from "../../services/ProductService";
+import { getAllCategories } from "../../services/CategoryService";
 import ImportProductModal from "./ImportProduct";
 import ProductDetailModal from "../../core/modals/inventories/ProductDetailModal";
 import { message } from "antd";
@@ -23,7 +25,11 @@ const ProductList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
-  const [searchQuery, setSearchQuery] = useState(undefined);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState(null); // true=Hoạt động, false=Không hoạt động, null=Tất cả
+  const [categoryFilter, setCategoryFilter] = useState(null); // UUID của parent category
+  const [subCategoryFilter, setSubCategoryFilter] = useState(null); // UUID của sub category
+  const [allCategories, setAllCategories] = useState([]);
   const [products, setProducts] = useState([]);
 
   const [error, setError] = useState(null);
@@ -35,19 +41,32 @@ const ProductList = () => {
 
   const route = allRoutes;
 
+  const StatusOptions = useMemo(
+    () => [
+      { value: null, label: "Tất cả" },
+      { value: true, label: "Hoạt động" },
+      { value: false, label: "Không hoạt động" },
+    ],
+    []
+  );
+
   const fetchProducts = useCallback(async () => {
     try {
       setError(null);
 
-      const backendPage = currentPage - 1;
+      const backendPage = Math.max(0, (currentPage || 1) - 1);
+      const params = {
+        keyword: searchQuery || undefined,
+        active: statusFilter,
+        categoryId: categoryFilter || undefined,
+        subCategoryId: subCategoryFilter || undefined,
+        page: backendPage,
+        size: rows,
+        sortBy: "createdDate",
+        sortDir: "DESC",
+      };
 
-      const result = await searchProducts(
-        searchQuery || "",
-        backendPage,
-        rows,
-        "createdDate",
-        "DESC"
-      );
+      const result = await searchProductsPaged(params);
 
       const mappedProducts = (result.content || [])
         .filter((product) => product && product.productId != null)
@@ -55,20 +74,33 @@ const ProductList = () => {
           const imageUrl = product.image || product.imageUrl || "";
           const fullImageUrl = getImageUrl(imageUrl) || stockImg1;
 
+          let categoryDisplay = product.categoryName || "Không có";
+          let subCategoryDisplay = "";
+
+          if (product.subCategoryName) {
+            categoryDisplay = product.parentCategoryName || product.categoryName || "Không có";
+            subCategoryDisplay = product.subCategoryName;
+          } else if (product.parentCategoryId) {
+            categoryDisplay = product.categoryName || "Không có";
+            subCategoryDisplay = "";
+          } else {
+            categoryDisplay = product.categoryName || "Không có";
+            subCategoryDisplay = "";
+          }
+
           return {
             productId: product.productId,
             productCode: product.productCode || "Không có",
             productName: product.productName || "Không có",
             productImage: fullImageUrl,
-            category: product.categoryName || "Không có",
+            category: categoryDisplay,
+            subCategory: subCategoryDisplay,
             description: product.description || "Không có",
             supplier: product.supplierName || "Không có",
             dimensions: product.dimensions || "Không có",
             imageUrl: imageUrl,
             unitprice: `${product.unitPrice?.toLocaleString() || "0.00"} đ`,
             rawUnitPrice: product.unitPrice || 0,
-            unit: product.unit || "Không có",
-            qty: product.quantityInStock?.toString() || "0",
             status:
               product.active === 1 || product.active === true
                 ? "Hoạt động"
@@ -84,11 +116,44 @@ const ProductList = () => {
     } finally {
       void 0;
     }
-  }, [currentPage, rows, searchQuery]);
+  }, [currentPage, rows, searchQuery, statusFilter, categoryFilter, subCategoryFilter]);
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const categories = await getAllCategories();
+        setAllCategories(categories || []);
+      } catch {
+        // Ignore error
+      }
+    };
+    loadCategories();
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, categoryFilter, subCategoryFilter]);
+
+  const parentCategoryOptions = useMemo(() => {
+    const parents = (allCategories || [])
+      .filter((cat) => !cat.parentCategoryId && cat.active)
+      .map((cat) => ({ label: cat.categoryName, value: cat.categoryId }));
+    return [{ value: null, label: "Tất cả" }, ...parents];
+  }, [allCategories]);
+
+  const subCategoryOptions = useMemo(() => {
+    if (!categoryFilter) {
+      return [{ value: null, label: "Tất cả" }];
+    }
+    const subs = (allCategories || [])
+      .filter((cat) => cat.parentCategoryId === categoryFilter && cat.active)
+      .map((cat) => ({ label: cat.categoryName, value: cat.categoryId }));
+    return [{ value: null, label: "Tất cả" }, ...subs];
+  }, [allCategories, categoryFilter]);
 
   const handleExportExcel = async () => {
     if (!products || products.length === 0) {
@@ -149,14 +214,16 @@ const ProductList = () => {
   };
 
   const handleRefresh = () => {
-    setSearchQuery(undefined);
+    setSearchQuery("");
+    setStatusFilter(null);
+    setCategoryFilter(null);
+    setSubCategoryFilter(null);
     setCurrentPage(1);
     message.success("Danh sách sản phẩm đã được làm mới!");
   };
 
   const handleSearch = (value) => {
-    setSearchQuery(value);
-    setCurrentPage(1);
+    setSearchQuery(value || "");
   };
 
   const handleDeleteClick = (product) => {
@@ -191,6 +258,20 @@ const ProductList = () => {
     }
   };
 
+  // Reset select-all checkbox và tất cả checkbox khi chuyển trang
+  useEffect(() => {
+    const selectAllCheckbox = document.getElementById("select-all");
+    if (selectAllCheckbox) {
+      selectAllCheckbox.checked = false;
+    }
+    const checkboxes = document.querySelectorAll(
+      '.table-list-card input[type="checkbox"][data-id]'
+    );
+    checkboxes.forEach((cb) => {
+      cb.checked = false;
+    });
+  }, [currentPage]);
+
   // Handle select-all checkbox
   useEffect(() => {
     const selectAllCheckbox = document.getElementById("select-all");
@@ -213,7 +294,7 @@ const ProductList = () => {
         selectAllCheckbox.removeEventListener("change", handleSelectAll);
       }
     };
-  }, [products]);
+  }, [products, currentPage]);
 
   const columns = [
     {
@@ -275,23 +356,18 @@ const ProductList = () => {
       sortable: true,
     },
     {
+      header: "Danh mục con",
+      field: "subCategory",
+      key: "subCategory",
+      sortable: true,
+      body: (data) => data.subCategory || "",
+    },
+    {
       header: "Giá",
       field: "unitprice",
       key: "unitprice",
       sortable: true,
       sortField: "rawUnitPrice",
-    },
-    {
-      header: "Đơn vị",
-      field: "unit",
-      key: "unit",
-      sortable: true,
-    },
-    {
-      header: "Số lượng",
-      field: "qty",
-      key: "qty",
-      sortable: true,
     },
     {
       header: "Trạng thái",
@@ -384,11 +460,67 @@ const ProductList = () => {
 
           <div className="card table-list-card">
             <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <SearchFromApi
-                callback={handleSearch}
-                rows={rows}
-                setRows={setRows}
-              />
+              <div className="search-set">
+                <SearchFromApi
+                  callback={handleSearch}
+                  rows={rows}
+                  setRows={setRows}
+                />
+              </div>
+              <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
+                <div className="me-2">
+                  <CommonSelect
+                    options={StatusOptions}
+                    value={
+                      StatusOptions.find((o) => o.value === statusFilter) ||
+                      StatusOptions[0]
+                    }
+                    onChange={(s) => {
+                      const v = s?.value;
+                      setStatusFilter(v === true || v === false ? v : null);
+                    }}
+                    placeholder="Trạng thái"
+                    width={180}
+                    className=""
+                  />
+                </div>
+                <div className="me-2">
+                  <CommonSelect
+                    options={parentCategoryOptions}
+                    value={
+                      parentCategoryOptions.find(
+                        (o) => o.value === (categoryFilter || null)
+                      ) || parentCategoryOptions[0]
+                    }
+                    onChange={(s) => {
+                      const v = s?.value;
+                      setCategoryFilter(v || null);
+                      setSubCategoryFilter(null); // Reset sub category khi đổi parent category
+                    }}
+                    placeholder="Danh mục"
+                    width={200}
+                    className=""
+                  />
+                </div>
+                <div>
+                  <CommonSelect
+                    options={subCategoryOptions}
+                    value={
+                      subCategoryOptions.find(
+                        (o) => o.value === (subCategoryFilter || null)
+                      ) || subCategoryOptions[0]
+                    }
+                    onChange={(s) => {
+                      const v = s?.value;
+                      setSubCategoryFilter(v || null);
+                    }}
+                    placeholder="Danh mục con"
+                    width={200}
+                    className=""
+                    disabled={!categoryFilter}
+                  />
+                </div>
+              </div>
               {/* <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
                   <div className="dropdown me-2">
                     <Link

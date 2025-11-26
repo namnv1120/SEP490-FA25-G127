@@ -18,6 +18,9 @@ public class ProductResponse {
     private String description;
     private UUID categoryId;
     private String categoryName;
+    private UUID parentCategoryId;
+    private String parentCategoryName;
+    private String subCategoryName;
     private UUID supplierId;
     private String supplierName;
     private String unit;

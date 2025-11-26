@@ -396,6 +396,12 @@ const EditProduct = () => {
                                     setProduct({ ...product, barcode: e.target.value });
                                     setErrors((prev) => ({ ...prev, barcode: "" }));
                                   }}
+                                  onKeyDown={(e) => {
+                                    // Ngăn chặn Enter key submit form khi quét barcode
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                    }
+                                  }}
                                   className={`form-control ${errors.barcode ? "is-invalid" : ""}`}
                                   placeholder="Nhập barcode hoặc tạo tự động"
                                 />

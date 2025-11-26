@@ -1,10 +1,10 @@
 /* eslint-disable no-unused-vars */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
 import CommonFooter from "../../components/footer/CommonFooter";
-import CommonDatePicker from "../../components/date-picker/common-date-picker";
 import SearchFromApi from "../../components/data-table/search";
+import CommonSelect from "../../components/select/common-select";
 import { getAllInventories } from "../../services/InventoryService";
 import { message } from "antd";
 import EditInventory from "../../core/modals/inventories/EditInventoryModal";
@@ -16,13 +16,24 @@ const InventoryList = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
-  const [dateFilter, setDateFilter] = useState(new Date());
+  const [statusFilter, setStatusFilter] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedInventory, setSelectedInventory] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
+
+  const StatusOptions = useMemo(
+    () => [
+      { value: null, label: "Tất cả" },
+      { value: "Thiếu hàng", label: "Thiếu hàng" },
+      { value: "Cần đặt hàng", label: "Cần đặt hàng" },
+      { value: "Quá tồn", label: "Quá tồn" },
+      { value: "Ổn định", label: "Ổn định" },
+    ],
+    []
+  );
 
   const openEditModal = (row) => {
     setSelectedInventory(row);
@@ -34,7 +45,6 @@ const InventoryList = () => {
     setSelectedInventory(null);
   };
 
-  // ✅ Lấy dữ liệu tồn kho từ backend
   useEffect(() => {
     fetchInventories();
   }, []);
@@ -45,9 +55,8 @@ const InventoryList = () => {
       setError(null);
       const data = await getAllInventories();
 
-      // Map API data to match table structure (giống ProductPriceList)
       const mapped = data
-        .filter((item) => item && item.inventoryId != null) // Lọc bỏ null/undefined inventoryId
+        .filter((item) => item && item.inventoryId != null)
         .map((item) => ({
           inventoryId: item.inventoryId,
           productId: item.productId || "Không có",
@@ -69,17 +78,52 @@ const InventoryList = () => {
     }
   };
 
-  // ✅ Lọc danh sách theo ô tìm kiếm
+  const getItemStatus = (item) => {
+    const qty = Number(item.quantityInStock);
+    const min = Number(item.minimumStock);
+    const max = Number(item.maximumStock);
+    const reorder = Number(item.reorderPoint);
+
+    if (qty < min) return "Thiếu hàng";
+    if (qty < reorder) return "Cần đặt hàng";
+    if (qty > max) return "Quá tồn";
+    return "Ổn định";
+  };
+
   const filteredList = inventoryList.filter((item) => {
-    if (!searchQuery) return true;
-    return (
-      item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.productId
-        ?.toString()
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
-    );
+    // Filter theo search query
+    if (searchQuery) {
+      const matchesSearch =
+        item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.productId
+          ?.toString()
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
+      if (!matchesSearch) return false;
+    }
+
+    // Filter theo trạng thái
+    if (statusFilter) {
+      const itemStatus = getItemStatus(item);
+      if (itemStatus !== statusFilter) return false;
+    }
+
+    return true;
   });
+
+  // Reset select-all checkbox và tất cả checkbox khi chuyển trang
+  useEffect(() => {
+    const selectAllCheckbox = document.getElementById("select-all");
+    if (selectAllCheckbox) {
+      selectAllCheckbox.checked = false;
+    }
+    const checkboxes = document.querySelectorAll(
+      '.table-list-card input[type="checkbox"][data-id]'
+    );
+    checkboxes.forEach((cb) => {
+      cb.checked = false;
+    });
+  }, [currentPage]);
 
   // Handle select-all checkbox
   useEffect(() => {
@@ -103,9 +147,8 @@ const InventoryList = () => {
         selectAllCheckbox.removeEventListener("change", handleSelectAll);
       }
     };
-  }, [inventoryList]);
+  }, [inventoryList, currentPage]);
 
-  // ✅ Cấu hình cột bảng
   const columns = [
     {
       header: (
@@ -142,31 +185,37 @@ const InventoryList = () => {
         </button>
       ),
     },
-    { header: "Tồn kho hiện tại", field: "quantityInStock" },
+    { header: "Tồn kho", field: "quantityInStock" },
     { header: "Tồn kho tối thiểu", field: "minimumStock" },
     { header: "Tồn kho tối đa", field: "maximumStock" },
     { header: "Điểm đặt hàng lại", field: "reorderPoint" },
     {
       header: "Trạng thái",
+      field: "status",
+      key: "status",
       body: (rowData) => {
-        const qty = Number(rowData.quantityInStock);
-        const min = Number(rowData.minimumStock);
-        const max = Number(rowData.maximumStock);
-
-        if (qty < min)
-          return <span className="badge bg-danger">Thiếu hàng</span>;
-        if (qty > max)
-          return <span className="badge bg-warning text-dark">Quá tồn</span>;
-        return <span className="badge bg-success">Ổn định</span>;
+        const status = getItemStatus(rowData);
+        switch (status) {
+          case "Thiếu hàng":
+            return <span className="badge bg-danger">Thiếu hàng</span>;
+          case "Cần đặt hàng":
+            return <span className="badge bg-warning text-dark">Cần đặt hàng</span>;
+          case "Quá tồn":
+            return <span className="badge bg-warning text-dark">Quá tồn</span>;
+          case "Ổn định":
+            return <span className="badge bg-success">Ổn định</span>;
+          default:
+            return <span className="badge bg-secondary">—</span>;
+        }
       },
     },
-    {
-      header: "Ngày cập nhật",
-      body: (rowData) =>
-        rowData.lastUpdated
-          ? new Date(rowData.lastUpdated).toLocaleDateString("vi-VN")
-          : "-",
-    },
+    // {
+    //   header: "Ngày cập nhật",
+    //   body: (rowData) =>
+    //     rowData.lastUpdated
+    //       ? new Date(rowData.lastUpdated).toLocaleDateString("vi-VN")
+    //       : "-",
+    // },
     {
       header: "",
       field: "actions",
@@ -185,13 +234,11 @@ const InventoryList = () => {
     },
   ];
 
-  // ✅ Xử lý tìm kiếm
   const handleSearch = (value) => setSearchQuery(value);
 
   return (
     <div className="page-wrapper">
       <div className="content">
-        {/* 🔹 Header */}
         <div className="page-header">
           <div className="add-item d-flex">
             <div className="page-title">
@@ -199,26 +246,48 @@ const InventoryList = () => {
               <h6>Theo dõi lượng hàng, cảnh báo thiếu hoặc quá tồn</h6>
             </div>
           </div>
-          <TableTopHead onRefresh={fetchInventories} />
+          <TableTopHead
+            showExcel={false}
+            onRefresh={(e) => {
+              if (e) e.preventDefault();
+              fetchInventories();
+              message.success("Đã làm mới danh sách tồn kho!");
+            }}
+          />
         </div>
 
-        {/* 🔹 Thông báo lỗi */}
         {error && (
           <div className="alert alert-danger" role="alert">
             {error}
           </div>
         )}
 
-        {/* 🔹 Danh sách tồn kho */}
         <div className="card table-list-card">
           <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-            <SearchFromApi
-              callback={handleSearch}
-              rows={rows}
-              setRows={setRows}
-            />
-            <div className="d-flex align-items-center flex-wrap row-gap-3">
-              <CommonDatePicker value={dateFilter} onChange={setDateFilter} />
+            <div className="search-set">
+              <SearchFromApi
+                callback={handleSearch}
+                rows={rows}
+                setRows={setRows}
+              />
+            </div>
+            <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
+              <div>
+                <CommonSelect
+                  options={StatusOptions}
+                  value={
+                    StatusOptions.find((o) => o.value === statusFilter) ||
+                    StatusOptions[0]
+                  }
+                  onChange={(s) => {
+                    const v = s?.value;
+                    setStatusFilter(v || null);
+                  }}
+                  placeholder="Trạng thái"
+                  width={180}
+                  className=""
+                />
+              </div>
             </div>
           </div>
 

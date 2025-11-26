@@ -214,9 +214,9 @@ public class PosShiftServiceImpl implements PosShiftService {
 
     @Override
     @Transactional(readOnly = true)
-    public java.util.List<PosShiftResponse> getMyShifts(String username, String status) {
+    public List<PosShiftResponse> getMyShifts(String username, String status) {
         UUID accountId = resolveAccountId(username);
-        java.util.List<PosShift> shifts = (status == null || status.isBlank())
+        List<PosShift> shifts = (status == null || status.isBlank())
                 ? posShiftRepository.findByAccount_AccountIdOrderByOpenedAtDesc(accountId)
                 : posShiftRepository.findByAccount_AccountIdAndStatusOrderByOpenedAtDesc(accountId, status);
         return shifts.stream().map(this::toResponse).toList();
@@ -234,7 +234,6 @@ public class PosShiftServiceImpl implements PosShiftService {
     @Override
     @Transactional(readOnly = true)
     public List<PosShiftResponse> getAllActiveShifts(String ownerUsername) {
-        // Lấy tất cả các ca đang mở
         List<PosShift> shifts = posShiftRepository.findByStatusOrderByOpenedAtDesc("Mở");
         return shifts.stream().map(this::toResponse).toList();
     }

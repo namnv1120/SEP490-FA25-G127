@@ -39,14 +39,14 @@ const ImportExcelModal = ({
   templateData,
   categoriesData = [],
   suppliersData = [],
-  guideData = null, // Custom guide data, nếu null thì dùng default
-  validateData = null, // Hàm validate dữ liệu, trả về { errors: [], validatedData: [] }
+  guideData = null,
+  validateData = null,
   title = "Thêm dữ liệu từ excel",
 }) => {
   const [fileData, setFileData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fileList, setFileList] = useState([]);
-  const [validationErrors, setValidationErrors] = useState({}); // { rowIndex: "error message" }
+  const [validationErrors, setValidationErrors] = useState({});
 
   const handleFileUpload = async (file) => {
     try {
@@ -238,8 +238,8 @@ const ImportExcelModal = ({
     }
 
     // Trang 1: Products template
-      const headers = Object.keys(templateData[0] || {});
-      const isProductPriceTemplate = headers.includes("Giá bán") && headers.includes("Giá nhập");
+    const headers = Object.keys(templateData[0] || {});
+    const isProductPriceTemplate = headers.includes("Giá bán") && headers.includes("Giá nhập");
 
     const wsProducts = workbook.addWorksheet(isProductPriceTemplate ? "Giá sản phẩm" : "Sản phẩm");
     const headerRow = wsProducts.addRow(headers);
@@ -260,10 +260,33 @@ const ImportExcelModal = ({
         return value;
       });
       const dataRow = wsProducts.addRow(values);
-      dataRow.eachCell((cell) => {
+      dataRow.eachCell((cell, colNumber) => {
         cell.alignment = { horizontal: "left", vertical: "middle" };
+        // Set format text cho cột Barcode để tránh Excel chuyển số dài thành E+
+        const headerName = headers[colNumber - 1];
+        if (headerName === "Barcode") {
+          cell.numFmt = '@'; // Text format
+          // Đảm bảo giá trị là string
+          if (cell.value !== null && cell.value !== undefined) {
+            cell.value = String(cell.value);
+          }
+        }
       });
     });
+
+    // Set format text cho toàn bộ cột Barcode (bao gồm cả header và data rows)
+    const barcodeColumnIndex = headers.findIndex(h => h === "Barcode");
+    if (barcodeColumnIndex !== -1) {
+      const barcodeColumn = wsProducts.getColumn(barcodeColumnIndex + 1);
+      barcodeColumn.numFmt = '@'; // Text format cho toàn bộ cột
+      // Đảm bảo tất cả cells trong cột Barcode là string
+      wsProducts.eachRow((row) => {
+        const cell = row.getCell(barcodeColumnIndex + 1);
+        if (cell.value !== null && cell.value !== undefined) {
+          cell.value = String(cell.value);
+        }
+      });
+    }
 
     // Set độ rộng cột và alignment - tất cả căn trái
     if (isProductPriceTemplate) {
@@ -274,18 +297,29 @@ const ImportExcelModal = ({
         { width: 12, alignment: { horizontal: "left", vertical: "middle" } }, // Giá nhập
       ];
     } else {
-      wsProducts.columns = [
-        { width: 18, alignment: { horizontal: "left", vertical: "middle" } }, // Mã
-        { width: 40, alignment: { horizontal: "left", vertical: "middle" } }, // Tên sản phẩm
-        { width: 40, alignment: { horizontal: "left", vertical: "middle" } }, // Mô tả
-        { width: 20, alignment: { horizontal: "left", vertical: "middle" } }, // Danh mục
-        { width: 25, alignment: { horizontal: "left", vertical: "middle" } }, // Danh mục con
-        { width: 18, alignment: { horizontal: "left", vertical: "middle" } }, // Mã ncc
-        { width: 40, alignment: { horizontal: "left", vertical: "middle" } }, // Tên ncc
-        { width: 10, alignment: { horizontal: "left", vertical: "middle" } }, // Đơn vị
-        { width: 15, alignment: { horizontal: "left", vertical: "middle" } }, // Kích thước
-        { width: 20, alignment: { horizontal: "left", vertical: "middle" } }, // Barcode
-      ];
+      wsProducts.columns = headers.map((header) => {
+        const widths = {
+          "Mã sản phẩm": 18,
+          "Tên sản phẩm": 40,
+          "Mô tả": 40,
+          "Danh mục": 20,
+          "Danh mục con": 25,
+          "Mã nhà cung cấp": 18,
+          "Tên nhà cung cấp": 40,
+          "Đơn vị": 10,
+          "Kích thước": 15,
+          "Barcode": 20,
+        };
+        const columnConfig = {
+          width: widths[header] || 20,
+          alignment: { horizontal: "left", vertical: "middle" },
+        };
+        // Set format text cho cột Barcode
+        if (header === "Barcode") {
+          columnConfig.numFmt = '@'; // Text format
+        }
+        return columnConfig;
+      });
     }
 
     // Trang 2: Categories (nếu có)
@@ -354,12 +388,57 @@ const ImportExcelModal = ({
       ];
     }
 
+    // Hàm loại bỏ dấu tiếng Việt
+    const removeVietnameseAccents = (str) => {
+      const accents = {
+        'à': 'a', 'á': 'a', 'ạ': 'a', 'ả': 'a', 'ã': 'a',
+        'â': 'a', 'ầ': 'a', 'ấ': 'a', 'ậ': 'a', 'ẩ': 'a', 'ẫ': 'a',
+        'ă': 'a', 'ằ': 'a', 'ắ': 'a', 'ặ': 'a', 'ẳ': 'a', 'ẵ': 'a',
+        'è': 'e', 'é': 'e', 'ẹ': 'e', 'ẻ': 'e', 'ẽ': 'e',
+        'ê': 'e', 'ề': 'e', 'ế': 'e', 'ệ': 'e', 'ể': 'e', 'ễ': 'e',
+        'ì': 'i', 'í': 'i', 'ị': 'i', 'ỉ': 'i', 'ĩ': 'i',
+        'ò': 'o', 'ó': 'o', 'ọ': 'o', 'ỏ': 'o', 'õ': 'o',
+        'ô': 'o', 'ồ': 'o', 'ố': 'o', 'ộ': 'o', 'ổ': 'o', 'ỗ': 'o',
+        'ơ': 'o', 'ờ': 'o', 'ớ': 'o', 'ợ': 'o', 'ở': 'o', 'ỡ': 'o',
+        'ù': 'u', 'ú': 'u', 'ụ': 'u', 'ủ': 'u', 'ũ': 'u',
+        'ư': 'u', 'ừ': 'u', 'ứ': 'u', 'ự': 'u', 'ử': 'u', 'ữ': 'u',
+        'ỳ': 'y', 'ý': 'y', 'ỵ': 'y', 'ỷ': 'y', 'ỹ': 'y',
+        'đ': 'd',
+        'À': 'A', 'Á': 'A', 'Ạ': 'A', 'Ả': 'A', 'Ã': 'A',
+        'Â': 'A', 'Ầ': 'A', 'Ấ': 'A', 'Ậ': 'A', 'Ẩ': 'A', 'Ẫ': 'A',
+        'Ă': 'A', 'Ằ': 'A', 'Ắ': 'A', 'Ặ': 'A', 'Ẳ': 'A', 'Ẵ': 'A',
+        'È': 'E', 'É': 'E', 'Ẹ': 'E', 'Ẻ': 'E', 'Ẽ': 'E',
+        'Ê': 'E', 'Ề': 'E', 'Ế': 'E', 'Ệ': 'E', 'Ể': 'E', 'Ễ': 'E',
+        'Ì': 'I', 'Í': 'I', 'Ị': 'I', 'Ỉ': 'I', 'Ĩ': 'I',
+        'Ò': 'O', 'Ó': 'O', 'Ọ': 'O', 'Ỏ': 'O', 'Õ': 'O',
+        'Ô': 'O', 'Ồ': 'O', 'Ố': 'O', 'Ộ': 'O', 'Ổ': 'O', 'Ỗ': 'O',
+        'Ơ': 'O', 'Ờ': 'O', 'Ớ': 'O', 'Ợ': 'O', 'Ở': 'O', 'Ỡ': 'O',
+        'Ù': 'U', 'Ú': 'U', 'Ụ': 'U', 'Ủ': 'U', 'Ũ': 'U',
+        'Ư': 'U', 'Ừ': 'U', 'Ứ': 'U', 'Ự': 'U', 'Ử': 'U', 'Ữ': 'U',
+        'Ỳ': 'Y', 'Ý': 'Y', 'Ỵ': 'Y', 'Ỷ': 'Y', 'Ỹ': 'Y',
+        'Đ': 'D'
+      };
+      return str.split('').map(char => accents[char] || char).join('');
+    };
+
+    // Format tên file: chữ đầu viết hoa, còn lại viết thường, không dấu
+    const formatFileName = (str) => {
+      // Loại bỏ dấu
+      const noAccent = removeVietnameseAccents(str);
+      // Thay khoảng trắng bằng underscore
+      const withUnderscore = noAccent.replace(/\s+/g, '_');
+      // Chữ đầu viết hoa, còn lại viết thường
+      if (withUnderscore.length === 0) return 'template';
+      return withUnderscore.charAt(0).toUpperCase() + withUnderscore.slice(1).toLowerCase();
+    };
+
     // Xuất file
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
-    saveAs(blob, `${title.replace(/\s+/g, "_").toLowerCase()}_template.xlsx`);
+    const fileName = `${formatFileName(title)}_template.xlsx`;
+    saveAs(blob, fileName);
     message.success("Tải về mẫu thành công!");
   };
 

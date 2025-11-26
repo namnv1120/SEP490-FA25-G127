@@ -17,9 +17,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
@@ -27,6 +30,8 @@ import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -98,7 +103,7 @@ public class ProductServiceImpl implements ProductService {
         Product savedProduct;
         try {
             savedProduct = productRepository.save(product);
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+        } catch (DataIntegrityViolationException e) {
             String errorMessage = e.getMessage();
             if (errorMessage != null && errorMessage.contains("UX_products_barcode")) {
                 throw new AppException(ErrorCode.BARCODE_ALREADY_EXISTS);
@@ -109,8 +114,8 @@ public class ProductServiceImpl implements ProductService {
         // Giá mặc định
         ProductPrice price = new ProductPrice();
         price.setProduct(savedProduct);
-        price.setUnitPrice(new java.math.BigDecimal("0.00"));
-        price.setCostPrice(new java.math.BigDecimal("0.00"));
+        price.setUnitPrice(new BigDecimal("0.00"));
+        price.setCostPrice(new BigDecimal("0.00"));
         price.setValidFrom(LocalDateTime.now());
         productPriceRepository.save(price);
 
@@ -188,7 +193,7 @@ public class ProductServiceImpl implements ProductService {
 
         try {
             return productMapper.toResponse(productRepository.save(product));
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+        } catch (DataIntegrityViolationException e) {
             String errorMessage = e.getMessage();
             if (errorMessage != null && errorMessage.contains("UX_products_barcode")) {
                 throw new AppException(ErrorCode.BARCODE_ALREADY_EXISTS);
@@ -203,6 +208,21 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
 
         ProductResponse response = productMapper.toResponse(product);
+
+        // Set parent category name and sub category name
+        if (product.getCategory() != null) {
+            if (product.getCategory().getParentCategoryId() != null) {
+                // Category có parent -> đây là subcategory
+                response.setSubCategoryName(product.getCategory().getCategoryName());
+                // Fetch parent category để lấy tên
+                categoryRepository.findById(product.getCategory().getParentCategoryId())
+                    .ifPresent(parent -> response.setParentCategoryName(parent.getCategoryName()));
+            } else {
+                // Category không có parent -> đây là parent category
+                response.setParentCategoryName(product.getCategory().getCategoryName());
+                response.setSubCategoryName(null);
+            }
+        }
 
         ProductPrice latestPrice = productPriceRepository
                 .findTopByProduct_ProductIdOrderByValidFromDesc(product.getProductId())
@@ -564,8 +584,8 @@ public class ProductServiceImpl implements ProductService {
 
                 ProductPrice price = new ProductPrice();
                 price.setProduct(savedProduct);
-                price.setUnitPrice(new java.math.BigDecimal("0.00"));
-                price.setCostPrice(new java.math.BigDecimal("0.00"));
+                price.setUnitPrice(new BigDecimal("0.00"));
+                price.setCostPrice(new BigDecimal("0.00"));
 
                 price.setValidFrom(LocalDateTime.now());
                 productPriceRepository.save(price);
@@ -633,22 +653,42 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public PageResponse<ProductResponse> searchByKeyword(String keyword, Pageable pageable) {
-        Page<Product> productPage = productRepository.searchByKeyword(keyword, 
-            org.springframework.data.domain.PageRequest.of(
+        Page<Product> productPage = productRepository.searchByKeyword(keyword, null, null, null,
+            PageRequest.of(
                 pageable.getPageNumber(),
                 pageable.getPageSize()
             ));
         
+        return buildProductPageResponse(productPage);
+    }
+
+    @Override
+    public PageResponse<ProductResponse> searchProductsPaged(String keyword, Boolean active, UUID categoryId, UUID subCategoryId, Pageable pageable) {
+        Page<Product> productPage = productRepository.searchByKeyword(
+            keyword == null || keyword.isBlank() ? null : keyword.trim(),
+            active,
+            categoryId,
+            subCategoryId,
+            PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize()
+            )
+        );
+        
+        return buildProductPageResponse(productPage);
+    }
+
+    private PageResponse<ProductResponse> buildProductPageResponse(Page<Product> productPage) {
         List<UUID> productIds = productPage.getContent().stream()
                 .map(Product::getProductId)
-                .filter(java.util.Objects::nonNull)
+                .filter(Objects::nonNull)
                 .toList();
         
         List<Product> productsWithRelations = productIds.isEmpty() 
             ? List.of()
             : productRepository.findAllById(productIds);
         
-        java.util.Map<UUID, Product> productMap = productsWithRelations.stream()
+        Map<UUID, Product> productMap = productsWithRelations.stream()
                 .collect(Collectors.toMap(Product::getProductId, p -> p));
         
         List<ProductResponse> responseList = productPage.getContent().stream()
@@ -659,6 +699,21 @@ public class ProductServiceImpl implements ProductService {
                     }
                     
                     ProductResponse response = productMapper.toResponse(fullProduct);
+                    
+                    // Set parent category name and sub category name
+                    if (fullProduct.getCategory() != null) {
+                        if (fullProduct.getCategory().getParentCategoryId() != null) {
+                            // Category có parent -> đây là subcategory
+                            response.setSubCategoryName(fullProduct.getCategory().getCategoryName());
+                            // Fetch parent category để lấy tên
+                            categoryRepository.findById(fullProduct.getCategory().getParentCategoryId())
+                                .ifPresent(parent -> response.setParentCategoryName(parent.getCategoryName()));
+                        } else {
+                            // Category không có parent -> đây là parent category
+                            response.setParentCategoryName(fullProduct.getCategory().getCategoryName());
+                            response.setSubCategoryName(null);
+                        }
+                    }
                     
                     productPriceRepository.findTopByProduct_ProductIdOrderByValidFromDesc(fullProduct.getProductId())
                             .ifPresent(latestPrice -> {
@@ -671,7 +726,7 @@ public class ProductServiceImpl implements ProductService {
                     
                     return response;
                 })
-                .filter(java.util.Objects::nonNull)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         
         return PageResponse.<ProductResponse>builder()

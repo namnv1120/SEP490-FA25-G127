@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import CommonFooter from "../../components/footer/CommonFooter";
 import TableTopHead from "../../components/table-top-head";
 import PrimeDataTable from "../../components/data-table";
-import SearchFromApi from "../../components/data-table/search";
 import {
   deletePurchaseOrder,
   approvePurchaseOrder,
@@ -20,6 +19,8 @@ import { allRoutes } from "../../routes/AllRoutes";
 import DeleteModal from "../../components/delete-modal";
 import PurchaseOrderDetailModal from "../../core/modals/sales/PurchaseOrderDetailModal";
 import { getMyInfo } from "../../services/AccountService";
+import CommonSelect from "../../components/select/common-select";
+import CommonDateRangePicker from "../../components/date-range-picker/common-date-range-picker";
 
 const PurchaseOrder = () => {
   const route = allRoutes;
@@ -35,6 +36,9 @@ const PurchaseOrder = () => {
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState(null);
+  const [statusFilter, setStatusFilter] = useState(null);
+  const [orderDateRange, setOrderDateRange] = useState([null, null]);
+  const [receivedDateRange, setReceivedDateRange] = useState([null, null]);
 
   const getAccountRole = () => {
     const role = localStorage.getItem("role");
@@ -55,6 +59,15 @@ const PurchaseOrder = () => {
     const result = isAdmin() || isOwner();
     return result;
   };
+
+  const StatusOptions = [
+    { value: null, label: "Tất cả" },
+    { value: "Chờ duyệt", label: "Chờ duyệt" },
+    { value: "Đã duyệt", label: "Đã duyệt" },
+    { value: "Chờ xác nhận", label: "Chờ xác nhận" },
+    { value: "Đã nhận hàng", label: "Đã nhận hàng" },
+    { value: "Đã hủy", label: "Đã hủy" },
+  ];
 
   const formatDateTime = (dateString) => {
     if (!dateString) return "—";
@@ -99,6 +112,15 @@ const PurchaseOrder = () => {
     setCurrentPage(1);
   };
 
+  const handleRefresh = () => {
+    setSearchQuery(undefined);
+    setStatusFilter(null);
+    setOrderDateRange([null, null]);
+    setReceivedDateRange([null, null]);
+    setCurrentPage(1);
+    message.success("Đã làm mới danh sách đơn đặt hàng!");
+  };
+
   const fetchPurchaseOrders = useCallback(async () => {
     try {
       setLoading(true);
@@ -107,12 +129,58 @@ const PurchaseOrder = () => {
       const backendSortDir = sortOrder === "asc" ? "ASC" : "DESC";
       const backendPage = currentPage - 1;
 
+      // Format date ranges for API
+      let orderDateFrom = null;
+      let orderDateTo = null;
+      if (orderDateRange[0] && orderDateRange[1]) {
+        const fromDate = new Date(orderDateRange[0]);
+        fromDate.setHours(0, 0, 0, 0);
+        const toDate = new Date(orderDateRange[1]);
+        toDate.setHours(23, 59, 59, 999);
+        const formatDate = (date) => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+          const hours = String(date.getHours()).padStart(2, "0");
+          const minutes = String(date.getMinutes()).padStart(2, "0");
+          const seconds = String(date.getSeconds()).padStart(2, "0");
+          return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+        };
+        orderDateFrom = formatDate(fromDate);
+        orderDateTo = formatDate(toDate);
+      }
+
+      let receivedDateFrom = null;
+      let receivedDateTo = null;
+      if (receivedDateRange[0] && receivedDateRange[1]) {
+        const fromDate = new Date(receivedDateRange[0]);
+        fromDate.setHours(0, 0, 0, 0);
+        const toDate = new Date(receivedDateRange[1]);
+        toDate.setHours(23, 59, 59, 999);
+        const formatDate = (date) => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+          const hours = String(date.getHours()).padStart(2, "0");
+          const minutes = String(date.getMinutes()).padStart(2, "0");
+          const seconds = String(date.getSeconds()).padStart(2, "0");
+          return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+        };
+        receivedDateFrom = formatDate(fromDate);
+        receivedDateTo = formatDate(toDate);
+      }
+
       const result = await searchPurchaseOrders(
         searchQuery || "",
         backendPage,
         rows,
         backendSortField,
-        backendSortDir
+        backendSortDir,
+        statusFilter || null,
+        orderDateFrom,
+        orderDateTo,
+        receivedDateFrom,
+        receivedDateTo
       );
 
       const formatted = (result.content || []).map((item) => ({
@@ -130,7 +198,7 @@ const PurchaseOrder = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, rows, searchQuery, sortField, sortOrder]);
+  }, [currentPage, rows, searchQuery, sortField, sortOrder, statusFilter, orderDateRange, receivedDateRange]);
 
   useEffect(() => {
     fetchPurchaseOrders();
@@ -145,6 +213,10 @@ const PurchaseOrder = () => {
     }
     setCurrentPage(1);
   };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, orderDateRange, receivedDateRange]);
 
   const handleBulkAction = async (action) => {
     try {
@@ -177,7 +249,7 @@ const PurchaseOrder = () => {
           const userInfo = await getMyInfo();
           currentAccountId = (userInfo.result || userInfo)?.id;
           console.log("Current accountId from API:", currentAccountId);
-          
+
           if (!currentAccountId) {
             message.error("Không tìm thấy thông tin tài khoản. Vui lòng đăng nhập lại!");
             return;
@@ -252,12 +324,12 @@ const PurchaseOrder = () => {
           action === "approve"
             ? "duyệt"
             : action === "cancel"
-            ? "huỷ"
-            : action === "receive"
-            ? "xác nhận nhận hàng"
-            : action === "revert"
-            ? "huỷ xác nhận"
-            : "xử lý";
+              ? "huỷ"
+              : action === "receive"
+                ? "xác nhận nhận hàng"
+                : action === "revert"
+                  ? "huỷ xác nhận"
+                  : "xử lý";
 
         message.warning({
           content: (
@@ -286,16 +358,15 @@ const PurchaseOrder = () => {
       for (const id of validOrders) {
         try {
           if (action === "approve") {
-            await approvePurchaseOrder(id, { 
+            await approvePurchaseOrder(id, {
               ownerAccountId: currentAccountId,
-              notes: "Duyệt hàng loạt" 
+              notes: "Duyệt hàng loạt"
             });
           } else if (action === "cancel") {
             await cancelPurchaseOrder(id);
           } else if (action === "receive") {
             const orderDetail = await getPurchaseOrderById(id);
 
-            // Cho phép receiveQuantity = 0 (nhà cung cấp hết hàng), chỉ cần có giá trị (không null)
             const allHaveReceivedQty = orderDetail.details?.every((d) => {
               const qty = d.receiveQuantity ?? d.receivedQuantity;
               return qty !== null && qty !== undefined;
@@ -304,15 +375,13 @@ const PurchaseOrder = () => {
             if (!allHaveReceivedQty) {
               const order = listData.find((o) => o.purchaseOrderId === id);
               errorMessages.push(
-                `${
-                  order?.purchaseOrderNumber || id
+                `${order?.purchaseOrderNumber || id
                 }: Chưa cập nhật số lượng thực nhận`
               );
               errorCount++;
               continue;
             }
 
-            // Chuẩn bị items array cho confirm request
             const items = orderDetail.details.map((detail) => ({
               purchaseOrderDetailId: detail.purchaseOrderDetailId || detail.id,
               receivedQuantity: detail.receiveQuantity ?? detail.receivedQuantity ?? 0,
@@ -405,6 +474,20 @@ const PurchaseOrder = () => {
     setSelectedItem(null);
   };
 
+  // Reset select-all checkbox và tất cả checkbox khi chuyển trang
+  useEffect(() => {
+    const selectAllCheckbox = document.getElementById("select-all");
+    if (selectAllCheckbox) {
+      selectAllCheckbox.checked = false;
+    }
+    const checkboxes = document.querySelectorAll(
+      '.table-list-card input[type="checkbox"][data-id]'
+    );
+    checkboxes.forEach((cb) => {
+      cb.checked = false;
+    });
+  }, [currentPage]);
+
   useEffect(() => {
     const selectAllCheckbox = document.getElementById("select-all");
 
@@ -427,7 +510,7 @@ const PurchaseOrder = () => {
         selectAllCheckbox.removeEventListener("change", handleSelectAll);
       }
     };
-  }, [listData]);
+  }, [listData, currentPage]);
 
   const generateEmailTemplate = async (orderIds) => {
     const orders = await Promise.all(
@@ -553,13 +636,12 @@ tr:hover { background-color: #f5f5f5; }
           html += `
 <tr>
 <td>${idx + 1}</td>
-<td>${escapeHtml(detail.productName || "")}${
-            detail.productCode
+<td>${escapeHtml(detail.productName || "")}${detail.productCode
               ? `<br><small style='color: #7f8c8d;'>Mã: ${escapeHtml(
-                  detail.productCode
-                )}</small>`
+                detail.productCode
+              )}</small>`
               : ""
-          }</td>
+            }</td>
 <td class='text-center'>${detail.quantity || 0}</td>
 <td class='text-right'>${formatCurrency(detail.unitPrice || 0)}</td>
 <td class='text-right'>${formatCurrency(itemTotal)}</td>
@@ -855,9 +937,6 @@ tr:hover { background-color: #f5f5f5; }
         const isReceived = status === "đã nhận hàng";
         const isCancelled = status === "đã hủy";
         const isWaitingConfirmation = status === "chờ xác nhận";
-
-        // Không hiện nút Edit và Delete khi đã nhận hàng hoặc đã hủy
-        // Chỉ cho phép edit khi ở trạng thái Chờ duyệt hoặc Đã duyệt
         if (isReceived || isCancelled || isWaitingConfirmation) {
           return null;
         }
@@ -894,7 +973,7 @@ tr:hover { background-color: #f5f5f5; }
               </div>
             </div>
             <TableTopHead
-              onRefresh={fetchPurchaseOrders}
+              onRefresh={handleRefresh}
               onSendEmail={handleSendEmail}
               showExcel={false}
               showMail={true}
@@ -948,13 +1027,91 @@ tr:hover { background-color: #f5f5f5; }
             </div>
           </div>
 
-          <div className="card table-list-card">
-            <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <SearchFromApi
-                callback={handleSearch}
-                rows={rows}
-                setRows={setRows}
-              />
+          {/* Bộ lọc */}
+          <div className="card mb-3 shadow-sm">
+            <div className="card-body p-4">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(1);
+                  fetchPurchaseOrders();
+                }}
+                className="row g-3 align-items-end"
+              >
+                <div className="col-12 col-md-6 col-lg-3">
+                  <label className="form-label fw-semibold text-dark mb-1">
+                    Ngày tạo phiếu
+                  </label>
+                  <CommonDateRangePicker
+                    value={orderDateRange}
+                    onChange={(newRange) => {
+                      setOrderDateRange(newRange);
+                      setCurrentPage(1);
+                    }}
+                    className="w-100"
+                  />
+                </div>
+                <div className="col-12 col-md-6 col-lg-3">
+                  <label className="form-label fw-semibold text-dark mb-1">
+                    Ngày nhận phiếu
+                  </label>
+                  <CommonDateRangePicker
+                    value={receivedDateRange}
+                    onChange={(newRange) => {
+                      setReceivedDateRange(newRange);
+                      setCurrentPage(1);
+                    }}
+                    className="w-100"
+                  />
+                </div>
+                <div className="col-12 col-md-6 col-lg-3">
+                  <label className="form-label fw-semibold text-dark mb-1">
+                    Trạng thái
+                  </label>
+                  <CommonSelect
+                    options={StatusOptions}
+                    value={
+                      StatusOptions.find((o) => o.value === statusFilter) ||
+                      StatusOptions[0]
+                    }
+                    onChange={(s) => {
+                      const v = s?.value;
+                      setStatusFilter(v || null);
+                      setCurrentPage(1);
+                    }}
+                    placeholder="Chọn trạng thái"
+                    className="w-100"
+                  />
+                </div>
+                <div className="col-12 col-md-6 col-lg-3">
+                  <label className="form-label fw-semibold text-dark mb-1">
+                    Tìm kiếm
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Mã tạo đơn, nhà cung cấp..."
+                    value={searchQuery || ""}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  />
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* Bảng */}
+          <div className="card table-list-card no-search shadow-sm">
+            <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
+              <h5 className="mb-0 fw-semibold">
+                Danh sách đơn đặt hàng{" "}
+                <span className="text-muted small">
+                  ({totalRecords} bản ghi)
+                </span>
+              </h5>
+
             </div>
 
             <div className="card-body p-0">

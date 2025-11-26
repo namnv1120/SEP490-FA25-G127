@@ -5,6 +5,7 @@ import com.g127.snapbuy.dto.request.ProductImportRequest;
 import com.g127.snapbuy.dto.request.ProductUpdateRequest;
 import com.g127.snapbuy.dto.response.PageResponse;
 import com.g127.snapbuy.dto.response.ProductResponse;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.UUID;
@@ -29,5 +30,6 @@ public interface ProductService {
 
     ProductResponse toggleProductStatus(UUID id);
 
-    PageResponse<ProductResponse> searchByKeyword(String keyword, org.springframework.data.domain.Pageable pageable);
+    PageResponse<ProductResponse> searchByKeyword(String keyword, Pageable pageable);
+    PageResponse<ProductResponse> searchProductsPaged(String keyword, Boolean active, UUID categoryId, UUID subCategoryId, Pageable pageable);
 }
