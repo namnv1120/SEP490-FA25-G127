@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { message, Modal, Table, Tag, Descriptions, Spin } from "antd";
+import { message, Modal, Table, Tag, Descriptions, Spin, Input, InputNumber, Button } from "antd";
 import PrimeDataTable from "../../components/data-table";
-import { getShiftsByAccountId } from "../../services/ShiftService";
+import { getShiftsByAccountId, openShiftForEmployee, getAllActiveShifts } from "../../services/ShiftService";
 import { searchStaffAccountsPaged } from "../../services/AccountService";
 import { getAllOrders } from "../../services/OrderService";
+import CashDenominationInput from "../../components/cash-denomination/CashDenominationInput";
+import CashDenominationComparison from "../../components/cash-denomination/CashDenominationComparison";
 
 const StaffShiftManagement = () => {
   const [loading, setLoading] = useState(false);
@@ -15,6 +17,13 @@ const StaffShiftManagement = () => {
   const [selectedShift, setSelectedShift] = useState(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [orders, setOrders] = useState([]);
+
+  // Open shift modal states
+  const [openShiftModalVisible, setOpenShiftModalVisible] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [initialCash, setInitialCash] = useState(0);
+  const [openCashDenominations, setOpenCashDenominations] = useState([]);
+  const [activeShifts, setActiveShifts] = useState([]);
 
   // Summary stats
   const [stats, setStats] = useState({
@@ -57,6 +66,16 @@ const StaffShiftManagement = () => {
     }
   }, []);
 
+  // Load active shifts
+  const loadActiveShifts = useCallback(async () => {
+    try {
+      const shifts = await getAllActiveShifts();
+      setActiveShifts(shifts || []);
+    } catch (error) {
+      console.error("Error loading active shifts:", error);
+    }
+  }, []);
+
   // Fetch staff list
   useEffect(() => {
     const fetchStaff = async () => {
@@ -87,7 +106,7 @@ const StaffShiftManagement = () => {
           return;
         }
 
-        await fetchAllShifts(staff);
+        await Promise.all([fetchAllShifts(staff), loadActiveShifts()]);
       } catch (error) {
         message.error(
           "Không thể tải danh sách nhân viên: " + (error.message || "")
@@ -98,7 +117,7 @@ const StaffShiftManagement = () => {
     };
 
     fetchStaff();
-  }, [fetchAllShifts]);
+  }, [fetchAllShifts, loadActiveShifts]);
 
   // Calculate daily revenue separately
   useEffect(() => {
@@ -246,6 +265,51 @@ const StaffShiftManagement = () => {
     return new Date(isoString).toLocaleString("vi-VN");
   };
 
+  // Open shift for employee
+  const handleOpenShiftForEmployee = (employee) => {
+    setSelectedEmployee(employee);
+    setInitialCash(0);
+    setOpenShiftModalVisible(true);
+  };
+
+  const confirmOpenShift = async () => {
+    if (!selectedEmployee) return;
+    if (initialCash < 0) {
+      message.error("Số tiền ban đầu không hợp lệ");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      // Calculate total from cash denominations if provided
+      const cashDenominationsData = openCashDenominations.map(d => ({
+        denomination: d.denomination,
+        quantity: d.quantity,
+        totalValue: d.denomination * d.quantity
+      }));
+
+      await openShiftForEmployee(selectedEmployee.id, initialCash, cashDenominationsData);
+      message.success(`Đã mở ca cho ${selectedEmployee.fullName}`);
+      setOpenShiftModalVisible(false);
+      setSelectedEmployee(null);
+      setInitialCash(0);
+      setOpenCashDenominations([]);
+
+      // Reload data
+      await Promise.all([fetchAllShifts(staffList), loadActiveShifts()]);
+    } catch (error) {
+      console.error("Error opening shift:", error);
+      message.error(error.response?.data?.message || "Không thể mở ca");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Check if employee has active shift
+  const hasActiveShift = (employeeId) => {
+    return activeShifts.some(shift => shift.accountId === employeeId);
+  };
+
   const columns = [
     {
       header: "Nhân viên",
@@ -260,9 +324,8 @@ const StaffShiftManagement = () => {
       sortable: true,
       body: (row) => (
         <span
-          className={`badge ${
-            row.status === "Mở" ? "badge-success" : "badge-secondary"
-          }`}
+          className={`badge ${row.status === "Mở" ? "badge-success" : "badge-secondary"
+            }`}
         >
           {row.status === "Mở" ? "🟢 Đang mở" : "⚪ Đã đóng"}
         </span>
@@ -364,173 +427,54 @@ const StaffShiftManagement = () => {
           </div>
         </div>
 
-        {/* Summary Cards - Styled like Report Dashboard */}
-        <div className="row mb-4">
-          {/* Active Shifts */}
-          <div className="col-xl-3 col-lg-6">
-            <div className="card bg-success text-white">
-              <div className="card-body">
-                <div className="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 className="text-white mb-2">Ca đang mở</h6>
-                    <h3 className="text-white mb-0">{stats.activeShifts}</h3>
-                    <small className="text-white-50 d-block mt-1">
-                      {stats.workingStaff.length > 0
-                        ? stats.workingStaff.join(", ")
-                        : "Không có"}
-                    </small>
-                  </div>
-                  <div
-                    className="avatar-lg"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <span
-                      className="avatar-title bg-light text-success rounded-circle"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: "60px",
-                        height: "60px",
-                      }}
-                    >
-                      <i
-                        className="feather icon-clock fs-2"
-                        style={{ fontSize: "2rem", lineHeight: "1" }}
-                      ></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+        {/* Staff List with Open Shift Button */}
+        <div className="card mb-3">
+          <div className="card-header">
+            <h5 className="mb-0">Danh sách nhân viên</h5>
           </div>
-
-          {/* Today Revenue */}
-          <div className="col-xl-3 col-lg-6">
-            <div className="card bg-primary text-white">
-              <div className="card-body">
-                <div className="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 className="text-white mb-2">Doanh thu hôm nay</h6>
-                    <h3 className="text-white mb-0">
-                      {formatCurrency(stats.todayRevenue)}
-                    </h3>
-                    <small className="text-white-50 d-block mt-1">
-                      Tất cả nhân viên bán hàng
-                    </small>
-                  </div>
-                  <div
-                    className="avatar-lg"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <span
-                      className="avatar-title bg-light text-primary rounded-circle"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: "60px",
-                        height: "60px",
-                      }}
-                    >
-                      <i
-                        className="feather icon-dollar-sign fs-2"
-                        style={{ fontSize: "2rem", lineHeight: "1" }}
-                      ></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Closed Shifts */}
-          <div className="col-xl-3 col-lg-6">
-            <div className="card bg-warning text-white">
-              <div className="card-body">
-                <div className="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 className="text-white mb-2">Ca đã đóng hôm nay</h6>
-                    <h3 className="text-white mb-0">{stats.closedShifts}</h3>
-                    <small className="text-white-50 d-block mt-1">
-                      Đã chốt ca
-                    </small>
-                  </div>
-                  <div
-                    className="avatar-lg"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <span
-                      className="avatar-title bg-light text-warning rounded-circle"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: "60px",
-                        height: "60px",
-                      }}
-                    >
-                      <i
-                        className="feather icon-check-circle fs-2"
-                        style={{ fontSize: "2rem", lineHeight: "1" }}
-                      ></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Total Staff */}
-          <div className="col-xl-3 col-lg-6">
-            <div className="card bg-info text-white">
-              <div className="card-body">
-                <div className="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 className="text-white mb-2">Tổng nhân viên</h6>
-                    <h3 className="text-white mb-0">{staffList.length}</h3>
-                    <small className="text-white-50 d-block mt-1">
-                      Nhân viên bán hàng
-                    </small>
-                  </div>
-                  <div
-                    className="avatar-lg"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <span
-                      className="avatar-title bg-light text-info rounded-circle"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: "60px",
-                        height: "60px",
-                      }}
-                    >
-                      <i
-                        className="feather icon-users fs-2"
-                        style={{ fontSize: "2rem", lineHeight: "1" }}
-                      ></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
+          <div className="card-body">
+            <div className="table-responsive">
+              <table className="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Nhân viên</th>
+                    <th>Email</th>
+                    <th>Trạng thái ca</th>
+                    <th className="text-center">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {staffList.map((staff) => {
+                    const hasShift = hasActiveShift(staff.id);
+                    return (
+                      <tr key={staff.id}>
+                        <td>
+                          <strong>{staff.fullName}</strong>
+                        </td>
+                        <td>{staff.email}</td>
+                        <td>
+                          {hasShift ? (
+                            <Tag color="success">🟢 Đang có ca</Tag>
+                          ) : (
+                            <Tag color="default">⚪ Chưa có ca</Tag>
+                          )}
+                        </td>
+                        <td className="text-center">
+                          {!hasShift && (
+                            <button
+                              className="btn btn-sm btn-primary"
+                              onClick={() => handleOpenShiftForEmployee(staff)}
+                            >
+                              <i className="feather icon-plus-circle me-1"></i>
+                              Mở ca
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -629,18 +573,11 @@ const StaffShiftManagement = () => {
                   </span>
                 </Descriptions.Item>
                 <Descriptions.Item label="Chênh lệch" span={2}>
-                  <span
-                    className={
-                      selectedShift.closingCash &&
-                      selectedShift.closingCash - selectedShift.initialCash >= 0
-                        ? "text-success fw-bold"
-                        : "text-danger fw-bold"
-                    }
-                  >
+                  <span className="text-danger fw-bold">
                     {selectedShift.closingCash
                       ? formatCurrency(
-                          selectedShift.closingCash - selectedShift.initialCash
-                        )
+                        selectedShift.closingCash - selectedShift.initialCash
+                      )
                       : "-"}
                   </span>
                 </Descriptions.Item>
@@ -650,6 +587,24 @@ const StaffShiftManagement = () => {
                   </Descriptions.Item>
                 )}
               </Descriptions>
+
+              {/* Cash Denominations Comparison - So sánh mệnh giá tiền */}
+              {((selectedShift.initialCashDenominations && selectedShift.initialCashDenominations.length > 0) ||
+                (selectedShift.cashDenominations && selectedShift.cashDenominations.length > 0)) && (
+                  <div className="mb-4">
+                    <h6 className="fw-bold mb-3">
+                      <i className="ti ti-cash me-2"></i>
+                      So sánh chi tiết mệnh giá tiền
+                    </h6>
+                    <div className="table-responsive">
+                      <CashDenominationComparison
+                        openingDenominations={selectedShift.initialCashDenominations || []}
+                        closingDenominations={selectedShift.cashDenominations || []}
+                        showClosing={selectedShift.status === 'Đóng' && selectedShift.cashDenominations && selectedShift.cashDenominations.length > 0}
+                      />
+                    </div>
+                  </div>
+                )}
 
               {/* Orders Summary Cards - Styled with solid colors for better visibility */}
               <div className="row g-3 mb-4">
@@ -708,9 +663,81 @@ const StaffShiftManagement = () => {
             </div>
           )}
         </Modal>
+
+        {/* Open Shift Modal - Cần thêm component nhập mệnh giá tiền */}
+        <Modal
+          open={openShiftModalVisible}
+          onCancel={() => {
+            setOpenShiftModalVisible(false);
+            setSelectedEmployee(null);
+            setInitialCash(0);
+            setOpenCashDenominations([]);
+          }}
+          onOk={confirmOpenShift}
+          title="Mở ca cho nhân viên"
+          okText="Mở ca"
+          cancelText="Hủy"
+          confirmLoading={loading}
+          centered
+          width={500}
+        >
+          {selectedEmployee && (
+            <div>
+              <div className="mb-3">
+                <label className="form-label" style={{ fontSize: '13px', marginBottom: '4px' }}>Nhân viên:</label>
+                <div className="p-2 bg-light rounded">
+                  <div style={{ fontSize: '14px', fontWeight: '500' }}>{selectedEmployee.fullName}</div>
+                  <small className="text-muted" style={{ fontSize: '12px' }}>{selectedEmployee.email}</small>
+                </div>
+              </div>
+              <div className="mb-3">
+                <label className="form-label fw-bold" style={{ fontSize: '13px', marginBottom: '4px' }}>
+                  <i className="ti ti-cash me-1"></i>
+                  Số tiền ban đầu trong két:
+                </label>
+                <InputNumber
+                  style={{ width: '100%' }}
+                  value={initialCash}
+                  onChange={(value) => setInitialCash(value || 0)}
+                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
+                  min={0}
+                  step={10000}
+                  placeholder="Nhập số tiền ban đầu"
+                />
+                <small className="text-muted d-block mt-1" style={{ fontSize: '11px' }}>
+                  Số tiền hiện có trong két trước khi bắt đầu ca
+                </small>
+
+                {/* Component nhập chi tiết mệnh giá tiền */}
+                <div className="mt-3">
+                  <label className="form-label fw-bold" style={{ fontSize: '13px', marginBottom: '4px' }}>
+                    <i className="ti ti-coins me-1"></i>
+                    Chi tiết mệnh giá tiền (tùy chọn):
+                  </label>
+                  <small className="text-muted d-block mb-2" style={{ fontSize: '11px' }}>
+                    Nhập số lượng từng loại tờ tiền để theo dõi chi tiết
+                  </small>
+                  <CashDenominationInput
+                    value={openCashDenominations}
+                    onChange={(denoms) => {
+                      setOpenCashDenominations(denoms);
+                      const total = denoms.reduce((sum, d) => sum + d.denomination * d.quantity, 0);
+                      setInitialCash(total);
+                    }}
+                    expectedTotal={initialCash}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </Modal>
       </div>
     </div>
   );
 };
 
 export default StaffShiftManagement;
+
+
+

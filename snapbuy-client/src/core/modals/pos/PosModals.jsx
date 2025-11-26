@@ -10,6 +10,7 @@ import {
 import { getMyInfo } from "../../../services/AccountService";
 import { getCustomerById } from "../../../services/CustomerService";
 import { logoPng } from "../../../utils/imagepath";
+import CashDenominationInput from "../../../components/cash-denomination/CashDenominationInput";
 import "../../../assets/css/pos-sidebar.css";
 
 const PosModals = ({
@@ -36,18 +37,20 @@ const PosModals = ({
   onOpenShift,
   onCloseShift,
 }) => {
-  
-  
+
+
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersSearchQuery, setOrdersSearchQuery] = useState("");
-  
+
   const [cashReceived, setCashReceived] = useState("");
   const [momoPayUrl, setMomoPayUrl] = useState(null);
   const [shiftAmount, setShiftAmount] = useState("");
   const [expectedDrawer, setExpectedDrawer] = useState(null);
   const [shiftNote, setShiftNote] = useState("");
   const [myAccountId, setMyAccountId] = useState(null);
+  const [openCashDenominations, setOpenCashDenominations] = useState([]);
+  const [closeCashDenominations, setCloseCashDenominations] = useState([]);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
   const [orderDetailLoading, setOrderDetailLoading] = useState(false);
   const [showOrderDetailModal, setShowOrderDetailModal] = useState(false);
@@ -57,11 +60,11 @@ const PosModals = ({
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
   const cashReceivedInputRef = useRef(null);
 
-  
 
-  
 
-  
+
+
+
   useEffect(() => {
     setShiftAmount("");
     setShiftNote("");
@@ -217,7 +220,7 @@ const PosModals = ({
   }, [createdOrder, showMomoModal]);
 
   // Handle payment method selection - will be passed from Pos.jsx
-  
+
 
   // Calculate change amount
   const calculateChange = () => {
@@ -293,7 +296,7 @@ const PosModals = ({
       }
       const data = await getAllOrders();
       setOrders(data || []);
-      
+
     } catch {
       message.error("Không thể tải danh sách đơn hàng");
       setOrders([]);
@@ -400,7 +403,7 @@ const PosModals = ({
           orderDetail.customer = customerData;
         } catch {
           // If customer fetch fails, continue without customer data
-          
+
         }
       }
 
@@ -438,7 +441,7 @@ const PosModals = ({
           orderData.customer = customerData;
         } catch {
           // If customer fetch fails, continue without customer data
-          
+
         }
       }
 
@@ -454,7 +457,7 @@ const PosModals = ({
   };
 
   // Helper function to close all modals and clean up
-  
+
 
   // Handle select order from order list - load order into POS
   const handleSelectOrder = async (order) => {
@@ -515,9 +518,8 @@ const PosModals = ({
       // Confirm before canceling
       Modal.confirm({
         title: "Xác nhận hủy đơn",
-        content: `Bạn có chắc chắn muốn hủy đơn hàng #${
-          order.orderNumber || order.orderId
-        }?`,
+        content: `Bạn có chắc chắn muốn hủy đơn hàng #${order.orderNumber || order.orderId
+          }?`,
         okText: "Hủy đơn",
         cancelText: "Không",
         okButtonProps: { danger: true },
@@ -550,7 +552,7 @@ const PosModals = ({
     }
   };
 
-  
+
 
   // Format date
   const formatDate = (dateString) => {
@@ -796,9 +798,8 @@ const PosModals = ({
               </label>
               <input
                 type="text"
-                className={`form-control ${
-                  calculateChange() >= 0 ? "text-success" : "text-danger"
-                }`}
+                className={`form-control ${calculateChange() >= 0 ? "text-success" : "text-danger"
+                  }`}
                 value={new Intl.NumberFormat("vi-VN", {
                   style: "currency",
                   currency: "VND",
@@ -1000,8 +1001,8 @@ const PosModals = ({
                     <span>Ngày: </span>
                     {formatDate(
                       orderToPrint.orderDate ||
-                        orderToPrint.createdAt ||
-                        orderToPrint.createdDate
+                      orderToPrint.createdAt ||
+                      orderToPrint.createdDate
                     )}
                   </div>
                   <div className="invoice-user-name">
@@ -1041,7 +1042,7 @@ const PosModals = ({
               </thead>
               <tbody>
                 {orderToPrint.orderDetails &&
-                orderToPrint.orderDetails.length > 0 ? (
+                  orderToPrint.orderDetails.length > 0 ? (
                   <>
                     {orderToPrint.orderDetails.map((item, index) => {
                       const unitPrice = item.unitPrice || 0;
@@ -1115,15 +1116,15 @@ const PosModals = ({
                               const discountPercent =
                                 subtotal > 0
                                   ? ((discountAmount / subtotal) * 100).toFixed(
-                                      2
-                                    )
+                                    2
+                                  )
                                   : 0;
                               const afterDiscount = subtotal - discountAmount;
                               const taxPercent =
                                 afterDiscount > 0
                                   ? ((taxAmount / afterDiscount) * 100).toFixed(
-                                      2
-                                    )
+                                    2
+                                  )
                                   : 0;
 
                               return (
@@ -1244,9 +1245,8 @@ const PosModals = ({
                   title="Làm mới danh sách"
                 >
                   <i
-                    className={`ti ti-refresh ${
-                      ordersLoading ? "spinning" : ""
-                    }`}
+                    className={`ti ti-refresh ${ordersLoading ? "spinning" : ""
+                      }`}
                   />
                 </button>
                 <button
@@ -1379,8 +1379,8 @@ const PosModals = ({
                                     </span>{" "}
                                     {formatDate(
                                       order.orderDate ||
-                                        order.createdAt ||
-                                        order.createdDate
+                                      order.createdAt ||
+                                      order.createdDate
                                     )}
                                   </p>
                                 </div>
@@ -1511,8 +1511,8 @@ const PosModals = ({
                                     </span>{" "}
                                     {formatDate(
                                       order.orderDate ||
-                                        order.createdAt ||
-                                        order.createdDate
+                                      order.createdAt ||
+                                      order.createdDate
                                     )}
                                   </p>
                                 </div>
@@ -1629,8 +1629,8 @@ const PosModals = ({
                                     </span>{" "}
                                     {formatDate(
                                       order.orderDate ||
-                                        order.createdAt ||
-                                        order.createdDate
+                                      order.createdAt ||
+                                      order.createdDate
                                     )}
                                   </p>
                                 </div>
@@ -1725,8 +1725,8 @@ const PosModals = ({
                   <span className="fw-bold">Ngày đặt:</span>{" "}
                   {formatDate(
                     selectedOrderDetail.orderDate ||
-                      selectedOrderDetail.createdAt ||
-                      selectedOrderDetail.createdDate
+                    selectedOrderDetail.createdAt ||
+                    selectedOrderDetail.createdDate
                   )}
                 </p>
                 <p className="mb-2">
@@ -1749,7 +1749,7 @@ const PosModals = ({
                 </thead>
                 <tbody>
                   {selectedOrderDetail.orderDetails &&
-                  selectedOrderDetail.orderDetails.length > 0 ? (
+                    selectedOrderDetail.orderDetails.length > 0 ? (
                     selectedOrderDetail.orderDetails.map((item, index) => {
                       const unitPrice = item.unitPrice || 0;
                       const quantity = item.quantity || 0;
@@ -1887,9 +1887,21 @@ const PosModals = ({
 
       <Modal
         open={!!showShiftModal}
-        onCancel={onCloseShiftModal}
+        onCancel={() => {
+          onCloseShiftModal();
+          setShiftAmount("");
+          setShiftNote("");
+          setOpenCashDenominations([]);
+          setCloseCashDenominations([]);
+        }}
         footer={null}
-        title="Đóng/Mở ca"
+        title={
+          <div className="d-flex align-items-center">
+            <i className={`ti ${currentShift && currentShift.status === "Mở" ? "ti-x" : "ti-cash"} me-2 fs-5`}></i>
+            <span>{currentShift && currentShift.status === "Mở" ? "Đóng ca làm việc" : "Mở ca làm việc"}</span>
+          </div>
+        }
+        width={800}
         centered
       >
         <div className="modal-body">
@@ -1899,63 +1911,124 @@ const PosModals = ({
             </div>
           ) : currentShift && currentShift.status === "Mở" ? (
             <div>
-              <div className="mb-2">
-                <span className="badge badge-success">Đang mở</span>
+              <div className="mb-3 p-3 bg-light rounded">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <span className="fw-bold">Trạng thái:</span>
+                  <span className="badge badge-success">Đang mở</span>
+                </div>
+                <div className="d-flex justify-content-between mb-2">
+                  <span className="text-muted">Bắt đầu:</span>
+                  <span className="fw-semibold">
+                    {currentShift?.openedAt
+                      ? new Date(currentShift.openedAt).toLocaleString("vi-VN")
+                      : ""}
+                  </span>
+                </div>
+                <div className="d-flex justify-content-between">
+                  <span className="text-muted">Tiền ban đầu:</span>
+                  <span className="fw-semibold text-primary">
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(Number(currentShift?.initialCash || 0))}
+                  </span>
+                </div>
+                <div className="d-flex justify-content-between mt-2 pt-2 border-top">
+                  <span className="text-muted">Tiền dự kiến:</span>
+                  <span className="fw-bold text-success">
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(Number(expectedDrawer ?? (currentShift?.initialCash || 0)))}
+                  </span>
+                </div>
               </div>
-              <div className="mb-2">
-                Bắt đầu:{" "}
-                {currentShift?.openedAt
-                  ? new Date(currentShift.openedAt).toLocaleString("vi-VN")
-                  : ""}
-              </div>
+
               <div className="mb-3">
-                Tiền dự kiến trong két:{" "}
-                {new Intl.NumberFormat("vi-VN", {
-                  style: "currency",
-                  currency: "VND",
-                }).format(
-                  Number(expectedDrawer ?? (currentShift?.initialCash || 0))
+                <label className="form-label fw-bold">
+                  <i className="ti ti-cash me-2"></i>
+                  Tiền thực tế trong két
+                </label>
+                <div className="input-icon-start position-relative mb-2">
+                  <input
+                    type="number"
+                    className="form-control form-control-lg"
+                    placeholder="Nhập số tiền hiện tại"
+                    value={shiftAmount}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "" || (!isNaN(v) && parseFloat(v) >= 0)) {
+                        setShiftAmount(v);
+                      }
+                    }}
+                    min="0"
+                    step="1000"
+                    style={{ paddingLeft: "40px" }}
+                  />
+                  <span
+                    className="input-icon-addon"
+                    style={{
+                      position: "absolute",
+                      left: "12px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      zIndex: 1,
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <i className="ti ti-currency-dollar text-gray-9" />
+                  </span>
+                </div>
+
+                <CashDenominationInput
+                  value={closeCashDenominations}
+                  onChange={(denoms) => {
+                    setCloseCashDenominations(denoms);
+                    const total = denoms.reduce((sum, d) => sum + d.value * d.quantity, 0);
+                    setShiftAmount(total.toString());
+                  }}
+                />
+
+                {/* Hiển thị chênh lệch */}
+                {shiftAmount && !isNaN(shiftAmount) && (
+                  <div className={`mt-3 p-3 rounded ${Number(shiftAmount) - Number(expectedDrawer ?? (currentShift?.initialCash || 0)) >= 0
+                    ? 'bg-success-subtle'
+                    : 'bg-danger-subtle'
+                    }`}>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <span className="fw-bold">
+                        <i className={`ti ${Number(shiftAmount) - Number(expectedDrawer ?? (currentShift?.initialCash || 0)) >= 0
+                          ? 'ti-trending-up'
+                          : 'ti-trending-down'
+                          } me-2`}></i>
+                        Chênh lệch:
+                      </span>
+                      <span className={`fw-bold fs-5 ${Number(shiftAmount) - Number(expectedDrawer ?? (currentShift?.initialCash || 0)) >= 0
+                        ? 'text-success'
+                        : 'text-danger'
+                        }`}>
+                        {Number(shiftAmount) - Number(expectedDrawer ?? (currentShift?.initialCash || 0)) >= 0 ? '+' : ''}
+                        {new Intl.NumberFormat("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        }).format(
+                          Number(shiftAmount) - Number(expectedDrawer ?? (currentShift?.initialCash || 0))
+                        )}
+                      </span>
+                    </div>
+                  </div>
                 )}
               </div>
-              <label className="form-label fw-bold">
-                Tiền thực tế trong két
-              </label>
-              <div className="input-icon-start position-relative">
-                <input
-                  type="number"
-                  className="form-control"
-                  placeholder="Nhập số tiền hiện tại"
-                  value={shiftAmount}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (v === "" || (!isNaN(v) && parseFloat(v) >= 0)) {
-                      setShiftAmount(v);
-                    }
-                  }}
-                  min="0"
-                  step="1000"
-                  style={{ paddingLeft: "40px" }}
-                />
-                <span
-                  className="input-icon-addon"
-                  style={{
-                    position: "absolute",
-                    left: "12px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    zIndex: 1,
-                    pointerEvents: "none",
-                  }}
-                >
-                  <i className="ti ti-currency-dollar text-gray-9" />
-                </span>
-              </div>
+
               <div className="mt-3">
-                <label className="form-label fw-bold">Ghi chú chốt ca</label>
+                <label className="form-label fw-bold">
+                  <i className="ti ti-note me-2"></i>
+                  Ghi chú chốt ca
+                </label>
                 <textarea
                   className="form-control"
-                  rows={2}
-                  placeholder="Nhập ghi chú"
+                  rows={3}
+                  placeholder="Nhập ghi chú về ca làm việc (nếu có)..."
                   value={shiftNote}
                   onChange={(e) => {
                     const v = e.target.value;
@@ -1965,64 +2038,25 @@ const PosModals = ({
               </div>
             </div>
           ) : (
-            <div>
-              <div className="mb-2">
-                {" "}
-                <span className="badge badge-secondary">Đang đóng</span>
-              </div>
-              <label className="form-label fw-bold">
-                Tiền trong két ban đầu
-              </label>
-              <div className="input-icon-start position-relative">
-                <input
-                  type="number"
-                  className="form-control"
-                  placeholder="Nhập tiền mặt ban đầu"
-                  value={shiftAmount}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (v === "" || (!isNaN(v) && parseFloat(v) >= 0))
-                      setShiftAmount(v);
-                  }}
-                  min="0"
-                  step="1000"
-                  style={{ paddingLeft: "40px" }}
-                />
-                <span
-                  className="input-icon-addon"
-                  style={{
-                    position: "absolute",
-                    left: "12px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    zIndex: 1,
-                    pointerEvents: "none",
-                  }}
-                >
-                  <i className="ti ti-currency-dollar text-gray-9" />
-                </span>
-              </div>
+            <div className="text-center py-5">
+              <i className="ti ti-info-circle text-muted" style={{ fontSize: '48px' }}></i>
+              <h5 className="mt-3 mb-2">Ca chưa được mở</h5>
+              <p className="text-muted">Vui lòng liên hệ quản lý để mở ca làm việc</p>
             </div>
           )}
         </div>
         <div className="modal-footer d-flex justify-content-end gap-2 flex-wrap">
-          {currentShift && currentShift.status === "Mở" ? (
+          {currentShift && currentShift.status === "Mở" && (
             <button
               className="btn btn-purple"
               onClick={async () => {
-                await onCloseShift(shiftAmount, shiftNote);
+                await onCloseShift(shiftAmount, shiftNote, closeCashDenominations);
                 setShiftAmount("");
                 setShiftNote("");
+                setCloseCashDenominations([]);
               }}
             >
               Đóng ca
-            </button>
-          ) : (
-            <button
-              className="btn btn-teal"
-              onClick={() => onOpenShift(shiftAmount)}
-            >
-              Mở ca
             </button>
           )}
         </div>

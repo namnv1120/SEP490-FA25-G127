@@ -23,18 +23,27 @@ export const getCurrentShift = async () => {
   }
 };
 
-export const openShift = async (initialCash) => {
+export const openShift = async (initialCash, cashDenominations = []) => {
   try {
-    const response = await axios.post(`${REST_API_BASE_URL}/open`, { initialCash }, getAuthHeaders());
+    const response = await axios.post(`${REST_API_BASE_URL}/open`, { initialCash, cashDenominations }, getAuthHeaders());
     return response.data?.result || response.data;
   } catch (error) {
     throw error;
   }
 };
 
-export const closeShift = async (closingCash, note) => {
+export const openShiftForEmployee = async (employeeAccountId, initialCash, cashDenominations = []) => {
   try {
-    const response = await axios.post(`${REST_API_BASE_URL}/close`, { closingCash, note }, getAuthHeaders());
+    const response = await axios.post(`${REST_API_BASE_URL}/open-for-employee`, { employeeAccountId, initialCash, cashDenominations }, getAuthHeaders());
+    return response.data?.result || response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const closeShift = async (closingCash, note, cashDenominations) => {
+  try {
+    const response = await axios.post(`${REST_API_BASE_URL}/close`, { closingCash, note, cashDenominations }, getAuthHeaders());
     return response.data?.result || response.data;
   } catch (error) {
     throw error;
@@ -65,6 +74,15 @@ export const getShiftsByAccountId = async (accountId, status) => {
       ...getAuthHeaders(),
       params: status ? { status } : {},
     });
+    return response.data?.result || response.data || [];
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAllActiveShifts = async () => {
+  try {
+    const response = await axios.get(`${REST_API_BASE_URL}/active`, getAuthHeaders());
     return response.data?.result || response.data || [];
   } catch (error) {
     throw error;

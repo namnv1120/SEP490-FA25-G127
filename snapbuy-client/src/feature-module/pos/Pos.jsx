@@ -7,6 +7,7 @@ import "../../assets/css/pos-promotion.css";
 import PosModals from "../../core/modals/pos/PosModals";
 import AddCustomerModal from "../../core/modals/pos/AddCustomerModal";
 import CounterTwo from "../../components/counter/CounterTwo";
+import CloseShiftModal from "../../components/shift/CloseShiftModal";
 import { Spin, message, Modal } from "antd";
 import { getAllCategories } from "../../services/CategoryService";
 import {
@@ -72,6 +73,10 @@ const Pos = () => {
   const [completedOrderForPrint, setCompletedOrderForPrint] = useState(null); // Lưu order đã thanh toán để in
   const [currentShift, setCurrentShift] = useState(null);
   const [shiftLoading, setShiftLoading] = useState(false);
+  const [shiftNotOpenOverlay, setShiftNotOpenOverlay] = useState(false);
+  const [showCloseShiftModal, setShowCloseShiftModal] = useState(false);
+  const [closeShiftNote, setCloseShiftNote] = useState("");
+  const [closeShiftDenominations, setCloseShiftDenominations] = useState([]);
   const momoPollingIntervalRef = useRef(null);
 
   const handleBarcodeScanRef = useRef(null);
@@ -244,8 +249,13 @@ const Pos = () => {
 
   useEffect(() => {
     const handler = () => setShowShiftModal(true);
+    const closeHandler = () => setShowCloseShiftModal(true); // Open close shift modal
     window.addEventListener("openShiftModal", handler);
-    return () => window.removeEventListener("openShiftModal", handler);
+    window.addEventListener("openCloseShiftModal", closeHandler);
+    return () => {
+      window.removeEventListener("openShiftModal", handler);
+      window.removeEventListener("openCloseShiftModal", closeHandler);
+    };
   }, []);
 
   // Helper function để hiển thị message và tránh duplicate
@@ -298,30 +308,45 @@ const Pos = () => {
   const checkedRef = useRef(false);
   useEffect(() => {
     const gate = async () => {
+      if (!userRole) return; // Đợi userRole được load
       if (checkedRef.current) return;
       checkedRef.current = true;
+
+      console.log('🔍 Checking shift for role:', userRole);
+
       if (userRole === "Nhân viên bán hàng") {
         // Ưu tiên localStorage
         const openLocal = await isShiftOpen();
-        if (openLocal) return;
+        console.log('📦 isShiftOpen (localStorage):', openLocal);
+
+        if (openLocal) {
+          setShiftNotOpenOverlay(false);
+          return;
+        }
 
         // Thử gọi API lần nữa
         try {
           const current = await getCurrentShift();
-          if (current && current.status === "Mở") return;
-        } catch {
-          void 0;
+          console.log('🌐 getCurrentShift (API):', current);
+
+          if (current && current.status === "Mở") {
+            setShiftNotOpenOverlay(false);
+            return;
+          }
+        } catch (error) {
+          console.log('❌ Error getting shift:', error);
         }
 
-        // Không mở, điều hướng về trang ca
-        if (Location?.state?.from !== "pos-shift-open") {
-          message.warning("Vui lòng mở ca trước khi vào POS");
-        }
-        navigate("/pos-shift");
+        // Không mở, hiển thị overlay thông báo
+        console.log('⚠️ Shift not open - showing overlay');
+        setShiftNotOpenOverlay(true);
+      } else {
+        console.log('👤 Not staff role - no shift check needed');
+        setShiftNotOpenOverlay(false);
       }
     };
     gate();
-  }, [userRole, Location?.state?.from, navigate]);
+  }, [userRole]);
 
   const fetchPosSettings = async () => {
     try {
@@ -969,8 +994,7 @@ const Pos = () => {
       if (userRole === "Nhân viên bán hàng") {
         const open = await isShiftOpen();
         if (!open) {
-          message.warning("Vui lòng mở ca trước khi tạo đơn");
-          setShowShiftModal(true);
+          message.warning("Ca chưa được mở. Vui lòng liên hệ quản lý");
           return;
         }
       }
@@ -987,8 +1011,7 @@ const Pos = () => {
     if (userRole === "Nhân viên bán hàng") {
       const open = await isShiftOpen();
       if (!open) {
-        message.warning("Vui lòng mở ca trước khi tạo đơn");
-        setShowShiftModal(true);
+        message.warning("Ca chưa được mở. Vui lòng liên hệ quản lý");
         return;
       }
     }
@@ -1291,9 +1314,8 @@ const Pos = () => {
     const previousCustomerId = selectedCustomer;
     const isGuest = String(previousCustomerId) === GUEST_CUSTOMER_ID;
 
+    // Reset cart và các state khác
     setCartItems([]);
-    setSelectedCustomer(GUEST_CUSTOMER_ID);
-    setSelectedCustomerData(guestCustomer);
     setCustomerSearchVisible(false);
     setSelectedShipping(null);
     setCreatedOrder(null);
@@ -1305,17 +1327,184 @@ const Pos = () => {
 
     await fetchProducts();
 
+    // Nếu không phải khách lẻ, fetch lại thông tin khách hàng để cập nhật điểm
     if (!isGuest && previousCustomerId) {
       try {
-        await getCustomerById(previousCustomerId);
+        const updatedCustomerData = await getCustomerById(previousCustomerId);
+        setSelectedCustomer(previousCustomerId);
+        setSelectedCustomerData(updatedCustomerData);
       } catch {
-        void 0;
+        // Nếu lỗi, reset về khách lẻ
+        setSelectedCustomer(GUEST_CUSTOMER_ID);
+        setSelectedCustomerData(guestCustomer);
       }
+    } else {
+      // Nếu là khách lẻ, reset về khách lẻ
+      setSelectedCustomer(GUEST_CUSTOMER_ID);
+      setSelectedCustomerData(guestCustomer);
+    }
+  };
+
+  // Helper functions for CloseShiftModal
+  const formatDateTime = (dateString) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleString('vi-VN');
+  };
+
+  const formatCurrency = (value) => {
+    if (!value) return '0 ₫';
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+  };
+
+  // Calculate expected drawer for close shift
+  const [expectedDrawer, setExpectedDrawer] = useState(0);
+
+  // Fetch orders and calculate expected drawer when modal opens
+  useEffect(() => {
+    const fetchExpectedDrawer = async () => {
+      if (!showCloseShiftModal || !currentShift) {
+        setExpectedDrawer(0);
+        return;
+      }
+
+      try {
+        const { getAllOrders } = await import("../../services/OrderService");
+        const { getMyInfo } = await import("../../services/AccountService");
+
+        const myInfoRes = await getMyInfo();
+        const myAccountId = myInfoRes?.accountId || myInfoRes?.id;
+
+        const allOrders = await getAllOrders();
+
+        // Filter orders in current shift
+        const fromTime = new Date(currentShift.openedAt).getTime();
+        const toTime = Date.now();
+
+        const shiftOrders = allOrders.filter(o => {
+          const orderAccountId = o.accountId || o.account?.id || o.account?.accountId;
+          const isAccountMatch = String(orderAccountId) === String(myAccountId);
+          const orderTime = new Date(o.orderDate || o.createdDate || o.createdAt).getTime();
+          const isTimeMatch = orderTime >= fromTime && orderTime <= toTime;
+          return isAccountMatch && isTimeMatch;
+        });
+
+        // Calculate cash revenue from completed orders
+        const completedOrders = shiftOrders.filter(o =>
+          o.orderStatus?.toLowerCase().includes('hoàn tất') ||
+          o.orderStatus?.toUpperCase() === 'COMPLETED'
+        );
+
+        const cashRevenue = completedOrders.filter(o => {
+          const method = (o.payment?.paymentMethod || o.paymentMethod || '').toUpperCase();
+          return method.includes('CASH') || method.includes('TIỀN MẶT');
+        }).reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+
+        const expected = (currentShift.initialCash || 0) + cashRevenue;
+        setExpectedDrawer(expected);
+      } catch (error) {
+        console.error("Error calculating expected drawer:", error);
+        setExpectedDrawer(currentShift.initialCash || 0);
+      }
+    };
+
+    fetchExpectedDrawer();
+  }, [showCloseShiftModal, currentShift]);
+
+  const handleCloseShift = async () => {
+    try {
+      setShiftLoading(true);
+      const total = closeShiftDenominations.reduce((sum, d) => sum + (d.denomination * d.quantity), 0);
+
+      const denominationsData = closeShiftDenominations.map(d => ({
+        denomination: d.denomination,
+        quantity: d.quantity,
+        totalValue: d.denomination * d.quantity
+      }));
+
+      const res = await closeShift(total, closeShiftNote, denominationsData);
+      setCurrentShift(res);
+      setShowCloseShiftModal(false);
+      setCloseShiftNote("");
+      setCloseShiftDenominations([]);
+      window.dispatchEvent(new CustomEvent("shiftUpdated", { detail: res }));
+      message.success("Đã đóng ca thành công!");
+    } catch (error) {
+      console.error("Error closing shift:", error);
+      message.error(error.response?.data?.message || "Không thể đóng ca");
+    } finally {
+      setShiftLoading(false);
     }
   };
 
   return (
     <div className="main-wrapper">
+      {/* Overlay khi ca chưa được mở */}
+      {shiftNotOpenOverlay && (
+        <>
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'rgba(0, 0, 0, 0.7)',
+            zIndex: 9998,
+            backdropFilter: 'blur(5px)'
+          }} />
+          <div style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: 'white',
+            padding: '40px',
+            borderRadius: '12px',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
+            zIndex: 9999,
+            minWidth: '450px',
+            textAlign: 'center'
+          }}>
+            <div style={{ marginBottom: '20px' }}>
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="#faad14" strokeWidth="2"/>
+                <path d="M12 8V12" stroke="#faad14" strokeWidth="2" strokeLinecap="round"/>
+                <circle cx="12" cy="16" r="1" fill="#faad14"/>
+              </svg>
+            </div>
+            <h2 style={{ fontSize: '24px', fontWeight: 600, color: '#262626', marginBottom: '12px' }}>
+              Ca chưa được mở
+            </h2>
+            <p style={{ fontSize: '16px', color: '#595959', marginBottom: '24px' }}>
+              Hãy liên hệ chủ cửa hàng để được mở ca
+            </p>
+            <button
+              onClick={() => navigate('/sales-dashboard')}
+              style={{
+                padding: '10px 24px',
+                fontSize: '16px',
+                fontWeight: 500,
+                color: '#fff',
+                background: '#1890ff',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 2px 8px rgba(24, 144, 255, 0.3)'
+              }}
+              onMouseOver={(e) => {
+                e.target.style.background = '#40a9ff';
+                e.target.style.boxShadow = '0 4px 12px rgba(24, 144, 255, 0.4)';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.background = '#1890ff';
+                e.target.style.boxShadow = '0 2px 8px rgba(24, 144, 255, 0.3)';
+              }}
+            >
+              Quay về Dashboard
+            </button>
+          </div>
+        </>
+      )}
       <div className="page-wrapper pos-pg-wrapper ms-0">
         <div className="content pos-design p-0">
           <div className="row align-items-start pos-wrapper">
@@ -1348,53 +1537,53 @@ const Pos = () => {
                       {...settings}
                       className={`tabs owl-carousel pos-category ${categories.length + 1 < 6 ? 'center-mode' : ''}`}
                     >
-                    <div
-                      onClick={() => setActiveTab("all")}
-                      className={`owl-item ${activeTab === "all" ? "active" : ""
-                        }`}
-                      id="all"
-                    >
-                      <Link to="#">
-                        <div className="category-placeholder">Tất cả</div>
-                      </Link>
-                      <h6>
-                        <Link to="#">Tất cả</Link>
-                      </h6>
-                      <span>{products.length} Sản phẩm</span>
-                    </div>
-                    {categories.map((category) => {
-                      // Tính số lượng sản phẩm bao gồm cả sub-categories
-                      const categoryIds = getCategoryIdsForParent(category.id);
-                      const productCount = products.filter((p) => {
-                        const pCategoryIdStr = p.categoryId
-                          ? String(p.categoryId)
-                          : null;
-                        return (
-                          pCategoryIdStr && categoryIds.includes(pCategoryIdStr)
-                        );
-                      }).length;
+                      <div
+                        onClick={() => setActiveTab("all")}
+                        className={`owl-item ${activeTab === "all" ? "active" : ""
+                          }`}
+                        id="all"
+                      >
+                        <Link to="#">
+                          <div className="category-placeholder">Tất cả</div>
+                        </Link>
+                        <h6>
+                          <Link to="#">Tất cả</Link>
+                        </h6>
+                        <span>{products.length} Sản phẩm</span>
+                      </div>
+                      {categories.map((category) => {
+                        // Tính số lượng sản phẩm bao gồm cả sub-categories
+                        const categoryIds = getCategoryIdsForParent(category.id);
+                        const productCount = products.filter((p) => {
+                          const pCategoryIdStr = p.categoryId
+                            ? String(p.categoryId)
+                            : null;
+                          return (
+                            pCategoryIdStr && categoryIds.includes(pCategoryIdStr)
+                          );
+                        }).length;
 
-                      return (
-                        <div
-                          key={category.id}
-                          onClick={() => setActiveTab(category.id)}
-                          className={`owl-item ${activeTab === category.id ? "active" : ""
-                            }`}
-                          id={category.id}
-                        >
-                          <Link to="#">
-                            <div className="category-placeholder">
-                              {category.name}
-                            </div>
-                          </Link>
-                          <h6>
-                            <Link to="#">{category.name}</Link>
-                          </h6>
-                          <span>{productCount} Sản phẩm</span>
-                        </div>
-                      );
-                    })}
-                  </Slider>
+                        return (
+                          <div
+                            key={category.id}
+                            onClick={() => setActiveTab(category.id)}
+                            className={`owl-item ${activeTab === category.id ? "active" : ""
+                              }`}
+                            id={category.id}
+                          >
+                            <Link to="#">
+                              <div className="category-placeholder">
+                                {category.name}
+                              </div>
+                            </Link>
+                            <h6>
+                              <Link to="#">{category.name}</Link>
+                            </h6>
+                            <span>{productCount} Sản phẩm</span>
+                          </div>
+                        );
+                      })}
+                    </Slider>
                   </div>
                 )}
                 <div className="pos-products">
@@ -2172,37 +2361,66 @@ const Pos = () => {
         onCloseShiftModal={() => setShowShiftModal(false)}
         currentShift={currentShift}
         shiftLoading={shiftLoading}
-        onOpenShift={async (amount) => {
+        onOpenShift={async (amount, cashDenominations = []) => {
           if (!amount || Number(amount) < 0) {
             message.error("Nhập số tiền mặt hợp lệ");
             return;
           }
           try {
-            const res = await openShift(Number(amount));
+            const denominationsData = cashDenominations.map(d => ({
+              denomination: d.denomination,
+              quantity: d.quantity,
+              totalValue: d.denomination * d.quantity
+            }));
+
+            console.log('🟢 Opening shift with:', {
+              amount: Number(amount),
+              denominationsCount: denominationsData.length,
+              denominations: denominationsData
+            });
+
+            const res = await openShift(Number(amount), denominationsData);
+            console.log('✅ Shift opened successfully:', res);
             setCurrentShift(res);
             setShowShiftModal(false);
             window.dispatchEvent(
               new CustomEvent("shiftUpdated", { detail: res })
             );
             message.success("Đã mở ca");
-          } catch {
+          } catch (error) {
+            console.error('❌ Error opening shift:', error);
             message.error("Không thể mở ca");
           }
         }}
-        onCloseShift={async (amount, note) => {
+        onCloseShift={async (amount, note, cashDenominations = []) => {
           if (amount === undefined || Number(amount) < 0) {
             message.error("Nhập số tiền mặt hiện tại hợp lệ");
             return;
           }
           try {
-            const res = await closeShift(Number(amount), note);
+            const denominationsData = cashDenominations.map(d => ({
+              denomination: d.denomination,
+              quantity: d.quantity,
+              totalValue: d.denomination * d.quantity
+            }));
+
+            console.log('🔵 Closing shift with:', {
+              amount: Number(amount),
+              note,
+              denominationsCount: denominationsData.length,
+              denominations: denominationsData
+            });
+
+            const res = await closeShift(Number(amount), note, denominationsData);
+            console.log('✅ Shift closed successfully:', res);
             setCurrentShift(res);
             setShowShiftModal(false);
             window.dispatchEvent(
               new CustomEvent("shiftUpdated", { detail: res })
             );
             message.success("Đã đóng ca");
-          } catch {
+          } catch (error) {
+            console.error('❌ Error closing shift:', error);
             message.error("Không thể đóng ca");
           }
         }}
@@ -2212,6 +2430,24 @@ const Pos = () => {
         initialPhone={customerSearchQuery}
         onClose={() => setAddCustomerModalOpen(false)}
         onSuccess={handleCustomerCreated}
+      />
+      <CloseShiftModal
+        visible={showCloseShiftModal}
+        onCancel={() => {
+          setShowCloseShiftModal(false);
+          setCloseShiftNote("");
+          setCloseShiftDenominations([]);
+        }}
+        onConfirm={handleCloseShift}
+        loading={shiftLoading}
+        currentShift={currentShift}
+        expectedDrawer={expectedDrawer}
+        closingNote={closeShiftNote}
+        setClosingNote={setCloseShiftNote}
+        cashDenominations={closeShiftDenominations}
+        setCashDenominations={setCloseShiftDenominations}
+        formatDateTime={formatDateTime}
+        formatCurrency={formatCurrency}
       />
     </div>
   );

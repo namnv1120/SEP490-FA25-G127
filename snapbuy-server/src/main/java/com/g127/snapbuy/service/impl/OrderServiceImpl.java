@@ -514,8 +514,9 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
                 order.setPointsEarned(pointsEarned);
             }
 
+            // Chỉ cộng điểm tích lũy, không trừ pointsRedeemed vì đã trừ trong createOrder
             int currentPoints = customer.getPoints() == null ? 0 : customer.getPoints();
-            long newPoints = (long) currentPoints - pointsRedeemed + pointsEarned;
+            long newPoints = (long) currentPoints + pointsEarned;
             if (newPoints < 0) newPoints = 0;
             customer.setPoints((int) newPoints);
             customerRepository.save(customer);
