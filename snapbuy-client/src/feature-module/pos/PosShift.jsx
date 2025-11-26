@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState, useCallback } from "react";
-import { Card, Row, Col, Statistic, Table, Button, Modal, message, Spin, Tag, Typography, Divider, Space } from "antd";
+import { Card, Row, Col, Statistic, Table, Button, Modal, message, Spin, Tag, Typography, Space } from "antd";
 import { DollarOutlined, ShoppingCartOutlined, ClockCircleOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { closeShift, getCurrentShift } from "../../services/ShiftService";
 import { getAllOrders } from "../../services/OrderService";
@@ -243,7 +243,7 @@ const PosShift = () => {
                       key: 'orderNumber',
                       width: 150,
                       render: (text, record) => (
-                        <Text strong style={{ color: '#ff9800' }}>
+                        <Text strong style={{ color: '#E67E22' }}>
                           {text || record.orderId || '-'}
                         </Text>
                       )
@@ -253,25 +253,21 @@ const PosShift = () => {
                       dataIndex: 'customerName',
                       key: 'customerName',
                       width: 150,
-                      render: (text, record) => <Text>{text || record.customer?.fullName || 'Khách lẻ'}</Text>
+                      render: (text, record) => text || record.customer?.fullName || 'Khách lẻ'
                     },
                     {
                       title: 'Người tạo đơn',
                       dataIndex: 'accountName',
                       key: 'accountName',
                       width: 150,
-                      render: (text, record) => (
-                        <Text type="secondary">
-                          {text || record.account?.fullName || 'N/A'}
-                        </Text>
-                      )
+                      render: (text, record) => text || record.account?.fullName || 'N/A'
                     },
                     {
                       title: 'Ngày đặt hàng',
                       dataIndex: 'orderDate',
                       key: 'orderDate',
                       width: 150,
-                      render: (text) => <Text>{formatDateTime(text)}</Text>
+                      render: (text) => formatDateTime(text)
                     },
                     {
                       title: 'Trạng thái đơn',
@@ -279,14 +275,7 @@ const PosShift = () => {
                       key: 'orderStatus',
                       width: 130,
                       align: 'center',
-                      render: (status) => {
-                        const isCompleted = status?.toLowerCase().includes('hoàn tất') || status?.toUpperCase() === 'COMPLETED';
-                        return (
-                          <Tag color={isCompleted ? 'success' : 'default'}>
-                            {status || '-'}
-                          </Tag>
-                        );
-                      }
+                      render: (status) => status || '-'
                     },
                     {
                       title: 'Trạng thái thanh toán',
@@ -294,14 +283,7 @@ const PosShift = () => {
                       key: 'paymentStatus',
                       width: 150,
                       align: 'center',
-                      render: (status, record) => {
-                        const isPaid = status?.toLowerCase().includes('đã thanh toán') || status?.toLowerCase().includes('paid');
-                        return (
-                          <Tag color={isPaid ? 'success' : 'warning'}>
-                            {status || record.payment?.status || '-'}
-                          </Tag>
-                        );
-                      }
+                      render: (status, record) => status || record.payment?.status || '-'
                     },
                     {
                       title: 'Hình thức',
@@ -312,11 +294,7 @@ const PosShift = () => {
                       render: (_, record) => {
                         const method = record.payment?.paymentMethod || record.paymentMethod || '-';
                         const isCash = method.toUpperCase().includes('CASH') || method.includes('Tiền mặt');
-                        return (
-                          <Tag color={isCash ? 'green' : 'blue'}>
-                            {isCash ? 'Tiền mặt' : method}
-                          </Tag>
-                        );
+                        return isCash ? 'Tiền mặt' : method;
                       }
                     },
                     {
@@ -325,14 +303,11 @@ const PosShift = () => {
                       key: 'totalAmount',
                       width: 130,
                       align: 'right',
-                      render: (amount, record) => {
-                        const isCompleted = record.orderStatus?.toLowerCase().includes('hoàn tất') || record.orderStatus?.toUpperCase() === 'COMPLETED';
-                        return (
-                          <Text strong style={{ color: isCompleted ? '#52c41a' : '#1890ff', fontSize: '14px' }}>
-                            {formatCurrency(amount)}
-                          </Text>
-                        );
-                      }
+                      render: (amount) => (
+                        <Text strong style={{ color: '#E67E22' }}>
+                          {formatCurrency(amount)}
+                        </Text>
+                      )
                     }
                   ]}
                   dataSource={orders}
@@ -433,17 +408,6 @@ const PosShift = () => {
                                 </div>
                               </Col>
                             )}
-                            <Col span={24}>
-                              <Divider style={{ margin: '12px 0' }} />
-                            </Col>
-                            <Col span={12}>
-                              <Text type="secondary">Ghi chú: </Text>
-                              <Text>{record.notes || 'Không có'}</Text>
-                            </Col>
-                            <Col span={12}>
-                              <Text type="secondary">Người tạo: </Text>
-                              <Text>{record.accountName || record.account?.fullName || 'N/A'}</Text>
-                            </Col>
                           </Row>
                         </div>
                       );
@@ -477,19 +441,17 @@ const PosShift = () => {
                     }, 0);
                     return (
                       <Table.Summary fixed>
-                        <Table.Summary.Row style={{ backgroundColor: '#e6f7ff' }}>
+                        <Table.Summary.Row style={{ backgroundColor: '#fafafa' }}>
                           <Table.Summary.Cell index={0} colSpan={8}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                              <Text strong style={{ fontSize: '15px' }}>
-                                Tổng cộng
-                              </Text>
+                              <Text strong>Tổng cộng</Text>
                               <Text type="secondary" style={{ fontSize: '13px' }}>
                                 ({totalCompleted} đơn hoàn tất / Trang hiện tại)
                               </Text>
                             </div>
                           </Table.Summary.Cell>
-                          <Table.Summary.Cell index={1} align="right" style={{ backgroundColor: '#e6f7ff' }}>
-                            <Text strong style={{ fontSize: '16px', color: '#1890ff' }}>
+                          <Table.Summary.Cell index={1} align="right">
+                            <Text strong style={{ color: '#E67E22' }}>
                               {formatCurrency(total)}
                             </Text>
                           </Table.Summary.Cell>
