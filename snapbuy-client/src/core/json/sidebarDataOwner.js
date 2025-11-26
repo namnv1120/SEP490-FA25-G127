@@ -147,7 +147,7 @@ export const SidebarDataOwner = [
         subRoutes: [],
       },
       {
-        tittle: "Báo cáo nhân viên",
+        tittle: "Quản lý nhân viên",
         hasSubRoute: false,
         showSubRoute: false,
         route: "/staff-shifts",

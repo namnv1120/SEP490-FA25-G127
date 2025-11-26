@@ -35,6 +35,9 @@ public class PosSettings {
     @Column(name = "discount_percent", nullable = false, precision = 5, scale = 2)
     private BigDecimal discountPercent;
 
+    @Column(name = "loyalty_points_percent", nullable = false, precision = 5, scale = 2)
+    private BigDecimal loyaltyPointsPercent;
+
     @Column(name = "created_date", nullable = false)
     private LocalDateTime createdDate;
 

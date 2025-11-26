@@ -48,6 +48,7 @@ public class PosSettingsServiceImpl implements PosSettingsService {
                             .account(account)
                             .taxPercent(BigDecimal.ZERO)
                             .discountPercent(BigDecimal.ZERO)
+                            .loyaltyPointsPercent(BigDecimal.ZERO)
                             .build();
                     return posSettingsRepository.save(defaultSettings);
                 });
@@ -56,6 +57,7 @@ public class PosSettingsServiceImpl implements PosSettingsService {
                 .settingsId(settings.getSettingsId())
                 .taxPercent(settings.getTaxPercent())
                 .discountPercent(settings.getDiscountPercent())
+                .loyaltyPointsPercent(settings.getLoyaltyPointsPercent())
                 .createdDate(settings.getCreatedDate())
                 .updatedDate(settings.getUpdatedDate())
                 .build();
@@ -75,6 +77,7 @@ public class PosSettingsServiceImpl implements PosSettingsService {
 
         settings.setTaxPercent(request.getTaxPercent());
         settings.setDiscountPercent(request.getDiscountPercent());
+        settings.setLoyaltyPointsPercent(request.getLoyaltyPointsPercent());
         // Đảm bảo account được set (nếu là record mới)
         if (settings.getAccount() == null) {
             settings.setAccount(account);
@@ -86,6 +89,7 @@ public class PosSettingsServiceImpl implements PosSettingsService {
                 .settingsId(saved.getSettingsId())
                 .taxPercent(saved.getTaxPercent())
                 .discountPercent(saved.getDiscountPercent())
+                .loyaltyPointsPercent(saved.getLoyaltyPointsPercent())
                 .createdDate(saved.getCreatedDate())
                 .updatedDate(saved.getUpdatedDate())
                 .build();

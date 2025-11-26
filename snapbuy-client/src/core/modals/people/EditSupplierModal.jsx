@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { Modal, message, Spin } from "antd";
+import { Modal, message, Spin, Select } from "antd";
 import {
   getSupplierById,
   updateSupplier,
 } from "../../../services/SupplierService";
+import { getProvinces, getWardsByProvince } from "../../../services/LocationService";
 
 const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
@@ -18,6 +19,13 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
     active: true,
   });
   const [errors, setErrors] = useState({});
+
+  // State cho dropdown địa phương
+  const [provinces, setProvinces] = useState([]);
+  const [wards, setWards] = useState([]);
+  const [selectedProvinceCode, setSelectedProvinceCode] = useState(null);
+  const [loadingProvinces, setLoadingProvinces] = useState(false);
+  const [loadingWards, setLoadingWards] = useState(false);
 
   const loadSupplierData = useCallback(async () => {
     try {
@@ -34,6 +42,11 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
         city: supplier.city || "",
         active: supplier.active === 1 || supplier.active === true,
       });
+
+      // Load provinces và wards nếu có city
+      if (supplier.city) {
+        await loadProvincesAndWards(supplier.city, supplier.ward);
+      }
     } catch {
       message.error("Không thể tải dữ liệu nhà cung cấp");
       if (onClose) onClose();
@@ -44,9 +57,54 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
 
   useEffect(() => {
     if (isOpen && supplierId) {
+      loadProvinces();
       loadSupplierData();
     }
   }, [isOpen, supplierId, loadSupplierData]);
+
+  // Load danh sách tỉnh/thành phố
+  const loadProvinces = async () => {
+    try {
+      setLoadingProvinces(true);
+      const data = await getProvinces();
+      setProvinces(data || []);
+    } catch (error) {
+      message.error("Không thể tải danh sách tỉnh/thành phố");
+    } finally {
+      setLoadingProvinces(false);
+    }
+  };
+
+  // Load danh sách xã/phường khi chọn tỉnh
+  const loadWards = async (provinceCode) => {
+    try {
+      setLoadingWards(true);
+      const data = await getWardsByProvince(provinceCode);
+      setWards(data || []);
+    } catch (error) {
+      message.error("Không thể tải danh sách xã/phường");
+    } finally {
+      setLoadingWards(false);
+    }
+  };
+
+  // Load provinces và wards khi edit (tìm province code từ tên city)
+  const loadProvincesAndWards = async (cityName, wardName) => {
+    try {
+      const provincesData = await getProvinces();
+      setProvinces(provincesData || []);
+
+      // Tìm province code từ tên
+      const province = provincesData.find(p => p.name === cityName);
+      if (province) {
+        setSelectedProvinceCode(province.code);
+        const wardsData = await getWardsByProvince(province.code);
+        setWards(wardsData || []);
+      }
+    } catch (error) {
+      console.error('Error loading location data:', error);
+    }
+  };
 
   // 🧩 Validate dữ liệu
   const validateForm = () => {
@@ -103,6 +161,31 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
       [name]: value,
     }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  // Xử lý khi chọn tỉnh/thành phố
+  const handleProvinceChange = (value, option) => {
+    setFormData((prev) => ({
+      ...prev,
+      city: option.label,
+      ward: "",
+    }));
+    setSelectedProvinceCode(value);
+    setWards([]);
+    setErrors((prev) => ({ ...prev, city: "", ward: "" }));
+
+    if (value) {
+      loadWards(value);
+    }
+  };
+
+  // Xử lý khi chọn xã/phường
+  const handleWardChange = (value, option) => {
+    setFormData((prev) => ({
+      ...prev,
+      ward: option.label,
+    }));
+    setErrors((prev) => ({ ...prev, ward: "" }));
   };
 
   const handleSubmit = async (e) => {
@@ -172,9 +255,8 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                 <input
                   type="text"
                   name="supplierCode"
-                  className={`form-control ${
-                    errors.supplierCode ? "is-invalid" : ""
-                  }`}
+                  className={`form-control ${errors.supplierCode ? "is-invalid" : ""
+                    }`}
                   value={formData.supplierCode}
                   onChange={handleInputChange}
                   disabled={loading}
@@ -193,9 +275,8 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                 <input
                   type="text"
                   name="supplierName"
-                  className={`form-control ${
-                    errors.supplierName ? "is-invalid" : ""
-                  }`}
+                  className={`form-control ${errors.supplierName ? "is-invalid" : ""
+                    }`}
                   value={formData.supplierName}
                   onChange={handleInputChange}
                   disabled={loading}
@@ -244,6 +325,72 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
               </div>
             </div>
 
+            {/* Thành phố */}
+            <div className="col-lg-6">
+              <div className="mb-3">
+                <label className="form-label">Thành phố</label>
+                <Select
+                  showSearch
+                  placeholder="Chọn tỉnh/thành phố"
+                  value={selectedProvinceCode}
+                  onChange={handleProvinceChange}
+                  loading={loadingProvinces}
+                  disabled={loading || loadingProvinces}
+                  style={{ width: '100%' }}
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                  options={provinces.map(province => ({
+                    value: province.code,
+                    label: province.name,
+                  }))}
+                  allowClear
+                  onClear={() => {
+                    setSelectedProvinceCode(null);
+                    setWards([]);
+                    setFormData((prev) => ({ ...prev, city: "", ward: "" }));
+                  }}
+                />
+                {errors.city && (
+                  <div className="text-danger mt-1" style={{ fontSize: '0.875rem' }}>
+                    {errors.city}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Xã/Phường */}
+            <div className="col-lg-6">
+              <div className="mb-3">
+                <label className="form-label">Xã/Phường</label>
+                <Select
+                  showSearch
+                  placeholder="Chọn xã/phường"
+                  value={formData.ward || undefined}
+                  onChange={handleWardChange}
+                  loading={loadingWards}
+                  disabled={loading || !selectedProvinceCode || loadingWards}
+                  style={{ width: '100%' }}
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                  options={wards.map(ward => ({
+                    value: ward.name,
+                    label: ward.name,
+                  }))}
+                  allowClear
+                  onClear={() => {
+                    setFormData((prev) => ({ ...prev, ward: "" }));
+                  }}
+                />
+                {errors.ward && (
+                  <div className="text-danger mt-1" style={{ fontSize: '0.875rem' }}>
+                    {errors.ward}
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="col-lg-12">
               <div className="mb-3">
                 <label className="form-label">
@@ -252,9 +399,8 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                 <input
                   type="text"
                   name="address"
-                  className={`form-control ${
-                    errors.address ? "is-invalid" : ""
-                  }`}
+                  className={`form-control ${errors.address ? "is-invalid" : ""
+                    }`}
                   value={formData.address}
                   onChange={handleInputChange}
                   disabled={loading}
@@ -265,40 +411,6 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
               </div>
             </div>
 
-            <div className="col-lg-6">
-              <div className="mb-3">
-                <label className="form-label">Quận/Huyện</label>
-                <input
-                  type="text"
-                  name="ward"
-                  className={`form-control ${errors.ward ? "is-invalid" : ""}`}
-                  value={formData.ward}
-                  onChange={handleInputChange}
-                  disabled={loading}
-                />
-                {errors.ward && (
-                  <div className="invalid-feedback">{errors.ward}</div>
-                )}
-              </div>
-            </div>
-
-            <div className="col-lg-6 col-sm-10 col-10">
-              <div className="mb-3">
-                <label className="form-label">Thành phố</label>
-                <input
-                  type="text"
-                  name="city"
-                  className={`form-control ${errors.city ? "is-invalid" : ""}`}
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  placeholder="Nhập thành phố"
-                  disabled={loading}
-                />
-                {errors.city && (
-                  <div className="invalid-feedback">{errors.city}</div>
-                )}
-              </div>
-            </div>
           </div>
 
           <div className="modal-footer-btn mt-4 d-flex justify-content-end">

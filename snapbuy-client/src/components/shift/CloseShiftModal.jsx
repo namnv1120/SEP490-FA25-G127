@@ -1,0 +1,100 @@
+import { Modal, Button, Row, Col, Tag, Typography, Input } from "antd";
+import CashDenominationInput from "../cash-denomination/CashDenominationInput";
+
+const { Text } = Typography;
+const { TextArea } = Input;
+
+const CloseShiftModal = ({
+  visible,
+  onCancel,
+  onConfirm,
+  loading,
+  currentShift,
+  expectedDrawer,
+  closingNote,
+  setClosingNote,
+  cashDenominations,
+  setCashDenominations,
+  formatDateTime,
+  formatCurrency
+}) => {
+  return (
+    <Modal
+      title="Đóng ca làm việc"
+      open={visible}
+      onCancel={onCancel}
+      footer={
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <Button onClick={onCancel}>
+            Hủy bỏ
+          </Button>
+          <Button
+            type="primary"
+            danger
+            loading={loading}
+            onClick={onConfirm}
+          >
+            Xác nhận đóng ca
+          </Button>
+        </div>
+      }
+      width={500}
+      centered
+    >
+      {/* Shift Info */}
+      <div style={{
+        background: '#f5f5f5',
+        borderRadius: 8,
+        padding: 16,
+        marginBottom: 16
+      }}>
+        <Row gutter={[16, 8]}>
+          <Col span={12}>
+            <Text type="secondary" style={{ fontSize: 12 }}>Trạng thái</Text>
+            <div><Tag color="green">Đang mở</Tag></div>
+          </Col>
+          <Col span={12}>
+            <Text type="secondary" style={{ fontSize: 12 }}>Bắt đầu</Text>
+            <div><Text strong style={{ fontSize: 13 }}>{formatDateTime(currentShift?.openedAt)}</Text></div>
+          </Col>
+          <Col span={12}>
+            <Text type="secondary" style={{ fontSize: 12 }}>Tiền ban đầu</Text>
+            <div><Text strong style={{ fontSize: 13, color: '#1890ff' }}>{formatCurrency(currentShift?.initialCash)}</Text></div>
+          </Col>
+          <Col span={12}>
+            <Text type="secondary" style={{ fontSize: 12 }}>Tiền dự kiến</Text>
+            <div><Text strong style={{ fontSize: 13, color: '#52c41a' }}>{formatCurrency(expectedDrawer)}</Text></div>
+          </Col>
+        </Row>
+      </div>
+
+      {/* Cash Denomination Input */}
+      <div style={{ marginBottom: 16 }}>
+        <Text strong style={{ fontSize: 14, marginBottom: 8, display: 'block' }}>
+          Tiền thực tế trong két
+        </Text>
+        <CashDenominationInput
+          value={cashDenominations}
+          onChange={setCashDenominations}
+          expectedTotal={expectedDrawer}
+        />
+      </div>
+
+      {/* Note */}
+      <div style={{ marginTop: 16 }}>
+        <Text strong style={{ fontSize: 14, marginBottom: 8, display: 'block' }}>
+          Ghi chú
+        </Text>
+        <TextArea
+          rows={2}
+          value={closingNote}
+          onChange={(e) => setClosingNote(e.target.value)}
+          placeholder="Nhập ghi chú (nếu có)..."
+        />
+      </div>
+    </Modal>
+  );
+};
+
+export default CloseShiftModal;
+

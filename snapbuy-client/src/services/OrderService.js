@@ -40,6 +40,13 @@ export const getMyTodayOrderCount = async (paymentStatus = "Đã thanh toán") =
   return response.data?.result ?? response.data;
 };
 
+export const getMyTodayOrders = async () => {
+  const response = await axios.get(`${REST_API_BASE_URL}/my/today`, {
+    ...getAuthHeaders(),
+  });
+  return response.data?.result || response.data || [];
+};
+
 export const createOrder = async (orderData) => {
   const response = await axios.post(
     REST_API_BASE_URL,
@@ -68,10 +75,19 @@ export const cancelOrder = async (orderId) => {
 };
 
 export const getMyOrdersByDateTimeRange = async (fromISO, toISO) => {
+  console.log("🔍 API Call - getMyOrdersByDateTimeRange");
+  console.log("  URL:", `${REST_API_BASE_URL}/my/by-range`);
+  console.log("  Params:", { from: fromISO, to: toISO });
+
   const response = await axios.get(`${REST_API_BASE_URL}/my/by-range`, {
     ...getAuthHeaders(),
     params: { from: fromISO, to: toISO },
   });
+
+  console.log("  Response status:", response.status);
+  console.log("  Response data:", response.data);
+  console.log("  Result:", response.data?.result || response.data || []);
+
   return response.data?.result || response.data || [];
 };
 

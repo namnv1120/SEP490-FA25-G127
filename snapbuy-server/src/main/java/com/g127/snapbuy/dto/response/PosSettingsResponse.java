@@ -17,6 +17,7 @@ public class PosSettingsResponse {
     private UUID settingsId;
     private BigDecimal taxPercent;
     private BigDecimal discountPercent;
+    private BigDecimal loyaltyPointsPercent;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
 }

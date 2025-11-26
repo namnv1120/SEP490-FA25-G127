@@ -5,6 +5,8 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -24,6 +26,10 @@ public class PosShift {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "opened_by_account_id")
+    private Account openedBy;
 
     @Column(name = "initial_cash", nullable = false, precision = 18, scale = 2)
     private BigDecimal initialCash;
@@ -48,6 +54,10 @@ public class PosShift {
 
     @Column(name = "updated_date")
     private LocalDateTime updatedDate;
+
+    @OneToMany(mappedBy = "shift", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<ShiftCashDenomination> cashDenominations = new ArrayList<>();
 
     @PrePersist
     void onCreate() {

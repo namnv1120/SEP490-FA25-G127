@@ -13,7 +13,7 @@ export const SidebarDataSales = [
         subRoutes: [],
       },
       {
-        tittle: "Đóng/Mở ca",
+        tittle: "Quản lý ca làm việc",
         hasSubRoute: false,
         showSubRoute: false,
         route: "/pos-shift",

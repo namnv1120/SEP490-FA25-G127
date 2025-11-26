@@ -14,4 +14,5 @@ public interface PosShiftRepository extends JpaRepository<PosShift, UUID> {
 
     List<PosShift> findByAccount_AccountIdOrderByOpenedAtDesc(UUID accountId);
     List<PosShift> findByAccount_AccountIdAndStatusOrderByOpenedAtDesc(UUID accountId, String status);
+    List<PosShift> findByStatusOrderByOpenedAtDesc(String status);
 }
