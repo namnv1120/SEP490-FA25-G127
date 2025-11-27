@@ -230,7 +230,7 @@ const AddProduct = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Tạo sản phẩm</h4>
+                <h4 className="fw-bold">Tạo sản phẩm</h4>
                 <h6>Tạo sản phẩm mới</h6>
               </div>
             </div>
@@ -606,7 +606,7 @@ const AddProduct = () => {
                               />
                               <div className="image-uploads">
                                 <i className="feather icon-plus-circle plus-down-add me-0" />
-                                <h4>Thêm ảnh</h4>
+                                <h4 className="fw-bold">Thêm ảnh</h4>
                               </div>
                             </div>
                           </div>

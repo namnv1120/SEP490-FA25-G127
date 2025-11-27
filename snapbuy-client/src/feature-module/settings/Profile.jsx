@@ -216,121 +216,121 @@ const Profile = () => {
                     <h4 className="fs-18 fw-bold">Trang cá nhân</h4>
                   </div>
                   <div className="card-body">
-                      <form onSubmit={handleSubmit}>
-                        <div className="card-title-head">
-                          <h6 className="fs-16 fw-bold mb-1">
-                            <span className="fs-16 me-2">
-                              <i className="ti ti-user" />
-                            </span>
-                            Thông tin cơ bản
-                          </h6>
-                        </div>
-                        <div className="profile-pic-upload">
-                          <div className="add-choosen">
-                            <div className="mb-3">
-                              <div className="image-upload">
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={handleFileChange}
-                                />
-                                <div className="image-uploads">
-                                  <i className="feather icon-plus-circle plus-down-add me-0" />
-                                  <h4>Thêm ảnh</h4>
-                                </div>
+                    <form onSubmit={handleSubmit}>
+                      <div className="card-title-head">
+                        <h6 className="fs-16 fw-bold mb-1">
+                          <span className="fs-16 me-2">
+                            <i className="ti ti-user" />
+                          </span>
+                          Thông tin cơ bản
+                        </h6>
+                      </div>
+                      <div className="profile-pic-upload">
+                        <div className="add-choosen">
+                          <div className="mb-3">
+                            <div className="image-upload">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                              />
+                              <div className="image-uploads">
+                                <i className="feather icon-plus-circle plus-down-add me-0" />
+                                <h4 className="fw-bold">Thêm ảnh</h4>
                               </div>
                             </div>
-                            {isImageVisible && avatarPreview && (
-                              <div className="phone-img">
-                                <img src={avatarPreview} alt="avatar" />
-                                <Link to="#">
-                                  <i
-                                    className="feather icon-x x-square-add remove-product"
-                                    onClick={handleRemoveAvatar}
-                                  />
-                                </Link>
-                              </div>
+                          </div>
+                          {isImageVisible && avatarPreview && (
+                            <div className="phone-img">
+                              <img src={avatarPreview} alt="avatar" />
+                              <Link to="#">
+                                <i
+                                  className="feather icon-x x-square-add remove-product"
+                                  onClick={handleRemoveAvatar}
+                                />
+                              </Link>
+                            </div>
+                          )}
+                        </div>
+                        <span className="fs-13 fw-medium mt-2">
+                          Định dạng file: JPG, PNG. Kích thước tối đa 2MB.
+                        </span>
+                      </div>
+
+                      <div className="row mb-3">
+                        <div className="col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">
+                              Họ và tên <span className="text-danger">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              value={formData.fullName}
+                              onChange={handleInputChange("fullName")}
+                              required
+                              disabled={saving}
+                            />
+                          </div>
+                        </div>
+                        <div className="col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">
+                              Số điện thoại
+                            </label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              value={formData.phone}
+                              onChange={handleInputChange("phone")}
+                              placeholder="Nhập số điện thoại"
+                              disabled={saving}
+                            />
+                          </div>
+                        </div>
+                        <div className="col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">
+                              Email {canEditEmail && <span className="text-danger">*</span>}
+                            </label>
+                            {canEditEmail ? (
+                              <>
+                                <input
+                                  type="email"
+                                  className="form-control"
+                                  value={formData.email || ""}
+                                  onChange={handleInputChange("email")}
+                                  placeholder="Nhập email"
+                                  disabled={saving}
+                                />
+                                <small className="text-muted">Email dùng để lấy lại mật khẩu</small>
+                              </>
+                            ) : (
+                              <>
+                                <input
+                                  type="email"
+                                  className="form-control"
+                                  value={formData.email || ""}
+                                  readOnly
+                                  disabled
+                                  style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                                />
+                                <small className="text-muted">Email chỉ có thể thay đổi ở phần Email</small>
+                              </>
                             )}
                           </div>
-                          <span className="fs-13 fw-medium mt-2">
-                            Định dạng file: JPG, PNG. Kích thước tối đa 2MB.
-                          </span>
                         </div>
+                      </div>
 
-                        <div className="row mb-3">
-                          <div className="col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Họ và tên <span className="text-danger">*</span>
-                              </label>
-                              <input
-                                type="text"
-                                className="form-control"
-                                value={formData.fullName}
-                                onChange={handleInputChange("fullName")}
-                                required
-                                disabled={saving}
-                              />
-                            </div>
-                          </div>
-                          <div className="col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Số điện thoại
-                              </label>
-                              <input
-                                type="text"
-                                className="form-control"
-                                value={formData.phone}
-                                onChange={handleInputChange("phone")}
-                                placeholder="Nhập số điện thoại"
-                                disabled={saving}
-                              />
-                            </div>
-                          </div>
-                          <div className="col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Email {canEditEmail && <span className="text-danger">*</span>}
-                              </label>
-                              {canEditEmail ? (
-                                <>
-                                  <input
-                                    type="email"
-                                    className="form-control"
-                                    value={formData.email || ""}
-                                    onChange={handleInputChange("email")}
-                                    placeholder="Nhập email"
-                                    disabled={saving}
-                                  />
-                                  <small className="text-muted">Email dùng để lấy lại mật khẩu</small>
-                                </>
-                              ) : (
-                                <>
-                                  <input
-                                    type="email"
-                                    className="form-control"
-                                    value={formData.email || ""}
-                                    readOnly
-                                    disabled
-                                    style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
-                                  />
-                                  <small className="text-muted">Email chỉ có thể thay đổi ở phần Email</small>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="text-end settings-bottom-btn mt-0">
-                          <button type="button" className="btn btn-secondary me-2" disabled={saving}>
-                            Huỷ
-                          </button>
-                          <button type="submit" className="btn btn-primary" disabled={saving}>
-                            {saving ? "Đang lưu..." : "Lưu thay đổi"}
-                          </button>
-                        </div>
-                      </form>
+                      <div className="text-end settings-bottom-btn mt-0">
+                        <button type="button" className="btn btn-secondary me-2" disabled={saving}>
+                          Huỷ
+                        </button>
+                        <button type="submit" className="btn btn-primary" disabled={saving}>
+                          {saving ? "Đang lưu..." : "Lưu thay đổi"}
+                        </button>
+                      </div>
+                    </form>
                   </div>
                 </div>
               </div>

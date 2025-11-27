@@ -35,7 +35,7 @@ const SupplierReport = () => {
     try {
       setLoading(true);
       let data = null;
-      
+
 
       switch (periodType) {
         case "daily": {
@@ -91,7 +91,7 @@ const SupplierReport = () => {
     }).format(amount);
   };
 
-  
+
 
   const getPeriodLabel = () => {
     switch (periodType) {
@@ -125,7 +125,7 @@ const SupplierReport = () => {
         <div className="content">
           <div className="page-header">
             <div className="page-title">
-              <h4>Báo cáo nhà cung cấp</h4>
+              <h4 className="fw-bold">Báo cáo nhà cung cấp</h4>
             </div>
           </div>
 
@@ -141,7 +141,7 @@ const SupplierReport = () => {
                       onChange={(e) => {
                         setPeriodType(e.target.value);
                         setSupplierData(null);
-                        
+
                       }}
                     >
                       <option value="daily">Theo ngày</option>
@@ -163,7 +163,7 @@ const SupplierReport = () => {
                         onChange={(date) => {
                           setSelectedDate(date);
                           setSupplierData(null);
-                          
+
                         }}
                         dateFormat="dd/mm/yyyy"
                       />
@@ -182,7 +182,7 @@ const SupplierReport = () => {
                           onChange={(e) => {
                             setSelectedMonth(parseInt(e.target.value));
                             setSupplierData(null);
-                            
+
                           }}
                         >
                           {Array.from({ length: 12 }, (_, i) => i + 1).map(
@@ -204,7 +204,7 @@ const SupplierReport = () => {
                           onChange={(e) => {
                             setSelectedYear(parseInt(e.target.value));
                             setSupplierData(null);
-                            
+
                           }}
                         >
                           {Array.from(
@@ -255,7 +255,7 @@ const SupplierReport = () => {
                         onChange={(dates) => {
                           setDateRange(dates);
                           setSupplierData(null);
-                          
+
                         }}
                         format="DD/MM/YYYY"
                         style={{ width: "100%" }}

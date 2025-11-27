@@ -5,6 +5,8 @@ import { closeShift, getCurrentShift } from "../../services/ShiftService";
 import { getAllOrders } from "../../services/OrderService";
 import { getMyInfo } from "../../services/AccountService";
 import CloseShiftModal from "../../components/shift/CloseShiftModal";
+import CommonFooter from "../../components/footer/CommonFooter";
+import TableTopHead from "../../components/table-top-head";
 
 const { Title, Text } = Typography;
 
@@ -12,7 +14,6 @@ const PosShift = () => {
   const [loading, setLoading] = useState(false);
   const [currentShift, setCurrentShift] = useState(null);
   const [orders, setOrders] = useState([]);
-  const [myInfo, setMyInfo] = useState(null);
   const [closeModalVisible, setCloseModalVisible] = useState(false);
   const [closingNote, setClosingNote] = useState("");
   const [cashDenominations, setCashDenominations] = useState([]);
@@ -24,7 +25,6 @@ const PosShift = () => {
       const [shiftData, userInfo] = await Promise.all([getCurrentShift(), getMyInfo()]);
 
       setCurrentShift(shiftData);
-      setMyInfo(userInfo?.result || userInfo);
 
       if (shiftData && shiftData.status === "Mở" && shiftData.openedAt) {
         try {
@@ -87,15 +87,6 @@ const PosShift = () => {
             }
 
             return isAccountMatch && isTimeMatch;
-          });
-
-          console.log('✅ Orders in shift:', {
-            filteredOrders: shiftOrders.length,
-            orders: shiftOrders.map(o => ({
-              orderId: o.orderId,
-              orderDate: o.orderDate,
-              totalAmount: o.totalAmount
-            }))
           });
 
           setOrders(shiftOrders || []);
@@ -181,6 +172,14 @@ const PosShift = () => {
             <Title level={3}>Quản lý ca làm việc</Title>
             <Text type="secondary">Xem thông tin ca và đơn hàng trong ca</Text>
           </div>
+          <TableTopHead
+            showExcel={false}
+            onRefresh={(e) => {
+              if (e) e.preventDefault();
+              loadData();
+              message.success("Đã làm mới dữ liệu!");
+            }}
+          />
         </div>
         <Spin spinning={loading}>
           {currentShift && currentShift.status === "Mở" ? (
@@ -590,6 +589,7 @@ const PosShift = () => {
           )}
         </Modal>
       </div>
+      <CommonFooter />
     </div>
   );
 };

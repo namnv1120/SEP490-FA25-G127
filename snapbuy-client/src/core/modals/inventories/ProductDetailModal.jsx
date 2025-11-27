@@ -175,43 +175,43 @@ const ProductDetailModal = ({ isOpen, onClose, productId }) => {
                   <div className="productdetails">
                     <ul className="product-bar">
                       <li>
-                        <h4>Mã sản phẩm</h4>
+                        <h4 className="fw-bold">Mã sản phẩm</h4>
                         <h6>{product.productCode || "—"}</h6>
                       </li>
                       <li>
-                        <h4>Tên sản phẩm</h4>
+                        <h4 className="fw-bold">Tên sản phẩm</h4>
                         <h6>{product.productName || "—"}</h6>
                       </li>
                       <li>
-                        <h4>Danh mục</h4>
+                        <h4 className="fw-bold">Danh mục</h4>
                         <h6>{product.parentCategoryName || product.categoryName || "—"}</h6>
                       </li>
                       <li>
-                        <h4>Danh mục con</h4>
+                        <h4 className="fw-bold">Danh mục con</h4>
                         <h6>{product.subCategoryName || "—"}</h6>
                       </li>
                       <li>
-                        <h4>Giá bán</h4>
+                        <h4 className="fw-bold">Giá bán</h4>
                         <h6>{product.unitPrice?.toLocaleString() || "0"} ₫</h6>
                       </li>
                       <li>
-                        <h4>Giá nhập</h4>
+                        <h4 className="fw-bold">Giá nhập</h4>
                         <h6>{product.costPrice?.toLocaleString() || "0"} ₫</h6>
                       </li>
                       <li>
-                        <h4>Đơn vị</h4>
+                        <h4 className="fw-bold">Đơn vị</h4>
                         <h6>{product.unit || "—"}</h6>
                       </li>
                       <li>
-                        <h4>Kích thước</h4>
+                        <h4 className="fw-bold">Kích thước</h4>
                         <h6>{product.dimensions || "—"}</h6>
                       </li>
                       <li>
-                        <h4>Nhà cung cấp</h4>
+                        <h4 className="fw-bold">Nhà cung cấp</h4>
                         <h6>{product.supplierName || "—"}</h6>
                       </li>
                       <li>
-                        <h4>Mô tả</h4>
+                        <h4 className="fw-bold">Mô tả</h4>
                         <h6>{product.description || "Không có mô tả"}</h6>
                       </li>
                     </ul>

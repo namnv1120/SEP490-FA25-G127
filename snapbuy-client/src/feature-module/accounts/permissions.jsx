@@ -148,7 +148,7 @@ const Permissions = () => {
         <div className="page-header">
           <div className="add-item d-flex">
             <div className="page-title">
-              <h4>Permission</h4>
+              <h4 className="fw-bold">Permission</h4>
               <h6>Manage your permissions</h6>
             </div>
           </div>

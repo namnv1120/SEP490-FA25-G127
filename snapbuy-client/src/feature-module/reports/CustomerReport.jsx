@@ -35,7 +35,7 @@ const CustomerReport = () => {
     try {
       setLoading(true);
       let data = null;
-      
+
 
       switch (periodType) {
         case "daily": {
@@ -83,7 +83,7 @@ const CustomerReport = () => {
     }
   };
 
-  
+
 
   const getPeriodLabel = () => {
     switch (periodType) {
@@ -117,7 +117,7 @@ const CustomerReport = () => {
         <div className="content">
           <div className="page-header">
             <div className="page-title">
-              <h4>Báo cáo khách hàng</h4>
+              <h4 className="fw-bold">Báo cáo khách hàng</h4>
             </div>
           </div>
 
@@ -133,7 +133,7 @@ const CustomerReport = () => {
                       onChange={(e) => {
                         setPeriodType(e.target.value);
                         setCustomerData(null);
-                        
+
                       }}
                     >
                       <option value="daily">Theo ngày</option>
@@ -155,7 +155,7 @@ const CustomerReport = () => {
                         onChange={(date) => {
                           setSelectedDate(date);
                           setCustomerData(null);
-                          
+
                         }}
                         dateFormat="dd/mm/yyyy"
                       />
@@ -174,7 +174,7 @@ const CustomerReport = () => {
                           onChange={(e) => {
                             setSelectedMonth(parseInt(e.target.value));
                             setCustomerData(null);
-                            
+
                           }}
                         >
                           {Array.from({ length: 12 }, (_, i) => i + 1).map(
@@ -196,7 +196,7 @@ const CustomerReport = () => {
                           onChange={(e) => {
                             setSelectedYear(parseInt(e.target.value));
                             setCustomerData(null);
-                            
+
                           }}
                         >
                           {Array.from(
@@ -247,7 +247,7 @@ const CustomerReport = () => {
                         onChange={(dates) => {
                           setDateRange(dates);
                           setCustomerData(null);
-                          
+
                         }}
                         format="DD/MM/YYYY"
                         style={{ width: "100%" }}

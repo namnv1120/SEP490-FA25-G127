@@ -158,7 +158,7 @@ const EditProductPrice = () => {
     } catch (error) {
       message.error(
         error.response?.data?.message ||
-          "Lỗi khi cập nhật giá sản phẩm. Vui lòng thử lại."
+        "Lỗi khi cập nhật giá sản phẩm. Vui lòng thử lại."
       );
     } finally {
       setLoading(false);
@@ -182,7 +182,7 @@ const EditProductPrice = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Sửa giá sản phẩm</h4>
+                <h4 className="fw-bold">Sửa giá sản phẩm</h4>
                 <h6>Cập nhật thông tin giá sản phẩm</h6>
               </div>
             </div>
@@ -215,9 +215,8 @@ const EditProductPrice = () => {
                           Sản phẩm <span className="text-danger">*</span>
                         </label>
                         <select
-                          className={`form-control ${
-                            errors.productId ? "is-invalid" : ""
-                          }`}
+                          className={`form-control ${errors.productId ? "is-invalid" : ""
+                            }`}
                           name="productId"
                           value={formData.productId}
                           onChange={handleChange}
@@ -256,9 +255,8 @@ const EditProductPrice = () => {
                         </label>
                         <input
                           type="number"
-                          className={`form-control ${
-                            errors.unitPrice ? "is-invalid" : ""
-                          }`}
+                          className={`form-control ${errors.unitPrice ? "is-invalid" : ""
+                            }`}
                           name="unitPrice"
                           value={formData.unitPrice}
                           onChange={handleChange}
@@ -291,9 +289,8 @@ const EditProductPrice = () => {
                         </label>
                         <input
                           type="number"
-                          className={`form-control ${
-                            errors.costPrice ? "is-invalid" : ""
-                          }`}
+                          className={`form-control ${errors.costPrice ? "is-invalid" : ""
+                            }`}
                           name="costPrice"
                           value={formData.costPrice}
                           onChange={handleChange}

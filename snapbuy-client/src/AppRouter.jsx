@@ -4,6 +4,7 @@ import FeatureModule from "./feature-module/feature-module";
 import { authRoutes, posPage, unAuthRoutes } from "./routes/path";
 import { base_path } from "./environment";
 import ProtectedRoute from "./components/common/ProtectedRoute";
+import NavigationGuard from "./components/common/NavigationGuard";
 
 // Khai báo component ở đây để path.jsx chỉ là cấu hình dữ liệu
 const Pos = lazy(() => import("./feature-module/pos/Pos"));
@@ -18,7 +19,9 @@ const ResetPassword = lazy(() =>
   import("./feature-module/pages/authentication/ResetPassword")
 );
 const Suppliers = lazy(() => import("./feature-module/people/SupplierList"));
-const AdminDashboard = lazy(() => import("./feature-module/dashboard/AdminDashboard"));
+const AdminDashboard = lazy(() =>
+  import("./feature-module/dashboard/AdminDashboard")
+);
 const ShopOwnerDashboard = lazy(() =>
   import("./feature-module/dashboard/ShopOwnerDashboard")
 );
@@ -106,6 +109,7 @@ const StaffShiftManagement = lazy(() =>
 const PromotionList = lazy(() =>
   import("./feature-module/promotions/PromotionList.jsx")
 );
+const NotFound = lazy(() => import("./feature-module/pages/NotFound"));
 
 const componentsMap = {
   Pos,
@@ -175,8 +179,9 @@ const AppRouter = () => {
             {renderRoutes(unAuthRoutes)}
             {renderRoutes(authRoutes)}
             {renderRoutes(posPage)}
+            <Route path="404" element={<NotFound />} />
+            <Route path="*" element={<NotFound />} />
           </Route>
-          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </>
     );
@@ -184,7 +189,9 @@ const AppRouter = () => {
 
   return (
     <BrowserRouter basename={base_path}>
-      <RouterContent />
+      <NavigationGuard>
+        <RouterContent />
+      </NavigationGuard>
     </BrowserRouter>
   );
 };

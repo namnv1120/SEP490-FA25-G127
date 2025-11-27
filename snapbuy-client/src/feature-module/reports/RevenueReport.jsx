@@ -73,7 +73,7 @@ const RevenueReport = () => {
         );
         message.error(
           productError.response?.data?.message ||
-            "Lỗi khi tải dữ liệu doanh thu sản phẩm. Vui lòng thử lại."
+          "Lỗi khi tải dữ liệu doanh thu sản phẩm. Vui lòng thử lại."
         );
         setProductRevenueData([]);
       }
@@ -270,7 +270,7 @@ const RevenueReport = () => {
       console.error("Lỗi khi tải dữ liệu doanh thu:", error);
       message.error(
         error.response?.data?.message ||
-          "Lỗi khi tải dữ liệu doanh thu. Vui lòng thử lại."
+        "Lỗi khi tải dữ liệu doanh thu. Vui lòng thử lại."
       );
       setRevenueData(null);
       setDetailedData([]);
@@ -348,7 +348,7 @@ const RevenueReport = () => {
       // Thêm dòng tổng tiền
       const accountName = selectedAccountId
         ? salesAccounts.find((acc) => acc.id === selectedAccountId)?.fullName ||
-          ""
+        ""
         : "Tất cả nhân viên";
 
       const totalRow = worksheet.addRow([
@@ -571,8 +571,8 @@ const RevenueReport = () => {
               periodType === "monthly"
                 ? "Biểu đồ doanh thu và số đơn hàng theo ngày trong tháng"
                 : periodType === "yearly"
-                ? "Biểu đồ doanh thu và số đơn hàng theo tháng trong năm"
-                : "Biểu đồ doanh thu và số đơn hàng theo ngày",
+                  ? "Biểu đồ doanh thu và số đơn hàng theo tháng trong năm"
+                  : "Biểu đồ doanh thu và số đơn hàng theo ngày",
             align: "center",
             style: {
               fontSize: "16px",
@@ -721,7 +721,7 @@ const RevenueReport = () => {
         <div className="content">
           <div className="page-header">
             <div className="page-title">
-              <h4>Báo cáo doanh thu</h4>
+              <h4 className="fw-bold">Báo cáo doanh thu</h4>
             </div>
           </div>
 
@@ -1000,9 +1000,9 @@ const RevenueReport = () => {
                                 <h3 className="text-white mb-0">
                                   {revenueData.orderCount > 0
                                     ? formatCurrency(
-                                        revenueData.totalRevenue /
-                                          revenueData.orderCount
-                                      )
+                                      revenueData.totalRevenue /
+                                      revenueData.orderCount
+                                    )
                                     : "0 đ"}
                                 </h3>
                               </div>
@@ -1069,8 +1069,8 @@ const RevenueReport = () => {
                                           {periodType === "monthly"
                                             ? "Doanh thu từng ngày trong tháng (cột)"
                                             : periodType === "yearly"
-                                            ? "Doanh thu từng tháng trong năm (cột)"
-                                            : "Doanh thu từng ngày trong khoảng thời gian (cột)"}
+                                              ? "Doanh thu từng tháng trong năm (cột)"
+                                              : "Doanh thu từng ngày trong khoảng thời gian (cột)"}
                                         </span>
                                       </div>
                                     </div>
@@ -1090,8 +1090,8 @@ const RevenueReport = () => {
                                           {periodType === "monthly"
                                             ? "Số đơn hàng từng ngày trong tháng (đường)"
                                             : periodType === "yearly"
-                                            ? "Số đơn hàng từng tháng trong năm (đường)"
-                                            : "Số đơn hàng từng ngày trong khoảng thời gian (đường)"}
+                                              ? "Số đơn hàng từng tháng trong năm (đường)"
+                                              : "Số đơn hàng từng ngày trong khoảng thời gian (đường)"}
                                         </span>
                                       </div>
                                     </div>
@@ -1201,8 +1201,8 @@ const RevenueReport = () => {
                                 </div>
                               )}
                             {productRevenueData &&
-                            Array.isArray(productRevenueData) &&
-                            productRevenueData.length > 0 ? (
+                              Array.isArray(productRevenueData) &&
+                              productRevenueData.length > 0 ? (
                               <PrimeDataTable
                                 column={[
                                   {
@@ -1228,7 +1228,7 @@ const RevenueReport = () => {
                                       const sellingPrice =
                                         rowData.totalSold > 0
                                           ? rowData.totalRevenue /
-                                            rowData.totalSold
+                                          rowData.totalSold
                                           : 0;
                                       return formatCurrency(sellingPrice);
                                     },

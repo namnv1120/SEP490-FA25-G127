@@ -25,4 +25,5 @@ public class CustomerResponse {
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
     private Integer points;
+    private Boolean active;
 }

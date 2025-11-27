@@ -75,11 +75,12 @@ DECLARE
 INSERT INTO account_roles (account_id, role_id)
 VALUES (@salesId, @roleSales);
 
-INSERT INTO customers (customer_id, customer_code, full_name, phone)
+INSERT INTO customers (customer_id, customer_code, full_name, phone, active)
 VALUES ('00000000-0000-0000-0000-000000000001',
         'DEFAULT',
         N'Khách lẻ',
-        N'Khách lẻ');
+        N'Khách lẻ',
+        1);
 
 
 INSERT INTO categories (category_name, description, parent_category_id, active)

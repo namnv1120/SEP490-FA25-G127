@@ -3,10 +3,9 @@ import { useState, useEffect, useMemo } from "react";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
 import CommonFooter from "../../components/footer/CommonFooter";
-import SearchFromApi from "../../components/data-table/search";
 import CommonSelect from "../../components/select/common-select";
 import { getAllInventories } from "../../services/InventoryService";
-import { message } from "antd";
+import { message, Spin } from "antd";
 import EditInventory from "../../core/modals/inventories/EditInventoryModal";
 import ProductDetailModal from "../../core/modals/inventories/ProductDetailModal";
 
@@ -234,7 +233,6 @@ const InventoryList = () => {
     },
   ];
 
-  const handleSearch = (value) => setSearchQuery(value);
 
   return (
     <div className="page-wrapper">
@@ -242,7 +240,7 @@ const InventoryList = () => {
         <div className="page-header">
           <div className="add-item d-flex">
             <div className="page-title">
-              <h4>Quản lý tồn kho</h4>
+              <h4 className="fw-bold">Quản lý tồn kho</h4>
               <h6>Theo dõi lượng hàng, cảnh báo thiếu hoặc quá tồn</h6>
             </div>
           </div>
@@ -262,17 +260,29 @@ const InventoryList = () => {
           </div>
         )}
 
-        <div className="card table-list-card">
-          <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-            <div className="search-set">
-              <SearchFromApi
-                callback={handleSearch}
-                rows={rows}
-                setRows={setRows}
-              />
-            </div>
-            <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-              <div>
+
+        <div className="card table-list-card no-search shadow-sm">
+          <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
+            <h5 className="mb-0 fw-semibold">
+              Danh sách tồn kho{" "}
+              <span className="text-muted small">
+                ({filteredList.length} bản ghi)
+              </span>
+            </h5>
+            <div className="d-flex gap-2 align-items-end flex-wrap">
+              <div style={{ minWidth: "250px" }}>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Tên sản phẩm, mã sản phẩm..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                />
+              </div>
+              <div style={{ minWidth: "180px" }}>
                 <CommonSelect
                   options={StatusOptions}
                   value={
@@ -282,17 +292,22 @@ const InventoryList = () => {
                   onChange={(s) => {
                     const v = s?.value;
                     setStatusFilter(v || null);
+                    setCurrentPage(1);
                   }}
-                  placeholder="Trạng thái"
-                  width={180}
-                  className=""
+                  placeholder="Chọn trạng thái"
+                  className="w-100"
                 />
               </div>
             </div>
           </div>
 
-          <div className="card-body">
+          <div className="card-body p-0">
             <div className="table-responsive">
+              {loading ? (
+                <div className="d-flex justify-content-center p-5">
+                  <Spin size="large" />
+                </div>
+              ) : (
               <PrimeDataTable
                 column={columns}
                 data={filteredList}
@@ -302,7 +317,9 @@ const InventoryList = () => {
                 setCurrentPage={setCurrentPage}
                 totalRecords={filteredList.length}
                 dataKey="inventoryId"
-              />
+                loading={false}
+                />
+              )}
             </div>
           </div>
         </div>

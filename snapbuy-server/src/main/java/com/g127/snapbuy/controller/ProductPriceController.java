@@ -8,6 +8,7 @@ import com.g127.snapbuy.dto.response.ProductPriceResponse;
 import com.g127.snapbuy.service.ProductPriceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class ProductPriceController {
     private final ProductPriceService productPriceService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<ProductPriceResponse> createPrice(
             @RequestBody @Valid ProductPriceCreateRequest request) {
         ApiResponse<ProductPriceResponse> response = new ApiResponse<>();
@@ -29,6 +31,7 @@ public class ProductPriceController {
     }
 
     @PutMapping("{id}")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<ProductPriceResponse> updatePrice(
             @PathVariable("id") UUID id,
             @RequestBody @Valid ProductPriceUpdateRequest request) {
@@ -52,6 +55,7 @@ public class ProductPriceController {
     }
 
     @DeleteMapping("{id}")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<String> deletePrice(@PathVariable("id") UUID id) {
         productPriceService.deletePrice(id);
         ApiResponse<String> response = new ApiResponse<>();
@@ -60,6 +64,7 @@ public class ProductPriceController {
     }
 
     @PostMapping("/import")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<List<ProductPriceResponse>> importPrices(
             @RequestBody @Valid List<ProductPriceImportRequest> requests) {
         ApiResponse<List<ProductPriceResponse>> response = new ApiResponse<>();

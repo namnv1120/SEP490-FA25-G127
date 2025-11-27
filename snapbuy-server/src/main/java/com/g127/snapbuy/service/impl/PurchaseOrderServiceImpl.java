@@ -438,7 +438,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         
         List<String> conditions = new ArrayList<>();
         if (hasKeyword) {
-            conditions.add("LOWER(po.purchase_order_number) LIKE LOWER(CONCAT('%', :keyword, '%'))");
+            conditions.add("(LOWER(po.purchase_order_number) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(s.supplier_name) LIKE LOWER(CONCAT('%', :keyword, '%')))");
         }
         if (hasStatus) {
             conditions.add("LOWER(po.status) = LOWER(:status)");

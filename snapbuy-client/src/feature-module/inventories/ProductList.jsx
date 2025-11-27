@@ -6,7 +6,6 @@ import PrimeDataTable from "../../components/data-table";
 import { stockImg1 } from "../../utils/imagepath";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
-import SearchFromApi from "../../components/data-table/search";
 import CommonSelect from "../../components/select/common-select";
 import {
   deleteProduct,
@@ -17,7 +16,7 @@ import {
 import { getAllCategories } from "../../services/CategoryService";
 import ImportProductModal from "./ImportProduct";
 import ProductDetailModal from "../../core/modals/inventories/ProductDetailModal";
-import { message } from "antd";
+import { message, Spin } from "antd";
 import { exportToExcel } from "../../utils/excelUtils";
 import { getImageUrl } from "../../utils/imageUtils";
 
@@ -38,7 +37,7 @@ const ProductList = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
-
+  const [loading, setLoading] = useState(false);
   const route = allRoutes;
 
   const StatusOptions = useMemo(
@@ -52,6 +51,7 @@ const ProductList = () => {
 
   const fetchProducts = useCallback(async () => {
     try {
+      setLoading(true);
       setError(null);
 
       const backendPage = Math.max(0, (currentPage || 1) - 1);
@@ -114,7 +114,7 @@ const ProductList = () => {
     } catch {
       setError("Lỗi khi tải danh sách sản phẩm. Vui lòng thử lại.");
     } finally {
-      void 0;
+      setLoading(false);
     }
   }, [currentPage, rows, searchQuery, statusFilter, categoryFilter, subCategoryFilter]);
 
@@ -219,11 +219,8 @@ const ProductList = () => {
     setCategoryFilter(null);
     setSubCategoryFilter(null);
     setCurrentPage(1);
+    fetchProducts();
     message.success("Danh sách sản phẩm đã được làm mới!");
-  };
-
-  const handleSearch = (value) => {
-    setSearchQuery(value || "");
   };
 
   const handleDeleteClick = (product) => {
@@ -426,7 +423,7 @@ const ProductList = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Danh sách sản phẩm</h4>
+                <h4 className="fw-bold">Danh sách sản phẩm</h4>
                 <h6>Quản lý danh sách sản phẩm</h6>
               </div>
             </div>
@@ -458,33 +455,20 @@ const ProductList = () => {
             </div>
           )}
 
-          <div className="card table-list-card">
-            <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <div className="search-set">
-                <SearchFromApi
-                  callback={handleSearch}
-                  rows={rows}
-                  setRows={setRows}
-                />
-              </div>
-              <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                <div className="me-2">
-                  <CommonSelect
-                    options={StatusOptions}
-                    value={
-                      StatusOptions.find((o) => o.value === statusFilter) ||
-                      StatusOptions[0]
-                    }
-                    onChange={(s) => {
-                      const v = s?.value;
-                      setStatusFilter(v === true || v === false ? v : null);
-                    }}
-                    placeholder="Trạng thái"
-                    width={180}
-                    className=""
-                  />
-                </div>
-                <div className="me-2">
+          {/* Bộ lọc */}
+          <div className="card mb-3 shadow-sm">
+            <div className="card-body p-4">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(1);
+                }}
+                className="row g-3 align-items-end"
+              >
+                <div className="col-12 col-md-6 col-lg-3">
+                  <label className="form-label fw-semibold text-dark mb-1">
+                    Danh mục
+                  </label>
                   <CommonSelect
                     options={parentCategoryOptions}
                     value={
@@ -496,13 +480,16 @@ const ProductList = () => {
                       const v = s?.value;
                       setCategoryFilter(v || null);
                       setSubCategoryFilter(null); // Reset sub category khi đổi parent category
+                      setCurrentPage(1);
                     }}
-                    placeholder="Danh mục"
-                    width={200}
-                    className=""
+                    placeholder="Chọn danh mục"
+                    className="w-100"
                   />
                 </div>
-                <div>
+                <div className="col-12 col-md-6 col-lg-3">
+                  <label className="form-label fw-semibold text-dark mb-1">
+                    Danh mục con
+                  </label>
                   <CommonSelect
                     options={subCategoryOptions}
                     value={
@@ -513,86 +500,66 @@ const ProductList = () => {
                     onChange={(s) => {
                       const v = s?.value;
                       setSubCategoryFilter(v || null);
+                      setCurrentPage(1);
                     }}
-                    placeholder="Danh mục con"
-                    width={200}
-                    className=""
+                    placeholder="Chọn danh mục con"
+                    className="w-100"
                     disabled={!categoryFilter}
                   />
                 </div>
-              </div>
-              {/* <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                  <div className="dropdown me-2">
-                    <Link
-                      to="#"
-                      className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                      data-bs-toggle="dropdown"
-                    >
-                      Category
-                    </Link>
-                    <ul className="dropdown-menu dropdown-menu-end p-3">
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Computers
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Electronics
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Shoe
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Electronics
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="dropdown">
-                    <Link
-                      to="#"
-                      className="dropdown-toggle btn btn-white btn-md d-inline-flex align-items-center"
-                      data-bs-toggle="dropdown"
-                    >
-                      Sort By : Last 7 Days
-                    </Link>
-                    <ul className="dropdown-menu dropdown-menu-end p-3">
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Recently Added
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Ascending
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Desending
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Last Month
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Last 7 Days
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                </div> */}
+                <div className="col-12 col-md-6 col-lg-3 ms-auto">
+                  <label className="form-label fw-semibold text-dark mb-1">
+                    Tìm kiếm
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Tên sản phẩm, mã sản phẩm..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  />
+                </div>
+              </form>
             </div>
-            <div className="card-body">
+          </div>
+
+          <div className="card table-list-card no-search shadow-sm">
+            <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
+              <h5 className="mb-0 fw-semibold">
+                Danh sách sản phẩm{" "}
+                <span className="text-muted small">
+                  ({totalRecords} bản ghi)
+                </span>
+              </h5>
+              <div className="d-flex gap-2 align-items-end flex-wrap">
+                <div style={{ minWidth: "180px" }}>
+                  <CommonSelect
+                    options={StatusOptions}
+                    value={
+                      StatusOptions.find((o) => o.value === statusFilter) ||
+                      StatusOptions[0]
+                    }
+                    onChange={(s) => {
+                      const v = s?.value;
+                      setStatusFilter(v === true || v === false ? v : null);
+                      setCurrentPage(1);
+                    }}
+                    placeholder="Chọn trạng thái"
+                    className="w-100"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="card-body p-0">
               <div className="table-responsive">
+                {loading ? (
+                  <div className="d-flex justify-content-center p-5">
+                    <Spin size="large" />
+                  </div>
+                ) : (
                 <PrimeDataTable
                   column={columns}
                   data={products}
@@ -604,6 +571,7 @@ const ProductList = () => {
                   dataKey="productId"
                   serverSidePagination={true}
                 />
+                )}
               </div>
             </div>
           </div>

@@ -32,6 +32,15 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public CustomerResponse createCustomer(CustomerCreateRequest request) {
+        // Check if phone already exists (regardless of active status)
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            String phone = request.getPhone().trim();
+            Customer existingCustomer = customerRepository.getCustomerByPhone(phone);
+            if (existingCustomer != null) {
+                throw new AppException(ErrorCode.PHONE_EXISTED);
+            }
+        }
+
         Customer customer = customerMapper.toEntity(request);
         customer.setCreatedDate(LocalDateTime.now());
         customer.setUpdatedDate(LocalDateTime.now());
@@ -158,5 +167,18 @@ public class CustomerServiceImpl implements CustomerService {
         return customers.stream()
                 .map(customerMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void toggleCustomerStatus(UUID id) {
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
+        
+        // Toggle status (default to true if null)
+        boolean currentStatus = customer.getActive() != null ? customer.getActive() : true;
+        customer.setActive(!currentStatus);
+        customer.setUpdatedDate(LocalDateTime.now());
+        
+        customerRepository.save(customer);
     }
 }

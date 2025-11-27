@@ -53,6 +53,8 @@ export const routeRoleMap = {
   "/settings/email": null,
   "/settings/password": null,
   "/settings/pos-system": ["Quản trị viên", "Chủ cửa hàng"],
+
+  "/404": null,
 };
 
 export const matchRoute = (currentPath, routePattern) => {

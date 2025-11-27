@@ -154,7 +154,10 @@ const Pos = () => {
           boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
         }}
       >
-        <i className="fa fa-chevron-right" style={{ color: "white", fontSize: "12px" }}></i>
+        <i
+          className="fa fa-chevron-right"
+          style={{ color: "white", fontSize: "12px" }}
+        ></i>
       </button>
     );
   }
@@ -183,7 +186,10 @@ const Pos = () => {
           boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
         }}
       >
-        <i className="fa fa-chevron-left" style={{ color: "white", fontSize: "12px" }}></i>
+        <i
+          className="fa fa-chevron-left"
+          style={{ color: "white", fontSize: "12px" }}
+        ></i>
       </button>
     );
   }
@@ -231,10 +237,10 @@ const Pos = () => {
       handleWheel(e);
     };
 
-    container.addEventListener('wheel', preventScroll, { passive: false });
+    container.addEventListener("wheel", preventScroll, { passive: false });
 
     return () => {
-      container.removeEventListener('wheel', preventScroll);
+      container.removeEventListener("wheel", preventScroll);
     };
   }, [handleWheel]);
 
@@ -312,12 +318,12 @@ const Pos = () => {
       if (checkedRef.current) return;
       checkedRef.current = true;
 
-      console.log('🔍 Checking shift for role:', userRole);
+      console.log("🔍 Checking shift for role:", userRole);
 
       if (userRole === "Nhân viên bán hàng") {
         // Ưu tiên localStorage
         const openLocal = await isShiftOpen();
-        console.log('📦 isShiftOpen (localStorage):', openLocal);
+        console.log("📦 isShiftOpen (localStorage):", openLocal);
 
         if (openLocal) {
           setShiftNotOpenOverlay(false);
@@ -327,21 +333,21 @@ const Pos = () => {
         // Thử gọi API lần nữa
         try {
           const current = await getCurrentShift();
-          console.log('🌐 getCurrentShift (API):', current);
+          console.log("🌐 getCurrentShift (API):", current);
 
           if (current && current.status === "Mở") {
             setShiftNotOpenOverlay(false);
             return;
           }
         } catch (error) {
-          console.log('❌ Error getting shift:', error);
+          console.log("❌ Error getting shift:", error);
         }
 
         // Không mở, hiển thị overlay thông báo
-        console.log('⚠️ Shift not open - showing overlay');
+        console.log("⚠️ Shift not open - showing overlay");
         setShiftNotOpenOverlay(true);
       } else {
-        console.log('👤 Not staff role - no shift check needed');
+        console.log("👤 Not staff role - no shift check needed");
         setShiftNotOpenOverlay(false);
       }
     };
@@ -406,7 +412,10 @@ const Pos = () => {
           );
 
           // Tính giá sau giảm: Trừ thẳng tổng số tiền giảm
-          const discountedPrice = Math.max(0, originalPrice - discountInfo.discountValue);
+          const discountedPrice = Math.max(
+            0,
+            originalPrice - discountInfo.discountValue
+          );
 
           return {
             id: product.productId,
@@ -748,7 +757,10 @@ const Pos = () => {
         );
 
         // Tính giá sau giảm: Trừ thẳng tổng số tiền giảm
-        const discountedPrice = Math.max(0, originalPrice - discountInfo.discountValue);
+        const discountedPrice = Math.max(
+          0,
+          originalPrice - discountInfo.discountValue
+        );
 
         const mappedProduct = {
           id: product.productId,
@@ -837,7 +849,7 @@ const Pos = () => {
   useEffect(() => {
     if (customerSearchVisible) {
       const timer = setTimeout(() => {
-        const customerInput = document.querySelector('.customer-search-input');
+        const customerInput = document.querySelector(".customer-search-input");
         if (customerInput) {
           customerInput.focus();
         }
@@ -1347,13 +1359,16 @@ const Pos = () => {
 
   // Helper functions for CloseShiftModal
   const formatDateTime = (dateString) => {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleString('vi-VN');
+    if (!dateString) return "";
+    return new Date(dateString).toLocaleString("vi-VN");
   };
 
   const formatCurrency = (value) => {
-    if (!value) return '0 ₫';
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+    if (!value) return "0 ₫";
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(value);
   };
 
   // Calculate expected drawer for close shift
@@ -1380,24 +1395,34 @@ const Pos = () => {
         const fromTime = new Date(currentShift.openedAt).getTime();
         const toTime = Date.now();
 
-        const shiftOrders = allOrders.filter(o => {
-          const orderAccountId = o.accountId || o.account?.id || o.account?.accountId;
+        const shiftOrders = allOrders.filter((o) => {
+          const orderAccountId =
+            o.accountId || o.account?.id || o.account?.accountId;
           const isAccountMatch = String(orderAccountId) === String(myAccountId);
-          const orderTime = new Date(o.orderDate || o.createdDate || o.createdAt).getTime();
+          const orderTime = new Date(
+            o.orderDate || o.createdDate || o.createdAt
+          ).getTime();
           const isTimeMatch = orderTime >= fromTime && orderTime <= toTime;
           return isAccountMatch && isTimeMatch;
         });
 
         // Calculate cash revenue from completed orders
-        const completedOrders = shiftOrders.filter(o =>
-          o.orderStatus?.toLowerCase().includes('hoàn tất') ||
-          o.orderStatus?.toUpperCase() === 'COMPLETED'
+        const completedOrders = shiftOrders.filter(
+          (o) =>
+            o.orderStatus?.toLowerCase().includes("hoàn tất") ||
+            o.orderStatus?.toUpperCase() === "COMPLETED"
         );
 
-        const cashRevenue = completedOrders.filter(o => {
-          const method = (o.payment?.paymentMethod || o.paymentMethod || '').toUpperCase();
-          return method.includes('CASH') || method.includes('TIỀN MẶT');
-        }).reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+        const cashRevenue = completedOrders
+          .filter((o) => {
+            const method = (
+              o.payment?.paymentMethod ||
+              o.paymentMethod ||
+              ""
+            ).toUpperCase();
+            return method.includes("CASH") || method.includes("TIỀN MẶT");
+          })
+          .reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
 
         const expected = (currentShift.initialCash || 0) + cashRevenue;
         setExpectedDrawer(expected);
@@ -1413,12 +1438,15 @@ const Pos = () => {
   const handleCloseShift = async () => {
     try {
       setShiftLoading(true);
-      const total = closeShiftDenominations.reduce((sum, d) => sum + (d.denomination * d.quantity), 0);
+      const total = closeShiftDenominations.reduce(
+        (sum, d) => sum + d.denomination * d.quantity,
+        0
+      );
 
-      const denominationsData = closeShiftDenominations.map(d => ({
+      const denominationsData = closeShiftDenominations.map((d) => ({
         denomination: d.denomination,
         quantity: d.quantity,
-        totalValue: d.denomination * d.quantity
+        totalValue: d.denomination * d.quantity,
       }));
 
       const res = await closeShift(total, closeShiftNote, denominationsData);
@@ -1428,6 +1456,11 @@ const Pos = () => {
       setCloseShiftDenominations([]);
       window.dispatchEvent(new CustomEvent("shiftUpdated", { detail: res }));
       message.success("Đã đóng ca thành công!");
+
+      // Navigate về dashboard sau khi đóng ca
+      setTimeout(() => {
+        navigate("/sale-dashboard");
+      }, 100); // Delay 1.5s để người dùng thấy message success
     } catch (error) {
       console.error("Error closing shift:", error);
       message.error(error.response?.data?.message || "Không thể đóng ca");
@@ -1441,63 +1474,97 @@ const Pos = () => {
       {/* Overlay khi ca chưa được mở */}
       {shiftNotOpenOverlay && (
         <>
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            background: 'rgba(0, 0, 0, 0.7)',
-            zIndex: 9998,
-            backdropFilter: 'blur(5px)'
-          }} />
-          <div style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            background: 'white',
-            padding: '40px',
-            borderRadius: '12px',
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
-            zIndex: 9999,
-            minWidth: '450px',
-            textAlign: 'center'
-          }}>
-            <div style={{ marginBottom: '20px' }}>
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="10" stroke="#faad14" strokeWidth="2" />
-                <path d="M12 8V12" stroke="#faad14" strokeWidth="2" strokeLinecap="round" />
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              background: "rgba(0, 0, 0, 0.7)",
+              zIndex: 9998,
+              backdropFilter: "blur(5px)",
+            }}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              background: "white",
+              padding: "40px",
+              borderRadius: "12px",
+              boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3)",
+              zIndex: 9999,
+              minWidth: "450px",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ marginBottom: "20px" }}>
+              <svg
+                width="64"
+                height="64"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="#faad14"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M12 8V12"
+                  stroke="#faad14"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
                 <circle cx="12" cy="16" r="1" fill="#faad14" />
               </svg>
             </div>
-            <h2 style={{ fontSize: '24px', fontWeight: 600, color: '#262626', marginBottom: '12px' }}>
+            <h2
+              style={{
+                fontSize: "24px",
+                fontWeight: 600,
+                color: "#262626",
+                marginBottom: "12px",
+              }}
+            >
               Ca chưa được mở
             </h2>
-            <p style={{ fontSize: '16px', color: '#595959', marginBottom: '24px' }}>
+            <p
+              style={{
+                fontSize: "16px",
+                color: "#595959",
+                marginBottom: "24px",
+              }}
+            >
               Hãy liên hệ chủ cửa hàng để được mở ca
             </p>
             <button
-              onClick={() => navigate('/sale-dashboard')}
+              onClick={() => navigate("/sale-dashboard")}
               style={{
-                padding: '10px 24px',
-                fontSize: '16px',
+                padding: "10px 24px",
+                fontSize: "16px",
                 fontWeight: 500,
-                color: '#fff',
-                background: '#1890ff',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                boxShadow: '0 2px 8px rgba(24, 144, 255, 0.3)'
+                color: "#fff",
+                background: "#1890ff",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                boxShadow: "0 2px 8px rgba(24, 144, 255, 0.3)",
               }}
               onMouseOver={(e) => {
-                e.target.style.background = '#40a9ff';
-                e.target.style.boxShadow = '0 4px 12px rgba(24, 144, 255, 0.4)';
+                e.target.style.background = "#40a9ff";
+                e.target.style.boxShadow = "0 4px 12px rgba(24, 144, 255, 0.4)";
               }}
               onMouseOut={(e) => {
-                e.target.style.background = '#1890ff';
-                e.target.style.boxShadow = '0 2px 8px rgba(24, 144, 255, 0.3)';
+                e.target.style.background = "#1890ff";
+                e.target.style.boxShadow = "0 2px 8px rgba(24, 144, 255, 0.3)";
               }}
             >
               Quay về Dashboard
@@ -1531,16 +1598,22 @@ const Pos = () => {
                     <Spin size="large" />
                   </div>
                 ) : (
-                  <div ref={sliderContainerRef} style={{ position: 'relative' }}>
+                  <div
+                    ref={sliderContainerRef}
+                    style={{ position: "relative" }}
+                  >
                     <Slider
                       ref={sliderRef}
                       {...settings}
-                      className={`tabs owl-carousel pos-category ${categories.length + 1 < 6 ? 'center-mode' : ''}`}
+                      className={`tabs owl-carousel pos-category ${
+                        categories.length + 1 < 6 ? "center-mode" : ""
+                      }`}
                     >
                       <div
                         onClick={() => setActiveTab("all")}
-                        className={`owl-item ${activeTab === "all" ? "active" : ""
-                          }`}
+                        className={`owl-item ${
+                          activeTab === "all" ? "active" : ""
+                        }`}
                         id="all"
                       >
                         <Link to="#">
@@ -1553,13 +1626,16 @@ const Pos = () => {
                       </div>
                       {categories.map((category) => {
                         // Tính số lượng sản phẩm bao gồm cả sub-categories
-                        const categoryIds = getCategoryIdsForParent(category.id);
+                        const categoryIds = getCategoryIdsForParent(
+                          category.id
+                        );
                         const productCount = products.filter((p) => {
                           const pCategoryIdStr = p.categoryId
                             ? String(p.categoryId)
                             : null;
                           return (
-                            pCategoryIdStr && categoryIds.includes(pCategoryIdStr)
+                            pCategoryIdStr &&
+                            categoryIds.includes(pCategoryIdStr)
                           );
                         }).length;
 
@@ -1567,8 +1643,9 @@ const Pos = () => {
                           <div
                             key={category.id}
                             onClick={() => setActiveTab(category.id)}
-                            className={`owl-item ${activeTab === category.id ? "active" : ""
-                              }`}
+                            className={`owl-item ${
+                              activeTab === category.id ? "active" : ""
+                            }`}
                             id={category.id}
                           >
                             <Link to="#">
@@ -1937,7 +2014,9 @@ const Pos = () => {
                             setCustomerSearchVisible(true);
                             // Focus vào input sau khi render
                             setTimeout(() => {
-                              const customerInput = document.querySelector('.customer-search-input');
+                              const customerInput = document.querySelector(
+                                ".customer-search-input"
+                              );
                               if (customerInput) {
                                 customerInput.focus();
                               }
@@ -2125,7 +2204,10 @@ const Pos = () => {
                                         minWidth: "auto",
                                       }}
                                     >
-                                      {new Intl.NumberFormat("vi-VN").format(item.price)} đ
+                                      {new Intl.NumberFormat("vi-VN").format(
+                                        item.price
+                                      )}{" "}
+                                      đ
                                     </span>
                                     <span
                                       className="badge"
@@ -2147,7 +2229,10 @@ const Pos = () => {
                                       className="text-muted text-decoration-line-through"
                                       style={{ fontSize: "13px" }}
                                     >
-                                      {new Intl.NumberFormat("vi-VN").format(item.originalPrice)} đ
+                                      {new Intl.NumberFormat("vi-VN").format(
+                                        item.originalPrice
+                                      )}{" "}
+                                      đ
                                     </small>
                                   </div>
                                 </div>
@@ -2159,7 +2244,10 @@ const Pos = () => {
                                     color: "#1f1f1f",
                                   }}
                                 >
-                                  {new Intl.NumberFormat("vi-VN").format(item.price)} đ
+                                  {new Intl.NumberFormat("vi-VN").format(
+                                    item.price
+                                  )}{" "}
+                                  đ
                                 </p>
                               )}
                             </div>
@@ -2257,7 +2345,7 @@ const Pos = () => {
                             )}
                             {createdOrder &&
                               createdOrder.paymentStatus ===
-                              "Chưa thanh toán" && (
+                                "Chưa thanh toán" && (
                                 <tr>
                                   <td className="fw-bold">Còn nợ:</td>
                                   <td className="text-end fw-bold text-danger">
@@ -2270,7 +2358,7 @@ const Pos = () => {
                               )}
                             {createdOrder &&
                               createdOrder.paymentStatus ===
-                              "Đã thanh toán" && (
+                                "Đã thanh toán" && (
                                 <tr>
                                   <td className="fw-bold">Còn nợ:</td>
                                   <td className="text-end fw-bold text-success">
@@ -2379,20 +2467,20 @@ const Pos = () => {
             return;
           }
           try {
-            const denominationsData = cashDenominations.map(d => ({
+            const denominationsData = cashDenominations.map((d) => ({
               denomination: d.denomination,
               quantity: d.quantity,
-              totalValue: d.denomination * d.quantity
+              totalValue: d.denomination * d.quantity,
             }));
 
-            console.log('🟢 Opening shift with:', {
+            console.log("🟢 Opening shift with:", {
               amount: Number(amount),
               denominationsCount: denominationsData.length,
-              denominations: denominationsData
+              denominations: denominationsData,
             });
 
             const res = await openShift(Number(amount), denominationsData);
-            console.log('✅ Shift opened successfully:', res);
+            console.log("✅ Shift opened successfully:", res);
             setCurrentShift(res);
             setShowShiftModal(false);
             window.dispatchEvent(
@@ -2400,7 +2488,7 @@ const Pos = () => {
             );
             message.success("Đã mở ca");
           } catch (error) {
-            console.error('❌ Error opening shift:', error);
+            console.error("❌ Error opening shift:", error);
             message.error("Không thể mở ca");
           }
         }}
@@ -2410,21 +2498,25 @@ const Pos = () => {
             return;
           }
           try {
-            const denominationsData = cashDenominations.map(d => ({
+            const denominationsData = cashDenominations.map((d) => ({
               denomination: d.denomination,
               quantity: d.quantity,
-              totalValue: d.denomination * d.quantity
+              totalValue: d.denomination * d.quantity,
             }));
 
-            console.log('🔵 Closing shift with:', {
+            console.log("🔵 Closing shift with:", {
               amount: Number(amount),
               note,
               denominationsCount: denominationsData.length,
-              denominations: denominationsData
+              denominations: denominationsData,
             });
 
-            const res = await closeShift(Number(amount), note, denominationsData);
-            console.log('✅ Shift closed successfully:', res);
+            const res = await closeShift(
+              Number(amount),
+              note,
+              denominationsData
+            );
+            console.log("✅ Shift closed successfully:", res);
             setCurrentShift(res);
             setShowShiftModal(false);
             window.dispatchEvent(
@@ -2432,7 +2524,7 @@ const Pos = () => {
             );
             message.success("Đã đóng ca");
           } catch (error) {
-            console.error('❌ Error closing shift:', error);
+            console.error("❌ Error closing shift:", error);
             message.error("Không thể đóng ca");
           }
         }}

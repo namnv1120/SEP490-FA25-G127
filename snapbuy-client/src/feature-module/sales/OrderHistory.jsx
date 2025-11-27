@@ -7,7 +7,7 @@ import CommonDateRangePicker from "../../components/date-range-picker/common-dat
 import { getAllOrders, cancelOrder } from "../../services/OrderService";
 import { getAccountById } from "../../services/AccountService";
 import OrderDetailModal from "../../core/modals/sales/OrderDetailModal";
-import { message, Modal } from "antd";
+import { message, Modal, Spin } from "antd";
 
 const OrderHistory = () => {
   const [filteredData, setFilteredData] = useState([]);
@@ -705,7 +705,7 @@ const OrderHistory = () => {
         <div className="page-header">
           <div className="add-item d-flex">
             <div className="page-title">
-              <h4>Lịch Sử Đơn Hàng</h4>
+              <h4 className="fw-bold">Lịch Sử Đơn Hàng</h4>
               <h6>Theo dõi các đơn hàng đã đặt và xử lý</h6>
             </div>
           </div>
@@ -714,6 +714,26 @@ const OrderHistory = () => {
             showExcel={false}
             showMail={false}
           />
+          <div className="page-btn d-flex align-items-center gap-2">
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={handleCancelOrders}
+              disabled={actionLoading}
+            >
+              <i className="ti ti-x me-1" />
+              Huỷ đơn
+            </button>
+            <button
+              type="button"
+              className="btn btn-warning"
+              onClick={handleRefundOrders}
+              disabled={actionLoading}
+            >
+              <i className="ti ti-refund me-1" />
+              Hoàn tiền
+            </button>
+          </div>
         </div>
 
         {/* Bộ lọc */}
@@ -737,38 +757,6 @@ const OrderHistory = () => {
                     setDateRange(newRange);
                     setCurrentPage(1);
                   }}
-                  className="w-100"
-                />
-              </div>
-              <div className="col-12 col-md-6 col-lg-3">
-                <label className="form-label fw-semibold text-dark mb-1">
-                  Trạng thái đơn
-                </label>
-                <CommonSelect
-                  options={OrderStatuses}
-                  value={OrderStatuses.find(
-                    (item) => item.value === selectedStatus
-                  )}
-                  onChange={(selected) =>
-                    setSelectedStatus(selected?.value || "")
-                  }
-                  placeholder="Chọn trạng thái đơn"
-                  className="w-100"
-                />
-              </div>
-              <div className="col-12 col-md-6 col-lg-3">
-                <label className="form-label fw-semibold text-dark mb-1">
-                  Trạng thái thanh toán
-                </label>
-                <CommonSelect
-                  options={PaymentStatuses}
-                  value={PaymentStatuses.find(
-                    (item) => item.value === selectedPaymentStatus
-                  )}
-                  onChange={(selected) =>
-                    setSelectedPaymentStatus(selected?.value || "")
-                  }
-                  placeholder="Chọn trạng thái thanh toán"
                   className="w-100"
                 />
               </div>
@@ -797,25 +785,33 @@ const OrderHistory = () => {
                 ({filteredData.length} bản ghi)
               </span>
             </h5>
-            <div className="d-flex gap-2">
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={handleCancelOrders}
-                disabled={actionLoading}
-              >
-                <i className="ti ti-x me-1" />
-                Huỷ đơn
-              </button>
-              <button
-                type="button"
-                className="btn btn-warning"
-                onClick={handleRefundOrders}
-                disabled={actionLoading}
-              >
-                <i className="ti ti-refund me-1" />
-                Hoàn tiền
-              </button>
+            <div className="d-flex align-items-end gap-3">
+              <div>
+                <CommonSelect
+                  options={OrderStatuses}
+                  value={OrderStatuses.find(
+                    (item) => item.value === selectedStatus
+                  )}
+                  onChange={(selected) =>
+                    setSelectedStatus(selected?.value || "")
+                  }
+                  placeholder="Chọn trạng thái đơn"
+                  className="w-100"
+                />
+              </div>
+              <div>
+                <CommonSelect
+                  options={PaymentStatuses}
+                  value={PaymentStatuses.find(
+                    (item) => item.value === selectedPaymentStatus
+                  )}
+                  onChange={(selected) =>
+                    setSelectedPaymentStatus(selected?.value || "")
+                  }
+                  placeholder="Chọn trạng thái thanh toán"
+                  className="w-100"
+                />
+              </div>
             </div>
           </div>
           <div className="card-body p-0">
@@ -825,18 +821,24 @@ const OrderHistory = () => {
                 {error}
               </div>
             )}
-            <PrimeDataTable
-              column={columns}
-              data={filteredData}
-              rows={rows}
-              setRows={setRows}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              totalRecords={filteredData.length}
-              dataKey="key"
-              loading={loading && !isInitialLoad}
-              serverSidePagination={false}
-            />
+            {loading ? (
+              <div className="d-flex justify-content-center p-5">
+                <Spin size="large" />
+              </div>
+            ) : (
+              <PrimeDataTable
+                column={columns}
+                data={filteredData}
+                rows={rows}
+                setRows={setRows}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                totalRecords={filteredData.length}
+                dataKey="key"
+                loading={loading && !isInitialLoad}
+                serverSidePagination={false}
+              />
+            )}
           </div>
         </div>
       </div>

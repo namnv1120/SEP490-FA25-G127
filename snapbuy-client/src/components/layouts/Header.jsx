@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Nav, NavDropdown, Dropdown, Button, Form } from "react-bootstrap";
@@ -73,9 +73,9 @@ const Header = () => {
     const handleFullscreenChange = () => {
       setIsFullscreen(
         document.fullscreenElement ||
-        document.mozFullScreenElement ||
-        document.webkitFullscreenElement ||
-        document.msFullscreenElement
+          document.mozFullScreenElement ||
+          document.webkitFullscreenElement ||
+          document.msFullscreenElement
       );
     };
 
@@ -108,23 +108,20 @@ const Header = () => {
 
   const location = useLocation();
   const { userRole } = usePermission();
-  let sidebarData;
-  switch (userRole) {
-    case "Quản trị viên":
-      sidebarData = SidebarDataAdmin;
-      break;
-    case "Chủ cửa hàng":
-      sidebarData = SidebarDataOwner;
-      break;
-    case "Nhân viên kho":
-      sidebarData = SidebarDataWarehouse;
-      break;
-    case "Nhân viên bán hàng":
-      sidebarData = SidebarDataSales;
-      break;
-    default:
-      sidebarData = [];
-  }
+  const sidebarData = useMemo(() => {
+    switch (userRole) {
+      case "Quản trị viên":
+        return SidebarDataAdmin;
+      case "Chủ cửa hàng":
+        return SidebarDataOwner;
+      case "Nhân viên kho":
+        return SidebarDataWarehouse;
+      case "Nhân viên bán hàng":
+        return SidebarDataSales;
+      default:
+        return [];
+    }
+  }, [userRole]);
 
   // Flatten all routes from SidebarData1
   const flattenRoutes = (data, parentTitle = "") => {
@@ -318,10 +315,11 @@ const Header = () => {
         <div
           className={`header-left
              ${toggle ? "" : "active"}
-             ${expandMenus || dataLayout === "layout-hovered"
-              ? "expand-menu"
-              : ""
-            }
+             ${
+               expandMenus || dataLayout === "layout-hovered"
+                 ? "expand-menu"
+                 : ""
+             }
              `}
           onMouseLeave={expandMenu}
           onMouseOver={expandMenuOpen}
@@ -331,12 +329,12 @@ const Header = () => {
               userRole === "Nhân viên bán hàng"
                 ? route.saledashboard
                 : userRole === "Chủ cửa hàng"
-                  ? route.shopownerdashboard
-                  : userRole === "Quản trị viên"
-                    ? route.admindashboard
-                    : userRole === "Nhân viên kho"
-                      ? route.warehousedashboard
-                      : route.shopownerdashboard
+                ? route.shopownerdashboard
+                : userRole === "Quản trị viên"
+                ? route.admindashboard
+                : userRole === "Nhân viên kho"
+                ? route.warehousedashboard
+                : route.shopownerdashboard
             }
             className="logo logo-normal"
           >
@@ -347,12 +345,12 @@ const Header = () => {
               userRole === "Nhân viên bán hàng"
                 ? route.saledashboard
                 : userRole === "Chủ cửa hàng"
-                  ? route.shopownerdashboard
-                  : userRole === "Quản trị viên"
-                    ? route.admindashboard
-                    : userRole === "Nhân viên kho"
-                      ? route.warehousedashboard
-                      : route.shopownerdashboard
+                ? route.shopownerdashboard
+                : userRole === "Quản trị viên"
+                ? route.admindashboard
+                : userRole === "Nhân viên kho"
+                ? route.warehousedashboard
+                : route.shopownerdashboard
             }
             className="logo logo-white"
           >
@@ -363,12 +361,12 @@ const Header = () => {
               userRole === "Nhân viên bán hàng"
                 ? route.saledashboard
                 : userRole === "Chủ cửa hàng"
-                  ? route.shopownerdashboard
-                  : userRole === "Quản trị viên"
-                    ? route.admindashboard
-                    : userRole === "Nhân viên kho"
-                      ? route.warehousedashboard
-                      : route.shopownerdashboard
+                ? route.shopownerdashboard
+                : userRole === "Quản trị viên"
+                ? route.admindashboard
+                : userRole === "Nhân viên kho"
+                ? route.warehousedashboard
+                : route.shopownerdashboard
             }
             className="logo-small"
           >
@@ -382,8 +380,8 @@ const Header = () => {
                 pathname.includes("tasks") || pathname.includes("pos")
                   ? "none"
                   : pathname.includes("compose")
-                    ? "none"
-                    : "",
+                  ? "none"
+                  : "",
             }}
             onClick={handlesidebar}
           >

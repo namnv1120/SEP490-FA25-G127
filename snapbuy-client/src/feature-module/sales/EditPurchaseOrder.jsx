@@ -424,7 +424,7 @@ const EditPurchaseOrder = () => {
         <div className="page-header">
           <div className="add-item d-flex">
             <div className="page-title">
-              <h4>Chỉnh sửa phiếu nhập hàng</h4>
+              <h4 className="fw-bold">Chỉnh sửa phiếu nhập hàng</h4>
               <h6>Cập nhật đơn nhập hàng</h6>
             </div>
           </div>

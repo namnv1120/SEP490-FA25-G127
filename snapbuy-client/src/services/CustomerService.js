@@ -1,4 +1,3 @@
- 
 import axios from "axios";
 
 const REST_API_BASE_URL = "http://localhost:8080/api/customers";
@@ -28,7 +27,10 @@ export const getAllCustomers = async () => {
 
 export const getCustomerById = async (id) => {
   try {
-    const response = await axios.get(`${REST_API_BASE_URL}/${id}`, getAuthHeaders());
+    const response = await axios.get(
+      `${REST_API_BASE_URL}/${id}`,
+      getAuthHeaders()
+    );
     return response.data?.result || response.data;
   } catch (error) {
     console.error("Lỗi khi lấy khách hàng theo ID:", error);
@@ -38,13 +40,10 @@ export const getCustomerById = async (id) => {
 
 export const searchCustomers = async (keyword) => {
   try {
-    const response = await axios.get(
-      `${REST_API_BASE_URL}/search`,
-      {
-        ...getAuthHeaders(),
-        params: { keyword }
-      }
-    );
+    const response = await axios.get(`${REST_API_BASE_URL}/search`, {
+      ...getAuthHeaders(),
+      params: { keyword },
+    });
     return response.data?.result || response.data || [];
   } catch (error) {
     console.error("Lỗi khi tìm kiếm khách hàng:", error);
@@ -54,7 +53,11 @@ export const searchCustomers = async (keyword) => {
 
 export const createCustomer = async (customerData) => {
   try {
-    const response = await axios.post(REST_API_BASE_URL, customerData, getAuthHeaders());
+    const response = await axios.post(
+      REST_API_BASE_URL,
+      customerData,
+      getAuthHeaders()
+    );
     return response.data?.result || response.data;
   } catch (error) {
     console.error("Lỗi khi tạo khách hàng:", error);
@@ -64,7 +67,11 @@ export const createCustomer = async (customerData) => {
 
 export const updateCustomer = async (id, customerData) => {
   try {
-    const response = await axios.put(`${REST_API_BASE_URL}/${id}`, customerData, getAuthHeaders());
+    const response = await axios.put(
+      `${REST_API_BASE_URL}/${id}`,
+      customerData,
+      getAuthHeaders()
+    );
     return response.data?.result || response.data;
   } catch (error) {
     console.error("Lỗi khi cập nhật khách hàng:", error);
@@ -74,10 +81,27 @@ export const updateCustomer = async (id, customerData) => {
 
 export const deleteCustomer = async (id) => {
   try {
-    const response = await axios.delete(`${REST_API_BASE_URL}/${id}`, getAuthHeaders());
+    const response = await axios.delete(
+      `${REST_API_BASE_URL}/${id}`,
+      getAuthHeaders()
+    );
     return response.data?.result || response.data;
   } catch (error) {
     console.error("Lỗi khi xóa khách hàng:", error);
+    throw error;
+  }
+};
+
+export const toggleCustomerStatus = async (id) => {
+  try {
+    const response = await axios.put(
+      `${REST_API_BASE_URL}/${id}/status`,
+      {},
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("Lỗi khi cập nhật trạng thái khách hàng:", error);
     throw error;
   }
 };

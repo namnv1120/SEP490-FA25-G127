@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { Modal, message, Spin } from "antd";
+import { message, Spin } from "antd";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
-import SearchFromApi from "../../components/data-table/search";
 import CommonSelect from "../../components/select/common-select";
+import CommonFooter from "../../components/footer/CommonFooter";
 import AddAccountModal from "../../core/modals/accounts/AddAccountModal";
 import EditAccountModal from "../../core/modals/accounts/EditAccountModal";
 import {
@@ -256,11 +256,18 @@ const StaffAccountList = () => {
           <div className="page-header">
             <div className="add-item d-flex justify-content-between align-items-center">
               <div className="page-title">
-                <h4>Nhân viên</h4>
+                <h4 className="fw-bold">Nhân viên</h4>
                 <h6>Quản lý tài khoản nhân viên</h6>
               </div>
             </div>
-            <TableTopHead />
+            <TableTopHead
+              showExcel={false}
+              onRefresh={(e) => {
+                if (e) e.preventDefault();
+                fetchStaff();
+                message.success("Đã làm mới danh sách nhân viên!");
+              }}
+            />
             <div className="page-btn">
               <button
                 type="button"
@@ -273,29 +280,21 @@ const StaffAccountList = () => {
             </div>
           </div>
 
-          <div className="card table-list-card">
-            <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <div className="search-set">
-                <SearchFromApi callback={(v) => setSearchQuery(v || "")} />
-              </div>
-              <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                <div className="me-2">
-                  <CommonSelect
-                    options={StatusOptions}
-                    value={
-                      StatusOptions.find((o) => o.value === statusFilter) ||
-                      StatusOptions[0]
-                    }
-                    onChange={(s) => {
-                      const v = s?.value;
-                      setStatusFilter(v === true || v === false ? v : null);
-                      setCurrentPage(1);
-                    }}
-                    placeholder="Trạng thái"
-                    width={220}
-                  />
-                </div>
-                <div>
+          {/* Bộ lọc */}
+          <div className="card mb-3 shadow-sm">
+            <div className="card-body p-4">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(1);
+                  fetchStaff();
+                }}
+                className="row g-3 align-items-end"
+              >
+                <div className="col-12 col-md-6 col-lg-3">
+                  <label className="form-label fw-semibold text-dark mb-1">
+                    Vai trò
+                  </label>
                   <CommonSelect
                     options={[{ value: "", label: "Tất cả" }, ...roleOptions]}
                     value={
@@ -307,19 +306,65 @@ const StaffAccountList = () => {
                       setRoleFilter(s?.value || "");
                       setCurrentPage(1);
                     }}
-                    placeholder="Vai trò"
-                    width={220}
+                    placeholder="Chọn vai trò"
+                    className="w-100"
+                  />
+                </div>
+                <div className="col-12 col-md-6 col-lg-3 ms-auto">
+                  <label className="form-label fw-semibold text-dark mb-1">
+                    Tìm kiếm
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Họ tên, tên đăng nhập, email, số điện thoại..."
+                    value={searchQuery || ""}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  />
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* Bảng */}
+          <div className="card table-list-card no-search shadow-sm">
+            <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
+              <h5 className="mb-0 fw-semibold">
+                Danh sách nhân viên{" "}
+                <span className="text-muted small">
+                  ({totalRecords} bản ghi)
+                </span>
+              </h5>
+              <div className="d-flex gap-2 align-items-end flex-wrap">
+                <div style={{ minWidth: "220px" }}>
+                  <CommonSelect
+                    options={StatusOptions}
+                    value={
+                      StatusOptions.find((o) => o.value === statusFilter) ||
+                      StatusOptions[0]
+                    }
+                    onChange={(s) => {
+                      const v = s?.value;
+                      setStatusFilter(v === true || v === false ? v : null);
+                      setCurrentPage(1);
+                    }}
+                    placeholder="Chọn trạng thái"
+                    className="w-100"
                   />
                 </div>
               </div>
             </div>
-            <div className="card-body">
-              {loading ? (
-                <div className="d-flex justify-content-center p-4">
-                  <Spin size="large" />
-                </div>
-              ) : (
-                <div className="table-responsive">
+
+            <div className="card-body p-0">
+              <div className="table-responsive">
+                {loading ? (
+                  <div className="d-flex justify-content-center p-5">
+                    <Spin size="large" />
+                  </div>
+                ) : (
                   <PrimeDataTable
                     column={columns}
                     data={data}
@@ -329,14 +374,15 @@ const StaffAccountList = () => {
                     setCurrentPage={setCurrentPage}
                     totalRecords={totalRecords}
                     dataKey="id"
-                    loading={false}
-                    serverSidePagination={false}
+                    loading={loading}
+                    serverSidePagination={true}
                   />
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
+        <CommonFooter />
       </div>
 
       <AddAccountModal

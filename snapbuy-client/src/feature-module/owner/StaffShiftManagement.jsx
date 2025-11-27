@@ -1,9 +1,16 @@
-import { useState, useEffect, useCallback } from "react";
-import { message, Modal, Table, Tag, Spin, Input, InputNumber, Button } from "antd";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { message, Modal, Table, Tag, InputNumber } from "antd";
 import PrimeDataTable from "../../components/data-table";
-import { getShiftsByAccountId, openShiftForEmployee, getAllActiveShifts } from "../../services/ShiftService";
+import TableTopHead from "../../components/table-top-head";
+import CommonSelect from "../../components/select/common-select";
+import {
+  getShiftsByAccountId,
+  openShiftForEmployee,
+  getAllActiveShifts,
+} from "../../services/ShiftService";
 import { searchStaffAccountsPaged } from "../../services/AccountService";
 import { getAllOrders } from "../../services/OrderService";
+import CommonFooter from "../../components/footer/CommonFooter";
 import CashDenominationInput from "../../components/cash-denomination/CashDenominationInput";
 import CashDenominationComparison from "../../components/cash-denomination/CashDenominationComparison";
 
@@ -13,10 +20,26 @@ const StaffShiftManagement = () => {
   const [shiftsData, setShiftsData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState(null);
   const [selectedShift, setSelectedShift] = useState(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [orders, setOrders] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rows] = useState(5); // Cố định 5 nhân viên mỗi trang
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [staffSearchQuery, setStaffSearchQuery] = useState("");
+  const [shiftCurrentPage, setShiftCurrentPage] = useState(1);
+  const [shiftRows, setShiftRows] = useState(10);
+
+  // Status filter options
+  const StatusOptions = useMemo(
+    () => [
+      { value: "all", label: "Tất cả" },
+      { value: "Mở", label: "Đang mở" },
+      { value: "Đóng", label: "Đã đóng" },
+    ],
+    []
+  );
 
   // Open shift modal states
   const [openShiftModalVisible, setOpenShiftModalVisible] = useState(false);
@@ -25,7 +48,8 @@ const StaffShiftManagement = () => {
   const [openCashDenominations, setOpenCashDenominations] = useState([]);
   const [activeShifts, setActiveShifts] = useState([]);
 
-  // Summary stats
+  // Summary stats (currently not displayed but kept for future use)
+  // eslint-disable-next-line no-unused-vars
   const [stats, setStats] = useState({
     activeShifts: 0,
     todayRevenue: 0,
@@ -77,47 +101,73 @@ const StaffShiftManagement = () => {
   }, []);
 
   // Fetch staff list
-  useEffect(() => {
-    const fetchStaff = async () => {
-      try {
-        setLoading(true);
+  const fetchStaff = useCallback(async () => {
+    try {
+      setLoading(true);
 
-        const response = await searchStaffAccountsPaged({
-          keyword: "",
-          active: true,
-          role: "Nhân viên bán hàng",
-          page: 0,
-          size: 100,
-          sortBy: "fullName",
-          sortDir: "ASC",
-        });
+      const backendPage = currentPage - 1;
 
-        const allStaff = response?.content || [];
+      const response = await searchStaffAccountsPaged({
+        keyword: staffSearchQuery || "",
+        active: true,
+        role: "Nhân viên bán hàng",
+        page: backendPage,
+        size: rows,
+        sortBy: "fullName",
+        sortDir: "ASC",
+      });
 
-        const staff = allStaff.filter(
-          (s) => s.roles && s.roles.includes("Nhân viên bán hàng")
-        );
+      const allStaff = response?.content || [];
 
-        setStaffList(staff);
+      const staff = allStaff.filter(
+        (s) => s.roles && s.roles.includes("Nhân viên bán hàng")
+      );
 
-        if (staff.length === 0) {
-          message.warning("Không tìm thấy nhân viên bán hàng nào");
-          setLoading(false);
-          return;
-        }
+      setStaffList(staff);
+      setTotalRecords(response?.totalElements || staff.length);
 
-        await Promise.all([fetchAllShifts(staff), loadActiveShifts()]);
-      } catch (error) {
-        message.error(
-          "Không thể tải danh sách nhân viên: " + (error.message || "")
-        );
-      } finally {
+      if (staff.length === 0 && currentPage === 1) {
         setLoading(false);
+        return;
       }
-    };
 
+      // Load active shifts để kiểm tra trạng thái ca
+      await loadActiveShifts();
+      if (currentPage === 1) {
+        try {
+          const allStaffResponse = await searchStaffAccountsPaged({
+            keyword: staffSearchQuery || "",
+            active: true,
+            role: "Nhân viên bán hàng",
+            page: 0,
+            size: 1000, // Lấy tất cả để fetch shifts
+            sortBy: "fullName",
+            sortDir: "ASC",
+          });
+          const allStaff = (allStaffResponse?.content || []).filter(
+            (s) => s.roles && s.roles.includes("Nhân viên bán hàng")
+          );
+          await fetchAllShifts(allStaff);
+        } catch (err) {
+          console.error("Error fetching all shifts:", err);
+        }
+      }
+    } catch (error) {
+      message.error(
+        "Không thể tải danh sách nhân viên: " + (error.message || "")
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, rows, staffSearchQuery, fetchAllShifts, loadActiveShifts]);
+
+  useEffect(() => {
     fetchStaff();
-  }, [fetchAllShifts, loadActiveShifts]);
+  }, [fetchStaff]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [staffSearchQuery]);
 
   // Calculate daily revenue separately
   useEffect(() => {
@@ -195,7 +245,7 @@ const StaffShiftManagement = () => {
       );
     }
 
-    if (statusFilter !== "all") {
+    if (statusFilter && statusFilter !== "all") {
       filtered = filtered.filter((s) => s.status === statusFilter);
     }
 
@@ -269,7 +319,9 @@ const StaffShiftManagement = () => {
   const calculateShiftDuration = (openedAt, closedAt) => {
     if (!openedAt) return "-";
     const startTime = new Date(openedAt).getTime();
-    const endTime = closedAt ? new Date(closedAt).getTime() : new Date().getTime();
+    const endTime = closedAt
+      ? new Date(closedAt).getTime()
+      : new Date().getTime();
     const diffMs = endTime - startTime;
     const hours = Math.floor(diffMs / (1000 * 60 * 60));
     const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -278,6 +330,11 @@ const StaffShiftManagement = () => {
 
   // Open shift for employee
   const handleOpenShiftForEmployee = (employee) => {
+    // Check if employee already has an active shift
+    if (hasActiveShift(employee.id)) {
+      message.error(`${employee.fullName} đang có ca làm việc, không thể mở ca mới!`);
+      return;
+    }
     setSelectedEmployee(employee);
     setInitialCash(0);
     setOpenShiftModalVisible(true);
@@ -293,21 +350,48 @@ const StaffShiftManagement = () => {
     try {
       setLoading(true);
       // Calculate total from cash denominations if provided
-      const cashDenominationsData = openCashDenominations.map(d => ({
+      const cashDenominationsData = openCashDenominations.map((d) => ({
         denomination: d.denomination,
         quantity: d.quantity,
-        totalValue: d.denomination * d.quantity
+        totalValue: d.denomination * d.quantity,
       }));
 
-      await openShiftForEmployee(selectedEmployee.id, initialCash, cashDenominationsData);
+      await openShiftForEmployee(
+        selectedEmployee.id,
+        initialCash,
+        cashDenominationsData
+      );
       message.success(`Đã mở ca cho ${selectedEmployee.fullName}`);
       setOpenShiftModalVisible(false);
       setSelectedEmployee(null);
       setInitialCash(0);
       setOpenCashDenominations([]);
 
-      // Reload data
-      await Promise.all([fetchAllShifts(staffList), loadActiveShifts()]);
+      // Reload active shifts first to update status immediately
+      await loadActiveShifts();
+
+      // Fetch all staff to get complete list for shifts
+      try {
+        const allStaffResponse = await searchStaffAccountsPaged({
+          keyword: staffSearchQuery || "",
+          active: true,
+          role: "Nhân viên bán hàng",
+          page: 0,
+          size: 1000, // Lấy tất cả để fetch shifts
+          sortBy: "fullName",
+          sortDir: "ASC",
+        });
+        const allStaff = (allStaffResponse?.content || []).filter(
+          (s) => s.roles && s.roles.includes("Nhân viên bán hàng")
+        );
+        // Fetch all shifts for all staff to update history
+        await fetchAllShifts(allStaff);
+      } catch (err) {
+        console.error("Error fetching all shifts:", err);
+      }
+
+      // Reload current page staff list to update status
+      await fetchStaff();
     } catch (error) {
       console.error("Error opening shift:", error);
       message.error(error.response?.data?.message || "Không thể mở ca");
@@ -318,8 +402,66 @@ const StaffShiftManagement = () => {
 
   // Check if employee has active shift
   const hasActiveShift = (employeeId) => {
-    return activeShifts.some(shift => shift.accountId === employeeId);
+    return activeShifts.some((shift) => shift.accountId === employeeId);
   };
+
+  // Staff list columns
+  const staffColumns = [
+    {
+      header: "Nhân viên",
+      field: "fullName",
+      key: "fullName",
+      sortable: true,
+      style: { paddingLeft: '60px' },
+    },
+    {
+      header: "Tài khoản",
+      field: "username",
+      key: "username",
+      sortable: true,
+    },
+    {
+      header: "Email",
+      field: "email",
+      key: "email",
+      sortable: true,
+      style: { paddingRight: '100px' },
+    },
+    {
+      header: "Trạng thái ca",
+      field: "shiftStatus",
+      key: "shiftStatus",
+      sortable: false,
+      body: (row) => {
+        const hasShift = hasActiveShift(row.id);
+        return hasShift ? (
+          <Tag color="success">🟢 Đang có ca</Tag>
+        ) : (
+          <Tag color="default">⚪ Chưa có ca</Tag>
+        );
+      },
+    },
+    {
+      header: "",
+      field: "actions",
+      key: "actions",
+      sortable: false,
+      body: (row) => {
+        return (
+          <div className="action-table-data text-center">
+            <button
+              className="btn btn-sm btn-primary"
+              onClick={() => handleOpenShiftForEmployee(row)}
+            >
+              <i className="feather icon-plus-circle me-1"></i>
+              Mở ca
+            </button>
+          </div>
+        );
+      },
+      style: { paddingRight: '30px' },
+    },
+  ];
 
   const columns = [
     {
@@ -327,21 +469,9 @@ const StaffShiftManagement = () => {
       field: "accountName",
       key: "accountName",
       sortable: true,
+      style: { paddingLeft: '60px' },
     },
-    {
-      header: "Trạng thái",
-      field: "status",
-      key: "status",
-      sortable: true,
-      body: (row) => (
-        <span
-          className={`badge ${row.status === "Mở" ? "badge-success" : "badge-secondary"
-            }`}
-        >
-          {row.status === "Mở" ? "🟢 Đang mở" : "⚪ Đã đóng"}
-        </span>
-      ),
-    },
+
     {
       header: "Mở ca",
       field: "openedAt",
@@ -364,7 +494,21 @@ const StaffShiftManagement = () => {
       body: (row) => calculateShiftDuration(row.openedAt, row.closedAt),
     },
     {
-      header: "Thao tác",
+      header: "Trạng thái",
+      field: "status",
+      key: "status",
+      sortable: true,
+      body: (row) => (
+        <span
+          className={`badge ${row.status === "Mở" ? "badge-success" : "badge-secondary"
+            }`}
+        >
+          {row.status === "Mở" ? "🟢 Đang mở" : "⚪ Đã đóng"}
+        </span>
+      ),
+    },
+    {
+      header: "",
       field: "actions",
       key: "actions",
       body: (row) => (
@@ -386,7 +530,7 @@ const StaffShiftManagement = () => {
       dataIndex: "orderNumber",
       key: "orderNumber",
       render: (text, record) => (
-        <span style={{ color: '#E67E22', fontWeight: 600 }}>
+        <span style={{ color: "#E67E22", fontWeight: 600 }}>
           {text || record.orderId}
         </span>
       ),
@@ -409,12 +553,11 @@ const StaffShiftManagement = () => {
       key: "paymentStatus",
       render: (status, record) => {
         const paymentStatus = status || record.payment?.status || "-";
-        const isPaid = paymentStatus?.toLowerCase().includes('đã thanh toán') ||
-                       paymentStatus?.toLowerCase().includes('paid');
+        const isPaid =
+          paymentStatus?.toLowerCase().includes("đã thanh toán") ||
+          paymentStatus?.toLowerCase().includes("paid");
         return (
-          <Tag color={isPaid ? "success" : "warning"}>
-            {paymentStatus}
-          </Tag>
+          <Tag color={isPaid ? "success" : "warning"}>{paymentStatus}</Tag>
         );
       },
     },
@@ -430,15 +573,19 @@ const StaffShiftManagement = () => {
   const totalRevenue = orders
     .filter((o) => {
       const status = o.paymentStatus || o.payment?.status || "";
-      return status.toLowerCase().includes('đã thanh toán') ||
-             status.toLowerCase().includes('paid');
+      return (
+        status.toLowerCase().includes("đã thanh toán") ||
+        status.toLowerCase().includes("paid")
+      );
     })
     .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
 
   const paidOrdersCount = orders.filter((o) => {
     const status = o.paymentStatus || o.payment?.status || "";
-    return status.toLowerCase().includes('đã thanh toán') ||
-           status.toLowerCase().includes('paid');
+    return (
+      status.toLowerCase().includes("đã thanh toán") ||
+      status.toLowerCase().includes("paid")
+    );
   }).length;
 
   return (
@@ -448,104 +595,120 @@ const StaffShiftManagement = () => {
         <div className="page-header">
           <div className="add-item d-flex">
             <div className="page-title">
-              <h4>Quản lý ca làm việc</h4>
+              <h4 className="fw-bold">Quản lý ca làm việc</h4>
               <h6>Giám sát ca làm việc của nhân viên</h6>
             </div>
           </div>
+          <TableTopHead
+            showExcel={false}
+            onRefresh={(e) => {
+              if (e) e.preventDefault();
+              fetchStaff();
+              message.success("Đã làm mới danh sách!");
+            }}
+          />
         </div>
 
         {/* Staff List with Open Shift Button */}
-        <div className="card mb-3">
-          <div className="card-header">
-            <h5 className="mb-0">Danh sách nhân viên</h5>
-          </div>
-          <div className="card-body">
-            <div className="table-responsive">
-              <table className="table table-hover">
-                <thead>
-                  <tr>
-                    <th>Nhân viên</th>
-                    <th>Email</th>
-                    <th>Trạng thái ca</th>
-                    <th className="text-center">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {staffList.map((staff) => {
-                    const hasShift = hasActiveShift(staff.id);
-                    return (
-                      <tr key={staff.id}>
-                        <td>
-                          <strong>{staff.fullName}</strong>
-                        </td>
-                        <td>{staff.email}</td>
-                        <td>
-                          {hasShift ? (
-                            <Tag color="success">🟢 Đang có ca</Tag>
-                          ) : (
-                            <Tag color="default">⚪ Chưa có ca</Tag>
-                          )}
-                        </td>
-                        <td className="text-center">
-                          {!hasShift && (
-                            <button
-                              className="btn btn-sm btn-primary"
-                              onClick={() => handleOpenShiftForEmployee(staff)}
-                            >
-                              <i className="feather icon-plus-circle me-1"></i>
-                              Mở ca
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="card mb-3">
-          <div className="card-body">
-            <div className="row g-3">
-              <div className="col-md-6">
-                <label className="form-label">Tìm kiếm nhân viên</label>
+        <div className="card table-list-card no-search shadow-sm mb-3">
+          <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
+            <h5 className="mb-0 fw-semibold">
+              Danh sách nhân viên{" "}
+              <span className="text-muted small">
+                ({totalRecords} nhân viên)
+              </span>
+            </h5>
+            <div className="d-flex gap-2 align-items-end flex-wrap">
+              <div style={{ minWidth: "250px" }}>
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Nhập tên nhân viên..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Tên nhân viên, tài khoản..."
+                  value={staffSearchQuery || ""}
+                  onChange={(e) => {
+                    setStaffSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
                 />
               </div>
-              <div className="col-md-3">
-                <label className="form-label">Trạng thái</label>
-                <select
-                  className="form-select"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <option value="all">Tất cả</option>
-                  <option value="Mở">Đang mở</option>
-                  <option value="Đóng">Đã đóng</option>
-                </select>
-              </div>
+            </div>
+          </div>
+          <div className="card-body p-0">
+            <div className="table-responsive staff-table">
+              <PrimeDataTable
+                data={staffList}
+                column={staffColumns}
+                loading={false}
+                emptyMessage="Không có nhân viên nào"
+                dataKey="id"
+                rows={rows}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                totalRecords={totalRecords}
+                serverSidePagination={true}
+
+              />
             </div>
           </div>
         </div>
 
-        {/* Data Table */}
-        <div className="card">
-          <div className="card-body">
-            <PrimeDataTable
-              data={filteredData}
-              column={columns}
-              loading={false}
-              emptyMessage="Không có dữ liệu ca làm việc"
-              dataKey="shiftId"
-            />
+        {/* Lịch sử ca */}
+        <div className="card table-list-card no-search shadow-sm">
+          <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
+            <h5 className="mb-0 fw-semibold">
+              Lịch sử ca{" "}
+              <span className="text-muted small">
+                ({filteredData.length} bản ghi)
+              </span>
+            </h5>
+            <div className="d-flex gap-2 align-items-end flex-wrap">
+              <div style={{ minWidth: "250px" }}>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Tên nhân viên..."
+                  value={searchTerm || ""}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setShiftCurrentPage(1);
+                  }}
+                />
+              </div>
+              <div style={{ minWidth: "180px" }}>
+                <CommonSelect
+                  options={StatusOptions}
+                  value={
+                    statusFilter
+                      ? StatusOptions.find((o) => o.value === statusFilter) || null
+                      : null
+                  }
+                  onChange={(s) => {
+                    const v = s?.value || null;
+                    setStatusFilter(v);
+                    setShiftCurrentPage(1);
+                  }}
+                  placeholder="Chọn trạng thái"
+                  className="w-100"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="card-body p-0">
+            <div className="table-responsive">
+              <PrimeDataTable
+                data={filteredData}
+                column={columns}
+                loading={false}
+                emptyMessage="Không có dữ liệu ca làm việc"
+                dataKey="shiftId"
+                rows={shiftRows}
+                setRows={setShiftRows}
+                currentPage={shiftCurrentPage}
+                setCurrentPage={setShiftCurrentPage}
+                totalRecords={filteredData.length}
+                serverSidePagination={false}
+              />
+            </div>
           </div>
         </div>
 
@@ -561,8 +724,10 @@ const StaffShiftManagement = () => {
           {selectedShift && (
             <div>
               {/* Cash Denominations Comparison - So sánh mệnh giá tiền */}
-              {((selectedShift.initialCashDenominations && selectedShift.initialCashDenominations.length > 0) ||
-                (selectedShift.cashDenominations && selectedShift.cashDenominations.length > 0)) && (
+              {((selectedShift.initialCashDenominations &&
+                selectedShift.initialCashDenominations.length > 0) ||
+                (selectedShift.cashDenominations &&
+                  selectedShift.cashDenominations.length > 0)) && (
                   <div className="mb-4">
                     <h6 className="fw-bold mb-3">
                       <i className="ti ti-cash me-2"></i>
@@ -570,9 +735,17 @@ const StaffShiftManagement = () => {
                     </h6>
                     <div className="table-responsive">
                       <CashDenominationComparison
-                        openingDenominations={selectedShift.initialCashDenominations || []}
-                        closingDenominations={selectedShift.cashDenominations || []}
-                        showClosing={selectedShift.status === 'Đóng' && selectedShift.cashDenominations && selectedShift.cashDenominations.length > 0}
+                        openingDenominations={
+                          selectedShift.initialCashDenominations || []
+                        }
+                        closingDenominations={
+                          selectedShift.cashDenominations || []
+                        }
+                        showClosing={
+                          selectedShift.status === "Đóng" &&
+                          selectedShift.cashDenominations &&
+                          selectedShift.cashDenominations.length > 0
+                        }
                       />
                     </div>
                   </div>
@@ -581,7 +754,10 @@ const StaffShiftManagement = () => {
               {/* Orders Summary Cards - Styled with solid colors for better visibility */}
               <div className="row g-3 mb-4">
                 <div className="col-md-6">
-                  <div className="card bg-success text-white mb-0" style={{ height: '100%' }}>
+                  <div
+                    className="card bg-success text-white mb-0"
+                    style={{ height: "100%" }}
+                  >
                     <div className="card-body p-3 d-flex align-items-center">
                       <div className="d-flex justify-content-between align-items-center w-100">
                         <div>
@@ -589,7 +765,9 @@ const StaffShiftManagement = () => {
                           <h4 className="text-white mb-0">
                             {formatCurrency(totalRevenue)}
                           </h4>
-                          <small className="text-white-50">({paidOrdersCount} đơn thanh toán thành công)</small>
+                          <small className="text-white-50">
+                            ({paidOrdersCount} đơn thanh toán thành công)
+                          </small>
                         </div>
                         <i className="feather icon-dollar-sign fs-2 text-white-50"></i>
                       </div>
@@ -597,7 +775,10 @@ const StaffShiftManagement = () => {
                   </div>
                 </div>
                 <div className="col-md-6">
-                  <div className="card bg-primary text-white mb-0" style={{ height: '100%' }}>
+                  <div
+                    className="card bg-primary text-white mb-0"
+                    style={{ height: "100%" }}
+                  >
                     <div className="card-body p-3 d-flex align-items-center">
                       <div className="d-flex justify-content-between align-items-center w-100">
                         <div>
@@ -658,45 +839,71 @@ const StaffShiftManagement = () => {
           {selectedEmployee && (
             <div>
               <div className="mb-3">
-                <label className="form-label" style={{ fontSize: '13px', marginBottom: '4px' }}>Nhân viên:</label>
+                <label
+                  className="form-label"
+                  style={{ fontSize: "13px", marginBottom: "4px" }}
+                >
+                  Nhân viên:
+                </label>
                 <div className="p-2 bg-light rounded">
-                  <div style={{ fontSize: '14px', fontWeight: '500' }}>{selectedEmployee.fullName}</div>
-                  <small className="text-muted" style={{ fontSize: '12px' }}>{selectedEmployee.email}</small>
+                  <div style={{ fontSize: "14px", fontWeight: "500" }}>
+                    {selectedEmployee.fullName}
+                  </div>
+                  <small className="text-muted" style={{ fontSize: "12px" }}>
+                    {selectedEmployee.email}
+                  </small>
                 </div>
               </div>
               <div className="mb-3">
-                <label className="form-label fw-bold" style={{ fontSize: '13px', marginBottom: '4px' }}>
+                <label
+                  className="form-label fw-bold"
+                  style={{ fontSize: "13px", marginBottom: "4px" }}
+                >
                   <i className="ti ti-cash me-1"></i>
                   Số tiền ban đầu trong két:
                 </label>
                 <InputNumber
-                  style={{ width: '100%' }}
+                  style={{ width: "100%" }}
                   value={initialCash}
                   onChange={(value) => setInitialCash(value || 0)}
-                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
+                  formatter={(value) =>
+                    `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
                   min={0}
                   step={10000}
                   placeholder="Nhập số tiền ban đầu"
                 />
-                <small className="text-muted d-block mt-1" style={{ fontSize: '11px' }}>
+                <small
+                  className="text-muted d-block mt-1"
+                  style={{ fontSize: "11px" }}
+                >
                   Số tiền hiện có trong két trước khi bắt đầu ca
                 </small>
 
                 {/* Component nhập chi tiết mệnh giá tiền */}
                 <div className="mt-3">
-                  <label className="form-label fw-bold" style={{ fontSize: '13px', marginBottom: '4px' }}>
+                  <label
+                    className="form-label fw-bold"
+                    style={{ fontSize: "13px", marginBottom: "4px" }}
+                  >
                     <i className="ti ti-coins me-1"></i>
                     Chi tiết mệnh giá tiền (tùy chọn):
                   </label>
-                  <small className="text-muted d-block mb-2" style={{ fontSize: '11px' }}>
+                  <small
+                    className="text-muted d-block mb-2"
+                    style={{ fontSize: "11px" }}
+                  >
                     Nhập số lượng từng loại tờ tiền để theo dõi chi tiết
                   </small>
                   <CashDenominationInput
                     value={openCashDenominations}
                     onChange={(denoms) => {
                       setOpenCashDenominations(denoms);
-                      const total = denoms.reduce((sum, d) => sum + d.denomination * d.quantity, 0);
+                      const total = denoms.reduce(
+                        (sum, d) => sum + d.denomination * d.quantity,
+                        0
+                      );
                       setInitialCash(total);
                     }}
                     expectedTotal={initialCash}
@@ -707,11 +914,9 @@ const StaffShiftManagement = () => {
           )}
         </Modal>
       </div>
+      <CommonFooter />
     </div>
   );
 };
 
 export default StaffShiftManagement;
-
-
-

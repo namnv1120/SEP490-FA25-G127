@@ -3,7 +3,6 @@ import CommonFooter from "../../components/footer/CommonFooter";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
-import SearchFromApi from "../../components/data-table/search";
 import CommonSelect from "../../components/select/common-select";
 import {
   getAllCategories,
@@ -133,10 +132,6 @@ const SubCategoryList = () => {
     fetchSubCategories();
   }, [fetchSubCategories]);
 
-  const handleSearch = (value) => {
-    setSearchQuery(value);
-    setCurrentPage(1);
-  };
 
   const handleRefresh = (e) => {
     if (e) e.preventDefault();
@@ -341,17 +336,28 @@ const SubCategoryList = () => {
             </div>
           )}
 
-          <div className="card table-list-card">
-            <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <div className="search-set">
-                <SearchFromApi
-                  callback={handleSearch}
-                  rows={rows}
-                  setRows={setRows}
-                />
-              </div>
-              <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                <div>
+          <div className="card table-list-card no-search shadow-sm">
+            <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
+              <h5 className="mb-0 fw-semibold">
+                Danh sách danh mục con{" "}
+                <span className="text-muted small">
+                  ({totalRecords} bản ghi)
+                </span>
+              </h5>
+              <div className="d-flex gap-2 align-items-end flex-wrap">
+                <div style={{ minWidth: "250px" }}>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Tên danh mục con..."
+                    value={searchQuery || ""}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  />
+                </div>
+                <div style={{ minWidth: "180px" }}>
                   <CommonSelect
                     options={StatusOptions}
                     value={
@@ -363,14 +369,13 @@ const SubCategoryList = () => {
                       setStatusFilter(v === true || v === false ? v : null);
                       setCurrentPage(1);
                     }}
-                    placeholder="Trạng thái"
-                    width={180}
-                    className=""
+                    placeholder="Chọn trạng thái"
+                    className="w-100"
                   />
                 </div>
               </div>
             </div>
-            <div className="card-body">
+            <div className="card-body p-0">
               <div className="table-responsive category-table">
                 <PrimeDataTable
                   column={columns}

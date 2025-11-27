@@ -154,8 +154,6 @@ const EditAccount = ({
       newErrors.fullName = "Vui lòng nhập họ và tên.";
     } else if (name.length < 2 || name.length > 100) {
       newErrors.fullName = "Họ và tên phải từ 2 đến 100 ký tự.";
-    } else if (!/^[\p{L}][\p{L}\s'.-]*$/u.test(name)) {
-      newErrors.fullName = "Họ và tên chỉ gồm chữ, khoảng trắng, ', -, .";
     }
 
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -221,12 +219,14 @@ const EditAccount = ({
       if (formData.fullName.trim()) {
         updateData.fullName = formData.fullName.trim();
       }
-      if (formData.email.trim()) {
-        updateData.email = formData.email.trim();
-      }
-      if (formData.phone.trim()) {
-        updateData.phone = formData.phone.trim();
-      }
+      // Luôn gửi email và phone để có thể xóa (set về chuỗi rỗng) nếu để trống
+      // Backend sẽ xử lý chuỗi rỗng và set về null trong database
+      const trimmedEmail = formData.email.trim();
+      updateData.email = trimmedEmail || "";
+
+      const trimmedPhone = formData.phone.trim();
+      updateData.phone = trimmedPhone || "";
+
       if (formData.password) {
         updateData.password = formData.password;
       }
@@ -369,18 +369,16 @@ const EditAccount = ({
               <input
                 type={showPassword ? "text" : "password"}
                 name="password"
-                className={`form-control ${
-                  errors.password ? "is-invalid" : ""
-                }`}
+                className={`form-control ${errors.password ? "is-invalid" : ""
+                  }`}
                 value={formData.password}
                 onChange={handleInputChange}
                 placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)"
                 disabled={loading}
               />
               <span
-                className={`ti toggle-password position-absolute end-0 top-50 translate-middle-y me-2 ${
-                  showPassword ? "ti-eye" : "ti-eye-off"
-                }`}
+                className={`ti toggle-password position-absolute end-0 top-50 translate-middle-y me-2 ${showPassword ? "ti-eye" : "ti-eye-off"
+                  }`}
                 onClick={() => setShowPassword(!showPassword)}
                 style={{ cursor: "pointer" }}
               />
@@ -398,18 +396,16 @@ const EditAccount = ({
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   name="confirmPassword"
-                  className={`form-control ${
-                    errors.confirmPassword ? "is-invalid" : ""
-                  }`}
+                  className={`form-control ${errors.confirmPassword ? "is-invalid" : ""
+                    }`}
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
                   placeholder="Nhập lại mật khẩu mới"
                   disabled={loading}
                 />
                 <span
-                  className={`ti toggle-password position-absolute end-0 top-50 translate-middle-y me-2 ${
-                    showConfirmPassword ? "ti-eye" : "ti-eye-off"
-                  }`}
+                  className={`ti toggle-password position-absolute end-0 top-50 translate-middle-y me-2 ${showConfirmPassword ? "ti-eye" : "ti-eye-off"
+                    }`}
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   style={{ cursor: "pointer" }}
                 />

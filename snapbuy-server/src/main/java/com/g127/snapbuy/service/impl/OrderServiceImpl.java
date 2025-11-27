@@ -341,6 +341,11 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
 
+        // Kiểm tra nếu đơn đã ở trạng thái "Đã hủy" thì không cho hủy nữa
+        if ("Đã hủy".equalsIgnoreCase(order.getOrderStatus())) {
+            throw new IllegalStateException("Đơn hàng đã ở trạng thái hủy, không thể hủy lại.");
+        }
+
         Payment payment = paymentRepository.findByOrder(order);
         if (payment == null) throw new NoSuchElementException("Không tìm thấy thanh toán của đơn hàng");
 

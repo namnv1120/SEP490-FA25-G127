@@ -96,6 +96,7 @@ public class OrderController {
     }
 
     @GetMapping("/my/today-revenue")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
     public ApiResponse<BigDecimal> getMyTodayRevenue(@RequestParam(required = false) String paymentStatus) {
         ApiResponse<BigDecimal> res = new ApiResponse<>();
         BigDecimal revenue = orderService.getMyTodayRevenue(paymentStatus == null || paymentStatus.isBlank() ? null : paymentStatus.trim());
@@ -163,7 +164,7 @@ public class OrderController {
     }
 
     @GetMapping("/by-account/{accountId}/by-range")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
     public ApiResponse<List<OrderResponse>> getOrdersByAccountAndRange(@PathVariable UUID accountId,
                                                                                 @RequestParam String from,
                                                                                 @RequestParam String to) {

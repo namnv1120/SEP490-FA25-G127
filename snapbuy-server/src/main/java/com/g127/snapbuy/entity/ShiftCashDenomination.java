@@ -16,7 +16,7 @@ import java.util.UUID;
 @Builder
 public class ShiftCashDenomination {
 
-    public static final String TYPE_OPENING = "Mờ";
+    public static final String TYPE_OPENING = "Mở";
     public static final String TYPE_CLOSING = "Đóng";
 
     @Id

@@ -5,7 +5,6 @@ import EditRole from "../../core/modals/accounts/EditRoleModal";
 import DeleteModal from "../../components/delete-modal";
 import TableTopHead from "../../components/table-top-head";
 import PrimeDataTable from "../../components/data-table";
-import SearchFromApi from "../../components/data-table/search";
 import CommonSelect from "../../components/select/common-select";
 
 import {
@@ -13,7 +12,7 @@ import {
   toggleRoleStatus,
   searchRolesPaged,
 } from "../../services/RoleService";
-import { message } from "antd";
+import { message, Spin } from "antd";
 import CommonFooter from "../../components/footer/CommonFooter";
 
 const RoleList = () => {
@@ -28,7 +27,7 @@ const RoleList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rows, setRows] = useState(10);
   const [totalRecords, setTotalRecords] = useState(0);
-
+  const [loading, setLoading] = useState(false);
   const StatusOptions = useMemo(
     () => [
       { value: null, label: "Tất cả" },
@@ -39,6 +38,7 @@ const RoleList = () => {
   );
 
   const fetchRoles = useCallback(async () => {
+    setLoading(true);
     try {
       const backendPage = Math.max(0, (currentPage || 1) - 1);
       const sortBy = "roleName";
@@ -75,7 +75,7 @@ const RoleList = () => {
         );
       }
     } finally {
-      void 0;
+      setLoading(false);
     }
   }, [currentPage, rows, searchQuery, statusFilter]);
 
@@ -279,11 +279,18 @@ const RoleList = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Vai trò và Phân quyền</h4>
+                <h4 className="fw-bold">Vai trò và Phân quyền</h4>
                 <h6>Quản lý danh sách vai trò và quyền</h6>
               </div>
             </div>
-            <TableTopHead />
+            <TableTopHead
+              showExcel={false}
+              onRefresh={(e) => {
+                if (e) e.preventDefault();
+                fetchRoles();
+                message.success("Đã làm mới danh sách vai trò!");
+              }}
+            />
             <div className="page-btn">
               <button
                 type="button"
@@ -296,17 +303,29 @@ const RoleList = () => {
             </div>
           </div>
 
-          <div className="card table-list-card">
-            <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <div className="search-set">
-                <SearchFromApi
-                  callback={(value) => {
-                    setSearchQuery(value || "");
-                  }}
-                />
-              </div>
-              <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                <div className="me-2">
+          {/* Bảng */}
+          <div className="card table-list-card no-search shadow-sm">
+            <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
+              <h5 className="mb-0 fw-semibold">
+                Danh sách vai trò{" "}
+                <span className="text-muted small">
+                  ({totalRecords} bản ghi)
+                </span>
+              </h5>
+              <div className="d-flex gap-2 align-items-end flex-wrap">
+                <div style={{ minWidth: "250px" }}>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Tên vai trò, mô tả..."
+                    value={searchQuery || ""}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  />
+                </div>
+                <div style={{ minWidth: "180px" }}>
                   <CommonSelect
                     options={StatusOptions}
                     value={
@@ -316,29 +335,35 @@ const RoleList = () => {
                     onChange={(s) => {
                       const v = s?.value;
                       setStatusFilter(v === true || v === false ? v : null);
+                      setCurrentPage(1);
                     }}
-                    placeholder="Trạng thái"
-                    width={220}
-                    className=""
+                    placeholder="Chọn trạng thái"
+                    className="w-100"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="card-body">
+            <div className="card-body p-0">
               <div className="table-responsive">
-                <PrimeDataTable
-                  column={columns}
-                  data={dataSource}
-                  rows={rows}
-                  setRows={setRows}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalRecords={totalRecords}
-                  dataKey="id"
-                  loading={false}
-                  serverSidePagination={true}
-                />
+                {loading ? (
+                  <div className="d-flex justify-content-center p-5">
+                    <Spin size="large" />
+                  </div>
+                ) : (
+                  <PrimeDataTable
+                    column={columns}
+                    data={dataSource}
+                    rows={rows}
+                    setRows={setRows}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    totalRecords={totalRecords}
+                    dataKey="id"
+                    loading={false}
+                    serverSidePagination={true}
+                  />
+                )}
               </div>
             </div>
           </div>

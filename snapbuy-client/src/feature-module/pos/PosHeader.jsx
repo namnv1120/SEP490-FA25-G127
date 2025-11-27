@@ -229,31 +229,20 @@ const PosHeader = () => {
               Dashboard
             </Link>
           </li>
-          {/* Only show button if staff has open shift, or if not staff */}
-          {(!isStaff || (currentShift && currentShift.status === "Mở")) && (
+          {/* Only show "Đóng ca" button for staff when shift is open */}
+          {isStaff && currentShift && currentShift.status === "Mở" && (
             <li className="nav-item pos-nav">
               <Link
                 to="#"
-                className={`btn btn-md d-inline-flex align-items-center ${
-                  currentShift && currentShift.status === "Mở"
-                    ? "btn-danger"
-                    : "btn-teal"
-                }`}
+                className="btn btn-danger btn-md d-inline-flex align-items-center"
                 onClick={(e) => {
                   e.preventDefault();
-                  if (currentShift && currentShift.status === "Mở") {
-                    // Open close shift modal
-                    window.dispatchEvent(new CustomEvent("openCloseShiftModal"));
-                  } else {
-                    // Open shift management modal (only for non-staff)
-                    if (!isStaff) {
-                      window.dispatchEvent(new CustomEvent("openShiftModal"));
-                    }
-                  }
+                  // Open close shift modal
+                  window.dispatchEvent(new CustomEvent("openCloseShiftModal"));
                 }}
               >
-                <i className={`ti ${currentShift && currentShift.status === "Mở" ? "ti-x" : "ti-cash"} me-1`} />
-                {currentShift && currentShift.status === "Mở" ? "Đóng ca" : "Mở ca"}
+                <i className="ti ti-x me-1" />
+                Đóng ca
               </Link>
             </li>
           )}

@@ -5,7 +5,7 @@ import PrimeDataTable from "../../components/data-table";
 import CommonSelect from "../../components/select/common-select";
 import CommonDateRangePicker from "../../components/date-range-picker/common-date-range-picker";
 import { getTransactions } from "../../services/InventoryTransactionsService";
-import { message } from "antd";
+import { message, Spin } from "antd";
 
 const TransactionHistory = () => {
   const [listData, setListData] = useState([]);
@@ -312,7 +312,7 @@ const TransactionHistory = () => {
         <div className="page-header">
           <div className="add-item d-flex">
             <div className="page-title">
-              <h4>Lịch Sử Giao Dịch Kho</h4>
+              <h4 className="fw-bold">Lịch Sử Giao Dịch Kho</h4>
               <h6>Theo dõi nhập, xuất, điều chỉnh hàng tồn</h6>
             </div>
           </div>
@@ -340,43 +340,7 @@ const TransactionHistory = () => {
                 />
               </div>
 
-              <div className="col-12 col-md-6 col-lg-3">
-                <label className="form-label fw-semibold text-dark mb-1">
-                  Loại giao dịch
-                </label>
-                <CommonSelect
-                  options={TransactionTypes}
-                  value={TransactionTypes.find(
-                    (i) => i.value === selectedTransactionType
-                  )}
-                  onChange={(s) => {
-                    setSelectedTransactionType(s?.value || "");
-                    setCurrentPage(1);
-                  }}
-                  placeholder="Chọn loại"
-                  className="w-100"
-                />
-              </div>
-
-              <div className="col-12 col-md-6 col-lg-3">
-                <label className="form-label fw-semibold text-dark mb-1">
-                  Loại tham chiếu
-                </label>
-                <CommonSelect
-                  options={ReferenceTypes}
-                  value={ReferenceTypes.find(
-                    (i) => i.value === selectedReferenceType
-                  )}
-                  onChange={(s) => {
-                    setSelectedReferenceType(s?.value || "");
-                    setCurrentPage(1);
-                  }}
-                  placeholder="Chọn loại"
-                  className="w-100"
-                />
-              </div>
-
-              <div className="col-12 col-md-6 col-lg-3">
+              <div className="col-12 col-md-6 col-lg-3 ms-auto">
                 <label className="form-label fw-semibold text-dark mb-1">
                   Tìm sản phẩm
                 </label>
@@ -401,6 +365,36 @@ const TransactionHistory = () => {
               Danh sách giao dịch{" "}
               <span className="text-muted small">({totalRecords} bản ghi)</span>
             </h5>
+            <div className="d-flex align-items-end gap-3">
+              <div>
+                <CommonSelect
+                  options={TransactionTypes}
+                  value={TransactionTypes.find(
+                    (i) => i.value === selectedTransactionType
+                  )}
+                  onChange={(s) => {
+                    setSelectedTransactionType(s?.value || "");
+                    setCurrentPage(1);
+                  }}
+                  placeholder="Chọn loại giao dịch"
+                  className="w-100"
+                />
+              </div>
+              <div>
+                <CommonSelect
+                  options={ReferenceTypes}
+                  value={ReferenceTypes.find(
+                    (i) => i.value === selectedReferenceType
+                  )}
+                  onChange={(s) => {
+                    setSelectedReferenceType(s?.value || "");
+                    setCurrentPage(1);
+                  }}
+                  placeholder="Chọn loại tham chiếu"
+                  className="w-100"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="card-body p-0">
@@ -411,6 +405,11 @@ const TransactionHistory = () => {
               </div>
             )}
 
+            {loading ? (
+              <div className="d-flex justify-content-center p-5">
+                <Spin size="large" />
+              </div>
+            ) : (
             <PrimeDataTable
               column={columns}
               data={listData}
@@ -421,8 +420,9 @@ const TransactionHistory = () => {
               totalRecords={totalRecords}
               dataKey="key"
               loading={loading && !isInitialLoad}
-              serverSidePagination={true}
-            />
+                serverSidePagination={true}
+              />
+            )}
           </div>
         </div>
       </div>

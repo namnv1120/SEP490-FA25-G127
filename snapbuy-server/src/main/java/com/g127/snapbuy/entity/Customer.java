@@ -51,4 +51,8 @@ public class Customer {
 
     @Column(name = "points", nullable = false)
     private Integer points = 0;
+
+    @Column(name = "active")
+    @Builder.Default
+    private Boolean active = true;
 }

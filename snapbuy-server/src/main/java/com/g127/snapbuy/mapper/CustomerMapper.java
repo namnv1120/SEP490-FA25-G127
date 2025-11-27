@@ -22,6 +22,7 @@ public interface CustomerMapper {
     void updateFromDto(CustomerUpdateRequest request, @MappingTarget Customer customer);
 
     @Mapping(source = "points", target = "points")
+    @Mapping(source = "active", target = "active", defaultValue = "true")
     CustomerResponse toResponse(Customer customer);
 }
 

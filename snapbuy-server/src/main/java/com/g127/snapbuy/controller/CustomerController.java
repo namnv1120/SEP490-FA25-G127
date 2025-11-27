@@ -7,6 +7,7 @@ import com.g127.snapbuy.dto.response.CustomerResponse;
 import com.g127.snapbuy.service.CustomerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class CustomerController {
     private final CustomerService customerService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
     public ApiResponse<CustomerResponse> createCustomer(@RequestBody @Valid CustomerCreateRequest request) {
         ApiResponse<CustomerResponse> response = new ApiResponse<>();
         response.setResult(customerService.createCustomer(request));
@@ -27,6 +29,7 @@ public class CustomerController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
     public ApiResponse<List<CustomerResponse>> getAllCustomers() {
         ApiResponse<List<CustomerResponse>> response = new ApiResponse<>();
         response.setResult(customerService.getAllCustomers());
@@ -34,6 +37,7 @@ public class CustomerController {
     }
 
     @GetMapping("{id}")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
     public ApiResponse<CustomerResponse> getCustomerById(@PathVariable("id") UUID id) {
         ApiResponse<CustomerResponse> response = new ApiResponse<>();
         response.setResult(customerService.getCustomerById(id));
@@ -41,6 +45,7 @@ public class CustomerController {
     }
 
     @PutMapping("{id}")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
     public ApiResponse<CustomerResponse> updateCustomer(
             @PathVariable("id") UUID id,
             @Valid @RequestBody CustomerUpdateRequest request) {
@@ -50,6 +55,7 @@ public class CustomerController {
     }
 
     @DeleteMapping("{id}")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<String> deleteCustomer(@PathVariable("id") UUID id) {
         customerService.deleteCustomer(id);
         ApiResponse<String> response = new ApiResponse<>();
@@ -58,6 +64,7 @@ public class CustomerController {
     }
 
     @GetMapping("/search")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
     public ApiResponse<List<CustomerResponse>> searchCustomer(@RequestParam("keyword") String keyword) {
         ApiResponse<List<CustomerResponse>> response = new ApiResponse<>();
         response.setResult(customerService.searchCustomer(keyword));
@@ -65,6 +72,7 @@ public class CustomerController {
     }
 
     @GetMapping("phone/{phone}")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
     public ApiResponse<CustomerResponse> getCustomerByPhone(@PathVariable String phone) {
         ApiResponse<CustomerResponse> response = new ApiResponse<>();
         response.setResult(customerService.getCustomerByPhone(phone));
@@ -72,6 +80,7 @@ public class CustomerController {
     }
 
     @GetMapping("/by-points")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
     public ApiResponse<List<CustomerResponse>> getCustomersByPoints(
             @RequestParam(value = "min", required = false) Integer min,
             @RequestParam(value = "max", required = false) Integer max,
@@ -79,6 +88,15 @@ public class CustomerController {
     ) {
         ApiResponse<List<CustomerResponse>> response = new ApiResponse<>();
         response.setResult(customerService.getCustomersByPoints(min, max, sort));
+        return response;
+    }
+
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    public ApiResponse<String> toggleCustomerStatus(@PathVariable UUID id) {
+        customerService.toggleCustomerStatus(id);
+        ApiResponse<String> response = new ApiResponse<>();
+        response.setResult("Cập nhật trạng thái khách hàng thành công");
         return response;
     }
 }

@@ -7,6 +7,7 @@ import com.g127.snapbuy.dto.response.SupplierResponse;
 import com.g127.snapbuy.service.SupplierService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class SupplierController {
     private final SupplierService supplierService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<SupplierResponse> createSupplier(@RequestBody @Valid SupplierCreateRequest request) {
         ApiResponse<SupplierResponse> response = new ApiResponse<>();
         response.setResult(supplierService.createSupplier(request));
@@ -26,6 +28,7 @@ public class SupplierController {
     }
 
     @PutMapping("{id}")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<SupplierResponse> updateSupplier(
             @PathVariable("id") UUID id,
             @RequestBody @Valid SupplierUpdateRequest request) {
@@ -35,6 +38,7 @@ public class SupplierController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<List<SupplierResponse>> getAllSuppliers() {
         ApiResponse<List<SupplierResponse>> response = new ApiResponse<>();
         response.setResult(supplierService.getAllSuppliers());
@@ -42,6 +46,7 @@ public class SupplierController {
     }
 
     @GetMapping("{id}")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<SupplierResponse> getSupplierById(@PathVariable("id") UUID id) {
         ApiResponse<SupplierResponse> response = new ApiResponse<>();
         response.setResult(supplierService.getSupplierById(id));
@@ -49,6 +54,7 @@ public class SupplierController {
     }
 
     @DeleteMapping("{id}")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<String> deleteSupplierById(@PathVariable("id") UUID id) {
         supplierService.deleteSupplier(id);
         ApiResponse<String> response = new ApiResponse<>();
@@ -57,6 +63,7 @@ public class SupplierController {
     }
 
     @PatchMapping("{id}/toggle-status")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<SupplierResponse> toggleSupplierStatus(@PathVariable("id") UUID id) {
         ApiResponse<SupplierResponse> response = new ApiResponse<>();
         response.setResult(supplierService.toggleSupplierStatus(id));

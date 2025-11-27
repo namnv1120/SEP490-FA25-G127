@@ -1,12 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import ProductDetailModal from "../../core/modals/inventories/ProductDetailModal";
 import { allRoutes } from "../../routes/AllRoutes";
 import CommonFooter from "../../components/footer/CommonFooter";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
-import SearchFromApi from "../../components/data-table/search";
-import { message } from "antd";
+import { message, Slider, Spin } from "antd";
 import { exportToExcel } from "../../utils/excelUtils";
 import { getAllProductPrices } from "../../services/ProductPriceService";
 import ImportProductPrice from "./ImportProductPrice";
@@ -20,11 +19,38 @@ const ProductPriceList = () => {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [priceRange, setPriceRange] = useState([0, 0]);
+  const [loading, setLoading] = useState(false);
 
   const route = allRoutes;
 
+  // Tính toán min và max giá từ dữ liệu
+  const priceRangeValues = useMemo(() => {
+    if (!productPrices || productPrices.length === 0) {
+      return { min: 0, max: 1000000 };
+    }
+    const prices = productPrices
+      .map((p) => p.rawUnitPrice)
+      .filter((p) => p != null && !isNaN(p));
+    if (prices.length === 0) {
+      return { min: 0, max: 1000000 };
+    }
+    const min = Math.floor(Math.min(...prices));
+    const max = Math.ceil(Math.max(...prices));
+    return { min, max };
+  }, [productPrices]);
+
+  // Khởi tạo priceRange khi dữ liệu thay đổi
+  useEffect(() => {
+    if (priceRangeValues.min >= 0 && priceRangeValues.max > priceRangeValues.min) {
+      setPriceRange([priceRangeValues.min, priceRangeValues.max]);
+    }
+  }, [priceRangeValues]);
+
   const fetchProductPrices = useCallback(async () => {
     try {
+      setLoading(true);
       setError(null);
       const data = await getAllProductPrices();
 
@@ -57,8 +83,9 @@ const ProductPriceList = () => {
     } catch (err) {
       console.error("❌ Lỗi khi tải danh sách giá sản phẩm:", err);
       setError("Không thể tải danh sách giá sản phẩm. Vui lòng thử lại sau.");
+      message.error("Không thể tải danh sách giá sản phẩm. Vui lòng thử lại sau.");
     } finally {
-      void 0;
+      setLoading(false);
     }
   }, []);
 
@@ -103,17 +130,33 @@ const ProductPriceList = () => {
     }
   };
 
-  const handleRefresh = () => {
-    fetchProductPrices();
-    message.success("Làm mới danh sách thành công!");
-  };
-
   const handleImportSuccess = () => {
     fetchProductPrices();
     setShowImportModal(false);
   };
 
-  const handleSearch = () => { };
+  const filteredList = productPrices.filter((item) => {
+    // Filter theo search query
+    if (searchQuery) {
+      const matchesSearch =
+        item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.productId
+          ?.toString()
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
+      if (!matchesSearch) return false;
+    }
+
+    // Filter theo khoảng giá
+    if (priceRange && priceRange[0] !== undefined && priceRange[1] !== undefined) {
+      const unitPrice = item.rawUnitPrice || 0;
+      if (unitPrice < priceRange[0] || unitPrice > priceRange[1]) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 
   // Reset select-all checkbox và tất cả checkbox khi chuyển trang
   useEffect(() => {
@@ -163,7 +206,7 @@ const ProductPriceList = () => {
       ),
       body: (data) => (
         <label className="checkboxs">
-          <input type="checkbox" data-id={data.productId} />
+          <input type="checkbox" data-id={data.priceId} />
           <span className="checkmarks" />
         </label>
       ),
@@ -247,13 +290,18 @@ const ProductPriceList = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Danh sách giá sản phẩm</h4>
+                <h4 className="fw-bold">Danh sách giá sản phẩm</h4>
                 <h6>Quản lý danh sách giá sản phẩm</h6>
               </div>
             </div>
             <TableTopHead
+              showExcel={true}
               onExportExcel={handleExportExcel}
-              onRefresh={handleRefresh}
+              onRefresh={(e) => {
+                if (e) e.preventDefault();
+                fetchProductPrices();
+                message.success("Đã làm mới danh sách giá sản phẩm!");
+              }}
             />
             <div className="page-btn">
               <button
@@ -274,26 +322,71 @@ const ProductPriceList = () => {
           )}
 
           {/* Product Price List Table */}
-          <div className="card table-list-card">
-            <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <SearchFromApi
-                callback={handleSearch}
-                rows={rows}
-                setRows={setRows}
-              />
+          <div className="card table-list-card no-search shadow-sm">
+            <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
+              <h5 className="mb-0 fw-semibold">
+                Danh sách giá sản phẩm{" "}
+                <span className="text-muted small">
+                  ({filteredList.length} bản ghi)
+                </span>
+              </h5>
+              <div className="d-flex gap-3 align-items-end flex-wrap">
+                <div style={{ minWidth: "250px" }}>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Tên sản phẩm, mã sản phẩm..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  />
+                </div>
+                <div style={{ minWidth: "300px", flex: 1, maxWidth: "400px" }}>
+                  <div className="mb-2">
+                    <label className="form-label small text-muted mb-1">
+                      Khoảng giá: {priceRange[0]?.toLocaleString() || "0"} đ - {priceRange[1]?.toLocaleString() || "0"} đ
+                    </label>
+                  </div>
+                  {priceRangeValues.max > priceRangeValues.min && (
+                    <Slider
+                      range
+                      min={priceRangeValues.min}
+                      max={priceRangeValues.max}
+                      value={priceRange}
+                      onChange={(value) => {
+                        setPriceRange(value);
+                        setCurrentPage(1);
+                      }}
+                      tooltip={{
+                        formatter: (value) => `${value?.toLocaleString()} đ`,
+                      }}
+                      step={Math.max(1000, Math.floor((priceRangeValues.max - priceRangeValues.min) / 100))}
+                    />
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="card-body">
+            <div className="card-body p-0">
               <div className="table-responsive">
+                {loading ? (
+                  <div className="d-flex justify-content-center p-5">
+                    <Spin size="large" />
+                  </div>
+                ) : (
                 <PrimeDataTable
                   column={columns}
-                  data={productPrices}
+                  data={filteredList}
                   rows={rows}
                   setRows={setRows}
                   currentPage={currentPage}
                   setCurrentPage={setCurrentPage}
-                  totalRecords={totalRecords}
+                  totalRecords={filteredList.length}
                   dataKey="priceId"
+                  loading={loading}
                 />
+                )}
               </div>
             </div>
           </div>

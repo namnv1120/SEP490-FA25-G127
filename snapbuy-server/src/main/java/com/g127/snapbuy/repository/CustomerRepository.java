@@ -17,8 +17,9 @@ import java.util.UUID;
 public interface CustomerRepository extends JpaRepository<Customer, UUID> {
     @Query("""
         SELECT c FROM Customer c
-        WHERE LOWER(c.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-           OR LOWER(c.phone) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        WHERE (LOWER(c.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+           OR LOWER(c.phone) LIKE LOWER(CONCAT('%', :keyword, '%')))
+           AND c.active = true
     """)
     List<Customer> searchByKeyword(@Param("keyword") String keyword);
 

@@ -745,33 +745,98 @@ tr:hover { background-color: #f5f5f5; }
       }
 
       if (validOrders.length === 0) {
-        message.error(
-          "Không có đơn hàng nào ở trạng thái 'Đã duyệt' để gửi email!"
-        );
         return;
       }
 
       setLoading(true);
 
       try {
-        // Tạo template HTML
-        const htmlContent = await generateEmailTemplate(validOrders);
-        const subject =
-          validOrders.length === 1
-            ? "Phiếu nhập kho"
-            : `Phiếu nhập kho - ${validOrders.length} đơn hàng`;
+        // Gửi từng đơn một để xử lý lỗi riêng biệt
+        const successOrders = [];
+        const errorOrders = [];
+        const alreadySentOrders = [];
 
-        // Gửi email
-        await sendPurchaseOrderEmail({
-          purchaseOrderIds: validOrders,
-          subject,
-          htmlContent,
-          forceResend: false,
-        });
+        for (const orderId of validOrders) {
+          try {
+            const order = listData.find((o) => o.purchaseOrderId === orderId);
+            const orderNumber = order?.purchaseOrderNumber || orderId;
 
-        message.success(
-          `Đã gửi email thành công cho ${validOrders.length} đơn hàng!`
-        );
+            // Tạo template HTML cho đơn này
+            const htmlContent = await generateEmailTemplate([orderId]);
+            const subject = "Phiếu nhập kho";
+
+            // Gửi email cho đơn này
+            await sendPurchaseOrderEmail({
+              purchaseOrderIds: [orderId],
+              subject,
+              htmlContent,
+              forceResend: false,
+            });
+
+            successOrders.push(orderNumber);
+          } catch (err) {
+            const order = listData.find((o) => o.purchaseOrderId === orderId);
+            const orderNumber = order?.purchaseOrderNumber || orderId;
+            const errorMsg =
+              err.response?.data?.message || err.message || "Lỗi không xác định";
+
+            // Kiểm tra xem có phải lỗi đơn đã được gửi không
+            if (
+              errorMsg.includes("đã được gửi email") ||
+              errorMsg.includes("Bạn có muốn gửi lại không")
+            ) {
+              alreadySentOrders.push(orderNumber);
+            } else {
+              // Các lỗi khác (như không có email nhà cung cấp)
+              errorOrders.push(`${orderNumber}: ${errorMsg}`);
+            }
+          }
+        }
+
+        // Hiển thị kết quả tổng hợp
+        if (successOrders.length > 0) {
+          message.success(
+            `Đã gửi email thành công cho ${successOrders.length} đơn hàng${successOrders.length <= 3 ? `: ${successOrders.join(", ")}` : ""}`
+          );
+        }
+
+        if (alreadySentOrders.length > 0) {
+          message.info({
+            content: (
+              <div>
+                <p>Có {alreadySentOrders.length} đơn hàng đã được gửi email trước đó:</p>
+                <ul style={{ marginTop: 8, paddingLeft: 20 }}>
+                  {alreadySentOrders.slice(0, 5).map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                  {alreadySentOrders.length > 5 && (
+                    <li>... và {alreadySentOrders.length - 5} đơn khác</li>
+                  )}
+                </ul>
+              </div>
+            ),
+            duration: 5,
+          });
+        }
+
+        if (errorOrders.length > 0) {
+          message.warning({
+            content: (
+              <div>
+                <p>Có {errorOrders.length} đơn hàng không thể gửi email:</p>
+                <ul style={{ marginTop: 8, paddingLeft: 20 }}>
+                  {errorOrders.slice(0, 5).map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                  {errorOrders.length > 5 && (
+                    <li>... và {errorOrders.length - 5} đơn khác</li>
+                  )}
+                </ul>
+              </div>
+            ),
+            duration: 8,
+          });
+        }
 
         // Uncheck tất cả checkbox
         document
@@ -783,64 +848,7 @@ tr:hover { background-color: #f5f5f5; }
         // Refresh data để cập nhật emailSentAt
         fetchPurchaseOrders();
       } catch (err) {
-        const errorMsg =
-          err.response?.data?.message || err.message || "Lỗi không xác định";
-
-        // Kiểm tra xem có phải lỗi đơn đã được gửi không
-        if (
-          errorMsg.includes("đã được gửi email") &&
-          errorMsg.includes("Bạn có muốn gửi lại không")
-        ) {
-          Modal.confirm({
-            title: "Xác nhận gửi lại email",
-            content: errorMsg,
-            okText: "Gửi lại",
-            cancelText: "Hủy",
-            onOk: async () => {
-              try {
-                setLoading(true);
-                const htmlContent = await generateEmailTemplate(validOrders);
-                const subject =
-                  validOrders.length === 1
-                    ? "Phiếu nhập kho"
-                    : `Phiếu nhập kho - ${validOrders.length} đơn hàng`;
-
-                await sendPurchaseOrderEmail({
-                  purchaseOrderIds: validOrders,
-                  subject,
-                  htmlContent,
-                  forceResend: true,
-                });
-
-                message.success(
-                  `Đã gửi lại email thành công cho ${validOrders.length} đơn hàng!`
-                );
-
-                // Uncheck tất cả checkbox
-                document
-                  .querySelectorAll(
-                    '.table-list-card input[type="checkbox"]:checked'
-                  )
-                  .forEach((cb) => {
-                    cb.checked = false;
-                  });
-
-                // Refresh data
-                fetchPurchaseOrders();
-              } catch (retryErr) {
-                const retryErrorMsg =
-                  retryErr.response?.data?.message ||
-                  retryErr.message ||
-                  "Lỗi không xác định";
-                message.error(`Không thể gửi lại email: ${retryErrorMsg}`);
-              } finally {
-                setLoading(false);
-              }
-            },
-          });
-        } else {
-          message.error(`Không thể gửi email: ${errorMsg}`);
-        }
+        message.error("Có lỗi xảy ra khi gửi email!");
       } finally {
         setLoading(false);
       }
@@ -968,7 +976,7 @@ tr:hover { background-color: #f5f5f5; }
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Đơn đặt hàng</h4>
+                <h4 className="fw-bold">Đơn đặt hàng</h4>
                 <h6>Quản lý danh sách đơn đặt hàng về kho</h6>
               </div>
             </div>
@@ -1064,26 +1072,7 @@ tr:hover { background-color: #f5f5f5; }
                     className="w-100"
                   />
                 </div>
-                <div className="col-12 col-md-6 col-lg-3">
-                  <label className="form-label fw-semibold text-dark mb-1">
-                    Trạng thái
-                  </label>
-                  <CommonSelect
-                    options={StatusOptions}
-                    value={
-                      StatusOptions.find((o) => o.value === statusFilter) ||
-                      StatusOptions[0]
-                    }
-                    onChange={(s) => {
-                      const v = s?.value;
-                      setStatusFilter(v || null);
-                      setCurrentPage(1);
-                    }}
-                    placeholder="Chọn trạng thái"
-                    className="w-100"
-                  />
-                </div>
-                <div className="col-12 col-md-6 col-lg-3">
+                <div className="col-12 col-md-6 col-lg-3 ms-auto">
                   <label className="form-label fw-semibold text-dark mb-1">
                     Tìm kiếm
                   </label>
@@ -1111,7 +1100,24 @@ tr:hover { background-color: #f5f5f5; }
                   ({totalRecords} bản ghi)
                 </span>
               </h5>
-
+              <div className="d-flex align-items-end gap-3">
+                <div>
+                  <CommonSelect
+                    options={StatusOptions}
+                    value={
+                      StatusOptions.find((o) => o.value === statusFilter) ||
+                      StatusOptions[0]
+                    }
+                    onChange={(s) => {
+                      const v = s?.value;
+                      setStatusFilter(v || null);
+                      setCurrentPage(1);
+                    }}
+                    placeholder="Chọn trạng thái"
+                    className="w-100"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="card-body p-0">

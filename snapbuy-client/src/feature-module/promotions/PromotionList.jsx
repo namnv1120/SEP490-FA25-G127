@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { message } from "antd";
+import { message, Spin } from "antd";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
 import CommonFooter from "../../components/footer/CommonFooter";
@@ -27,7 +27,7 @@ const PromotionList = () => {
   const [startDateRange, setStartDateRange] = useState([null, null]);
   const [endDateRange, setEndDateRange] = useState([null, null]);
   const [statusFilter, setStatusFilter] = useState(null);
-
+  const [loading, setLoading] = useState(false);
   const formatDateTime = (dateString) => {
     if (!dateString) return "Không có";
     const date = new Date(dateString);
@@ -41,6 +41,7 @@ const PromotionList = () => {
 
   const fetchPromotions = useCallback(async () => {
     try {
+      setLoading(true);
       setError(null);
       const data = await getAllPromotions();
 
@@ -79,9 +80,12 @@ const PromotionList = () => {
       });
 
       setPromotions(mappedData);
+      setLoading(false);
     } catch {
       setError("Lỗi khi tải danh sách khuyến mãi. Vui lòng thử lại.");
       message.error("Không thể tải danh sách khuyến mãi");
+    } finally {
+      void 0;
     }
   }, []);
 
@@ -428,12 +432,12 @@ const PromotionList = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Khuyến mãi</h4>
+                <h4 className="fw-bold">Khuyến mãi</h4>
                 <h6>Quản lý danh sách khuyến mãi</h6>
               </div>
             </div>
             <TableTopHead
-              onExportExcel={false}
+              showExcel={false}
               onRefresh={handleRefresh}
             />
             <div className="page-btn">
@@ -556,6 +560,11 @@ const PromotionList = () => {
             </div>
             <div className="card-body p-0">
               <div className="table-responsive">
+                {loading ? (
+                  <div className="d-flex justify-content-center p-5">
+                    <Spin size="large" />
+                  </div>
+                ) : (
                 <PrimeDataTable
                   column={columns}
                   data={filteredPromotions}
@@ -565,8 +574,9 @@ const PromotionList = () => {
                   setCurrentPage={setCurrentPage}
                   totalRecords={totalRecords}
                   dataKey="promotionId"
-                  loading={false}
-                />
+                    loading={false}
+                  />
+                )}
               </div>
             </div>
           </div>

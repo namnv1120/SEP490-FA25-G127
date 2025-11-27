@@ -1,6 +1,8 @@
 package com.g127.snapbuy.repository;
 
 import com.g127.snapbuy.entity.Account;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
@@ -52,7 +54,8 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
            where (:keyword is null or :keyword = '' or
                   lower(a.fullName) like lower(concat('%', :keyword, '%')) or
                   lower(a.username) like lower(concat('%', :keyword, '%')) or
-                  lower(a.email) like lower(concat('%', :keyword, '%')))
+                  lower(a.email) like lower(concat('%', :keyword, '%')) or
+                  lower(a.phone) like lower(concat('%', :keyword, '%')))
              and (:active is null or a.active = :active)
              and (:roleName is null or :roleName = '' or r.roleName = :roleName)
            order by a.fullName
@@ -68,7 +71,8 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
            where (:keyword is null or :keyword = '' or
                   lower(a.fullName) like lower(concat('%', :keyword, '%')) or
                   lower(a.username) like lower(concat('%', :keyword, '%')) or
-                  lower(a.email) like lower(concat('%', :keyword, '%')))
+                  lower(a.email) like lower(concat('%', :keyword, '%')) or
+                  lower(a.phone) like lower(concat('%', :keyword, '%')))
              and (:active is null or a.active = :active)
              and (:roleName is null or :roleName = '' or r.roleName = :roleName)
            """,
@@ -79,14 +83,15 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
            where (:keyword is null or :keyword = '' or
                   lower(a.fullName) like lower(concat('%', :keyword, '%')) or
                   lower(a.username) like lower(concat('%', :keyword, '%')) or
-                  lower(a.email) like lower(concat('%', :keyword, '%')))
+                  lower(a.email) like lower(concat('%', :keyword, '%')) or
+                  lower(a.phone) like lower(concat('%', :keyword, '%')))
              and (:active is null or a.active = :active)
              and (:roleName is null or :roleName = '' or r.roleName = :roleName)
            """)
-    org.springframework.data.domain.Page<Account> searchAccountsPage(@Param("keyword") String keyword,
-                                                                     @Param("active") Boolean active,
-                                                                     @Param("roleName") String roleName,
-                                                                     org.springframework.data.domain.Pageable pageable);
+    Page<Account> searchAccountsPage(@Param("keyword") String keyword,
+                                     @Param("active") Boolean active,
+                                     @Param("roleName") String roleName,
+                                     Pageable pageable);
 
     @Query(value = """
            select distinct a
@@ -95,7 +100,8 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
            where (:keyword is null or :keyword = '' or
                   lower(a.fullName) like lower(concat('%', :keyword, '%')) or
                   lower(a.username) like lower(concat('%', :keyword, '%')) or
-                  lower(a.email) like lower(concat('%', :keyword, '%')))
+                  lower(a.email) like lower(concat('%', :keyword, '%')) or
+                  lower(a.phone) like lower(concat('%', :keyword, '%')))
              and (:active is null or a.active = :active)
              and r.roleName in (:roleNames)
            """,
@@ -106,12 +112,13 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
            where (:keyword is null or :keyword = '' or
                   lower(a.fullName) like lower(concat('%', :keyword, '%')) or
                   lower(a.username) like lower(concat('%', :keyword, '%')) or
-                  lower(a.email) like lower(concat('%', :keyword, '%')))
+                  lower(a.email) like lower(concat('%', :keyword, '%')) or
+                  lower(a.phone) like lower(concat('%', :keyword, '%')))
              and (:active is null or a.active = :active)
              and r.roleName in (:roleNames)
            """)
-    org.springframework.data.domain.Page<Account> searchStaffAccountsPage(@Param("keyword") String keyword,
+    Page<Account> searchStaffAccountsPage(@Param("keyword") String keyword,
                                                                           @Param("active") Boolean active,
                                                                           @Param("roleNames") java.util.List<String> roleNames,
-                                                                          org.springframework.data.domain.Pageable pageable);
+                                                                          Pageable pageable);
 }

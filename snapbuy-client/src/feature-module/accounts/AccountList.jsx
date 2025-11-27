@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import AddAccount from "../../core/modals/accounts/AddAccountModal";
 import EditAccount from "../../core/modals/accounts/EditAccountModal";
 import TableTopHead from "../../components/table-top-head";
-import SearchFromApi from "../../components/data-table/search";
 import PrimeDataTable from "../../components/data-table";
 import CommonSelect from "../../components/select/common-select";
 import DeleteModal from "../../components/delete-modal";
@@ -13,7 +12,7 @@ import {
   toggleAccountStatus,
 } from "../../services/AccountService";
 import { getAllRoles } from "../../services/RoleService";
-import { message } from "antd";
+import { message, Spin } from "antd";
 import CommonFooter from "../../components/footer/CommonFooter";
 
 const AccountList = () => {
@@ -39,8 +38,9 @@ const AccountList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rows, setRows] = useState(10);
   const [totalRecords, setTotalRecords] = useState(0);
-
+  const [loading, setLoading] = useState(false);
   const fetchAccounts = useCallback(async () => {
+    setLoading(true);
     try {
       const backendPage = Math.max(0, (currentPage || 1) - 1);
       const sortBy = "fullName";
@@ -81,7 +81,7 @@ const AccountList = () => {
         );
       }
     } finally {
-      void 0;
+      setLoading(false);
     }
   }, [currentPage, rows, searchQuery, statusFilter, roleFilter]);
 
@@ -307,11 +307,18 @@ const AccountList = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Tài khoản</h4>
+                <h4 className="fw-bold">Tài khoản</h4>
                 <h6>Quản lý danh sách tài khoản</h6>
               </div>
             </div>
-            <TableTopHead />
+            <TableTopHead
+              showExcel={false}
+              onRefresh={(e) => {
+                if (e) e.preventDefault();
+                fetchAccounts();
+                message.success("Đã làm mới danh sách tài khoản!");
+              }}
+            />
             <div className="page-btn">
               <button
                 type="button"
@@ -324,33 +331,21 @@ const AccountList = () => {
             </div>
           </div>
 
-          <div className="card table-list-card">
-            <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <div className="search-set">
-                <SearchFromApi
-                  callback={(value) => {
-                    setSearchQuery(value || "");
-                  }}
-                />
-              </div>
-              <div className="d-flex table-dropdown my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                <div className="me-2">
-                  <CommonSelect
-                    options={StatusOptions}
-                    value={
-                      StatusOptions.find((o) => o.value === statusFilter) ||
-                      StatusOptions[0]
-                    }
-                    onChange={(s) => {
-                      const v = s?.value;
-                      setStatusFilter(v === true || v === false ? v : null);
-                    }}
-                    placeholder="Trạng thái"
-                    width={220}
-                    className=""
-                  />
-                </div>
-                <div>
+          {/* Bộ lọc */}
+          <div className="card mb-3 shadow-sm">
+            <div className="card-body p-4">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(1);
+                  fetchAccounts();
+                }}
+                className="row g-3 align-items-end"
+              >
+                <div className="col-12 col-md-6 col-lg-3">
+                  <label className="form-label fw-semibold text-dark mb-1">
+                    Vai trò
+                  </label>
                   <CommonSelect
                     options={[{ value: "", label: "Tất cả" }, ...roleOptions]}
                     value={
@@ -361,29 +356,80 @@ const AccountList = () => {
                     onChange={(s) => {
                       const v = s?.value || "";
                       setRoleFilter(v);
+                      setCurrentPage(1);
                     }}
-                    placeholder="Vai trò"
-                    width={220}
-                    className=""
+                    placeholder="Chọn vai trò"
+                    className="w-100"
+                  />
+                </div>
+                <div className="col-12 col-md-6 col-lg-3 ms-auto">
+                  <label className="form-label fw-semibold text-dark mb-1">
+                    Tìm kiếm
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Họ tên, tên đăng nhập, email, số điện thoại..."
+                    value={searchQuery || ""}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  />
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* Bảng */}
+          <div className="card table-list-card no-search shadow-sm">
+            <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
+              <h5 className="mb-0 fw-semibold">
+                Danh sách tài khoản{" "}
+                <span className="text-muted small">
+                  ({totalRecords} bản ghi)
+                </span>
+              </h5>
+              <div className="d-flex gap-2 align-items-end flex-wrap">
+                <div style={{ minWidth: "220px" }}>
+                  <CommonSelect
+                    options={StatusOptions}
+                    value={
+                      StatusOptions.find((o) => o.value === statusFilter) ||
+                      StatusOptions[0]
+                    }
+                    onChange={(s) => {
+                      const v = s?.value;
+                      setStatusFilter(v === true || v === false ? v : null);
+                      setCurrentPage(1);
+                    }}
+                    placeholder="Chọn trạng thái"
+                    className="w-100"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="card-body">
+            <div className="card-body p-0">
               <div className="table-responsive">
-                <PrimeDataTable
-                  column={columns}
-                  data={dataSource}
-                  rows={rows}
-                  setRows={setRows}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalRecords={totalRecords}
-                  dataKey="id"
-                  loading={false}
-                  serverSidePagination={true}
-                />
+                {loading ? (
+                  <div className="d-flex justify-content-center p-5">
+                    <Spin size="large" />
+                  </div>
+                ) : (
+                  <PrimeDataTable
+                    column={columns}
+                    data={dataSource}
+                    rows={rows}
+                    setRows={setRows}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    totalRecords={totalRecords}
+                    dataKey="id"
+                    loading={false}
+                    serverSidePagination={true}
+                  />
+                )}
               </div>
             </div>
           </div>

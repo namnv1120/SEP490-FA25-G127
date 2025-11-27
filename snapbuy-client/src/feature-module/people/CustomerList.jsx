@@ -1,15 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Modal as AntdModal, message, Spin } from "antd";
 import PrimeDataTable from "../../components/data-table";
-import SearchFromApi from "../../components/data-table/search";
 import TableTopHead from "../../components/table-top-head";
 import DeleteModal from "../../components/delete-modal";
 import CommonFooter from "../../components/footer/CommonFooter";
+import CommonSelect from "../../components/select/common-select";
 
 import {
   getAllCustomers,
   getCustomerById,
   updateCustomer,
+  toggleCustomerStatus,
 } from "../../services/CustomerService";
 
 const Customers = () => {
@@ -20,7 +21,10 @@ const Customers = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
-  const [_searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [genderFilter, setGenderFilter] = useState(null);
+  const [statusFilter, setStatusFilter] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -31,15 +35,36 @@ const Customers = () => {
   });
   const [modalLoading, setModalLoading] = useState(false);
 
+  const StatusOptions = useMemo(
+    () => [
+      { value: null, label: "Tất cả" },
+      { value: true, label: "Hoạt động" },
+      { value: false, label: "Không hoạt động" },
+    ],
+    []
+  );
+
+  const GenderOptions = useMemo(
+    () => [
+      { value: null, label: "Tất cả" },
+      { value: "Male", label: "Nam" },
+      { value: "Female", label: "Nữ" },
+      { value: "Other", label: "Khác" },
+    ],
+    []
+  );
+
   const fetchCustomers = async () => {
     try {
+      setLoading(true);
       const data = await getAllCustomers();
       setListData(data);
       setTotalRecords(data.length || 0);
     } catch (error) {
       console.error("Error fetching customers:", error);
+      message.error("Không thể tải danh sách khách hàng. Vui lòng thử lại.");
     } finally {
-      void 0;
+      setLoading(false);
     }
   };
 
@@ -102,7 +127,9 @@ const Customers = () => {
 
       // Validate phone if provided
       if (trimmedPhone && !/^\+?[0-9]{10,15}$/.test(trimmedPhone)) {
-        message.error("Số điện thoại không đúng định dạng. Vui lòng nhập 10-15 chữ số.");
+        message.error(
+          "Số điện thoại không đúng định dạng. Vui lòng nhập 10-15 chữ số."
+        );
         return;
       }
 
@@ -125,6 +152,64 @@ const Customers = () => {
       setModalLoading(false);
     }
   };
+
+  const handleToggleStatus = async (customer) => {
+    try {
+      await toggleCustomerStatus(customer.customerId);
+      await fetchCustomers();
+      message.success("Đã cập nhật trạng thái khách hàng thành công!");
+    } catch (err) {
+      console.error("❌ Lỗi khi chuyển đổi trạng thái khách hàng:", err);
+      message.error("Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại.");
+    }
+  };
+
+  const filteredList = listData.filter((item) => {
+    // Hide default customer
+    if (
+      item.customerCode === "CUS000" ||
+      item.fullName === "Khách lẻ" ||
+      item.customerId === "00000000-0000-0000-0000-000000000001"
+    ) {
+      return false;
+    }
+
+    // Filter theo search query
+    if (searchQuery) {
+      const matchesSearch =
+        item.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.customerCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.phone?.toLowerCase().includes(searchQuery.toLowerCase());
+      if (!matchesSearch) return false;
+    }
+
+    // Filter theo giới tính
+    if (genderFilter) {
+      const itemGender = (item.gender || "").toLowerCase();
+      const filterGender = genderFilter.toLowerCase();
+
+      // Map các giá trị khác nhau về cùng format để so sánh
+      const normalizeGender = (gender) => {
+        if (gender === "male" || gender === "m") return "male";
+        if (gender === "female" || gender === "f") return "female";
+        return gender;
+      };
+
+      if (normalizeGender(itemGender) !== normalizeGender(filterGender)) {
+        return false;
+      }
+    }
+
+    // Filter theo trạng thái
+    if (statusFilter !== null) {
+      const isActive = item.active !== false; // Treat null/undefined as true
+      if (isActive !== statusFilter) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 
   // Reset select-all checkbox và tất cả checkbox khi chuyển trang
   useEffect(() => {
@@ -209,6 +294,36 @@ const Customers = () => {
       },
     },
     {
+      header: "Trạng thái",
+      field: "status",
+      key: "status",
+      sortable: true,
+      body: (data) => {
+        const isActive = data.active !== false; // Treat null/undefined as true
+        return (
+          <div className="d-flex align-items-center gap-2">
+            <span
+              className={`badge fw-medium fs-10 ${
+                isActive ? "bg-success" : "bg-danger"
+              }`}
+            >
+              {isActive ? "Hoạt động" : "Không hoạt động"}
+            </span>
+            <div className="form-check form-switch">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                role="switch"
+                checked={isActive}
+                onChange={() => handleToggleStatus(data)}
+                style={{ cursor: "pointer" }}
+              />
+            </div>
+          </div>
+        );
+      },
+    },
+    {
       header: "",
       key: "actions",
       sortable: false,
@@ -244,30 +359,91 @@ const Customers = () => {
               <h6>Quản lý danh sách khách hàng</h6>
             </div>
           </div>
-          <TableTopHead />
+          <TableTopHead
+            showExcel={false}
+            onRefresh={(e) => {
+              if (e) e.preventDefault();
+              fetchCustomers();
+              message.success("Đã làm mới danh sách khách hàng!");
+            }}
+          />
         </div>
 
-        <div className="card table-list-card">
-          <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-            <SearchFromApi
-              callback={setSearchQuery}
-              rows={rows}
-              setRows={setRows}
-            />
+        <div className="card table-list-card no-search shadow-sm">
+          <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
+            <h5 className="mb-0 fw-semibold">
+              Danh sách khách hàng{" "}
+              <span className="text-muted small">
+                ({filteredList.length} bản ghi)
+              </span>
+            </h5>
+            <div className="d-flex gap-2 align-items-end flex-wrap">
+              <div style={{ minWidth: "250px" }}>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Tên, mã KH, số điện thoại..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                />
+              </div>
+              <div style={{ minWidth: "180px" }}>
+                <CommonSelect
+                  options={StatusOptions}
+                  value={
+                    StatusOptions.find((o) => o.value === statusFilter) ||
+                    StatusOptions[0]
+                  }
+                  onChange={(s) => {
+                    const v = s?.value;
+                    setStatusFilter(v === true || v === false ? v : null);
+                    setCurrentPage(1);
+                  }}
+                  placeholder="Chọn trạng thái"
+                  className="w-100"
+                />
+              </div>
+              {/* <div style={{ minWidth: "180px" }}>
+                <CommonSelect
+                  options={GenderOptions}
+                  value={
+                    GenderOptions.find((o) => o.value === genderFilter) ||
+                    GenderOptions[0]
+                  }
+                  onChange={(s) => {
+                    const v = s?.value;
+                    setGenderFilter(v || null);
+                    setCurrentPage(1);
+                  }}
+                  placeholder="Chọn giới tính"
+                  className="w-100"
+                />
+              </div> */}
+            </div>
           </div>
 
           <div className="card-body p-0">
             <div className="table-responsive">
-              <PrimeDataTable
-                column={columns}
-                data={listData}
-                rows={rows}
-                setRows={setRows}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-                totalRecords={totalRecords}
-                dataKey="customerId"
-              />
+              {loading ? (
+                <div className="d-flex justify-content-center p-5">
+                  <Spin size="large" />
+                </div>
+              ) : (
+                <PrimeDataTable
+                  column={columns}
+                  data={filteredList}
+                  rows={rows}
+                  setRows={setRows}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  totalRecords={filteredList.length}
+                  dataKey="customerId"
+                  loading={false}
+                />
+              )}
             </div>
           </div>
         </div>

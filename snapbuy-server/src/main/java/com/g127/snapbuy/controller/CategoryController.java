@@ -9,6 +9,7 @@ import com.g127.snapbuy.service.CategoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<CategoryResponse> createCategory(@RequestBody @Valid CategoryCreateRequest request) {
         ApiResponse<CategoryResponse> response = new ApiResponse<>();
         response.setResult(categoryService.createCategory(request));
@@ -28,6 +30,7 @@ public class CategoryController {
     }
 
     @PutMapping("{id}")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<CategoryResponse> updateCategory(
             @PathVariable("id") UUID id,
             @RequestBody @Valid CategoryUpdateRequest request) {
@@ -51,6 +54,7 @@ public class CategoryController {
     }
 
     @DeleteMapping("{id}")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<String> deleteCategoryById(@PathVariable("id") UUID id) {
         categoryService.deleteCategory(id);
         ApiResponse<String> response = new ApiResponse<>();
@@ -59,6 +63,7 @@ public class CategoryController {
     }
 
     @PatchMapping("{id}/toggle-status")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<CategoryResponse> toggleCategoryStatus(@PathVariable("id") UUID id) {
         ApiResponse<CategoryResponse> response = new ApiResponse<>();
         response.setResult(categoryService.toggleCategoryStatus(id));

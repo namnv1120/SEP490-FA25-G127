@@ -1,15 +1,15 @@
 import PrimeDataTable from "../../components/data-table";
-import SearchFromApi from "../../components/data-table/search";
 import DeleteModal from "../../components/delete-modal";
 import TableTopHead from "../../components/table-top-head";
 import CommonFooter from "../../components/footer/CommonFooter";
-import { useState, useEffect } from "react";
+import CommonSelect from "../../components/select/common-select";
+import { useState, useEffect, useMemo } from "react";
 import {
   getAllSuppliers,
   deleteSupplier,
   toggleSupplierStatus,
 } from "../../services/SupplierService";
-import { message } from "antd";
+import { message, Spin } from "antd";
 import { exportToExcel } from "../../utils/excelUtils";
 
 import AddSupplier from "../../core/modals/people/AddSupplierModal";
@@ -21,11 +21,23 @@ const Suppliers = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [editSupplierId, setEditSupplierId] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+
+  const StatusOptions = useMemo(
+    () => [
+      { value: null, label: "Tất cả" },
+      { value: "Hoạt động", label: "Hoạt động" },
+      { value: "Không hoạt động", label: "Không hoạt động" },
+    ],
+    []
+  );
 
   useEffect(() => {
     fetchSuppliers();
@@ -33,6 +45,7 @@ const Suppliers = () => {
 
   const fetchSuppliers = async () => {
     try {
+      setLoading(true);
       setError(null);
       const data = await getAllSuppliers();
       const mappedData = data.map((supplier) => ({
@@ -47,8 +60,9 @@ const Suppliers = () => {
       setTotalRecords(mappedData.length);
     } catch {
       setError("Lỗi khi tải danh sách nhà cung cấp. Vui lòng thử lại.");
+      message.error("Lỗi khi tải danh sách nhà cung cấp. Vui lòng thử lại.");
     } finally {
-      void 0;
+      setLoading(false);
     }
   };
 
@@ -80,7 +94,24 @@ const Suppliers = () => {
     message.success("Làm mới danh sách thành công!");
   };
 
-  const handleSearch = () => { };
+  const filteredList = listData.filter((item) => {
+    // Filter theo search query
+    if (searchQuery) {
+      const matchesSearch =
+        item.supplierName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.supplierCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.phone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.email?.toLowerCase().includes(searchQuery.toLowerCase());
+      if (!matchesSearch) return false;
+    }
+
+    // Filter theo trạng thái
+    if (statusFilter) {
+      if (item.status !== statusFilter) return false;
+    }
+
+    return true;
+  });
 
   const handleEditClick = (supplier) => {
     setEditSupplierId(supplier.supplierId);
@@ -241,13 +272,18 @@ const Suppliers = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Nhà cung cấp</h4>
+                <h4 className="fw-bold">Nhà cung cấp</h4>
                 <h6>Quản lý danh sách nhà cung cấp</h6>
               </div>
             </div>
             <TableTopHead
+              showExcel={true}
               onExportExcel={handleExportExcel}
-              onRefresh={handleRefresh}
+              onRefresh={(e) => {
+                if (e) e.preventDefault();
+                fetchSuppliers();
+                message.success("Đã làm mới danh sách nhà cung cấp!");
+              }}
             />
             <div className="page-btn">
               <button
@@ -267,26 +303,64 @@ const Suppliers = () => {
             </div>
           )}
 
-          <div className="card table-list-card">
-            <div className="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-              <SearchFromApi
-                callback={handleSearch}
-                rows={rows}
-                setRows={setRows}
-              />
+          <div className="card table-list-card no-search shadow-sm">
+            <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
+              <h5 className="mb-0 fw-semibold">
+                Danh sách nhà cung cấp{" "}
+                <span className="text-muted small">
+                  ({filteredList.length} bản ghi)
+                </span>
+              </h5>
+              <div className="d-flex gap-2 align-items-end flex-wrap">
+                <div style={{ minWidth: "250px" }}>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Tên, mã, số điện thoại, email..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  />
+                </div>
+                <div style={{ minWidth: "180px" }}>
+                  <CommonSelect
+                    options={StatusOptions}
+                    value={
+                      StatusOptions.find((o) => o.value === statusFilter) ||
+                      StatusOptions[0]
+                    }
+                    onChange={(s) => {
+                      const v = s?.value;
+                      setStatusFilter(v || null);
+                      setCurrentPage(1);
+                    }}
+                    placeholder="Chọn trạng thái"
+                    className="w-100"
+                  />
+                </div>
+              </div>
             </div>
             <div className="card-body p-0">
               <div className="table-responsive">
-                <PrimeDataTable
-                  column={columns}
-                  data={listData}
-                  rows={rows}
-                  setRows={setRows}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalRecords={totalRecords}
-                  dataKey="supplierId"
-                />
+                {loading ? (
+                  <div className="d-flex justify-content-center p-5">
+                    <Spin size="large" />
+                  </div>
+                ) : (
+                  <PrimeDataTable
+                    column={columns}
+                    data={filteredList}
+                    rows={rows}
+                    setRows={setRows}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    totalRecords={filteredList.length}
+                    dataKey="supplierId"
+                    loading={false}
+                  />
+                )}
               </div>
             </div>
           </div>

@@ -58,9 +58,10 @@ CREATE TABLE customers
     full_name     NVARCHAR(50),
     phone         NVARCHAR(20),
     gender        NVARCHAR(6),
+    points        INT NOT NULL                 DEFAULT 0,
+    active        BIT                          DEFAULT 1,
     created_date  DATETIME2                    DEFAULT GETDATE(),
-    updated_date  DATETIME2                    DEFAULT GETDATE(),
-    points        INT NOT NULL                 DEFAULT 0
+    updated_date  DATETIME2                    DEFAULT GETDATE()
 );
 
 CREATE TABLE categories

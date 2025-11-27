@@ -21,26 +21,29 @@ const CustomPaginator = ({
     <>
       {totalPages ? (
         <div className="parent-class-datatable">
-          <div className="dataTables_length" id="DataTables_Table_0_length">
-            <label>
-              Số bản ghi trên trang{" "}
-              <select
-                name="DataTables_Table_0_length"
-                aria-controls="DataTables_Table_0"
-                className="form-select form-select-sm"
-                value={rows}
-                onChange={(e) => handleSelectChange(e.target.value)}
-              >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>{" "}
-            </label>
-          </div>
+          {setRows && (
+            <div className="dataTables_length" id="DataTables_Table_0_length">
+              <label>
+                Số bản ghi trên trang{" "}
+                <select
+                  name="DataTables_Table_0_length"
+                  aria-controls="DataTables_Table_0"
+                  className="form-select form-select-sm"
+                  value={rows}
+                  onChange={(e) => handleSelectChange(e.target.value)}
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>{" "}
+              </label>
+            </div>
+          )}
           <div
             className="dataTables_paginate paging_simple_numbers"
             id="DataTables_Table_0_paginate"
+            style={{ marginLeft: setRows ? 'auto' : 'auto' }}
           >
             <Paginator
               first={(currentPage - 1) * rows}

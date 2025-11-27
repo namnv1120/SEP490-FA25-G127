@@ -290,7 +290,7 @@ const EditProduct = () => {
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4>Sửa sản phẩm</h4>
+                <h4 className="fw-bold">Sửa sản phẩm</h4>
                 <h6>Cập nhật sản phẩm</h6>
               </div>
             </div>
@@ -639,7 +639,7 @@ const EditProduct = () => {
                                   />
                                   <div className="image-uploads">
                                     <i className="feather icon-plus-circle plus-down-add me-0" />
-                                    <h4>Thêm ảnh</h4>
+                                    <h4 className="fw-bold">Thêm ảnh</h4>
                                   </div>
                                 </div>
                               </div>

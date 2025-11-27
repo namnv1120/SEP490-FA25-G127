@@ -320,18 +320,25 @@ public class AccountServiceImpl implements AccountService {
         if (req.getFullName() != null) acc.setFullName(req.getFullName());
         if (req.getEmail() != null) {
             String newEmail = req.getEmail().trim();
+            // Nếu email là chuỗi rỗng, set về null
+            String emailToSet = newEmail.isEmpty() ? null : newEmail;
             String currentEmail = acc.getEmail() != null ? acc.getEmail().trim() : "";
 
             // Chỉ cập nhật nếu email mới khác email hiện tại
-            if (!newEmail.equalsIgnoreCase(currentEmail)) {
-                // Kiểm tra email đã được sử dụng bởi tài khoản khác chưa
-                if (accountRepository.existsByEmailIgnoreCase(newEmail)) {
+            String currentEmailForCompare = currentEmail.isEmpty() ? null : currentEmail;
+            if (!Objects.equals(emailToSet, currentEmailForCompare)) {
+                // Chỉ kiểm tra email đã được sử dụng nếu email không rỗng
+                if (emailToSet != null && accountRepository.existsByEmailIgnoreCase(emailToSet)) {
                     throw new IllegalArgumentException("Email này đã được sử dụng bởi tài khoản khác");
                 }
-                acc.setEmail(newEmail);
+                acc.setEmail(emailToSet);
             }
         }
-        if (req.getPhone() != null) acc.setPhone(req.getPhone());
+        if (req.getPhone() != null) {
+            String phoneToSet = req.getPhone().trim();
+            // Nếu phone là chuỗi rỗng, set về null
+            acc.setPhone(phoneToSet.isEmpty() ? null : phoneToSet);
+        }
         if (req.getAvatarUrl() != null) acc.setAvatarUrl(req.getAvatarUrl());
         if (req.getActive() != null) acc.setActive(req.getActive());
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
@@ -372,18 +379,25 @@ public class AccountServiceImpl implements AccountService {
         if (req.getFullName() != null) acc.setFullName(req.getFullName());
         if (req.getEmail() != null) {
             String newEmail = req.getEmail().trim();
+            // Nếu email là chuỗi rỗng, set về null
+            String emailToSet = newEmail.isEmpty() ? null : newEmail;
             String currentEmail = acc.getEmail() != null ? acc.getEmail().trim() : "";
 
             // Chỉ cập nhật nếu email mới khác email hiện tại
-            if (!newEmail.equalsIgnoreCase(currentEmail)) {
-                // Kiểm tra email đã được sử dụng bởi tài khoản khác chưa
-                if (accountRepository.existsByEmailIgnoreCase(newEmail)) {
+            String currentEmailForCompare = currentEmail.isEmpty() ? null : currentEmail;
+            if (!Objects.equals(emailToSet, currentEmailForCompare)) {
+                // Chỉ kiểm tra email đã được sử dụng nếu email không rỗng
+                if (emailToSet != null && accountRepository.existsByEmailIgnoreCase(emailToSet)) {
                     throw new IllegalArgumentException("Email này đã được sử dụng bởi tài khoản khác");
                 }
-                acc.setEmail(newEmail);
+                acc.setEmail(emailToSet);
             }
         }
-        if (req.getPhone() != null) acc.setPhone(req.getPhone());
+        if (req.getPhone() != null) {
+            String phoneToSet = req.getPhone().trim();
+            // Nếu phone là chuỗi rỗng, set về null
+            acc.setPhone(phoneToSet.isEmpty() ? null : phoneToSet);
+        }
 
         if (req.getRemoveAvatar() != null && req.getRemoveAvatar()) {
             acc.setAvatarUrl(null);
@@ -535,3 +549,5 @@ public class AccountServiceImpl implements AccountService {
                 .build();
     }
 }
+
+

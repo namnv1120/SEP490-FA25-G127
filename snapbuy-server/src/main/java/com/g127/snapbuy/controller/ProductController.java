@@ -34,6 +34,7 @@ public class ProductController {
     private final BarcodeService barcodeService;
 
     @PostMapping(consumes = {"multipart/form-data"})
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<ProductResponse> createProduct(@ModelAttribute @Valid ProductCreateRequest request) {
         ApiResponse<ProductResponse> response = new ApiResponse<>();
         response.setResult(productService.createProduct(request));
@@ -42,6 +43,7 @@ public class ProductController {
 
 
     @PutMapping(value = "{id}", consumes = {"multipart/form-data"})
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<ProductResponse> updateProduct(
             @PathVariable("id") UUID id,
             @ModelAttribute @Valid ProductUpdateRequest request) {
@@ -72,6 +74,7 @@ public class ProductController {
     }
 
     @DeleteMapping("{id}")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<String> deleteProduct(@PathVariable("id") UUID id) {
         productService.deleteProduct(id);
         ApiResponse<String> response = new ApiResponse<>();
@@ -80,6 +83,7 @@ public class ProductController {
     }
 
     @PostMapping("/import")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<List<ProductResponse>> importProducts(
             @RequestBody @Valid List<ProductImportRequest> requests) {
         ApiResponse<List<ProductResponse>> response = new ApiResponse<>();
@@ -90,6 +94,7 @@ public class ProductController {
     }
 
     @GetMapping("/supplier/{supplierId}")
+
     public ApiResponse<List<ProductResponse>> getProductsBySupplierId(@PathVariable("supplierId") UUID supplierId) {
         ApiResponse<List<ProductResponse>> response = new ApiResponse<>();
         response.setResult(productService.getProductsBySupplierId(supplierId));
@@ -143,6 +148,7 @@ public class ProductController {
     }
 
     @PatchMapping("{id}/toggle-status")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên kho')")
     public ApiResponse<ProductResponse> toggleProductStatus(@PathVariable("id") UUID id) {
         ApiResponse<ProductResponse> response = new ApiResponse<>();
         response.setResult(productService.toggleProductStatus(id));
