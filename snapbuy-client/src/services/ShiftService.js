@@ -50,6 +50,15 @@ export const closeShift = async (closingCash, note, cashDenominations) => {
   }
 };
 
+export const closeShiftForEmployee = async (employeeAccountId, closingCash, note, cashDenominations = []) => {
+  try {
+    const response = await axios.post(`${REST_API_BASE_URL}/close-for-employee`, { employeeAccountId, closingCash, note, cashDenominations }, getAuthHeaders());
+    return response.data?.result || response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const isShiftOpen = async () => {
   try {
     const current = await getCurrentShift();

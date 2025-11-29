@@ -100,6 +100,9 @@ const PrimeDataTable = ({
             sortField={col.sortField ? col.sortField : col.field}
             className={col.className ? col.className : ""}
             style={col.style || {}}
+            headerStyle={col.headerStyle || {}}
+            headerClassName={col.headerClassName || ""}
+            alignHeader={col.alignHeader || null}
           />
         ))}
       </DataTable>

@@ -4,6 +4,7 @@ import com.g127.snapbuy.dto.ApiResponse;
 import com.g127.snapbuy.dto.request.PosShiftOpenRequest;
 import com.g127.snapbuy.dto.request.PosShiftOpenForEmployeeRequest;
 import com.g127.snapbuy.dto.request.PosShiftCloseRequest;
+import com.g127.snapbuy.dto.request.PosShiftCloseForEmployeeRequest;
 import com.g127.snapbuy.dto.response.PosShiftResponse;
 import com.g127.snapbuy.service.PosShiftService;
 import jakarta.validation.Valid;
@@ -55,6 +56,22 @@ public class PosShiftController {
                                                @AuthenticationPrincipal User principal) {
         ApiResponse<PosShiftResponse> res = new ApiResponse<>();
         PosShiftResponse result = posShiftService.close(principal.getUsername(), req.getClosingCash(), req.getNote(), req.getCashDenominations());
+        res.setResult(result);
+        return res;
+    }
+
+    @PostMapping("/close-for-employee")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    public ApiResponse<PosShiftResponse> closeForEmployee(@Valid @RequestBody PosShiftCloseForEmployeeRequest req,
+                                                          @AuthenticationPrincipal User principal) {
+        ApiResponse<PosShiftResponse> res = new ApiResponse<>();
+        PosShiftResponse result = posShiftService.closeForEmployee(
+                principal.getUsername(),
+                req.getEmployeeAccountId(),
+                req.getClosingCash(),
+                req.getNote(),
+                req.getCashDenominations()
+        );
         res.setResult(result);
         return res;
     }

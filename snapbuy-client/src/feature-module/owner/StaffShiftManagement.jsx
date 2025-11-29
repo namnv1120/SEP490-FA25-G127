@@ -6,6 +6,7 @@ import CommonSelect from "../../components/select/common-select";
 import {
   getShiftsByAccountId,
   openShiftForEmployee,
+  closeShiftForEmployee,
   getAllActiveShifts,
 } from "../../services/ShiftService";
 import { searchStaffAccountsPaged } from "../../services/AccountService";
@@ -47,6 +48,14 @@ const StaffShiftManagement = () => {
   const [initialCash, setInitialCash] = useState(0);
   const [openCashDenominations, setOpenCashDenominations] = useState([]);
   const [activeShifts, setActiveShifts] = useState([]);
+  const [activeShiftsLoaded, setActiveShiftsLoaded] = useState(false);
+
+  // Close shift modal states
+  const [closeShiftModalVisible, setCloseShiftModalVisible] = useState(false);
+  const [employeeToClose, setEmployeeToClose] = useState(null);
+  const [closeNote, setCloseNote] = useState("");
+  const [closingCash, setClosingCash] = useState(0);
+  const [closeCashDenominations, setCloseCashDenominations] = useState([]);
 
   // Summary stats (currently not displayed but kept for future use)
   // eslint-disable-next-line no-unused-vars
@@ -95,8 +104,10 @@ const StaffShiftManagement = () => {
     try {
       const shifts = await getAllActiveShifts();
       setActiveShifts(shifts || []);
+      setActiveShiftsLoaded(true);
     } catch (error) {
       console.error("Error loading active shifts:", error);
+      setActiveShiftsLoaded(true);
     }
   }, []);
 
@@ -104,6 +115,9 @@ const StaffShiftManagement = () => {
   const fetchStaff = useCallback(async () => {
     try {
       setLoading(true);
+
+      // Load active shifts FIRST để đảm bảo trạng thái ca hiển thị đúng
+      await loadActiveShifts();
 
       const backendPage = currentPage - 1;
 
@@ -131,8 +145,6 @@ const StaffShiftManagement = () => {
         return;
       }
 
-      // Load active shifts để kiểm tra trạng thái ca
-      await loadActiveShifts();
       if (currentPage === 1) {
         try {
           const allStaffResponse = await searchStaffAccountsPaged({
@@ -342,8 +354,10 @@ const StaffShiftManagement = () => {
 
   const confirmOpenShift = async () => {
     if (!selectedEmployee) return;
+    
+    // Validation: kiểm tra số tiền không được âm
     if (initialCash < 0) {
-      message.error("Số tiền ban đầu không hợp lệ");
+      message.error("Số tiền ban đầu không được âm");
       return;
     }
 
@@ -402,7 +416,82 @@ const StaffShiftManagement = () => {
 
   // Check if employee has active shift
   const hasActiveShift = (employeeId) => {
-    return activeShifts.some((shift) => shift.accountId === employeeId);
+    return activeShifts.some((shift) => String(shift.accountId) === String(employeeId));
+  };
+
+  // Close shift for employee
+  const handleCloseShiftForEmployee = (employee) => {
+    if (!hasActiveShift(employee.id)) {
+      message.error(`${employee.fullName} không có ca đang mở!`);
+      return;
+    }
+    setEmployeeToClose(employee);
+    setCloseNote("");
+    setClosingCash(0);
+    setCloseCashDenominations([]);
+    setCloseShiftModalVisible(true);
+  };
+
+  const confirmCloseShift = async () => {
+    if (!employeeToClose) return;
+    
+    // Validation: kiểm tra số tiền không được âm
+    if (closingCash < 0) {
+      message.error("Số tiền cuối ca không được âm");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      // Chuẩn bị dữ liệu mệnh giá tiền
+      const cashDenominationsData = closeCashDenominations.map((d) => ({
+        denomination: d.denomination,
+        quantity: d.quantity,
+        totalValue: d.denomination * d.quantity,
+      }));
+
+      await closeShiftForEmployee(
+        employeeToClose.id, 
+        closingCash, 
+        closeNote || "",
+        cashDenominationsData
+      );
+      message.success(`Đã đóng ca cho ${employeeToClose.fullName}`);
+      setCloseShiftModalVisible(false);
+      setEmployeeToClose(null);
+      setCloseNote("");
+      setClosingCash(0);
+      setCloseCashDenominations([]);
+
+      // Reload active shifts first to update status immediately
+      await loadActiveShifts();
+
+      // Fetch all staff to get complete list for shifts
+      try {
+        const allStaffResponse = await searchStaffAccountsPaged({
+          keyword: staffSearchQuery || "",
+          active: true,
+          role: "Nhân viên bán hàng",
+          page: 0,
+          size: 1000,
+          sortBy: "fullName",
+          sortDir: "ASC",
+        });
+        const allStaff = (allStaffResponse?.content || []).filter(
+          (s) => s.roles && s.roles.includes("Nhân viên bán hàng")
+        );
+        await fetchAllShifts(allStaff);
+      } catch (err) {
+        console.error("Error fetching all shifts:", err);
+      }
+
+      await fetchStaff();
+    } catch (error) {
+      console.error("Error closing shift:", error);
+      message.error(error.response?.data?.message || "Không thể đóng ca");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Staff list columns
@@ -432,6 +521,9 @@ const StaffShiftManagement = () => {
       field: "shiftStatus",
       key: "shiftStatus",
       sortable: false,
+      alignHeader: "center",
+      headerClassName: "text-center",
+      className: "text-center",
       body: (row) => {
         const hasShift = hasActiveShift(row.id);
         return hasShift ? (
@@ -442,24 +534,41 @@ const StaffShiftManagement = () => {
       },
     },
     {
-      header: "",
+      header: "Hành động",
       field: "actions",
       key: "actions",
       sortable: false,
       body: (row) => {
+        const hasShift = hasActiveShift(row.id);
         return (
-          <div className="action-table-data text-center">
+          <div className="action-table-data d-flex gap-2">
             <button
               className="btn btn-sm btn-primary"
               onClick={() => handleOpenShiftForEmployee(row)}
+              disabled={hasShift}
+              style={{
+                opacity: hasShift ? 0.5 : 1,
+                cursor: hasShift ? 'not-allowed' : 'pointer',
+              }}
             >
               <i className="feather icon-plus-circle me-1"></i>
               Mở ca
             </button>
+            <button
+              className="btn btn-sm btn-danger"
+              onClick={() => handleCloseShiftForEmployee(row)}
+              disabled={!hasShift}
+              style={{
+                opacity: !hasShift ? 0.5 : 1,
+                cursor: !hasShift ? 'not-allowed' : 'pointer',
+              }}
+            >
+              <i className="feather icon-x-circle me-1"></i>
+              Đóng ca
+            </button>
           </div>
         );
       },
-      style: { paddingRight: '30px' },
     },
   ];
 
@@ -636,9 +745,10 @@ const StaffShiftManagement = () => {
           <div className="card-body p-0">
             <div className="table-responsive staff-table">
               <PrimeDataTable
+                key={`staff-table-${activeShifts.length}-${activeShiftsLoaded}`}
                 data={staffList}
                 column={staffColumns}
-                loading={false}
+                loading={loading || !activeShiftsLoaded}
                 emptyMessage="Không có nhân viên nào"
                 dataKey="id"
                 rows={rows}
@@ -750,6 +860,17 @@ const StaffShiftManagement = () => {
                     </div>
                   </div>
                 )}
+
+              {/* Ghi chú đóng ca - hiển thị nếu có */}
+              {selectedShift.note && (
+                <div className="alert alert-info mb-4">
+                  <h6 className="fw-bold mb-2">
+                    <i className="ti ti-notes me-2"></i>
+                    Ghi chú khi đóng ca:
+                  </h6>
+                  <p className="mb-0" style={{ whiteSpace: 'pre-wrap' }}>{selectedShift.note}</p>
+                </div>
+              )}
 
               {/* Orders Summary Cards - Styled with solid colors for better visibility */}
               <div className="row g-3 mb-4">
@@ -909,6 +1030,123 @@ const StaffShiftManagement = () => {
                     expectedTotal={initialCash}
                   />
                 </div>
+              </div>
+            </div>
+          )}
+        </Modal>
+
+        {/* Close Shift Modal */}
+        <Modal
+          open={closeShiftModalVisible}
+          onCancel={() => {
+            setCloseShiftModalVisible(false);
+            setEmployeeToClose(null);
+            setCloseNote("");
+            setClosingCash(0);
+            setCloseCashDenominations([]);
+          }}
+          onOk={confirmCloseShift}
+          title="Đóng ca cho nhân viên"
+          okText="Đóng ca"
+          okButtonProps={{ danger: true }}
+          cancelText="Hủy"
+          confirmLoading={loading}
+          centered
+          width={500}
+        >
+          {employeeToClose && (
+            <div>
+              <div className="mb-3">
+                <label
+                  className="form-label"
+                  style={{ fontSize: "13px", marginBottom: "4px" }}
+                >
+                  Nhân viên:
+                </label>
+                <div className="p-2 bg-light rounded">
+                  <div style={{ fontSize: "14px", fontWeight: "500" }}>
+                    {employeeToClose.fullName}
+                  </div>
+                  <small className="text-muted" style={{ fontSize: "12px" }}>
+                    {employeeToClose.email}
+                  </small>
+                </div>
+              </div>
+              <div className="alert alert-warning mb-3">
+                <i className="feather icon-alert-triangle me-2"></i>
+                Bạn đang đóng ca thay cho nhân viên. Hành động này sẽ kết thúc ca làm việc hiện tại của nhân viên.
+              </div>
+              <div className="mb-3">
+                <label
+                  className="form-label fw-bold"
+                  style={{ fontSize: "13px", marginBottom: "4px" }}
+                >
+                  <i className="ti ti-cash me-1"></i>
+                  Số tiền cuối ca trong két:
+                </label>
+                <InputNumber
+                  style={{ width: "100%" }}
+                  value={closingCash}
+                  onChange={(value) => setClosingCash(value || 0)}
+                  formatter={(value) =>
+                    `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+                  min={0}
+                  step={10000}
+                  placeholder="Nhập số tiền cuối ca"
+                />
+                <small
+                  className="text-muted d-block mt-1"
+                  style={{ fontSize: "11px" }}
+                >
+                  Số tiền hiện có trong két khi kết thúc ca
+                </small>
+
+                {/* Component nhập chi tiết mệnh giá tiền */}
+                <div className="mt-3">
+                  <label
+                    className="form-label fw-bold"
+                    style={{ fontSize: "13px", marginBottom: "4px" }}
+                  >
+                    <i className="ti ti-coins me-1"></i>
+                    Chi tiết mệnh giá tiền (tùy chọn):
+                  </label>
+                  <small
+                    className="text-muted d-block mb-2"
+                    style={{ fontSize: "11px" }}
+                  >
+                    Nhập số lượng từng loại tờ tiền để theo dõi chi tiết
+                  </small>
+                  <CashDenominationInput
+                    value={closeCashDenominations}
+                    onChange={(denoms) => {
+                      setCloseCashDenominations(denoms);
+                      const total = denoms.reduce(
+                        (sum, d) => sum + d.denomination * d.quantity,
+                        0
+                      );
+                      setClosingCash(total);
+                    }}
+                    expectedTotal={closingCash}
+                  />
+                </div>
+              </div>
+              <div className="mb-3">
+                <label
+                  className="form-label fw-bold"
+                  style={{ fontSize: "13px", marginBottom: "4px" }}
+                >
+                  <i className="ti ti-notes me-1"></i>
+                  Ghi chú (tùy chọn):
+                </label>
+                <textarea
+                  className="form-control"
+                  rows={2}
+                  value={closeNote}
+                  onChange={(e) => setCloseNote(e.target.value)}
+                  placeholder="Nhập lý do đóng ca..."
+                />
               </div>
             </div>
           )}
