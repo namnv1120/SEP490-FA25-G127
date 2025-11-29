@@ -213,6 +213,46 @@ public class PosShiftServiceImpl implements PosShiftService {
     }
 
     @Override
+    @Transactional
+    public PosShiftResponse closeForEmployee(String ownerUsername, UUID employeeAccountId, BigDecimal closingCash, String note, List<CashDenominationRequest> cashDenominations) {
+        // Kiểm tra owner có quyền không (đã được kiểm tra ở controller qua @PreAuthorize)
+        
+        // Tìm ca đang mở của nhân viên
+        PosShift s = posShiftRepository.findFirstByAccount_AccountIdAndStatusOrderByOpenedAtDesc(employeeAccountId, "Mở")
+                .orElseThrow(() -> new IllegalStateException("Nhân viên không có ca đang mở"));
+
+        s.setClosingCash(closingCash == null ? BigDecimal.ZERO : closingCash);
+        s.setClosedAt(LocalDateTime.now());
+        s.setStatus("Đóng");
+        s.setClosingNote(note != null ? note : "Đóng ca bởi chủ cửa hàng");
+
+        // Lưu chi tiết mệnh giá tiền khi đóng ca
+        if (cashDenominations != null && !cashDenominations.isEmpty()) {
+            // Xóa các mệnh giá CLOSING cũ (nếu có), giữ lại OPENING
+            s.getCashDenominations().removeIf(d -> ShiftCashDenomination.TYPE_CLOSING.equals(d.getDenominationType()));
+
+            List<ShiftCashDenomination> closingDenominations = cashDenominations.stream()
+                    .filter(d -> d.getQuantity() != null && d.getQuantity() > 0)
+                    .map(d -> {
+                        BigDecimal totalValue = BigDecimal.valueOf(d.getDenomination())
+                                .multiply(BigDecimal.valueOf(d.getQuantity()));
+                        return ShiftCashDenomination.builder()
+                                .shift(s)
+                                .denomination(d.getDenomination())
+                                .quantity(d.getQuantity())
+                                .totalValue(totalValue)
+                                .denominationType(ShiftCashDenomination.TYPE_CLOSING)
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+
+            s.getCashDenominations().addAll(closingDenominations);
+        }
+
+        return toResponse(posShiftRepository.save(s));
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<PosShiftResponse> getMyShifts(String username, String status) {
         UUID accountId = resolveAccountId(username);
