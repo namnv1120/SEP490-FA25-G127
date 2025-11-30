@@ -1,0 +1,62 @@
+/* Compact Notification Styles */
+.compact-notification {
+    .ant-notification-notice-message {
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        margin-bottom: 4px !important;
+        line-height: 1.4 !important;
+    }
+
+    .ant-notification-notice-description {
+        font-size: 13px !important;
+        line-height: 1.4 !important;
+        color: #666 !important;
+        margin-top: 0 !important;
+    }
+
+    .ant-notification-notice-icon {
+        font-size: 20px !important;
+        margin-top: 2px !important;
+    }
+
+    .ant-notification-notice-close {
+        top: 12px !important;
+        right: 12px !important;
+    }
+}
+
+/* Override Ant Design notification default styles */
+.ant-notification-notice {
+    padding: 12px 16px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.ant-notification-notice-with-icon .ant-notification-notice-message {
+    margin-left: 36px !important;
+}
+
+.ant-notification-notice-with-icon .ant-notification-notice-description {
+    margin-left: 36px !important;
+}
+
+/* Notification types - compact colors */
+.ant-notification-notice-info {
+    background: #e6f7ff !important;
+    border-left: 4px solid #1890ff !important;
+}
+
+.ant-notification-notice-warning {
+    background: #fffbe6 !important;
+    border-left: 4px solid #faad14 !important;
+}
+
+.ant-notification-notice-error {
+    background: #fff2f0 !important;
+    border-left: 4px solid #ff4d4f !important;
+}
+
+.ant-notification-notice-success {
+    background: #f6ffed !important;
+    border-left: 4px solid #52c41a !important;
+}

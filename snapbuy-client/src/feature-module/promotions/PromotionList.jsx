@@ -565,15 +565,15 @@ const PromotionList = () => {
                     <Spin size="large" />
                   </div>
                 ) : (
-                <PrimeDataTable
-                  column={columns}
-                  data={filteredPromotions}
-                  rows={rows}
-                  setRows={setRows}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalRecords={totalRecords}
-                  dataKey="promotionId"
+                  <PrimeDataTable
+                    column={columns}
+                    data={filteredPromotions}
+                    rows={rows}
+                    setRows={setRows}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    totalRecords={totalRecords}
+                    dataKey="promotionId"
                     loading={false}
                   />
                 )}

@@ -248,6 +248,13 @@ export const authRoutes = [
     componentKey: "PosShift",
     protected: true,
   },
+  {
+    id: 27,
+    path: routes.notifications,
+    name: "notifications",
+    componentKey: "Notifications",
+    protected: true,
+  },
 ];
 
 export const posPage = [

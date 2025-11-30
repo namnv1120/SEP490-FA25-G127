@@ -130,10 +130,10 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
         discountType: formData.discountType,
         discountValue: parseFloat(formData.discountValue),
         startDate: formData.startDate
-          ? dayjs(formData.startDate).toISOString()
+          ? dayjs(formData.startDate).format('YYYY-MM-DDTHH:mm:ss')
           : null,
         endDate: formData.endDate
-          ? dayjs(formData.endDate).toISOString()
+          ? dayjs(formData.endDate).format('YYYY-MM-DDTHH:mm:ss')
           : null,
         productIds: formData.productIds,
       };

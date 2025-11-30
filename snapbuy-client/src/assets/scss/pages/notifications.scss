@@ -1,0 +1,258 @@
+// Notifications Page Styles
+
+.notification-filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+
+    .filter-btn {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        color: #495057;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        i {
+            font-size: 16px;
+        }
+
+        &:hover {
+            background: #e9ecef;
+            border-color: #ced4da;
+        }
+
+        &.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: #ffffff;
+        }
+    }
+}
+
+.notification-table {
+    margin-bottom: 0;
+    table-layout: fixed;
+    width: 100%;
+
+    thead {
+        background: #f8f9fa;
+
+        th {
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+            padding: 12px;
+
+            // Cột icon
+            &:nth-child(1) {
+                width: 50px;
+            }
+            // Cột Thông báo - chiều rộng tự động chiếm phần còn lại
+            &:nth-child(2) {
+                width: auto;
+            }
+            // Cột Thời gian
+            &:nth-child(3) {
+                width: 120px;
+            }
+            // Cột Trạng thái
+            &:nth-child(4) {
+                width: 100px;
+            }
+            // Cột Thao tác
+            &:nth-child(5) {
+                width: 100px;
+            }
+        }
+    }
+
+    tbody {
+        tr {
+            transition: background 0.2s ease;
+
+            &:hover {
+                background: #f8f9fa;
+            }
+
+            &.unread {
+                background: rgba(102, 126, 234, 0.03);
+
+                &:hover {
+                    background: rgba(102, 126, 234, 0.06);
+                }
+            }
+
+            // Clickable row style
+            &.clickable {
+                td:nth-child(1),
+                td:nth-child(2),
+                td:nth-child(3) {
+                    cursor: pointer;
+                }
+
+                &:hover {
+                    background: #e9ecef;
+
+                    h6 {
+                        color: #667eea;
+                    }
+                }
+
+                &.unread:hover {
+                    background: rgba(102, 126, 234, 0.1);
+                }
+            }
+
+            td {
+                vertical-align: middle;
+                padding: 12px;
+                border-bottom: 1px solid #f1f3f4;
+
+                // Cột thông báo - cho phép text wrap
+                &:nth-child(2) {
+                    word-wrap: break-word;
+                    overflow-wrap: break-word;
+                    white-space: normal;
+                }
+            }
+        }
+    }
+
+    // Icon wrapper with unread dot
+    .notification-icon-wrapper {
+        position: relative;
+        display: inline-flex;
+
+        .unread-dot {
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            width: 10px;
+            height: 10px;
+            background-color: #667eea;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            z-index: 1;
+        }
+    }
+
+    // Black/white notification icon
+    .notification-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f5f5f5;
+        border: 1px solid #e0e0e0;
+
+        i {
+            font-size: 20px;
+            color: #333;
+        }
+    }
+
+    // Action buttons
+    .action-buttons {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        .btn {
+            padding: 4px 8px;
+
+            i {
+                font-size: 16px;
+            }
+
+            &.btn-disabled,
+            &:disabled {
+                opacity: 0.3;
+                cursor: not-allowed;
+                pointer-events: none;
+            }
+        }
+    }
+
+    h6 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+        color: #212529;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
+    }
+
+    p.text-muted {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
+        line-height: 1.4;
+    }
+
+    .small {
+        font-size: 13px;
+    }
+
+    .badge {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 4px 8px;
+    }
+}
+
+// Responsive
+@media (max-width: 768px) {
+    .notification-filters {
+        .filter-btn {
+            flex: 1;
+            min-width: calc(50% - 5px);
+            justify-content: center;
+        }
+    }
+
+    .notification-table {
+        font-size: 13px;
+
+        thead {
+            display: none;
+        }
+
+        tbody tr {
+            display: block;
+            margin-bottom: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px;
+
+            td {
+                display: block;
+                border: none;
+                padding: 6px 0;
+
+                &:first-child {
+                    text-align: center;
+                    margin-bottom: 10px;
+                }
+
+                &:last-child {
+                    text-align: right;
+                    margin-top: 10px;
+                }
+            }
+        }
+
+        .action-buttons {
+            justify-content: flex-end;
+        }
+    }
+}

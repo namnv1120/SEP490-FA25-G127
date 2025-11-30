@@ -10,6 +10,7 @@ import { SidebarDataAdmin } from "../../core/json/sidebarDataAdmin";
 import { SidebarDataOwner } from "../../core/json/sidebarDataOwner";
 import { SidebarDataWarehouse } from "../../core/json/sidebarDataWarehouse";
 import { SidebarDataSales } from "../../core/json/sidebarDataSales";
+import NotificationDropdown from "../notifications/NotificationDropdown";
 import {
   avatar_02,
   avatar_03,
@@ -73,9 +74,9 @@ const Header = () => {
     const handleFullscreenChange = () => {
       setIsFullscreen(
         document.fullscreenElement ||
-          document.mozFullScreenElement ||
-          document.webkitFullscreenElement ||
-          document.msFullscreenElement
+        document.mozFullScreenElement ||
+        document.webkitFullscreenElement ||
+        document.msFullscreenElement
       );
     };
 
@@ -315,11 +316,10 @@ const Header = () => {
         <div
           className={`header-left
              ${toggle ? "" : "active"}
-             ${
-               expandMenus || dataLayout === "layout-hovered"
-                 ? "expand-menu"
-                 : ""
-             }
+             ${expandMenus || dataLayout === "layout-hovered"
+              ? "expand-menu"
+              : ""
+            }
              `}
           onMouseLeave={expandMenu}
           onMouseOver={expandMenuOpen}
@@ -329,12 +329,12 @@ const Header = () => {
               userRole === "Nhân viên bán hàng"
                 ? route.saledashboard
                 : userRole === "Chủ cửa hàng"
-                ? route.shopownerdashboard
-                : userRole === "Quản trị viên"
-                ? route.admindashboard
-                : userRole === "Nhân viên kho"
-                ? route.warehousedashboard
-                : route.shopownerdashboard
+                  ? route.shopownerdashboard
+                  : userRole === "Quản trị viên"
+                    ? route.admindashboard
+                    : userRole === "Nhân viên kho"
+                      ? route.warehousedashboard
+                      : route.shopownerdashboard
             }
             className="logo logo-normal"
           >
@@ -345,12 +345,12 @@ const Header = () => {
               userRole === "Nhân viên bán hàng"
                 ? route.saledashboard
                 : userRole === "Chủ cửa hàng"
-                ? route.shopownerdashboard
-                : userRole === "Quản trị viên"
-                ? route.admindashboard
-                : userRole === "Nhân viên kho"
-                ? route.warehousedashboard
-                : route.shopownerdashboard
+                  ? route.shopownerdashboard
+                  : userRole === "Quản trị viên"
+                    ? route.admindashboard
+                    : userRole === "Nhân viên kho"
+                      ? route.warehousedashboard
+                      : route.shopownerdashboard
             }
             className="logo logo-white"
           >
@@ -361,12 +361,12 @@ const Header = () => {
               userRole === "Nhân viên bán hàng"
                 ? route.saledashboard
                 : userRole === "Chủ cửa hàng"
-                ? route.shopownerdashboard
-                : userRole === "Quản trị viên"
-                ? route.admindashboard
-                : userRole === "Nhân viên kho"
-                ? route.warehousedashboard
-                : route.shopownerdashboard
+                  ? route.shopownerdashboard
+                  : userRole === "Quản trị viên"
+                    ? route.admindashboard
+                    : userRole === "Nhân viên kho"
+                      ? route.warehousedashboard
+                      : route.shopownerdashboard
             }
             className="logo-small"
           >
@@ -380,8 +380,8 @@ const Header = () => {
                 pathname.includes("tasks") || pathname.includes("pos")
                   ? "none"
                   : pathname.includes("compose")
-                  ? "none"
-                  : "",
+                    ? "none"
+                    : "",
             }}
             onClick={handlesidebar}
           >
@@ -535,109 +535,9 @@ const Header = () => {
             </Nav.Link>
           </Nav.Item> */}
 
-          <NavDropdown
-            as="li"
-            className="nav-item dropdown nav-item-box"
-            title={<i className="ti ti-bell"></i>}
-            id="notifications-dropdown"
-            align="end"
-          >
-            <div className="topnav-dropdown-header">
-              <h5 className="notification-title">Notifications</h5>
-              <Link to="#" className="clear-noti">
-                Mark all as read
-              </Link>
-            </div>
-            <div className="noti-content">
-              <ul className="notification-list">
-                <li className="notification-message">
-                  <Link to={route.activities}>
-                    <div className="media d-flex">
-                      <span className="avatar flex-shrink-0">
-                        <img alt="Img" src={avatar_13} />
-                      </span>
-                      <div className="flex-grow-1">
-                        <p className="noti-details">
-                          <span className="noti-title">James Kirwin</span>{" "}
-                          confirmed his order. Order No: #78901.Estimated
-                          delivery: 2 days
-                        </p>
-                        <p className="noti-time">4 mins ago</p>
-                      </div>
-                    </div>
-                  </Link>
-                </li>
-                <li className="notification-message">
-                  <Link to={route.activities}>
-                    <div className="media d-flex">
-                      <span className="avatar flex-shrink-0">
-                        <img alt="Img" src={avatar_03} />
-                      </span>
-                      <div className="flex-grow-1">
-                        <p className="noti-details">
-                          <span className="noti-title">Leo Kelly</span>{" "}
-                          cancelled his order scheduled for 17 Jan 2025
-                        </p>
-                        <p className="noti-time">10 mins ago</p>
-                      </div>
-                    </div>
-                  </Link>
-                </li>
-                <li className="notification-message">
-                  <Link to={route.activities} className="recent-msg">
-                    <div className="media d-flex">
-                      <span className="avatar flex-shrink-0">
-                        <img alt="Img" src={avatar_17} />
-                      </span>
-                      <div className="flex-grow-1">
-                        <p className="noti-details">
-                          Payment of $50 received for Order #67890 from{" "}
-                          <span className="noti-title">Antonio Engle</span>
-                        </p>
-                        <p className="noti-time">05 mins ago</p>
-                      </div>
-                    </div>
-                  </Link>
-                </li>
-                <li className="notification-message">
-                  <Link to={route.activities} className="recent-msg">
-                    <div className="media d-flex">
-                      <span className="avatar flex-shrink-0">
-                        <img alt="Img" src={avatar_02} />
-                      </span>
-                      <div className="flex-grow-1">
-                        <p className="noti-details">
-                          <span className="noti-title">Andrea</span> confirmed
-                          his order. Order No: #73401.Estimated delivery: 3 days
-                        </p>
-                        <p className="noti-time">4 mins ago</p>
-                      </div>
-                    </div>
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div className="topnav-dropdown-footer d-flex align-items-center gap-3">
-              <Button
-                as={Link}
-                to="#"
-                variant="secondary"
-                size="md"
-                className="w-100"
-              >
-                Cancel
-              </Button>
-              <Button
-                as={Link}
-                to={route.activities}
-                variant="primary"
-                size="md"
-                className="w-100"
-              >
-                View all
-              </Button>
-            </div>
-          </NavDropdown>
+          {/* Notification Dropdown */}
+          <NotificationDropdown />
+
           {/* 
           <Nav.Item as="li" className="nav-item nav-item-box">
             <Nav.Link as={Link} to="/general-settings">

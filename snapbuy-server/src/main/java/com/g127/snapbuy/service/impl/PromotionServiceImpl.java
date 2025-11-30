@@ -10,6 +10,7 @@ import com.g127.snapbuy.exception.ErrorCode;
 import com.g127.snapbuy.mapper.PromotionMapper;
 import com.g127.snapbuy.repository.ProductRepository;
 import com.g127.snapbuy.repository.PromotionRepository;
+import com.g127.snapbuy.service.NotificationSchedulerService;
 import com.g127.snapbuy.service.PromotionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,7 @@ public class PromotionServiceImpl implements PromotionService {
     private final PromotionRepository promotionRepository;
     private final ProductRepository productRepository;
     private final PromotionMapper promotionMapper;
+    private final NotificationSchedulerService notificationSchedulerService;
 
     @Override
     @Transactional
@@ -52,6 +54,10 @@ public class PromotionServiceImpl implements PromotionService {
         entity.setProducts(products);
 
         Promotion saved = promotionRepository.save(entity);
+
+        // Schedule notifications for this promotion (real-time)
+        notificationSchedulerService.schedulePromotionNotifications(saved.getPromotionId());
+
         return promotionMapper.toResponse(saved);
     }
 
@@ -82,6 +88,10 @@ public class PromotionServiceImpl implements PromotionService {
         }
 
         Promotion saved = promotionRepository.save(p);
+
+        // Reschedule notifications after update
+        notificationSchedulerService.schedulePromotionNotifications(saved.getPromotionId());
+
         return promotionMapper.toResponse(saved);
     }
 
@@ -119,8 +129,17 @@ public class PromotionServiceImpl implements PromotionService {
         Promotion promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
         Boolean currentActive = promotion.getActive();
-        promotion.setActive(currentActive == null || !currentActive);
+        boolean newActive = currentActive == null || !currentActive;
+        promotion.setActive(newActive);
         Promotion saved = promotionRepository.save(promotion);
+
+        // Schedule or cancel notifications based on new status
+        if (newActive) {
+            notificationSchedulerService.schedulePromotionNotifications(saved.getPromotionId());
+        } else {
+            notificationSchedulerService.cancelPromotionNotifications(saved.getPromotionId());
+        }
+
         return promotionMapper.toResponse(saved);
     }
 
@@ -129,6 +148,10 @@ public class PromotionServiceImpl implements PromotionService {
     public void delete(UUID id) {
         Promotion promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
+
+        // Cancel scheduled notifications before deleting
+        notificationSchedulerService.cancelPromotionNotifications(id);
+
         promotionRepository.delete(promotion);
     }
 

@@ -8,6 +8,7 @@ import com.g127.snapbuy.mapper.AccountMapper;
 import com.g127.snapbuy.mapper.OrderMapper;
 import com.g127.snapbuy.repository.*;
 import com.g127.snapbuy.service.MoMoService;
+import com.g127.snapbuy.service.NotificationSchedulerService;
 import com.g127.snapbuy.service.PromotionService;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,7 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
     private final MoMoService moMoService;
     private final PromotionService promotionService;
     private final PosSettingsRepository posSettingsRepository;
+    private final NotificationSchedulerService notificationSchedulerService;
 
     private UUID resolveCurrentAccountId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -257,6 +259,15 @@ public class OrderServiceImpl implements com.g127.snapbuy.service.OrderService {
         resp.setSubtotal(subtotal);
         resp.setPointsRedeemed(pointsRedeemed);
         resp.setPointsEarned(pointsEarned);
+
+        // Kiểm tra tồn kho thấp ngay sau khi tạo order (realtime notification)
+        try {
+            notificationSchedulerService.checkLowStock();
+            log.info("Đã kiểm tra tồn kho thấp sau khi tạo đơn hàng: {}", order.getOrderNumber());
+        } catch (Exception e) {
+            log.error("Lỗi khi kiểm tra tồn kho thấp sau order: {}", e.getMessage());
+        }
+
         return resp;
     }
 

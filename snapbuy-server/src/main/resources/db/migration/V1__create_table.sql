@@ -283,3 +283,26 @@ CREATE UNIQUE INDEX UX_customers_phone ON customers (phone) WHERE phone IS NOT N
 CREATE UNIQUE INDEX UX_suppliers_phone ON suppliers (phone) WHERE phone IS NOT NULL;
 CREATE UNIQUE INDEX UX_suppliers_email ON suppliers (email) WHERE email IS NOT NULL;
 
+-- Notifications Table
+CREATE TABLE notifications
+(
+    notification_id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    [type]          NVARCHAR(50)     NOT NULL,
+    [message]       NVARCHAR(255)    NOT NULL,
+    [description]   NVARCHAR(500)    NULL,
+    is_read         BIT              NOT NULL    DEFAULT 0,
+    shop_id         UNIQUEIDENTIFIER NOT NULL,
+    reference_id    UNIQUEIDENTIFIER NULL,
+    created_at      DATETIME2        NOT NULL    DEFAULT GETDATE(),
+
+    FOREIGN KEY (shop_id) REFERENCES accounts (account_id),
+
+    CONSTRAINT CK_notification_type CHECK ([type] IN ('TON_KHO_THAP', 'KHUYEN_MAI_SAP_HET_HAN', 'DON_HANG', 'THANH_TOAN', 'HE_THONG'))
+);
+
+-- Indexes for notifications
+CREATE INDEX ix_notifications_shop_id ON notifications (shop_id);
+CREATE INDEX ix_notifications_created_at ON notifications (created_at DESC);
+CREATE INDEX ix_notifications_is_read ON notifications (is_read);
+CREATE INDEX ix_notifications_type ON notifications ([type]);
+CREATE INDEX ix_notifications_shop_read_created ON notifications (shop_id, is_read, created_at DESC);

@@ -43,6 +43,8 @@ export const allRoutes = {
   passwordsettings: "/settings/password",
   possystemsettings: "/settings/pos-system",
 
+  notifications: "/notifications",
+
   login: "/login",
   forgotpassword: "/forgot-password",
   verifyotp: "/verify-otp",

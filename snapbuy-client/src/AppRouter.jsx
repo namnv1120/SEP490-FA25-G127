@@ -109,6 +109,7 @@ const StaffShiftManagement = lazy(() =>
 const PromotionList = lazy(() =>
   import("./feature-module/promotions/PromotionList.jsx")
 );
+const Notifications = lazy(() => import("./feature-module/pages/Notifications"));
 const NotFound = lazy(() => import("./feature-module/pages/NotFound"));
 
 const componentsMap = {
@@ -152,6 +153,7 @@ const componentsMap = {
   OwnerStaffAccountList,
   StaffShiftManagement,
   PromotionList,
+  Notifications,
 };
 
 const AppRouter = () => {
