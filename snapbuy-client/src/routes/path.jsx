@@ -248,6 +248,13 @@ export const authRoutes = [
     componentKey: "PosShift",
     protected: true,
   },
+  {
+    id: 27,
+    path: routes.shifthistory,
+    name: "shift-history",
+    componentKey: "ShiftHistory",
+    protected: true,
+  },
 ];
 
 export const posPage = [

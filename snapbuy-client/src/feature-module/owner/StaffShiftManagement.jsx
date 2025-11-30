@@ -748,7 +748,7 @@ const StaffShiftManagement = () => {
                 key={`staff-table-${activeShifts.length}-${activeShiftsLoaded}`}
                 data={staffList}
                 column={staffColumns}
-                loading={loading || !activeShiftsLoaded}
+                loading={false}
                 emptyMessage="Không có nhân viên nào"
                 dataKey="id"
                 rows={rows}
