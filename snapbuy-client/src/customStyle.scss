@@ -195,18 +195,18 @@ ul.tabs.owl-carousel.pos-category {
 
 .tabs_wrapper ul.tabs li:last-child {
   margin-right: 0;
-.pos-design .tabs_wrapper .slick-arrow.slick-prev::before {
-}
+  .pos-design .tabs_wrapper .slick-arrow.slick-prev::before {
+  }
 
-.spinner-border,
-.spinner-grow {
-  display: none !important;
-}
+  .spinner-border,
+  .spinner-grow {
+    display: none !important;
+  }
 
-.ant-spin,
-.ant-spin-spinning {
-  display: none !important;
-}
+  .ant-spin,
+  .ant-spin-spinning {
+    display: none !important;
+  }
   content: "\f053";
   width: 12px;
   height: 12px;
@@ -2065,13 +2065,13 @@ div.p-datepicker table td.p-datepicker-today > span.p-highlight {
 // Profile dropdown width for long names
 .profile-nav .dropdown-menu {
   min-width: 240px !important;
-  
+
   .profileset {
     .profilesets,
     > div {
       min-width: 0;
       flex: 1;
-      
+
       h6,
       h5,
       p {
@@ -2088,7 +2088,7 @@ div.p-datepicker table td.p-datepicker-today > span.p-highlight {
 .profile-pic-upload .add-choosen .phone-img {
   width: 120px;
   height: 120px;
-  
+
   img {
     width: 100%;
     height: 100%;
@@ -2103,7 +2103,7 @@ div.p-datepicker table td.p-datepicker-today > span.p-highlight {
   width: 32px;
   height: 32px;
   overflow: hidden;
-  
+
   img {
     width: 100%;
     height: 100%;
@@ -2117,7 +2117,7 @@ div.p-datepicker table td.p-datepicker-today > span.p-highlight {
   width: 38px;
   height: 38px;
   overflow: hidden;
-  
+
   img {
     width: 100%;
     height: 100%;
@@ -2134,7 +2134,7 @@ div.p-datepicker table td.p-datepicker-today > span.p-highlight {
   margin-top: 0 !important;
   top: 100% !important;
   transform: none !important;
-  
+
   button.search-result-item {
     padding: 12px 16px !important;
     margin: 0 !important;
@@ -2149,20 +2149,20 @@ div.p-datepicker table td.p-datepicker-today > span.p-highlight {
     white-space: normal !important;
     font-size: 14px !important;
     line-height: 1.4 !important;
-    
+
     &:last-child {
       border-bottom: none !important;
     }
-    
+
     &:hover {
       background-color: rgba(var(--bs-primary-rgb), 0.05) !important;
       color: var(--bs-primary) !important;
     }
-    
+
     > div {
       margin-bottom: 4px !important;
       line-height: 1.4 !important;
-      
+
       &:last-child {
         margin-bottom: 0 !important;
       }

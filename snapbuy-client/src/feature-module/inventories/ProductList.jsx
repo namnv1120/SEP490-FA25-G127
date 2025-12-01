@@ -455,146 +455,123 @@ const ProductList = () => {
             </div>
           )}
 
-          {/* Layout với sidebar filter và table list */}
-          <div className="row g-3">
-            {/* Sidebar Filter - Bên trái */}
-            <div className="col-12 col-md-3 col-lg-3">
-              <div className="card shadow-sm sticky-top" style={{ top: "20px" }}>
-                <div className="card-header bg-light-subtle px-3 py-2">
-                  <h6 className="mb-0 fw-semibold">
-                    <i className="feather icon-filter me-2"></i>
-                    Bộ lọc
-                  </h6>
-                </div>
-                <div className="card-body p-3">
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
+          {/* Bộ lọc */}
+          <div className="card mb-3 shadow-sm">
+            <div className="card-body p-4">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(1);
+                }}
+                className="row g-3 align-items-end"
+              >
+                <div className="col-12 col-md-6 col-lg-3">
+                  <label className="form-label fw-semibold text-dark mb-1">
+                    Danh mục
+                  </label>
+                  <CommonSelect
+                    options={parentCategoryOptions}
+                    value={
+                      parentCategoryOptions.find(
+                        (o) => o.value === (categoryFilter || null)
+                      ) || parentCategoryOptions[0]
+                    }
+                    onChange={(s) => {
+                      const v = s?.value;
+                      setCategoryFilter(v || null);
+                      setSubCategoryFilter(null); // Reset sub category khi đổi parent category
                       setCurrentPage(1);
                     }}
-                    className="d-flex flex-column gap-3"
-                  >
-                    <div>
-                      <label className="form-label fw-semibold text-dark mb-2">
-                        Tìm kiếm
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Tên sản phẩm, mã sản phẩm..."
-                        value={searchQuery}
-                        onChange={(e) => {
-                          setSearchQuery(e.target.value);
-                          setCurrentPage(1);
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <label className="form-label fw-semibold text-dark mb-2">
-                        Trạng thái
-                      </label>
-                      <CommonSelect
-                        options={StatusOptions}
-                        value={
-                          StatusOptions.find((o) => o.value === statusFilter) ||
-                          StatusOptions[0]
-                        }
-                        onChange={(s) => {
-                          const v = s?.value;
-                          setStatusFilter(v === true || v === false ? v : null);
-                          setCurrentPage(1);
-                        }}
-                        placeholder="Chọn trạng thái"
-                        className="w-100"
-                      />
-                    </div>
-                    <div>
-                      <label className="form-label fw-semibold text-dark mb-2">
-                        Danh mục
-                      </label>
-                      <CommonSelect
-                        options={parentCategoryOptions}
-                        value={
-                          parentCategoryOptions.find(
-                            (o) => o.value === (categoryFilter || null)
-                          ) || parentCategoryOptions[0]
-                        }
-                        onChange={(s) => {
-                          const v = s?.value;
-                          setCategoryFilter(v || null);
-                          setSubCategoryFilter(null); // Reset sub category khi đổi parent category
-                          setCurrentPage(1);
-                        }}
-                        placeholder="Chọn danh mục"
-                        className="w-100"
-                      />
-                    </div>
-                    <div>
-                      <label className="form-label fw-semibold text-dark mb-2">
-                        Danh mục con
-                      </label>
-                      <CommonSelect
-                        options={subCategoryOptions}
-                        value={
-                          subCategoryOptions.find(
-                            (o) => o.value === (subCategoryFilter || null)
-                          ) || subCategoryOptions[0]
-                        }
-                        onChange={(s) => {
-                          const v = s?.value;
-                          setSubCategoryFilter(v || null);
-                          setCurrentPage(1);
-                        }}
-                        placeholder="Chọn danh mục con"
-                        className="w-100"
-                        disabled={!categoryFilter}
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary w-100 mt-2"
-                      onClick={handleRefresh}
-                    >
-                      <i className="feather icon-refresh-cw me-2"></i>
-                      Làm mới
-                    </button>
-                  </form>
+                    placeholder="Chọn danh mục"
+                    className="w-100"
+                  />
+                </div>
+                <div className="col-12 col-md-6 col-lg-3">
+                  <label className="form-label fw-semibold text-dark mb-1">
+                    Danh mục con
+                  </label>
+                  <CommonSelect
+                    options={subCategoryOptions}
+                    value={
+                      subCategoryOptions.find(
+                        (o) => o.value === (subCategoryFilter || null)
+                      ) || subCategoryOptions[0]
+                    }
+                    onChange={(s) => {
+                      const v = s?.value;
+                      setSubCategoryFilter(v || null);
+                      setCurrentPage(1);
+                    }}
+                    placeholder="Chọn danh mục con"
+                    className="w-100"
+                    disabled={!categoryFilter}
+                  />
+                </div>
+                <div className="col-12 col-md-6 col-lg-3 ms-auto">
+                  <label className="form-label fw-semibold text-dark mb-1">
+                    Tìm kiếm
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Tên sản phẩm, mã sản phẩm..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  />
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div className="card table-list-card no-search shadow-sm">
+            <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
+              <h5 className="mb-0 fw-semibold">
+                Danh sách sản phẩm{" "}
+                <span className="text-muted small">
+                  ({totalRecords} bản ghi)
+                </span>
+              </h5>
+              <div className="d-flex gap-2 align-items-end flex-wrap">
+                <div style={{ minWidth: "180px" }}>
+                  <CommonSelect
+                    options={StatusOptions}
+                    value={
+                      StatusOptions.find((o) => o.value === statusFilter) ||
+                      StatusOptions[0]
+                    }
+                    onChange={(s) => {
+                      const v = s?.value;
+                      setStatusFilter(v === true || v === false ? v : null);
+                      setCurrentPage(1);
+                    }}
+                    placeholder="Chọn trạng thái"
+                    className="w-100"
+                  />
                 </div>
               </div>
             </div>
-
-            {/* Table List - Bên phải */}
-            <div className="col-12 col-md-9 col-lg-9">
-              <div className="card table-list-card no-search shadow-sm">
-                <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
-                  <h5 className="mb-0 fw-semibold">
-                    Danh sách sản phẩm{" "}
-                    <span className="text-muted small">
-                      ({totalRecords} bản ghi)
-                    </span>
-                  </h5>
-                </div>
-                <div className="card-body p-0">
-                  <div className="table-responsive">
-                    {loading ? (
-                      <div className="d-flex justify-content-center p-5">
-                        <Spin size="large" />
-                      </div>
-                    ) : (
-                      <PrimeDataTable
-                        column={columns}
-                        data={products}
-                        rows={rows}
-                        setRows={setRows}
-                        currentPage={currentPage}
-                        setCurrentPage={setCurrentPage}
-                        totalRecords={totalRecords}
-                        dataKey="productId"
-                        serverSidePagination={true}
-                      />
-                    )}
+            <div className="card-body p-0">
+              <div className="table-responsive">
+                {loading ? (
+                  <div className="d-flex justify-content-center p-5">
+                    <Spin size="large" />
                   </div>
-                </div>
+                ) : (
+                <PrimeDataTable
+                  column={columns}
+                  data={products}
+                  rows={rows}
+                  setRows={setRows}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  totalRecords={totalRecords}
+                  dataKey="productId"
+                  serverSidePagination={true}
+                />
+                )}
               </div>
             </div>
           </div>
