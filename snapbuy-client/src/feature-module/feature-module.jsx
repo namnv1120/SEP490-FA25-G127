@@ -7,6 +7,7 @@ import { authRoutes, posPage, unAuthRoutes } from "../routes/path";
 import HorizontalSidebar from "../components/layouts/horizontalSidebar";
 import PosHeader from "./pos/PosHeader";
 import PageTitle from "../components/page-title/PageTitle";
+import NotificationAlert from "../components/notifications/NotificationAlert";
 
 const FeatureModule = () => {
   const location = useLocation();
@@ -65,6 +66,7 @@ const FeatureModule = () => {
       <div className={`main-wrapper ${toggleHeader ? "header-collapse" : ""}`}>
         <>
           <PageTitle />
+          <NotificationAlert />
           <style>
             {`
               :root {

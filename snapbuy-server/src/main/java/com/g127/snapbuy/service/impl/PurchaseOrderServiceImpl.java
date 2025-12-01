@@ -9,16 +9,20 @@ import com.g127.snapbuy.dto.response.PageResponse;
 import com.g127.snapbuy.dto.response.PurchaseOrderResponse;
 import com.g127.snapbuy.dto.response.PurchaseOrderDetailResponse;
 import com.g127.snapbuy.entity.*;
+import com.g127.snapbuy.entity.Notification.NotificationType;
 import com.g127.snapbuy.exception.AppException;
 import com.g127.snapbuy.exception.ErrorCode;
 import com.g127.snapbuy.mapper.PurchaseOrderMapper;
 import com.g127.snapbuy.repository.*;
+import com.g127.snapbuy.service.NotificationService;
+import com.g127.snapbuy.service.NotificationSettingsService;
 import com.g127.snapbuy.service.PurchaseOrderService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +39,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
     @PersistenceContext
@@ -50,6 +55,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     private final SupplierRepository supplierRepo;
     private final PurchaseOrderMapper purchaseOrderMapper;
     private final com.g127.snapbuy.service.MailService mailService;
+    private final NotificationService notificationService;
+    private final com.g127.snapbuy.service.NotificationSettingsService notificationSettingsService;
 
     @Override
     @Transactional
@@ -141,6 +148,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         detailRepo.saveAll(details);
         detailRepo.flush();
 
+        // Thông báo cho Chủ cửa hàng: Có đơn đặt hàng mới cần duyệt
+        notifyShopOwnersNewPurchaseOrder(po, currentAccountId);
+
         return mapResponse(po, details);
     }
 
@@ -166,6 +176,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         po.setStatus("Đã duyệt");
         po.setNotes(base + extra);
         purchaseOrderRepo.save(po);
+
+        // Thông báo cho nhân viên tạo đơn: Đơn đã được duyệt
+        notifyStaffOrderApproved(po);
 
         List<PurchaseOrderDetail> details = detailRepo.findByPurchaseOrderId(poId);
         return mapResponse(po, details);
@@ -341,7 +354,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     @Override
     @Transactional
     public PurchaseOrderResponse cancel(UUID poId, String usernameOrEmail) {
-        resolveAccountId(usernameOrEmail);
+        UUID cancellerAccountId = resolveAccountId(usernameOrEmail);
 
         PurchaseOrder po = purchaseOrderRepo.findById(poId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu nhập hàng"));
@@ -358,6 +371,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         po.setStatus("Đã hủy");
         po.setReceivedDate(null);
         purchaseOrderRepo.save(po);
+
+        // Thông báo cho nhân viên tạo đơn: Đơn đã bị hủy
+        notifyStaffOrderCancelled(po, cancellerAccountId);
 
         return mapResponse(po, details);
     }
@@ -699,10 +715,12 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         
         // Nếu đang ở trạng thái "Đã duyệt" và có receiveQuantity được cập nhật (kể cả 0), chuyển sang "Chờ xác nhận"
         // Vì có thể nhà cung cấp hết sản phẩm (nhận 0)
+        boolean statusChangedToWaitingConfirm = false;
         if (isApproved && hasReceivedQuantity) {
             po.setStatus("Chờ xác nhận");
+            statusChangedToWaitingConfirm = true;
         }
-        
+
         purchaseOrderRepo.save(po);
         purchaseOrderRepo.flush();
 
@@ -714,7 +732,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                     if (isApproved && i.getReceiveQuantity() != null) {
                         receivedQty = i.getReceiveQuantity();
                     }
-                    
+
                     return PurchaseOrderDetail.builder()
                             .purchaseOrderId(poId)
                             .productId(i.getProductId())
@@ -727,6 +745,11 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
         detailRepo.saveAll(newDetails);
         detailRepo.flush();
+
+        // Thông báo cho Chủ cửa hàng: Nhân viên đã cập nhật số lượng thực nhận
+        if (statusChangedToWaitingConfirm) {
+            notifyShopOwnersReceivedQuantityUpdated(po, usernameOrEmail);
+        }
 
         return mapResponse(po, newDetails);
     }
@@ -876,13 +899,16 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             }
         }
 
+        // Thông báo cho cả Chủ cửa hàng và Nhân viên: Đơn đặt hàng đã hoàn tất nhập kho
+        notifyPurchaseOrderCompleted(po);
+
         return mapResponse(po, details);
     }
 
     @Override
     @Transactional
     public PurchaseOrderResponse revert(UUID poId, PurchaseOrderApproveRequest req, String usernameOrEmail) {
-        resolveAccountId(usernameOrEmail);
+        UUID reverterAccountId = resolveAccountId(usernameOrEmail);
 
         PurchaseOrder po = purchaseOrderRepo.findById(poId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu nhập hàng"));
@@ -905,9 +931,20 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                         .multiply(BigDecimal.valueOf(Optional.ofNullable(d.getQuantity()).orElse(0))))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal taxRatePct = Optional.ofNullable(po.getTaxAmount()).orElse(BigDecimal.ZERO);
-        BigDecimal plannedTax = plannedSubtotal.multiply(taxRatePct)
-                .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+        // Tính lại thuế dựa trên tỷ lệ thuế ban đầu
+        BigDecimal plannedTax = BigDecimal.ZERO;
+        BigDecimal currentTax = Optional.ofNullable(po.getTaxAmount()).orElse(BigDecimal.ZERO);
+        BigDecimal currentTotal = Optional.ofNullable(po.getTotalAmount()).orElse(BigDecimal.ZERO);
+        
+        // Tính tỷ lệ thuế từ giá trị hiện tại
+        if (currentTotal.compareTo(BigDecimal.ZERO) > 0 && currentTax.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal currentSubtotal = currentTotal.subtract(currentTax);
+            if (currentSubtotal.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal taxRate = currentTax.divide(currentSubtotal, 6, java.math.RoundingMode.HALF_UP);
+                plannedTax = plannedSubtotal.multiply(taxRate).setScale(2, java.math.RoundingMode.HALF_UP);
+            }
+        }
+        
         BigDecimal plannedTotal = plannedSubtotal.add(plannedTax);
 
         po.setStatus("Đã duyệt");
@@ -917,6 +954,14 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         String extra = (req.getNotes() != null && !req.getNotes().isBlank()) ? (" " + cleanNotes(req.getNotes())) : "";
         po.setNotes(base + extra);
         purchaseOrderRepo.save(po);
+
+        // Thông báo cho nhân viên tạo đơn: Đơn đã bị từ chối (hủy duyệt)
+        try {
+            notifyStaffOrderRejected(po, reverterAccountId);
+        } catch (Exception e) {
+            log.error("Lỗi khi gửi thông báo đơn bị từ chối: {}", e.getMessage(), e);
+            // Không throw exception để không làm rollback transaction chính
+        }
 
         return mapResponse(po, details);
     }
@@ -1035,6 +1080,257 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 po.setEmailSentAt(now);
                 purchaseOrderRepo.save(po);
             }
+        }
+    }
+
+    // ================== NOTIFICATION HELPERS ==================
+
+    /**
+     * Thông báo cho Chủ cửa hàng khi có đơn đặt hàng mới cần duyệt
+     */
+    private void notifyShopOwnersNewPurchaseOrder(PurchaseOrder po, UUID creatorAccountId) {
+        try {
+            Account creator = accountRepo.findById(creatorAccountId).orElse(null);
+            String creatorName = creator != null ? creator.getFullName() : "Nhân viên";
+
+            Supplier supplier = supplierRepo.findById(po.getSupplierId()).orElse(null);
+            String supplierName = supplier != null ? supplier.getSupplierName() : "Không xác định";
+
+            String message = "Đơn đặt hàng mới cần duyệt";
+            String description = String.format(
+                "Nhân viên %s đã tạo đơn đặt hàng %s từ NCC %s với tổng giá trị %,.0f₫. Vui lòng xem xét và duyệt đơn.",
+                creatorName, po.getNumber(), supplierName, po.getTotalAmount()
+            );
+
+            // Gửi thông báo cho tất cả Chủ cửa hàng (chỉ nếu đã bật trong cài đặt)
+            List<Account> shopOwners = accountRepo.findByRoleName("Chủ cửa hàng");
+            for (Account owner : shopOwners) {
+                if (!notificationSettingsService.isNotificationEnabledForAccount(owner.getAccountId(), "purchase_order")) {
+                    log.debug("Bỏ qua thông báo đơn nhập kho cho account {} - đã tắt trong cài đặt", owner.getAccountId());
+                    continue;
+                }
+                notificationService.createNotificationForAccount(
+                    owner.getAccountId(),
+                    NotificationType.DON_DAT_HANG_CHO_DUYET,
+                    message,
+                    description,
+                    po.getId()
+                );
+            }
+            log.info("Đã gửi thông báo đơn đặt hàng mới {} cho {} chủ cửa hàng", po.getNumber(), shopOwners.size());
+        } catch (Exception e) {
+            log.error("Lỗi khi gửi thông báo đơn đặt hàng mới: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Thông báo cho Nhân viên tạo đơn khi đơn đã được duyệt
+     */
+    private void notifyStaffOrderApproved(PurchaseOrder po) {
+        try {
+            Account creator = accountRepo.findById(po.getAccountId()).orElse(null);
+            if (creator == null) {
+                log.warn("Không tìm thấy nhân viên tạo đơn {}", po.getNumber());
+                return;
+            }
+
+            Supplier supplier = supplierRepo.findById(po.getSupplierId()).orElse(null);
+            String supplierName = supplier != null ? supplier.getSupplierName() : "Không xác định";
+
+            String message = "Đơn đặt hàng đã được duyệt";
+            String description = String.format(
+                "Đơn đặt hàng %s từ NCC %s đã được duyệt. Vui lòng liên hệ nhà cung cấp, kiểm tra và cập nhật số lượng thực nhận khi hàng về.",
+                po.getNumber(), supplierName
+            );
+
+            // Chỉ gửi thông báo nếu đã bật trong cài đặt
+            if (notificationSettingsService.isNotificationEnabledForAccount(creator.getAccountId(), "purchase_order")) {
+                notificationService.createNotificationForAccount(
+                    creator.getAccountId(),
+                    NotificationType.DON_DAT_HANG_DA_DUYET,
+                    message,
+                    description,
+                    po.getId()
+                );
+            } else {
+                log.debug("Bỏ qua thông báo đơn nhập kho cho account {} - đã tắt trong cài đặt", creator.getAccountId());
+            }
+            log.info("Đã gửi thông báo đơn {} được duyệt cho nhân viên {}", po.getNumber(), creator.getFullName());
+        } catch (Exception e) {
+            log.error("Lỗi khi gửi thông báo đơn được duyệt: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Thông báo cho Chủ cửa hàng khi Nhân viên đã cập nhật số lượng thực nhận
+     */
+    private void notifyShopOwnersReceivedQuantityUpdated(PurchaseOrder po, String updaterUsernameOrEmail) {
+        try {
+            Account updater = accountRepo.findByUsername(updaterUsernameOrEmail)
+                    .or(() -> accountRepo.findByEmail(updaterUsernameOrEmail))
+                    .orElse(null);
+            String updaterName = updater != null ? updater.getFullName() : "Nhân viên";
+
+            Supplier supplier = supplierRepo.findById(po.getSupplierId()).orElse(null);
+            String supplierName = supplier != null ? supplier.getSupplierName() : "Không xác định";
+
+            String message = "Đơn đặt hàng chờ xác nhận nhập kho";
+            String description = String.format(
+                "Nhân viên %s đã cập nhật số lượng thực nhận cho đơn %s từ NCC %s. Vui lòng kiểm tra và xác nhận nhập kho.",
+                updaterName, po.getNumber(), supplierName
+            );
+
+            // Gửi thông báo cho tất cả Chủ cửa hàng (chỉ nếu đã bật trong cài đặt)
+            List<Account> shopOwners = accountRepo.findByRoleName("Chủ cửa hàng");
+            for (Account owner : shopOwners) {
+                if (!notificationSettingsService.isNotificationEnabledForAccount(owner.getAccountId(), "purchase_order")) {
+                    log.debug("Bỏ qua thông báo đơn nhập kho cho account {} - đã tắt trong cài đặt", owner.getAccountId());
+                    continue;
+                }
+                notificationService.createNotificationForAccount(
+                    owner.getAccountId(),
+                    NotificationType.DON_DAT_HANG_CHO_XAC_NHAN,
+                    message,
+                    description,
+                    po.getId()
+                );
+            }
+            log.info("Đã gửi thông báo cập nhật số lượng thực nhận đơn {} cho {} chủ cửa hàng", po.getNumber(), shopOwners.size());
+        } catch (Exception e) {
+            log.error("Lỗi khi gửi thông báo cập nhật số lượng thực nhận: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Thông báo cho cả Chủ cửa hàng và Nhân viên khi đơn đặt hàng hoàn tất nhập kho
+     */
+    private void notifyPurchaseOrderCompleted(PurchaseOrder po) {
+        try {
+            Supplier supplier = supplierRepo.findById(po.getSupplierId()).orElse(null);
+            String supplierName = supplier != null ? supplier.getSupplierName() : "Không xác định";
+
+            String message = "Đơn đặt hàng đã nhập kho thành công";
+            String description = String.format(
+                "Đơn đặt hàng %s từ NCC %s đã được xác nhận và nhập kho thành công với tổng giá trị %,.0f₫.",
+                po.getNumber(), supplierName, po.getTotalAmount()
+            );
+
+            Set<UUID> notifiedAccountIds = new HashSet<>();
+
+            // Thông báo cho tất cả Chủ cửa hàng (chỉ nếu đã bật trong cài đặt)
+            List<Account> shopOwners = accountRepo.findByRoleName("Chủ cửa hàng");
+            for (Account owner : shopOwners) {
+                if (!notificationSettingsService.isNotificationEnabledForAccount(owner.getAccountId(), "purchase_order")) {
+                    log.debug("Bỏ qua thông báo đơn nhập kho cho account {} - đã tắt trong cài đặt", owner.getAccountId());
+                    continue;
+                }
+                notificationService.createNotificationForAccount(
+                    owner.getAccountId(),
+                    NotificationType.DON_DAT_HANG_HOAN_TAT,
+                    message,
+                    description,
+                    po.getId()
+                );
+                notifiedAccountIds.add(owner.getAccountId());
+            }
+
+            // Thông báo cho Nhân viên tạo đơn (nếu chưa được thông báo và đã bật trong cài đặt)
+            if (!notifiedAccountIds.contains(po.getAccountId()) && 
+                notificationSettingsService.isNotificationEnabledForAccount(po.getAccountId(), "purchase_order")) {
+                notificationService.createNotificationForAccount(
+                    po.getAccountId(),
+                    NotificationType.DON_DAT_HANG_HOAN_TAT,
+                    message,
+                    description,
+                    po.getId()
+                );
+            }
+
+            log.info("Đã gửi thông báo hoàn tất nhập kho đơn {} cho {} người", po.getNumber(), notifiedAccountIds.size() + 1);
+        } catch (Exception e) {
+            log.error("Lỗi khi gửi thông báo hoàn tất nhập kho: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Thông báo cho Nhân viên tạo đơn khi đơn bị từ chối (hủy duyệt)
+     */
+    private void notifyStaffOrderRejected(PurchaseOrder po, UUID reverterAccountId) {
+        try {
+            Account creator = accountRepo.findById(po.getAccountId()).orElse(null);
+            if (creator == null) {
+                log.warn("Không tìm thấy nhân viên tạo đơn {}", po.getNumber());
+                return;
+            }
+
+            Account reverter = accountRepo.findById(reverterAccountId).orElse(null);
+            String reverterName = reverter != null ? reverter.getFullName() : "Quản lý";
+
+            Supplier supplier = supplierRepo.findById(po.getSupplierId()).orElse(null);
+            String supplierName = supplier != null ? supplier.getSupplierName() : "Không xác định";
+
+            String message = "Đơn đặt hàng bị từ chối";
+            String description = String.format(
+                "%s đã từ chối đơn đặt hàng %s từ NCC %s. Vui lòng kiểm tra lại thông tin và cập nhật số lượng thực nhận.",
+                reverterName, po.getNumber(), supplierName
+            );
+
+            // Chỉ gửi thông báo nếu đã bật trong cài đặt
+            if (notificationSettingsService.isNotificationEnabledForAccount(creator.getAccountId(), "purchase_order")) {
+                notificationService.createNotificationForAccount(
+                    creator.getAccountId(),
+                    NotificationType.DON_DAT_HANG_BI_TU_CHOI,
+                    message,
+                    description,
+                    po.getId()
+                );
+            } else {
+                log.debug("Bỏ qua thông báo đơn nhập kho cho account {} - đã tắt trong cài đặt", creator.getAccountId());
+            }
+            log.info("Đã gửi thông báo đơn {} bị từ chối cho nhân viên {}", po.getNumber(), creator.getFullName());
+        } catch (Exception e) {
+            log.error("Lỗi khi gửi thông báo đơn bị từ chối: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Thông báo cho Nhân viên tạo đơn khi đơn bị hủy
+     */
+    private void notifyStaffOrderCancelled(PurchaseOrder po, UUID cancellerAccountId) {
+        try {
+            Account creator = accountRepo.findById(po.getAccountId()).orElse(null);
+            if (creator == null) {
+                log.warn("Không tìm thấy nhân viên tạo đơn {}", po.getNumber());
+                return;
+            }
+
+            Account canceller = accountRepo.findById(cancellerAccountId).orElse(null);
+            String cancellerName = canceller != null ? canceller.getFullName() : "Quản lý";
+
+            Supplier supplier = supplierRepo.findById(po.getSupplierId()).orElse(null);
+            String supplierName = supplier != null ? supplier.getSupplierName() : "Không xác định";
+
+            String message = "Đơn đặt hàng đã bị hủy";
+            String description = String.format(
+                "%s đã hủy đơn đặt hàng %s từ NCC %s.",
+                cancellerName, po.getNumber(), supplierName
+            );
+
+            // Chỉ gửi thông báo nếu đã bật trong cài đặt
+            if (notificationSettingsService.isNotificationEnabledForAccount(creator.getAccountId(), "purchase_order")) {
+                notificationService.createNotificationForAccount(
+                    creator.getAccountId(),
+                    NotificationType.DON_DAT_HANG_BI_HUY,
+                    message,
+                    description,
+                    po.getId()
+                );
+            } else {
+                log.debug("Bỏ qua thông báo đơn nhập kho cho account {} - đã tắt trong cài đặt", creator.getAccountId());
+            }
+            log.info("Đã gửi thông báo đơn {} bị hủy cho nhân viên {}", po.getNumber(), creator.getFullName());
+        } catch (Exception e) {
+            log.error("Lỗi khi gửi thông báo đơn bị hủy: {}", e.getMessage());
         }
     }
 

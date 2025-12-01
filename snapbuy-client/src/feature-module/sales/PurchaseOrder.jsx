@@ -204,6 +204,30 @@ const PurchaseOrder = () => {
     fetchPurchaseOrders();
   }, [fetchPurchaseOrders]);
 
+  // Listen for notification click events to reload data
+  useEffect(() => {
+    const handleNotificationClick = (event) => {
+      // Reload purchase orders data when notification is clicked
+      console.log('Purchase order notification clicked, reloading data...', event.detail);
+      fetchPurchaseOrders();
+    };
+
+    // Listen for custom event
+    window.addEventListener('purchaseOrderNotificationClicked', handleNotificationClick);
+    
+    // Also listen for focus event (when user comes back to tab)
+    const handleFocus = () => {
+      // Reload when tab becomes active (user might have clicked notification in another tab)
+      fetchPurchaseOrders();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('purchaseOrderNotificationClicked', handleNotificationClick);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [fetchPurchaseOrders]);
+
   const handleSort = (field) => {
     if (sortField === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");

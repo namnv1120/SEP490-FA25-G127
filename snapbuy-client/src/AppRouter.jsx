@@ -72,6 +72,9 @@ const EmailSettings = lazy(() =>
 const PasswordSettings = lazy(() =>
   import("./feature-module/settings/PasswordSettings")
 );
+const NotificationSettings = lazy(() =>
+  import("./feature-module/settings/NotificationSettings")
+);
 const Customers = lazy(() => import("./feature-module/people/CustomerList"));
 const PurchaseOrder = lazy(() =>
   import("./feature-module/sales/PurchaseOrder")
@@ -110,6 +113,7 @@ const StaffShiftManagement = lazy(() =>
 const PromotionList = lazy(() =>
   import("./feature-module/promotions/PromotionList.jsx")
 );
+const Notifications = lazy(() => import("./feature-module/pages/Notifications"));
 const NotFound = lazy(() => import("./feature-module/pages/NotFound"));
 
 const componentsMap = {
@@ -139,6 +143,7 @@ const componentsMap = {
   Profile,
   EmailSettings,
   PasswordSettings,
+  NotificationSettings,
   Customers,
   PurchaseOrder,
   AddPurchaseOrder,
@@ -154,6 +159,7 @@ const componentsMap = {
   OwnerStaffAccountList,
   StaffShiftManagement,
   PromotionList,
+  Notifications,
 };
 
 const AppRouter = () => {

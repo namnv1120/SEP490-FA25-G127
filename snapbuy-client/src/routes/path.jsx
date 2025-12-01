@@ -75,6 +75,13 @@ export const authRoutes = [
   },
   {
     id: 3.3,
+    path: routes.notification,
+    name: "notification-settings",
+    componentKey: "NotificationSettings",
+    protected: true,
+  },
+  {
+    id: 3.4,
     path: routes.possystemsettings,
     name: "pos-system-settings",
     componentKey: "PosSystemSettings",
@@ -250,6 +257,13 @@ export const authRoutes = [
   },
   {
     id: 27,
+    path: routes.notifications,
+    name: "notifications",
+    componentKey: "Notifications",
+    protected: true,
+  },
+  {
+    id: 28,
     path: routes.shifthistory,
     name: "shift-history",
     componentKey: "ShiftHistory",
