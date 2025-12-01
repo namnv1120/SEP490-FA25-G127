@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import store from "./core/redux/store.js";
@@ -32,7 +32,7 @@ const App = () => {
   // Kiểm tra nếu đang ở trang 404 thì bỏ qua splashscreen
   useEffect(() => {
     const currentPath = window.location.pathname;
-    if (currentPath === '/404' || currentPath.endsWith('/404')) {
+    if (currentPath === "/404" || currentPath.endsWith("/404")) {
       setShowSplash(false);
     }
   }, []);
@@ -52,8 +52,4 @@ const App = () => {
 
 export default App;
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);

@@ -32,6 +32,7 @@ export const routeRoleMap = {
 
   "/pos": ["Quản trị viên", "Chủ cửa hàng", "Nhân viên bán hàng"],
   "/pos-shift": ["Quản trị viên", "Chủ cửa hàng", "Nhân viên bán hàng"],
+  "/shift-history": ["Quản trị viên", "Chủ cửa hàng", "Nhân viên bán hàng"],
 
   "/accounts": ["Quản trị viên"],
 

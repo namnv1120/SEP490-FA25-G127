@@ -50,6 +50,7 @@ const EditProductPrice = lazy(() =>
   import("./feature-module/inventories/EditProductPrice")
 );
 const PosShift = lazy(() => import("./feature-module/pos/PosShift"));
+const ShiftHistory = lazy(() => import("./feature-module/pos/ShiftHistory"));
 const SaleDashboard = lazy(() =>
   import("./feature-module/dashboard/SaleDashboard")
 );
@@ -118,6 +119,7 @@ const NotFound = lazy(() => import("./feature-module/pages/NotFound"));
 const componentsMap = {
   Pos,
   PosShift,
+  ShiftHistory,
   Login,
   ForgotPassword,
   VerifyOtp,

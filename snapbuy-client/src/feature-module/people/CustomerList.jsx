@@ -516,6 +516,7 @@ const Customers = () => {
                 onChange={handleInputChange}
                 disabled={modalLoading}
                 placeholder="Nhập số điện thoại (10-15 chữ số)"
+                
               />
               <small className="text-muted">
                 Định dạng: 10-15 chữ số, có thể bắt đầu bằng dấu +

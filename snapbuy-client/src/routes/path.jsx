@@ -262,6 +262,13 @@ export const authRoutes = [
     componentKey: "Notifications",
     protected: true,
   },
+  {
+    id: 28,
+    path: routes.shifthistory,
+    name: "shift-history",
+    componentKey: "ShiftHistory",
+    protected: true,
+  },
 ];
 
 export const posPage = [

@@ -34,6 +34,7 @@ const routeNameMap = {
   rolespermission: "Phân quyền",
   pos: "POS",
   "pos-shift": "Quản lý ca làm việc",
+  "shift-history": "Lịch sử ca làm việc",
   "owner-staff-accounts": "Tài khoản nhân viên",
   "staff-shift-management": "Quản lý ca nhân viên",
   forgotpassword: "Quên mật khẩu",

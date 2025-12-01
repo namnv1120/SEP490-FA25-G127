@@ -19,6 +19,29 @@ export const SidebarDataSales = [
         route: "/pos-shift",
         subRoutes: [],
       },
+      {
+        tittle: "Lịch sử ca làm việc",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/shift-history",
+        subRoutes: [],
+      },
+    ],
+  },
+  {
+    tittle: "Giao dịch",
+    hasSubRoute: true,
+    icon: "layout-grid",
+    showSubRoute: false,
+    activeRoute: "sales",
+    subRoutes: [
+      {
+        tittle: "Lịch sử đơn hàng",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/order-history",
+        subRoutes: [],
+      },
     ],
   },
   {
