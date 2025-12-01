@@ -1,62 +1,160 @@
-/* Compact Notification Styles */
-.compact-notification {
-    .ant-notification-notice-message {
-        font-size: 14px !important;
-        font-weight: 600 !important;
-        margin-bottom: 4px !important;
-        line-height: 1.4 !important;
+/* Professional Notification Toast - Black & White Design */
+
+/* High specificity to override Ant Design defaults */
+.ant-notification.ant-notification-bottomRight {
+    .notification-summary.ant-notification-notice {
+        background: #ffffff !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 10px !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+        padding: 14px 16px !important;
+        width: 360px !important;
+        max-width: 360px !important;
+        min-height: auto !important;
+        cursor: pointer !important;
+        overflow: visible !important;
+
+        &:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16) !important;
+            transform: translateY(-1px) !important;
+        }
+
+        /* Main container with icon */
+        &.ant-notification-notice-with-icon {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            padding: 14px 16px !important;
+
+            /* Icon styling */
+            .ant-notification-notice-icon {
+                width: 44px !important;
+                height: 44px !important;
+                min-width: 44px !important;
+                max-width: 44px !important;
+                flex-shrink: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                background: #f3f4f6 !important;
+                border-radius: 50% !important;
+                margin: 0 !important;
+                margin-right: 12px !important;
+                padding: 0 !important;
+                line-height: 1 !important;
+                position: relative !important;
+                top: 0 !important;
+                left: 0 !important;
+
+                /* Icon element - handles SVG, emoji and font icons */
+                svg,
+                i,
+                span,
+                div {
+                    color: #1f2937 !important;
+                    line-height: 1 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
+            }
+
+            /* Content area */
+            .ant-notification-notice-content {
+                flex: 1 !important;
+                min-width: 0 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                padding-right: 28px !important;
+                position: relative !important;
+                top: 0 !important;
+                left: 0 !important;
+            }
+
+            /* Message (title) */
+            .ant-notification-notice-message {
+                color: #111827 !important;
+                font-size: 14px !important;
+                font-weight: 600 !important;
+                line-height: 1.5 !important;
+                margin: 0 !important;
+                margin-bottom: 4px !important;
+                padding: 0 !important;
+                word-wrap: break-word !important;
+                overflow-wrap: break-word !important;
+                white-space: normal !important;
+                display: block !important;
+            }
+
+            /* Description (time) */
+            .ant-notification-notice-description {
+                color: #6b7280 !important;
+                font-size: 12px !important;
+                font-weight: 400 !important;
+                line-height: 1.4 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 4px !important;
+                white-space: normal !important;
+
+                &::before {
+                    content: '🕐';
+                    font-size: 12px;
+                    line-height: 1;
+                    flex-shrink: 0;
+                }
+            }
+        }
+
+        /* Close button */
+        .ant-notification-notice-close {
+            position: absolute !important;
+            top: 14px !important;
+            right: 14px !important;
+            width: 22px !important;
+            height: 22px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            color: #9ca3af !important;
+            font-size: 14px !important;
+            line-height: 1 !important;
+            border-radius: 4px !important;
+            transition: all 0.2s ease !important;
+
+            &:hover {
+                color: #1f2937 !important;
+                background: #f3f4f6 !important;
+            }
+
+            .ant-notification-notice-close-x {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+        }
+    }
+}
+
+/* Slide in animation */
+@keyframes notificationSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
     }
 
-    .ant-notification-notice-description {
-        font-size: 13px !important;
-        line-height: 1.4 !important;
-        color: #666 !important;
-        margin-top: 0 !important;
-    }
-
-    .ant-notification-notice-icon {
-        font-size: 20px !important;
-        margin-top: 2px !important;
-    }
-
-    .ant-notification-notice-close {
-        top: 12px !important;
-        right: 12px !important;
+    to {
+        opacity: 1;
+        transform: translateX(0);
     }
 }
 
-/* Override Ant Design notification default styles */
-.ant-notification-notice {
-    padding: 12px 16px !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-}
-
-.ant-notification-notice-with-icon .ant-notification-notice-message {
-    margin-left: 36px !important;
-}
-
-.ant-notification-notice-with-icon .ant-notification-notice-description {
-    margin-left: 36px !important;
-}
-
-/* Notification types - compact colors */
-.ant-notification-notice-info {
-    background: #e6f7ff !important;
-    border-left: 4px solid #1890ff !important;
-}
-
-.ant-notification-notice-warning {
-    background: #fffbe6 !important;
-    border-left: 4px solid #faad14 !important;
-}
-
-.ant-notification-notice-error {
-    background: #fff2f0 !important;
-    border-left: 4px solid #ff4d4f !important;
-}
-
-.ant-notification-notice-success {
-    background: #f6ffed !important;
-    border-left: 4px solid #52c41a !important;
+.ant-notification.ant-notification-bottomRight .notification-summary.ant-notification-notice {
+    animation: notificationSlideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }

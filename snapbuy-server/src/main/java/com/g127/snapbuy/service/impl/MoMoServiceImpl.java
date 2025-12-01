@@ -56,10 +56,10 @@ public class MoMoServiceImpl implements MoMoService {
             String requestId = UUID.randomUUID().toString();
             String momoOrderId = order.getOrderNumber() + "-" + System.currentTimeMillis();
 
-            // String returnUrl = "http://localhost:8080/api/payments/momo/return";
-            // String notifyUrl = "http://localhost:8080/api/payments/momo/notify";
-            String returnUrl = "https://nonrecoiling-edris-provincially.ngrok-free.dev/api/payments/momo/return";
-            String notifyUrl = "https://nonrecoiling-edris-provincially.ngrok-free.dev/api/payments/momo/notify";
+             String returnUrl = "http://localhost:8080/api/payments/momo/return";
+             String notifyUrl = "http://localhost:8080/api/payments/momo/notify";
+//            String returnUrl = "https://nonrecoiling-edris-provincially.ngrok-free.dev/api/payments/momo/return";
+//            String notifyUrl = "https://nonrecoiling-edris-provincially.ngrok-free.dev/api/payments/momo/notify";
 
             String orderInfo = "Thanh toán đơn hàng " + order.getOrderNumber();
 

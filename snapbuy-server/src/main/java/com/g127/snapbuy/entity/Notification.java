@@ -58,7 +58,9 @@ public class Notification {
         DON_DAT_HANG_CHO_DUYET("Đơn đặt hàng chờ duyệt"),
         DON_DAT_HANG_DA_DUYET("Đơn đặt hàng đã duyệt"),
         DON_DAT_HANG_CHO_XAC_NHAN("Đơn đặt hàng chờ xác nhận"),
-        DON_DAT_HANG_HOAN_TAT("Đơn đặt hàng hoàn tất");
+        DON_DAT_HANG_HOAN_TAT("Đơn đặt hàng hoàn tất"),
+        DON_DAT_HANG_BI_TU_CHOI("Đơn đặt hàng bị từ chối"),
+        DON_DAT_HANG_BI_HUY("Đơn đặt hàng bị hủy");
 
         private final String label;
 

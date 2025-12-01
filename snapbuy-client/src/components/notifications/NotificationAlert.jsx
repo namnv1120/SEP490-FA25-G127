@@ -1,63 +1,55 @@
 import { useEffect, useRef, useCallback } from "react";
 import { notification as antNotification } from "antd";
-import {
-    getLowStockNotifications,
-    getExpiringPromotionNotifications,
-    getExpiredPromotionNotifications,
-} from "../../services/NotificationService";
+import { getAllNotifications } from "../../services/NotificationService";
 import "../../assets/scss/components/compact-notification.scss";
 
 /**
- * NotificationAlert component - only shows toast notifications for new alerts
- * No popup modal - just background checking and toast notifications
+ * NotificationAlert component - shows a single summary toast for new notifications
+ * No individual popups - just a clean summary notification
  */
 const NotificationAlert = () => {
-    const previousNotificationIds = useRef(new Set());
+    const previousUnreadCount = useRef(0);
     const isInitialLoad = useRef(true);
 
-    // Helper function to parse notification data
-    const parseNotifications = useCallback((data) => {
-        if (data?.result) {
-            if (data.result.content) {
-                return data.result.content;
-            } else if (Array.isArray(data.result)) {
-                return data.result;
-            }
-        } else if (Array.isArray(data)) {
-            return data;
-        } else if (data?.content) {
-            return data.content;
-        }
-        return [];
-    }, []);
+    // Show summary toast notification
+    const showSummaryNotification = useCallback((newCount) => {
+        const currentTime = new Date();
+        const timeString = currentTime.toLocaleTimeString('vi-VN', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
 
-    // Show toast notification for new notifications
-    const showToastNotification = useCallback((newNotifications) => {
-        newNotifications.forEach((notif) => {
-            const type = notif.type === 'TON_KHO_THAP' ? 'warning'
-                : notif.type === 'KHUYEN_MAI_HET_HAN' ? 'error'
-                    : 'info';
+        const message = newCount === 1
+            ? "Bạn vừa có 1 thông báo mới"
+            : `Bạn vừa có ${newCount} thông báo mới`;
 
-            // Get icon based on type
-            const icon = notif.type === 'TON_KHO_THAP' ? '📦'
-                : notif.type === 'KHUYEN_MAI_HET_HAN' ? '⚠️'
-                    : notif.type === 'KHUYEN_MAI_SAP_HET_HAN' ? '⏰'
-                        : '🔔';
+        const description = `Nhận lúc ${timeString}`;
 
-            antNotification[type]({
-                message: notif.message,
-                description: notif.description,
-                duration: 4,
-                placement: 'bottomRight',
-                style: {
-                    width: '340px',
-                    padding: '12px 16px',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                },
-                className: 'compact-notification',
-                icon: <span style={{ fontSize: '20px' }}>{icon}</span>,
-            });
+        antNotification.open({
+            message,
+            description,
+            duration: 6,
+            placement: 'bottomRight',
+            className: 'notification-summary',
+            icon: (
+                <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ color: '#1f2937' }}
+                >
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+            ),
+            onClick: () => {
+                window.location.href = '/notifications';
+            },
         });
     }, []);
 
@@ -66,46 +58,42 @@ const NotificationAlert = () => {
         if (!token) return;
 
         try {
-            const [lowStockData, expiringData, expiredData] = await Promise.all([
-                getLowStockNotifications(),
-                getExpiringPromotionNotifications(),
-                getExpiredPromotionNotifications(),
-            ]);
+            // Get all unread notifications
+            const response = await getAllNotifications({ isRead: false, size: 100 });
 
-            // Parse all notification types
-            let notifList = [
-                ...parseNotifications(lowStockData),
-                ...parseNotifications(expiringData),
-                ...parseNotifications(expiredData),
-            ];
-
-            // Filter only unread notifications and remove duplicates by id
-            const uniqueNotifMap = new Map();
-            notifList.filter((n) => !n.isRead).forEach((n) => {
-                uniqueNotifMap.set(n.id, n);
-            });
-            notifList = Array.from(uniqueNotifMap.values());
-
-            // Check for new notifications (not in previous set)
-            const currentIds = new Set(notifList.map(n => n.id));
-            const newNotifications = notifList.filter(n => !previousNotificationIds.current.has(n.id));
-
-            // Update previous IDs
-            previousNotificationIds.current = currentIds;
-
-            // Only show toast for new notifications (skip initial load)
-            if (!isInitialLoad.current && newNotifications.length > 0) {
-                showToastNotification(newNotifications);
+            // Parse response
+            let unreadNotifications = [];
+            if (response?.result?.content) {
+                unreadNotifications = response.result.content;
+            } else if (Array.isArray(response?.result)) {
+                unreadNotifications = response.result;
+            } else if (response?.content) {
+                unreadNotifications = response.content;
             }
+
+            const currentUnreadCount = unreadNotifications.length;
+
+            console.log('[NotificationAlert] Unread count:', currentUnreadCount, 'Previous:', previousUnreadCount.current);
+
+            // Check if there are new notifications
+            if (!isInitialLoad.current && currentUnreadCount > previousUnreadCount.current) {
+                const newNotificationsCount = currentUnreadCount - previousUnreadCount.current;
+                console.log('[NotificationAlert] New notifications detected:', newNotificationsCount);
+                showSummaryNotification(newNotificationsCount);
+            }
+
+            // Update previous count
+            previousUnreadCount.current = currentUnreadCount;
 
             // Mark initial load as complete
             if (isInitialLoad.current) {
+                console.log('[NotificationAlert] Initial load complete');
                 isInitialLoad.current = false;
             }
         } catch (error) {
             console.error("Error fetching notifications:", error);
         }
-    }, [parseNotifications, showToastNotification]);
+    }, [showSummaryNotification]);
 
     useEffect(() => {
         // Check if user is authenticated
@@ -113,14 +101,12 @@ const NotificationAlert = () => {
         if (!token) return;
 
         let intervalId;
-        let currentInterval = 120000; // Start with 2 minutes (idle)
-        const IDLE_INTERVAL = 120000; // 2 minutes when idle
-        const ACTIVE_INTERVAL = 30000; // 30 seconds when active
+        let currentInterval = 5000; // Start with 5 seconds for faster detection
+        const IDLE_INTERVAL = 30000; // 30 seconds when idle
+        const ACTIVE_INTERVAL = 5000; // 5 seconds when active
 
-        // Initial fetch with delay
-        const initialTimer = setTimeout(() => {
-            fetchNotifications();
-        }, 2000);
+        // Initial fetch immediately
+        fetchNotifications();
 
         // Smart polling: slower when idle, faster when active
         const startPolling = () => {
@@ -160,7 +146,6 @@ const NotificationAlert = () => {
         startPolling();
 
         return () => {
-            clearTimeout(initialTimer);
             clearInterval(intervalId);
             window.removeEventListener('mousemove', handleUserActivity);
             window.removeEventListener('keydown', handleUserActivity);
@@ -173,4 +158,3 @@ const NotificationAlert = () => {
 };
 
 export default NotificationAlert;
-

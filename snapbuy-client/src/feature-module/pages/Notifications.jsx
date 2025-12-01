@@ -30,12 +30,14 @@ const Notifications = () => {
 
             if (filter === "UNREAD") {
                 params.isRead = false;
-            } else if (filter !== "ALL") {
+            } else if (filter !== "ALL" && filter !== "KHUYEN_MAI" && filter !== "DON_NHAP_KHO") {
+                // For specific type filters (not grouped ones)
                 params.type = filter;
             }
+            // For KHUYEN_MAI and DON_NHAP_KHO, we fetch all and filter client-side
 
             const response = await getAllNotifications(params);
-            
+
             // Handle API response format
             let data = {};
             if (response?.result) {
@@ -61,6 +63,22 @@ const Notifications = () => {
         fetchNotifications();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filter, currentPage]);
+
+    // Auto-reload when page becomes visible (user navigates back)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (!document.hidden) {
+                // Page is visible again, reload notifications
+                fetchNotifications();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Handle mark as read
     const handleMarkAsRead = async (notificationId) => {
@@ -128,6 +146,10 @@ const Notifications = () => {
                 return "ti ti-clipboard-check";
             case "DON_DAT_HANG_HOAN_TAT":
                 return "ti ti-package-import";
+            case "DON_DAT_HANG_BI_TU_CHOI":
+                return "ti ti-x";
+            case "DON_DAT_HANG_BI_HUY":
+                return "ti ti-trash";
             default:
                 return "ti ti-bell";
         }
@@ -147,6 +169,8 @@ const Notifications = () => {
             case "DON_DAT_HANG_DA_DUYET":
             case "DON_DAT_HANG_CHO_XAC_NHAN":
             case "DON_DAT_HANG_HOAN_TAT":
+            case "DON_DAT_HANG_BI_TU_CHOI":
+            case "DON_DAT_HANG_BI_HUY":
                 return allRoutes.purchaseorders;
             case "DON_HANG":
                 return allRoutes.orderhistory;
@@ -176,7 +200,30 @@ const Notifications = () => {
         // Điều hướng đến trang liên quan
         const url = getNotificationUrl(notification);
         if (url) {
-            navigate(url);
+            // Kiểm tra xem có đang ở trang purchase order không
+            const isPurchaseOrderPage = window.location.pathname.includes('/purchase-orders');
+            const isPurchaseOrderNotification = [
+                'DON_DAT_HANG_CHO_DUYET',
+                'DON_DAT_HANG_DA_DUYET',
+                'DON_DAT_HANG_CHO_XAC_NHAN',
+                'DON_DAT_HANG_HOAN_TAT',
+                'DON_DAT_HANG_BI_TU_CHOI',
+                'DON_DAT_HANG_BI_HUY'
+            ].includes(notification.type);
+
+            // Nếu đang ở trang purchase order và click vào thông báo purchase order
+            if (isPurchaseOrderPage && isPurchaseOrderNotification && url === allRoutes.purchaseorders) {
+                // Dispatch event để trigger reload dữ liệu
+                const event = new CustomEvent('purchaseOrderNotificationClicked', {
+                    detail: { notification }
+                });
+                window.dispatchEvent(event);
+                console.log('Dispatched purchaseOrderNotificationClicked event from Notifications page', notification);
+                // Navigate back to purchase orders page to trigger reload
+                navigate(url);
+            } else {
+                navigate(url);
+            }
         }
     };
 
@@ -208,6 +255,17 @@ const Notifications = () => {
     const filteredNotifications = notifications.filter((n) => {
         if (filter === "ALL") return true;
         if (filter === "UNREAD") return !n.isRead;
+
+        // Group promotion notifications
+        if (filter === "KHUYEN_MAI") {
+            return n.type === "KHUYEN_MAI_SAP_HET_HAN" || n.type === "KHUYEN_MAI_HET_HAN";
+        }
+
+        // Group purchase order notifications
+        if (filter === "DON_NHAP_KHO") {
+            return n.type.startsWith("DON_DAT_HANG_");
+        }
+
         return n.type === filter;
     });
 
@@ -268,14 +326,24 @@ const Notifications = () => {
                                 Tồn kho thấp
                             </button>
                             <button
-                                className={`filter-btn ${filter === "KHUYEN_MAI_SAP_HET_HAN" ? "active" : ""}`}
+                                className={`filter-btn ${filter === "KHUYEN_MAI" ? "active" : ""}`}
                                 onClick={() => {
-                                    setFilter("KHUYEN_MAI_SAP_HET_HAN");
+                                    setFilter("KHUYEN_MAI");
                                     setCurrentPage(0);
                                 }}
                             >
                                 <i className="ti ti-discount-2"></i>
                                 Khuyến mãi
+                            </button>
+                            <button
+                                className={`filter-btn ${filter === "DON_NHAP_KHO" ? "active" : ""}`}
+                                onClick={() => {
+                                    setFilter("DON_NHAP_KHO");
+                                    setCurrentPage(0);
+                                }}
+                            >
+                                <i className="ti ti-truck-delivery"></i>
+                                Đơn nhập kho
                             </button>
                         </div>
                     </div>

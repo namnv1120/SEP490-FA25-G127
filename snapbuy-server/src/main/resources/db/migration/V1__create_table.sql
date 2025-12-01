@@ -291,17 +291,33 @@ CREATE TABLE notifications
     [message]       NVARCHAR(255)    NOT NULL,
     [description]   NVARCHAR(500)    NULL,
     is_read         BIT              NOT NULL    DEFAULT 0,
-    shop_id         UNIQUEIDENTIFIER NOT NULL,
+    shop_id         UNIQUEIDENTIFIER NULL,
+    account_id      UNIQUEIDENTIFIER NULL,
     reference_id    UNIQUEIDENTIFIER NULL,
     created_at      DATETIME2        NOT NULL    DEFAULT GETDATE(),
 
     FOREIGN KEY (shop_id) REFERENCES accounts (account_id),
+    FOREIGN KEY (account_id) REFERENCES accounts (account_id),
 
-    CONSTRAINT CK_notification_type CHECK ([type] IN ('TON_KHO_THAP', 'KHUYEN_MAI_SAP_HET_HAN', 'DON_HANG', 'THANH_TOAN', 'HE_THONG'))
+    CONSTRAINT CK_notification_type CHECK ([type] IN (
+        'TON_KHO_THAP',
+        'KHUYEN_MAI_SAP_HET_HAN',
+        'KHUYEN_MAI_HET_HAN',
+        'DON_HANG',
+        'THANH_TOAN',
+        'HE_THONG',
+        'DON_DAT_HANG_CHO_DUYET',
+        'DON_DAT_HANG_DA_DUYET',
+        'DON_DAT_HANG_CHO_XAC_NHAN',
+        'DON_DAT_HANG_HOAN_TAT',
+        'DON_DAT_HANG_BI_TU_CHOI',
+        'DON_DAT_HANG_BI_HUY'
+    ))
 );
 
 -- Indexes for notifications
 CREATE INDEX ix_notifications_shop_id ON notifications (shop_id);
+CREATE INDEX ix_notifications_account_id ON notifications (account_id);
 CREATE INDEX ix_notifications_created_at ON notifications (created_at DESC);
 CREATE INDEX ix_notifications_is_read ON notifications (is_read);
 CREATE INDEX ix_notifications_type ON notifications ([type]);

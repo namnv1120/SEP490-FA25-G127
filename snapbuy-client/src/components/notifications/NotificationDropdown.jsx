@@ -174,14 +174,38 @@ const NotificationDropdown = () => {
             }
         }
 
-        // Đóng dropdown
-        setShow(false);
-
         // Điều hướng đến trang liên quan
         const url = getNotificationUrl(notification);
         if (url) {
-            navigate(url);
+            // Kiểm tra xem có đang ở trang purchase order không
+            const isPurchaseOrderPage = window.location.pathname.includes('/purchase-orders');
+            const isPurchaseOrderNotification = [
+                'DON_DAT_HANG_CHO_DUYET',
+                'DON_DAT_HANG_DA_DUYET',
+                'DON_DAT_HANG_CHO_XAC_NHAN',
+                'DON_DAT_HANG_HOAN_TAT',
+                'DON_DAT_HANG_BI_TU_CHOI',
+                'DON_DAT_HANG_BI_HUY'
+            ].includes(notification.type);
+
+            // Nếu đang ở trang purchase order và click vào thông báo purchase order
+            if (isPurchaseOrderPage && isPurchaseOrderNotification && url === allRoutes.purchaseorders) {
+                // Dispatch event để trigger reload dữ liệu ngay lập tức
+                const event = new CustomEvent('purchaseOrderNotificationClicked', {
+                    detail: { notification },
+                    bubbles: true,
+                    cancelable: true
+                });
+                window.dispatchEvent(event);
+                console.log('Dispatched purchaseOrderNotificationClicked event', notification);
+                // Không navigate vì đã ở trang purchase order rồi
+            } else {
+                navigate(url);
+            }
         }
+
+        // Đóng dropdown sau khi xử lý
+        setShow(false);
     };
 
     // Format time

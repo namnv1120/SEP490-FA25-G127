@@ -352,7 +352,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     @Override
     @Transactional
     public PurchaseOrderResponse cancel(UUID poId, String usernameOrEmail) {
-        resolveAccountId(usernameOrEmail);
+        UUID cancellerAccountId = resolveAccountId(usernameOrEmail);
 
         PurchaseOrder po = purchaseOrderRepo.findById(poId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu nhập hàng"));
@@ -369,6 +369,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         po.setStatus("Đã hủy");
         po.setReceivedDate(null);
         purchaseOrderRepo.save(po);
+
+        // Thông báo cho nhân viên tạo đơn: Đơn đã bị hủy
+        notifyStaffOrderCancelled(po, cancellerAccountId);
 
         return mapResponse(po, details);
     }
@@ -903,7 +906,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     @Override
     @Transactional
     public PurchaseOrderResponse revert(UUID poId, PurchaseOrderApproveRequest req, String usernameOrEmail) {
-        resolveAccountId(usernameOrEmail);
+        UUID reverterAccountId = resolveAccountId(usernameOrEmail);
 
         PurchaseOrder po = purchaseOrderRepo.findById(poId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu nhập hàng"));
@@ -926,9 +929,20 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                         .multiply(BigDecimal.valueOf(Optional.ofNullable(d.getQuantity()).orElse(0))))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal taxRatePct = Optional.ofNullable(po.getTaxAmount()).orElse(BigDecimal.ZERO);
-        BigDecimal plannedTax = plannedSubtotal.multiply(taxRatePct)
-                .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+        // Tính lại thuế dựa trên tỷ lệ thuế ban đầu
+        BigDecimal plannedTax = BigDecimal.ZERO;
+        BigDecimal currentTax = Optional.ofNullable(po.getTaxAmount()).orElse(BigDecimal.ZERO);
+        BigDecimal currentTotal = Optional.ofNullable(po.getTotalAmount()).orElse(BigDecimal.ZERO);
+        
+        // Tính tỷ lệ thuế từ giá trị hiện tại
+        if (currentTotal.compareTo(BigDecimal.ZERO) > 0 && currentTax.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal currentSubtotal = currentTotal.subtract(currentTax);
+            if (currentSubtotal.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal taxRate = currentTax.divide(currentSubtotal, 6, java.math.RoundingMode.HALF_UP);
+                plannedTax = plannedSubtotal.multiply(taxRate).setScale(2, java.math.RoundingMode.HALF_UP);
+            }
+        }
+        
         BigDecimal plannedTotal = plannedSubtotal.add(plannedTax);
 
         po.setStatus("Đã duyệt");
@@ -938,6 +952,14 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         String extra = (req.getNotes() != null && !req.getNotes().isBlank()) ? (" " + cleanNotes(req.getNotes())) : "";
         po.setNotes(base + extra);
         purchaseOrderRepo.save(po);
+
+        // Thông báo cho nhân viên tạo đơn: Đơn đã bị từ chối (hủy duyệt)
+        try {
+            notifyStaffOrderRejected(po, reverterAccountId);
+        } catch (Exception e) {
+            log.error("Lỗi khi gửi thông báo đơn bị từ chối: {}", e.getMessage(), e);
+            // Không throw exception để không làm rollback transaction chính
+        }
 
         return mapResponse(po, details);
     }
@@ -1207,6 +1229,78 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             log.info("Đã gửi thông báo hoàn tất nhập kho đơn {} cho {} người", po.getNumber(), notifiedAccountIds.size() + 1);
         } catch (Exception e) {
             log.error("Lỗi khi gửi thông báo hoàn tất nhập kho: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Thông báo cho Nhân viên tạo đơn khi đơn bị từ chối (hủy duyệt)
+     */
+    private void notifyStaffOrderRejected(PurchaseOrder po, UUID reverterAccountId) {
+        try {
+            Account creator = accountRepo.findById(po.getAccountId()).orElse(null);
+            if (creator == null) {
+                log.warn("Không tìm thấy nhân viên tạo đơn {}", po.getNumber());
+                return;
+            }
+
+            Account reverter = accountRepo.findById(reverterAccountId).orElse(null);
+            String reverterName = reverter != null ? reverter.getFullName() : "Quản lý";
+
+            Supplier supplier = supplierRepo.findById(po.getSupplierId()).orElse(null);
+            String supplierName = supplier != null ? supplier.getSupplierName() : "Không xác định";
+
+            String message = "Đơn đặt hàng bị từ chối";
+            String description = String.format(
+                "%s đã từ chối đơn đặt hàng %s từ NCC %s. Vui lòng kiểm tra lại thông tin và cập nhật số lượng thực nhận.",
+                reverterName, po.getNumber(), supplierName
+            );
+
+            notificationService.createNotificationForAccount(
+                creator.getAccountId(),
+                NotificationType.DON_DAT_HANG_BI_TU_CHOI,
+                message,
+                description,
+                po.getId()
+            );
+            log.info("Đã gửi thông báo đơn {} bị từ chối cho nhân viên {}", po.getNumber(), creator.getFullName());
+        } catch (Exception e) {
+            log.error("Lỗi khi gửi thông báo đơn bị từ chối: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Thông báo cho Nhân viên tạo đơn khi đơn bị hủy
+     */
+    private void notifyStaffOrderCancelled(PurchaseOrder po, UUID cancellerAccountId) {
+        try {
+            Account creator = accountRepo.findById(po.getAccountId()).orElse(null);
+            if (creator == null) {
+                log.warn("Không tìm thấy nhân viên tạo đơn {}", po.getNumber());
+                return;
+            }
+
+            Account canceller = accountRepo.findById(cancellerAccountId).orElse(null);
+            String cancellerName = canceller != null ? canceller.getFullName() : "Quản lý";
+
+            Supplier supplier = supplierRepo.findById(po.getSupplierId()).orElse(null);
+            String supplierName = supplier != null ? supplier.getSupplierName() : "Không xác định";
+
+            String message = "Đơn đặt hàng đã bị hủy";
+            String description = String.format(
+                "%s đã hủy đơn đặt hàng %s từ NCC %s.",
+                cancellerName, po.getNumber(), supplierName
+            );
+
+            notificationService.createNotificationForAccount(
+                creator.getAccountId(),
+                NotificationType.DON_DAT_HANG_BI_HUY,
+                message,
+                description,
+                po.getId()
+            );
+            log.info("Đã gửi thông báo đơn {} bị hủy cho nhân viên {}", po.getNumber(), creator.getFullName());
+        } catch (Exception e) {
+            log.error("Lỗi khi gửi thông báo đơn bị hủy: {}", e.getMessage());
         }
     }
 
