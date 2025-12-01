@@ -41,6 +41,7 @@ export const allRoutes = {
   profile: "/settings/profile",
   emailsettings: "/settings/email",
   passwordsettings: "/settings/password",
+  notification: "/settings/notification",
   possystemsettings: "/settings/pos-system",
 
   notifications: "/notifications",

@@ -118,7 +118,33 @@ const EditPurchaseOrder = () => {
       }
 
       setNotes(data.notes || "");
-      setTaxAmount(data.taxAmount || 0);
+      
+      // Tính phần trăm thuế từ số tiền thuế và tổng tiền hàng
+      let taxPercent = 0;
+      if (data.details && data.details.length > 0) {
+        const isApproved = data.status?.toLowerCase() === "đã duyệt";
+        const isWaitingConfirmation = data.status?.toLowerCase() === "chờ xác nhận";
+        const isReceived = data.status?.toLowerCase() === "đã nhận hàng";
+        
+        // Tính subtotal dựa trên trạng thái đơn
+        const subtotal = data.details.reduce((sum, item) => {
+          const receiveQty = item.receiveQuantity || item.receivedQuantity || 0;
+          const quantity = item.quantity || 1;
+          const unitPrice = item.unitPrice || 0;
+          
+          const itemTotal = (isApproved || isWaitingConfirmation || isReceived) && receiveQty > 0
+            ? receiveQty * unitPrice
+            : quantity * unitPrice;
+          
+          return sum + itemTotal;
+        }, 0);
+        
+        // Tính phần trăm thuế: (taxAmount / subtotal) * 100
+        if (subtotal > 0 && data.taxAmount) {
+          taxPercent = (data.taxAmount / subtotal) * 100;
+        }
+      }
+      setTaxAmount(taxPercent);
     } catch {
       message.error("Không thể tải chi tiết đơn hàng.");
       navigate(route.purchaseorders);

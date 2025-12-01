@@ -71,6 +71,9 @@ const EmailSettings = lazy(() =>
 const PasswordSettings = lazy(() =>
   import("./feature-module/settings/PasswordSettings")
 );
+const NotificationSettings = lazy(() =>
+  import("./feature-module/settings/NotificationSettings")
+);
 const Customers = lazy(() => import("./feature-module/people/CustomerList"));
 const PurchaseOrder = lazy(() =>
   import("./feature-module/sales/PurchaseOrder")
@@ -138,6 +141,7 @@ const componentsMap = {
   Profile,
   EmailSettings,
   PasswordSettings,
+  NotificationSettings,
   Customers,
   PurchaseOrder,
   AddPurchaseOrder,

@@ -15,6 +15,7 @@ import com.g127.snapbuy.exception.ErrorCode;
 import com.g127.snapbuy.mapper.PurchaseOrderMapper;
 import com.g127.snapbuy.repository.*;
 import com.g127.snapbuy.service.NotificationService;
+import com.g127.snapbuy.service.NotificationSettingsService;
 import com.g127.snapbuy.service.PurchaseOrderService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -55,6 +56,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     private final PurchaseOrderMapper purchaseOrderMapper;
     private final com.g127.snapbuy.service.MailService mailService;
     private final NotificationService notificationService;
+    private final com.g127.snapbuy.service.NotificationSettingsService notificationSettingsService;
 
     @Override
     @Transactional
@@ -1100,9 +1102,13 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 creatorName, po.getNumber(), supplierName, po.getTotalAmount()
             );
 
-            // Gửi thông báo cho tất cả Chủ cửa hàng
+            // Gửi thông báo cho tất cả Chủ cửa hàng (chỉ nếu đã bật trong cài đặt)
             List<Account> shopOwners = accountRepo.findByRoleName("Chủ cửa hàng");
             for (Account owner : shopOwners) {
+                if (!notificationSettingsService.isNotificationEnabledForAccount(owner.getAccountId(), "purchase_order")) {
+                    log.debug("Bỏ qua thông báo đơn nhập kho cho account {} - đã tắt trong cài đặt", owner.getAccountId());
+                    continue;
+                }
                 notificationService.createNotificationForAccount(
                     owner.getAccountId(),
                     NotificationType.DON_DAT_HANG_CHO_DUYET,
@@ -1137,13 +1143,18 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 po.getNumber(), supplierName
             );
 
-            notificationService.createNotificationForAccount(
-                creator.getAccountId(),
-                NotificationType.DON_DAT_HANG_DA_DUYET,
-                message,
-                description,
-                po.getId()
-            );
+            // Chỉ gửi thông báo nếu đã bật trong cài đặt
+            if (notificationSettingsService.isNotificationEnabledForAccount(creator.getAccountId(), "purchase_order")) {
+                notificationService.createNotificationForAccount(
+                    creator.getAccountId(),
+                    NotificationType.DON_DAT_HANG_DA_DUYET,
+                    message,
+                    description,
+                    po.getId()
+                );
+            } else {
+                log.debug("Bỏ qua thông báo đơn nhập kho cho account {} - đã tắt trong cài đặt", creator.getAccountId());
+            }
             log.info("Đã gửi thông báo đơn {} được duyệt cho nhân viên {}", po.getNumber(), creator.getFullName());
         } catch (Exception e) {
             log.error("Lỗi khi gửi thông báo đơn được duyệt: {}", e.getMessage());
@@ -1169,9 +1180,13 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 updaterName, po.getNumber(), supplierName
             );
 
-            // Gửi thông báo cho tất cả Chủ cửa hàng
+            // Gửi thông báo cho tất cả Chủ cửa hàng (chỉ nếu đã bật trong cài đặt)
             List<Account> shopOwners = accountRepo.findByRoleName("Chủ cửa hàng");
             for (Account owner : shopOwners) {
+                if (!notificationSettingsService.isNotificationEnabledForAccount(owner.getAccountId(), "purchase_order")) {
+                    log.debug("Bỏ qua thông báo đơn nhập kho cho account {} - đã tắt trong cài đặt", owner.getAccountId());
+                    continue;
+                }
                 notificationService.createNotificationForAccount(
                     owner.getAccountId(),
                     NotificationType.DON_DAT_HANG_CHO_XAC_NHAN,
@@ -1202,9 +1217,13 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
             Set<UUID> notifiedAccountIds = new HashSet<>();
 
-            // Thông báo cho tất cả Chủ cửa hàng
+            // Thông báo cho tất cả Chủ cửa hàng (chỉ nếu đã bật trong cài đặt)
             List<Account> shopOwners = accountRepo.findByRoleName("Chủ cửa hàng");
             for (Account owner : shopOwners) {
+                if (!notificationSettingsService.isNotificationEnabledForAccount(owner.getAccountId(), "purchase_order")) {
+                    log.debug("Bỏ qua thông báo đơn nhập kho cho account {} - đã tắt trong cài đặt", owner.getAccountId());
+                    continue;
+                }
                 notificationService.createNotificationForAccount(
                     owner.getAccountId(),
                     NotificationType.DON_DAT_HANG_HOAN_TAT,
@@ -1215,8 +1234,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 notifiedAccountIds.add(owner.getAccountId());
             }
 
-            // Thông báo cho Nhân viên tạo đơn (nếu chưa được thông báo)
-            if (!notifiedAccountIds.contains(po.getAccountId())) {
+            // Thông báo cho Nhân viên tạo đơn (nếu chưa được thông báo và đã bật trong cài đặt)
+            if (!notifiedAccountIds.contains(po.getAccountId()) && 
+                notificationSettingsService.isNotificationEnabledForAccount(po.getAccountId(), "purchase_order")) {
                 notificationService.createNotificationForAccount(
                     po.getAccountId(),
                     NotificationType.DON_DAT_HANG_HOAN_TAT,
@@ -1255,13 +1275,18 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 reverterName, po.getNumber(), supplierName
             );
 
-            notificationService.createNotificationForAccount(
-                creator.getAccountId(),
-                NotificationType.DON_DAT_HANG_BI_TU_CHOI,
-                message,
-                description,
-                po.getId()
-            );
+            // Chỉ gửi thông báo nếu đã bật trong cài đặt
+            if (notificationSettingsService.isNotificationEnabledForAccount(creator.getAccountId(), "purchase_order")) {
+                notificationService.createNotificationForAccount(
+                    creator.getAccountId(),
+                    NotificationType.DON_DAT_HANG_BI_TU_CHOI,
+                    message,
+                    description,
+                    po.getId()
+                );
+            } else {
+                log.debug("Bỏ qua thông báo đơn nhập kho cho account {} - đã tắt trong cài đặt", creator.getAccountId());
+            }
             log.info("Đã gửi thông báo đơn {} bị từ chối cho nhân viên {}", po.getNumber(), creator.getFullName());
         } catch (Exception e) {
             log.error("Lỗi khi gửi thông báo đơn bị từ chối: {}", e.getMessage());
@@ -1291,13 +1316,18 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 cancellerName, po.getNumber(), supplierName
             );
 
-            notificationService.createNotificationForAccount(
-                creator.getAccountId(),
-                NotificationType.DON_DAT_HANG_BI_HUY,
-                message,
-                description,
-                po.getId()
-            );
+            // Chỉ gửi thông báo nếu đã bật trong cài đặt
+            if (notificationSettingsService.isNotificationEnabledForAccount(creator.getAccountId(), "purchase_order")) {
+                notificationService.createNotificationForAccount(
+                    creator.getAccountId(),
+                    NotificationType.DON_DAT_HANG_BI_HUY,
+                    message,
+                    description,
+                    po.getId()
+                );
+            } else {
+                log.debug("Bỏ qua thông báo đơn nhập kho cho account {} - đã tắt trong cài đặt", creator.getAccountId());
+            }
             log.info("Đã gửi thông báo đơn {} bị hủy cho nhân viên {}", po.getNumber(), creator.getFullName());
         } catch (Exception e) {
             log.error("Lỗi khi gửi thông báo đơn bị hủy: {}", e.getMessage());

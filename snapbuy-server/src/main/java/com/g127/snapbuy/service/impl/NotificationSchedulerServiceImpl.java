@@ -10,6 +10,7 @@ import com.g127.snapbuy.repository.NotificationRepository;
 import com.g127.snapbuy.repository.PromotionRepository;
 import com.g127.snapbuy.service.NotificationService;
 import com.g127.snapbuy.service.NotificationSchedulerService;
+import com.g127.snapbuy.service.NotificationSettingsService;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.TaskScheduler;
@@ -37,6 +38,7 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
     private final InventoryRepository inventoryRepository;
     private final PromotionRepository promotionRepository;
     private final AccountRepository accountRepository;
+    private final NotificationSettingsService notificationSettingsService;
     private final TaskScheduler taskScheduler;
 
     // Track last notified quantity per product (productId -> quantity)
@@ -51,12 +53,14 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
             NotificationRepository notificationRepository,
             InventoryRepository inventoryRepository,
             PromotionRepository promotionRepository,
-            AccountRepository accountRepository) {
+            AccountRepository accountRepository,
+            NotificationSettingsService notificationSettingsService) {
         this.notificationService = notificationService;
         this.notificationRepository = notificationRepository;
         this.inventoryRepository = inventoryRepository;
         this.promotionRepository = promotionRepository;
         this.accountRepository = accountRepository;
+        this.notificationSettingsService = notificationSettingsService;
 
         // Create TaskScheduler
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
@@ -164,9 +168,16 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
                             inventory.getProduct().getProductName(), quantity, reorderPoint);
                 }
 
-                // Create notification for all shop owners
+                // Create notification for all shop owners (only if enabled in their settings)
                 for (UUID shopId : shopIds) {
                     try {
+                        // Check if low stock notifications are enabled for this shop owner
+                        if (!notificationSettingsService.isNotificationEnabledForAccount(shopId, "low_stock")) {
+                            log.debug("Bỏ qua thông báo tồn kho thấp cho shop {} - đã tắt trong cài đặt",
+                                    shopId);
+                            continue;
+                        }
+                        
                         notificationService.createNotification(
                                 shopId,
                                 NotificationType.TON_KHO_THAP,
@@ -341,6 +352,13 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
                     promotion.getPromotionName(), promotion.getEndDate().toLocalDate());
 
             for (UUID shopId : shopIds) {
+                // Check if promotion notifications are enabled for this shop owner
+                if (!notificationSettingsService.isNotificationEnabledForAccount(shopId, "promotion")) {
+                    log.debug("Bỏ qua thông báo khuyến mãi sắp hết hạn cho shop {} - đã tắt trong cài đặt",
+                            shopId);
+                    continue;
+                }
+                
                 boolean exists = notificationRepository.existsByShopIdAndTypeAndReferenceIdAndIsRead(
                         shopId, NotificationType.KHUYEN_MAI_SAP_HET_HAN, promotionId, false);
                 if (!exists) {
@@ -370,6 +388,13 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
                     promotion.getPromotionName());
 
             for (UUID shopId : shopIds) {
+                // Check if promotion notifications are enabled for this shop owner
+                if (!notificationSettingsService.isNotificationEnabledForAccount(shopId, "promotion")) {
+                    log.debug("Bỏ qua thông báo khuyến mãi đã hết hạn cho shop {} - đã tắt trong cài đặt",
+                            shopId);
+                    continue;
+                }
+                
                 boolean exists = notificationRepository.existsByShopIdAndTypeAndReferenceIdAndIsRead(
                         shopId, NotificationType.KHUYEN_MAI_HET_HAN, promotionId, false);
                 if (!exists) {
