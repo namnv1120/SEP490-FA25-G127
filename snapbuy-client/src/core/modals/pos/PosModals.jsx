@@ -752,11 +752,18 @@ const PosModals = ({
                   onChange={(e) => {
                     const value = e.target.value;
                     // Chỉ cho phép số dương hoặc rỗng
-                    if (
-                      value === "" ||
-                      (!isNaN(value) && parseFloat(value) >= 0)
-                    ) {
+                    if (value === "") {
+                      setCashReceived("");
+                      return;
+                    }
+                    // Kiểm tra nếu là số hợp lệ
+                    const numValue = value.replace(/[^\d]/g, '');
+                    if (numValue === value && (!isNaN(parseFloat(value)) && parseFloat(value) >= 0)) {
                       setCashReceived(value);
+                    } else {
+                      message.warning("Vui lòng chỉ nhập số dương!");
+                      // Giữ giá trị cũ nếu nhập ký tự không hợp lệ
+                      return;
                     }
                   }}
                   min="0"
@@ -764,7 +771,20 @@ const PosModals = ({
                   style={{ fontSize: "16px", paddingLeft: "40px" }}
                   autoFocus
                   onKeyDown={(e) => {
-                    // Chặn nhập dấu trừ, dấu cộng, và ký tự e/E
+                    // Chặn các ký tự không phải số, phím điều hướng, và phím điều khiển
+                    const allowedKeys = [
+                      'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+                      'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+                      'Home', 'End', '.'
+                    ];
+                    const isNumber = /[0-9]/.test(e.key);
+                    const isAllowedKey = allowedKeys.includes(e.key);
+                    const isCtrlA = e.ctrlKey && e.key === 'a';
+                    const isCtrlC = e.ctrlKey && e.key === 'c';
+                    const isCtrlV = e.ctrlKey && e.key === 'v';
+                    const isCtrlX = e.ctrlKey && e.key === 'x';
+                    
+                    // Chặn dấu trừ, dấu cộng, và ký tự e/E
                     if (
                       e.key === "-" ||
                       e.key === "+" ||
@@ -772,6 +792,27 @@ const PosModals = ({
                       e.key === "E"
                     ) {
                       e.preventDefault();
+                      message.warning("Vui lòng chỉ nhập số dương!");
+                      return;
+                    }
+                    
+                    if (!isNumber && !isAllowedKey && !isCtrlA && !isCtrlC && !isCtrlV && !isCtrlX) {
+                      e.preventDefault();
+                      message.warning("Vui lòng chỉ nhập số!");
+                    }
+                  }}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const pastedText = e.clipboardData.getData('text');
+                    const numericValue = pastedText.replace(/[^\d.]/g, '');
+                    if (numericValue) {
+                      const num = parseFloat(numericValue);
+                      if (!isNaN(num) && num >= 0) {
+                        setCashReceived(numericValue);
+                        message.success("Đã dán số tiền");
+                      } else {
+                        message.warning("Dữ liệu dán không hợp lệ! Vui lòng chỉ dán số.");
+                      }
                     }
                   }}
                 />
@@ -1957,8 +1998,63 @@ const PosModals = ({
                     value={shiftAmount}
                     onChange={(e) => {
                       const v = e.target.value;
-                      if (v === "" || (!isNaN(v) && parseFloat(v) >= 0)) {
+                      if (v === "") {
+                        setShiftAmount("");
+                        return;
+                      }
+                      // Kiểm tra nếu là số hợp lệ
+                      const numValue = v.replace(/[^\d.]/g, '');
+                      if (numValue === v && (!isNaN(parseFloat(v)) && parseFloat(v) >= 0)) {
                         setShiftAmount(v);
+                      } else {
+                        message.warning("Vui lòng chỉ nhập số dương!");
+                        // Giữ giá trị cũ nếu nhập ký tự không hợp lệ
+                        return;
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      // Chặn các ký tự không phải số, phím điều hướng, và phím điều khiển
+                      const allowedKeys = [
+                        'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+                        'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+                        'Home', 'End', '.'
+                      ];
+                      const isNumber = /[0-9]/.test(e.key);
+                      const isAllowedKey = allowedKeys.includes(e.key);
+                      const isCtrlA = e.ctrlKey && e.key === 'a';
+                      const isCtrlC = e.ctrlKey && e.key === 'c';
+                      const isCtrlV = e.ctrlKey && e.key === 'v';
+                      const isCtrlX = e.ctrlKey && e.key === 'x';
+                      
+                      // Chặn dấu trừ, dấu cộng, và ký tự e/E
+                      if (
+                        e.key === "-" ||
+                        e.key === "+" ||
+                        e.key === "e" ||
+                        e.key === "E"
+                      ) {
+                        e.preventDefault();
+                        message.warning("Vui lòng chỉ nhập số dương!");
+                        return;
+                      }
+                      
+                      if (!isNumber && !isAllowedKey && !isCtrlA && !isCtrlC && !isCtrlV && !isCtrlX) {
+                        e.preventDefault();
+                        message.warning("Vui lòng chỉ nhập số!");
+                      }
+                    }}
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      const pastedText = e.clipboardData.getData('text');
+                      const numericValue = pastedText.replace(/[^\d.]/g, '');
+                      if (numericValue) {
+                        const num = parseFloat(numericValue);
+                        if (!isNaN(num) && num >= 0) {
+                          setShiftAmount(numericValue);
+                          message.success("Đã dán số tiền");
+                        } else {
+                          message.warning("Dữ liệu dán không hợp lệ! Vui lòng chỉ dán số.");
+                        }
                       }
                     }}
                     min="0"
