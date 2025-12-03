@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useCallback } from "react";
+﻿import { useEffect, useState, useCallback, useRef } from "react";
 import {
   Card,
   Row,
@@ -37,6 +37,9 @@ const PosShift = () => {
   const [closingNote, setClosingNote] = useState("");
   const [cashDenominations, setCashDenominations] = useState([]);
   const [showInitialCashModal, setShowInitialCashModal] = useState(false);
+
+  // Ref for close shift modal validation
+  const closeShiftModalRef = useRef(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -147,6 +150,11 @@ const PosShift = () => {
   }, [loadData]);
 
   const handleCloseShift = async () => {
+    // Validate cash denomination input
+    if (closeShiftModalRef.current && !closeShiftModalRef.current.validate()) {
+      return;
+    }
+
     try {
       setLoading(true);
       const total = cashDenominations.reduce(
@@ -520,7 +528,7 @@ const PosShift = () => {
                                         <Text>
                                           {formatCurrency(
                                             total ||
-                                              detail.quantity * detail.unitPrice
+                                            detail.quantity * detail.unitPrice
                                           )}
                                         </Text>
                                       ),
@@ -670,6 +678,7 @@ const PosShift = () => {
         </Spin>
 
         <CloseShiftModal
+          ref={closeShiftModalRef}
           visible={closeModalVisible}
           onCancel={() => {
             setCloseModalVisible(false);
@@ -705,7 +714,7 @@ const PosShift = () => {
           width={480}
         >
           {currentShift?.initialCashDenominations &&
-          currentShift.initialCashDenominations.length > 0 ? (
+            currentShift.initialCashDenominations.length > 0 ? (
             <div>
               <Table
                 dataSource={[...currentShift.initialCashDenominations].sort(

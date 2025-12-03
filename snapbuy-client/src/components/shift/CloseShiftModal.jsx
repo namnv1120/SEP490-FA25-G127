@@ -1,10 +1,11 @@
+import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { Modal, Button, Row, Col, Tag, Typography, Input } from "antd";
 import CashDenominationInput from "../cash-denomination/CashDenominationInput";
 
 const { Text } = Typography;
 const { TextArea } = Input;
 
-const CloseShiftModal = ({
+const CloseShiftModal = forwardRef(({
   visible,
   onCancel,
   onConfirm,
@@ -17,7 +18,18 @@ const CloseShiftModal = ({
   setCashDenominations,
   formatDateTime,
   formatCurrency
-}) => {
+}, ref) => {
+  const cashDenominationRef = useRef(null);
+
+  // Expose validate function to parent
+  useImperativeHandle(ref, () => ({
+    validate: () => {
+      if (cashDenominationRef.current) {
+        return cashDenominationRef.current.validate();
+      }
+      return true;
+    }
+  }));
   return (
     <Modal
       title="Đóng ca làm việc"
@@ -74,6 +86,7 @@ const CloseShiftModal = ({
           Tiền thực tế trong két
         </Text>
         <CashDenominationInput
+          ref={cashDenominationRef}
           value={cashDenominations}
           onChange={setCashDenominations}
           expectedTotal={expectedDrawer}
@@ -94,7 +107,9 @@ const CloseShiftModal = ({
       </div>
     </Modal>
   );
-};
+});
+
+CloseShiftModal.displayName = 'CloseShiftModal';
 
 export default CloseShiftModal;
 

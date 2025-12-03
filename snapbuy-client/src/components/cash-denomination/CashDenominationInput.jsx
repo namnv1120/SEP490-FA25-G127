@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { InputNumber, Table, Typography } from 'antd';
+import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
+import { InputNumber, Table, Typography, message } from 'antd';
 
 const { Text } = Typography;
 
@@ -15,7 +15,7 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
-const CashDenominationInput = ({ value = [], onChange, expectedTotal }) => {
+const CashDenominationInput = forwardRef(({ value = [], onChange, expectedTotal }, ref) => {
   const [denominations, setDenominations] = useState(() => {
     const initial = {};
     DENOMINATIONS.forEach(denom => {
@@ -24,6 +24,27 @@ const CashDenominationInput = ({ value = [], onChange, expectedTotal }) => {
     });
     return initial;
   });
+
+  const [hasInvalidInput, setHasInvalidInput] = useState(false);
+
+  // Expose validate function to parent
+  useImperativeHandle(ref, () => ({
+    validate: () => {
+      // Check if any denomination has invalid input
+      const hasInvalid = DENOMINATIONS.some(denom => {
+        const val = denominations[denom];
+        return val !== 0 && val !== null && val !== undefined && (!Number.isInteger(val) || val < 0);
+      });
+
+      if (hasInvalid) {
+        message.error("Vui lòng kiểm tra lại số lượng tờ tiền! Chỉ được nhập số nguyên dương.");
+        setHasInvalidInput(true);
+        return false;
+      }
+      setHasInvalidInput(false);
+      return true;
+    }
+  }), [denominations]);
 
   const calculateTotal = () => {
     return DENOMINATIONS.reduce((sum, denom) => {
@@ -45,7 +66,7 @@ const CashDenominationInput = ({ value = [], onChange, expectedTotal }) => {
         denomination: denom,
         quantity: newDenominations[denom]
       }));
-    
+
     onChange?.(denominationsArray);
   };
 
@@ -71,7 +92,50 @@ const CashDenominationInput = ({ value = [], onChange, expectedTotal }) => {
         <InputNumber
           min={0}
           value={denominations[record.denomination]}
-          onChange={(val) => handleQuantityChange(record.denomination, val)}
+          onChange={(val) => {
+            if (val === null || val === undefined) {
+              handleQuantityChange(record.denomination, 0);
+              return;
+            }
+            if (typeof val === 'number' && !isNaN(val) && val >= 0 && Number.isInteger(val)) {
+              handleQuantityChange(record.denomination, val);
+            } else {
+              message.warning("Vui lòng chỉ nhập số nguyên dương!");
+            }
+          }}
+          onKeyDown={(e) => {
+            // Chặn các ký tự không phải số, phím điều hướng, và phím điều khiển
+            const allowedKeys = [
+              'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+              'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+              'Home', 'End'
+            ];
+            const isNumber = /[0-9]/.test(e.key);
+            const isAllowedKey = allowedKeys.includes(e.key);
+            const isCtrlA = e.ctrlKey && e.key === 'a';
+            const isCtrlC = e.ctrlKey && e.key === 'c';
+            const isCtrlV = e.ctrlKey && e.key === 'v';
+            const isCtrlX = e.ctrlKey && e.key === 'x';
+
+            if (!isNumber && !isAllowedKey && !isCtrlA && !isCtrlC && !isCtrlV && !isCtrlX) {
+              e.preventDefault();
+              message.warning("Vui lòng chỉ nhập số!");
+            }
+          }}
+          onPaste={(e) => {
+            e.preventDefault();
+            const pastedText = e.clipboardData.getData('text');
+            const numericValue = pastedText.replace(/[^\d]/g, '');
+            if (numericValue) {
+              const num = parseInt(numericValue, 10);
+              if (!isNaN(num) && num >= 0) {
+                handleQuantityChange(record.denomination, num);
+                message.success("Đã dán số lượng");
+              } else {
+                message.warning("Dữ liệu dán không hợp lệ! Vui lòng chỉ dán số.");
+              }
+            }
+          }}
           style={{ width: '100%' }}
           size="small"
         />
@@ -153,7 +217,9 @@ const CashDenominationInput = ({ value = [], onChange, expectedTotal }) => {
       />
     </div>
   );
-};
+});
+
+CashDenominationInput.displayName = 'CashDenominationInput';
 
 export default CashDenominationInput;
 

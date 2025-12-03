@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { message, Modal, Table, Tag, InputNumber } from "antd";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
@@ -56,6 +56,10 @@ const StaffShiftManagement = () => {
   const [closeNote, setCloseNote] = useState("");
   const [closingCash, setClosingCash] = useState(0);
   const [closeCashDenominations, setCloseCashDenominations] = useState([]);
+
+  // Refs for cash denomination validation
+  const openCashDenominationRef = useRef(null);
+  const closeCashDenominationRef = useRef(null);
 
   // Summary stats (currently not displayed but kept for future use)
   // eslint-disable-next-line no-unused-vars
@@ -354,7 +358,12 @@ const StaffShiftManagement = () => {
 
   const confirmOpenShift = async () => {
     if (!selectedEmployee) return;
-    
+
+    // Validate cash denomination input
+    if (openCashDenominationRef.current && !openCashDenominationRef.current.validate()) {
+      return;
+    }
+
     // Validation: kiểm tra số tiền không được âm
     if (initialCash < 0) {
       message.error("Số tiền ban đầu không được âm");
@@ -434,7 +443,12 @@ const StaffShiftManagement = () => {
 
   const confirmCloseShift = async () => {
     if (!employeeToClose) return;
-    
+
+    // Validate cash denomination input
+    if (closeCashDenominationRef.current && !closeCashDenominationRef.current.validate()) {
+      return;
+    }
+
     // Validation: kiểm tra số tiền không được âm
     if (closingCash < 0) {
       message.error("Số tiền cuối ca không được âm");
@@ -451,8 +465,8 @@ const StaffShiftManagement = () => {
       }));
 
       await closeShiftForEmployee(
-        employeeToClose.id, 
-        closingCash, 
+        employeeToClose.id,
+        closingCash,
         closeNote || "",
         cashDenominationsData
       );
@@ -986,7 +1000,50 @@ const StaffShiftManagement = () => {
                 <InputNumber
                   style={{ width: "100%" }}
                   value={initialCash}
-                  onChange={(value) => setInitialCash(value || 0)}
+                  onChange={(value) => {
+                    if (value === null || value === undefined) {
+                      setInitialCash(0);
+                      return;
+                    }
+                    if (typeof value === 'number' && !isNaN(value) && value >= 0) {
+                      setInitialCash(value);
+                    } else {
+                      message.warning("Vui lòng chỉ nhập số dương!");
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    // Chặn các ký tự không phải số, dấu chấm, dấu phẩy, phím điều hướng, và phím điều khiển
+                    const allowedKeys = [
+                      'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+                      'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+                      'Home', 'End'
+                    ];
+                    const isNumber = /[0-9]/.test(e.key);
+                    const isAllowedKey = allowedKeys.includes(e.key);
+                    const isCtrlA = e.ctrlKey && e.key === 'a';
+                    const isCtrlC = e.ctrlKey && e.key === 'c';
+                    const isCtrlV = e.ctrlKey && e.key === 'v';
+                    const isCtrlX = e.ctrlKey && e.key === 'x';
+
+                    if (!isNumber && !isAllowedKey && !isCtrlA && !isCtrlC && !isCtrlV && !isCtrlX) {
+                      e.preventDefault();
+                      message.warning("Vui lòng chỉ nhập số!");
+                    }
+                  }}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const pastedText = e.clipboardData.getData('text');
+                    const numericValue = pastedText.replace(/[^\d]/g, '');
+                    if (numericValue) {
+                      const num = parseFloat(numericValue);
+                      if (!isNaN(num) && num >= 0) {
+                        setInitialCash(num);
+                        message.success("Đã dán số tiền");
+                      } else {
+                        message.warning("Dữ liệu dán không hợp lệ! Vui lòng chỉ dán số.");
+                      }
+                    }
+                  }}
                   formatter={(value) =>
                     `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                   }
@@ -1018,6 +1075,7 @@ const StaffShiftManagement = () => {
                     Nhập số lượng từng loại tờ tiền để theo dõi chi tiết
                   </small>
                   <CashDenominationInput
+                    ref={openCashDenominationRef}
                     value={openCashDenominations}
                     onChange={(denoms) => {
                       setOpenCashDenominations(denoms);
@@ -1087,7 +1145,50 @@ const StaffShiftManagement = () => {
                 <InputNumber
                   style={{ width: "100%" }}
                   value={closingCash}
-                  onChange={(value) => setClosingCash(value || 0)}
+                  onChange={(value) => {
+                    if (value === null || value === undefined) {
+                      setClosingCash(0);
+                      return;
+                    }
+                    if (typeof value === 'number' && !isNaN(value) && value >= 0) {
+                      setClosingCash(value);
+                    } else {
+                      message.warning("Vui lòng chỉ nhập số dương!");
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    // Chặn các ký tự không phải số, dấu chấm, dấu phẩy, phím điều hướng, và phím điều khiển
+                    const allowedKeys = [
+                      'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+                      'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+                      'Home', 'End'
+                    ];
+                    const isNumber = /[0-9]/.test(e.key);
+                    const isAllowedKey = allowedKeys.includes(e.key);
+                    const isCtrlA = e.ctrlKey && e.key === 'a';
+                    const isCtrlC = e.ctrlKey && e.key === 'c';
+                    const isCtrlV = e.ctrlKey && e.key === 'v';
+                    const isCtrlX = e.ctrlKey && e.key === 'x';
+
+                    if (!isNumber && !isAllowedKey && !isCtrlA && !isCtrlC && !isCtrlV && !isCtrlX) {
+                      e.preventDefault();
+                      message.warning("Vui lòng chỉ nhập số!");
+                    }
+                  }}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const pastedText = e.clipboardData.getData('text');
+                    const numericValue = pastedText.replace(/[^\d]/g, '');
+                    if (numericValue) {
+                      const num = parseFloat(numericValue);
+                      if (!isNaN(num) && num >= 0) {
+                        setClosingCash(num);
+                        message.success("Đã dán số tiền");
+                      } else {
+                        message.warning("Dữ liệu dán không hợp lệ! Vui lòng chỉ dán số.");
+                      }
+                    }
+                  }}
                   formatter={(value) =>
                     `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                   }
@@ -1119,6 +1220,7 @@ const StaffShiftManagement = () => {
                     Nhập số lượng từng loại tờ tiền để theo dõi chi tiết
                   </small>
                   <CashDenominationInput
+                    ref={closeCashDenominationRef}
                     value={closeCashDenominations}
                     onChange={(denoms) => {
                       setCloseCashDenominations(denoms);
