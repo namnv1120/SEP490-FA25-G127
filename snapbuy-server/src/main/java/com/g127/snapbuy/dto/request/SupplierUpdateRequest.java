@@ -19,7 +19,7 @@ public class SupplierUpdateRequest {
     private String supplierName;
 
     @Size(max = 20, message = "Số điện thoại không được vượt quá 20 ký tự.")
-    @Pattern(regexp = "^[0-9+\\-()\\s]{6,20}$", message = "Số điện thoại không đúng định dạng.")
+    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Số điện thoại không đúng định dạng.")
     private String phone;
 
     @Pattern(regexp = "^$|^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Email không đúng định dạng. Vui lòng kiểm tra lại.")

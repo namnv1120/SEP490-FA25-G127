@@ -110,6 +110,7 @@ const Customers = () => {
     e.preventDefault();
 
     const trimmedFullName = formData.fullName.trim();
+    const trimmedPhone = formData.phone?.trim() || "";
 
     if (
       !trimmedFullName ||
@@ -120,10 +121,14 @@ const Customers = () => {
       return;
     }
 
+    // Phone now required
+    if (!trimmedPhone) {
+      message.error("Số điện thoại không được để trống");
+      return;
+    }
+
     try {
       setModalLoading(true);
-
-      const trimmedPhone = formData.phone?.trim() || "";
 
       // Validate phone if provided
       if (trimmedPhone && !/^\+?[0-9]{10,15}$/.test(trimmedPhone)) {
@@ -135,7 +140,7 @@ const Customers = () => {
 
       const updateData = {
         fullName: trimmedFullName,
-        phone: trimmedPhone || null,
+        phone: trimmedPhone,
         gender: formData.gender,
       };
 

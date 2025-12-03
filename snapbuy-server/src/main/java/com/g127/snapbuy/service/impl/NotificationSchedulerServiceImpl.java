@@ -79,7 +79,6 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
      * Reschedule all promotion notifications on server startup
      */
     private void rescheduleAllPromotionNotifications() {
-        log.info("Bắt đầu lên lịch lại tất cả thông báo khuyến mãi...");
         List<Promotion> activePromotions = promotionRepository.findAll().stream()
                 .filter(p -> Boolean.TRUE.equals(p.getActive()))
                 .filter(p -> p.getEndDate().isAfter(LocalDateTime.now()))
@@ -88,7 +87,6 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
         for (Promotion promotion : activePromotions) {
             schedulePromotionNotifications(promotion.getPromotionId());
         }
-        log.info("Đã lên lịch thông báo cho {} khuyến mãi", activePromotions.size());
     }
 
     /**
@@ -107,12 +105,10 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
         try {
             List<UUID> shopIds = getAllShopIds();
             if (shopIds.isEmpty()) {
-                log.warn("Cannot check low stock: No shop owners found");
                 return;
             }
 
             List<Inventory> inventories = inventoryRepository.findAll();
-            log.info("Bắt đầu kiểm tra tồn kho thấp. Tổng số inventory: {}, Số shop: {}", inventories.size(), shopIds.size());
             int notificationCount = 0;
             int checkedCount = 0;
             int skippedCount = 0;
@@ -132,9 +128,6 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
                 Integer quantity = inventory.getQuantityInStock() != null ? inventory.getQuantityInStock() : 0;
                 Integer reorderPoint = inventory.getReorderPoint();
 
-                log.debug("Kiểm tra sản phẩm: {}, Số lượng: {}, Điểm đặt hàng: {}",
-                        inventory.getProduct().getProductName(), quantity, reorderPoint);
-
                 // Chỉ xử lý khi có reorderPoint hợp lệ và quantity <= reorderPoint
                 if (reorderPoint == null || reorderPoint <= 0 || quantity > reorderPoint) {
                     continue;
@@ -150,8 +143,6 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
                 boolean shouldNotify = (lastNotifiedQty == null) || (quantity < lastNotifiedQty);
 
                 if (!shouldNotify) {
-                    log.debug("Bỏ qua sản phẩm {} - đã thông báo với số lượng {} (hiện tại: {})",
-                            inventory.getProduct().getProductName(), lastNotifiedQty, quantity);
                     continue;
                 }
 
@@ -173,8 +164,6 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
                     try {
                         // Check if low stock notifications are enabled for this shop owner
                         if (!notificationSettingsService.isNotificationEnabledForAccount(shopId, "low_stock")) {
-                            log.debug("Bỏ qua thông báo tồn kho thấp cho shop {} - đã tắt trong cài đặt",
-                                    shopId);
                             continue;
                         }
                         
@@ -186,8 +175,6 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
                                 productId
                         );
                         notificationCount++;
-                        log.info("Đã tạo thông báo tồn kho thấp cho shop {} - sản phẩm: {}, số lượng: {}",
-                                shopId, inventory.getProduct().getProductName(), quantity);
                     } catch (Exception e) {
                         log.error("Lỗi khi tạo thông báo cho sản phẩm {}: {}",
                                 inventory.getProduct().getProductName(), e.getMessage());
@@ -200,9 +187,6 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
 
             // Clean up old tracking keys (from previous days)
             cleanupOldTrackingKeys(today);
-
-            log.info("Kết thúc kiểm tra tồn kho thấp. Đã kiểm tra: {}, Bỏ qua: {}, Tạo thông báo: {}",
-                    checkedCount, skippedCount, notificationCount);
         } catch (Exception e) {
             log.error("Lỗi khi kiểm tra tồn kho thấp: {}", e.getMessage(), e);
         }
@@ -244,7 +228,6 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
     public void schedulePromotionNotifications(UUID promotionId) {
         Promotion promotion = promotionRepository.findById(promotionId).orElse(null);
         if (promotion == null) {
-            log.warn("Không tìm thấy khuyến mãi: {}", promotionId);
             return;
         }
 
@@ -256,7 +239,6 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
 
         // Don't schedule if promotion is inactive
         if (!Boolean.TRUE.equals(promotion.getActive())) {
-            log.info("Khuyến mãi {} không hoạt động, bỏ qua lên lịch", promotion.getPromotionName());
             return;
         }
 
@@ -273,7 +255,6 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
                 () -> createExpiringNotification(promotionId),
                 expiringTime
             );
-            log.info("Lên lịch 'sắp hết hạn' cho '{}' vào {}", promotion.getPromotionName(), oneDayBefore);
         }
 
         // Schedule "đã hết hạn" notification (at exact expiry time)
@@ -283,7 +264,6 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
                 () -> createExpiredNotification(promotionId),
                 expiredTime
             );
-            log.info("Lên lịch 'đã hết hạn' cho '{}' vào {}", promotion.getPromotionName(), endDate);
         }
 
         scheduledTasks.put(promotionId, tasks);
@@ -314,7 +294,6 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
                 }
             }
 
-            log.info("Đã đánh dấu đã đọc các thông báo cũ cho khuyến mãi: {}", promotionId);
         } catch (Exception e) {
             log.error("Lỗi khi đánh dấu thông báo đã đọc: {}", e.getMessage());
         }
@@ -332,7 +311,6 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
                     task.cancel(false);
                 }
             }
-            log.info("Đã hủy lịch thông báo cho khuyến mãi: {}", promotionId);
         }
     }
 
@@ -354,8 +332,6 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
             for (UUID shopId : shopIds) {
                 // Check if promotion notifications are enabled for this shop owner
                 if (!notificationSettingsService.isNotificationEnabledForAccount(shopId, "promotion")) {
-                    log.debug("Bỏ qua thông báo khuyến mãi sắp hết hạn cho shop {} - đã tắt trong cài đặt",
-                            shopId);
                     continue;
                 }
                 
@@ -366,7 +342,6 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
                             message, description, promotionId);
                 }
             }
-            log.info("Đã tạo thông báo 'sắp hết hạn' cho: {}", promotion.getPromotionName());
         } catch (Exception e) {
             log.error("Lỗi tạo thông báo sắp hết hạn: {}", e.getMessage(), e);
         }
@@ -390,8 +365,6 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
             for (UUID shopId : shopIds) {
                 // Check if promotion notifications are enabled for this shop owner
                 if (!notificationSettingsService.isNotificationEnabledForAccount(shopId, "promotion")) {
-                    log.debug("Bỏ qua thông báo khuyến mãi đã hết hạn cho shop {} - đã tắt trong cài đặt",
-                            shopId);
                     continue;
                 }
                 
@@ -402,7 +375,6 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
                             message, description, promotionId);
                 }
             }
-            log.info("Đã tạo thông báo 'đã hết hạn' cho: {}", promotion.getPromotionName());
         } catch (Exception e) {
             log.error("Lỗi tạo thông báo hết hạn: {}", e.getMessage(), e);
         }

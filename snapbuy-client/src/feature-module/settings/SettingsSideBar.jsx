@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { allRoutes } from "../../routes/AllRoutes";
 import { Link, useLocation } from "react-router-dom";
 
@@ -28,35 +28,15 @@ const SettingsSideBar = () => {
     ]
   );
 
-  const [isGeneralSettingsOpen, setIsGeneralSettingsOpen] = useState(() =>
-    generalSettingPaths.includes(location.pathname)
-  );
-  const [isPosSettingsOpen, setIsPosSettingsOpen] = useState(() =>
-    posSettingPaths.includes(location.pathname)
-  );
-
-  useEffect(() => {
-    if (generalSettingPaths.includes(location.pathname)) {
-      setIsGeneralSettingsOpen(true);
-    }
-    if (posSettingPaths.includes(location.pathname)) {
-      setIsPosSettingsOpen(true);
-    }
-  }, [location.pathname, generalSettingPaths, posSettingPaths]);
-
-  const toggleGeneralSettings = () => setIsGeneralSettingsOpen(!isGeneralSettingsOpen);
-  const togglePosSettings = () => setIsPosSettingsOpen(!isPosSettingsOpen);
-
   const sidebarContent = (
     <div id="sidebar-menu5" className="sidebar-menu">
-      <h4 className="fw-bold fs-18 mb-2 pb-2">Cài đặt</h4>
       <ul className="list-unstyled">
         <li className="submenu-open">
           <ul>
+            {/* Cài đặt chung */}
             <li className="submenu">
               <Link
                 to="#"
-                onClick={toggleGeneralSettings}
                 className={
                   location.pathname === route.profile ||
                     location.pathname === route.emailsettings ||
@@ -69,9 +49,8 @@ const SettingsSideBar = () => {
               >
                 <i className="ti ti-settings fs-18"></i>
                 <span className="fs-14 fw-medium ms-2">Cài đặt chung</span>
-                <span className="menu-arrow" />
               </Link>
-              <ul style={{ display: isGeneralSettingsOpen ? "block" : "none" }}>
+              <ul style={{ display: "block" }}>
                 <li>
                   <Link
                     to={route.profile}
@@ -107,26 +86,24 @@ const SettingsSideBar = () => {
               </ul>
             </li>
 
-            {/* POS Settings */}
+            {/* Cài đặt POS */}
             <li className="submenu">
               <Link
                 to="#"
-                onClick={togglePosSettings}
                 className={
-                  location.pathname === route.possystemsettings
-                    ? "active subdrop"
-                    : ""
+                  location.pathname === route.possystemsettings ? "active subdrop" : ""
                 }
               >
                 <i className="ti ti-shopping-cart fs-18"></i>
                 <span className="fs-14 fw-medium ms-2">Cài đặt POS</span>
-                <span className="menu-arrow" />
               </Link>
-              <ul style={{ display: isPosSettingsOpen ? "block" : "none" }}>
+              <ul style={{ display: "block" }}>
                 <li>
                   <Link
                     to={route.possystemsettings}
-                    className={location.pathname === route.possystemsettings ? "active" : ""}
+                    className={
+                      location.pathname === route.possystemsettings ? "active" : ""
+                    }
                   >
                     Cài đặt hệ thống
                   </Link>

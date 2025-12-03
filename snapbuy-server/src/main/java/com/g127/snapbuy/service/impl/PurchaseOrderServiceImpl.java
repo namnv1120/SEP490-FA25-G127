@@ -1117,7 +1117,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                     po.getId()
                 );
             }
-            log.info("Đã gửi thông báo đơn đặt hàng mới {} cho {} chủ cửa hàng", po.getNumber(), shopOwners.size());
         } catch (Exception e) {
             log.error("Lỗi khi gửi thông báo đơn đặt hàng mới: {}", e.getMessage());
         }
@@ -1130,7 +1129,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         try {
             Account creator = accountRepo.findById(po.getAccountId()).orElse(null);
             if (creator == null) {
-                log.warn("Không tìm thấy nhân viên tạo đơn {}", po.getNumber());
                 return;
             }
 
@@ -1155,7 +1153,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             } else {
                 log.debug("Bỏ qua thông báo đơn nhập kho cho account {} - đã tắt trong cài đặt", creator.getAccountId());
             }
-            log.info("Đã gửi thông báo đơn {} được duyệt cho nhân viên {}", po.getNumber(), creator.getFullName());
         } catch (Exception e) {
             log.error("Lỗi khi gửi thông báo đơn được duyệt: {}", e.getMessage());
         }
@@ -1195,7 +1192,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                     po.getId()
                 );
             }
-            log.info("Đã gửi thông báo cập nhật số lượng thực nhận đơn {} cho {} chủ cửa hàng", po.getNumber(), shopOwners.size());
         } catch (Exception e) {
             log.error("Lỗi khi gửi thông báo cập nhật số lượng thực nhận: {}", e.getMessage());
         }
@@ -1246,7 +1242,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 );
             }
 
-            log.info("Đã gửi thông báo hoàn tất nhập kho đơn {} cho {} người", po.getNumber(), notifiedAccountIds.size() + 1);
         } catch (Exception e) {
             log.error("Lỗi khi gửi thông báo hoàn tất nhập kho: {}", e.getMessage());
         }
@@ -1328,7 +1323,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             } else {
                 log.debug("Bỏ qua thông báo đơn nhập kho cho account {} - đã tắt trong cài đặt", creator.getAccountId());
             }
-            log.info("Đã gửi thông báo đơn {} bị hủy cho nhân viên {}", po.getNumber(), creator.getFullName());
         } catch (Exception e) {
             log.error("Lỗi khi gửi thông báo đơn bị hủy: {}", e.getMessage());
         }

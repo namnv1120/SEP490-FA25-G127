@@ -93,6 +93,10 @@ public class PosShiftServiceImpl implements PosShiftService {
     @Override
     @Transactional
     public PosShiftResponse open(String username, BigDecimal initialCash, List<CashDenominationRequest> cashDenominations) {
+        if (initialCash != null && initialCash.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Số tiền ban đầu không được âm");
+        }
+
         UUID accountId = resolveAccountId(username);
         posShiftRepository.findFirstByAccount_AccountIdAndStatusOrderByOpenedAtDesc(accountId, "Mở")
                 .ifPresent(s -> { throw new IllegalStateException("Ca đang mở"); });
@@ -119,6 +123,9 @@ public class PosShiftServiceImpl implements PosShiftService {
     @Override
     @Transactional
     public PosShiftResponse openForEmployee(String ownerUsername, UUID employeeAccountId, BigDecimal initialCash, List<CashDenominationRequest> cashDenominations) {
+        if (initialCash != null && initialCash.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Số tiền ban đầu không được âm");
+        }
         // Kiểm tra owner
         UUID ownerId = resolveAccountId(ownerUsername);
         Account owner = accountRepository.findById(ownerId)
@@ -177,6 +184,9 @@ public class PosShiftServiceImpl implements PosShiftService {
     @Override
     @Transactional
     public PosShiftResponse close(String username, BigDecimal closingCash, String note, List<CashDenominationRequest> cashDenominations) {
+        if (closingCash != null && closingCash.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Số tiền cuối ca không được âm");
+        }
         UUID accountId = resolveAccountId(username);
         PosShift s = posShiftRepository.findFirstByAccount_AccountIdAndStatusOrderByOpenedAtDesc(accountId, "Mở")
                 .orElseThrow(() -> new IllegalStateException("Không có ca đang mở"));
@@ -215,6 +225,9 @@ public class PosShiftServiceImpl implements PosShiftService {
     @Override
     @Transactional
     public PosShiftResponse closeForEmployee(String ownerUsername, UUID employeeAccountId, BigDecimal closingCash, String note, List<CashDenominationRequest> cashDenominations) {
+        if (closingCash != null && closingCash.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Số tiền cuối ca không được âm");
+        }
         // Kiểm tra owner có quyền không (đã được kiểm tra ở controller qua @PreAuthorize)
         
         // Tìm ca đang mở của nhân viên

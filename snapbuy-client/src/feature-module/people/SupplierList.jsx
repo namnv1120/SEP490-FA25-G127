@@ -14,6 +14,7 @@ import { exportToExcel } from "../../utils/excelUtils";
 
 import AddSupplier from "../../core/modals/people/AddSupplierModal";
 import EditSupplier from "../../core/modals/people/EditSupplierModal";
+import SupplierDetailModal from "../../core/modals/people/SupplierDetailModal";
 
 const Suppliers = () => {
   const [listData, setListData] = useState([]);
@@ -29,6 +30,8 @@ const Suppliers = () => {
   const [editSupplierId, setEditSupplierId] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedSupplierId, setSelectedSupplierId] = useState(null);
 
   const StatusOptions = useMemo(
     () => [
@@ -87,11 +90,6 @@ const Suppliers = () => {
     } catch {
       message.error("Lỗi khi xuất file Excel!");
     }
-  };
-
-  const handleRefresh = () => {
-    fetchSuppliers();
-    message.success("Làm mới danh sách thành công!");
   };
 
   const filteredList = listData.filter((item) => {
@@ -211,6 +209,19 @@ const Suppliers = () => {
       header: "Nhà cung cấp",
       field: "supplierName",
       key: "supplierName",
+      body: (data) => (
+        <button
+          type="button"
+          className="btn btn-link p-0 text-primary text-decoration-none"
+          onClick={() => {
+            setSelectedSupplierId(data.supplierId);
+            setDetailModalOpen(true);
+          }}
+          style={{ cursor: "pointer" }}
+        >
+          {data.supplierName}
+        </button>
+      ),
     },
     { header: "Email", field: "email", key: "email" },
     { header: "Số điện thoại", field: "phone", key: "phone" },
@@ -395,6 +406,14 @@ const Suppliers = () => {
         itemName={selectedSupplier?.supplierName}
         onDelete={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
+      />
+      <SupplierDetailModal
+        isOpen={detailModalOpen}
+        supplierId={selectedSupplierId}
+        onClose={() => {
+          setDetailModalOpen(false);
+          setSelectedSupplierId(null);
+        }}
       />
     </>
   );

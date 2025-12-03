@@ -120,7 +120,6 @@ public class NotificationServiceImpl implements NotificationService {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new RuntimeException("Notification not found"));
 
-        // Verify ownership - kiểm tra cả shopId và accountId
         UUID shopId = getShopIdFromAuth();
         UUID accountId = getCurrentAccountId();
         boolean isAuthorized =
@@ -149,8 +148,7 @@ public class NotificationServiceImpl implements NotificationService {
                 throw new IllegalArgumentException("Notification type cannot be null");
             }
             
-            log.info("Bắt đầu tạo thông báo - Shop ID: {}, Type: {}, Message: {}", shopId, type, message);
-            
+
             Notification notification = Notification.builder()
                     .shopId(shopId)
                     .type(type)
@@ -160,13 +158,10 @@ public class NotificationServiceImpl implements NotificationService {
                     .isRead(false)
                     .build();
 
-            log.info("Notification object created: {}", notification);
-            
+
             Notification saved = notificationRepository.save(notification);
             notificationRepository.flush(); // Force immediate write to database
             
-            log.info("Created notification successfully - ID: {}, shop: {}, type: {}, message: {}", 
-                    saved.getId(), shopId, type, message);
         } catch (Exception e) {
             log.error("Error creating notification for shop: {}, type: {}, message: {}", 
                     shopId, type, message, e);
@@ -193,7 +188,6 @@ public class NotificationServiceImpl implements NotificationService {
                 throw new IllegalArgumentException("Notification type cannot be null");
             }
 
-            log.info("Bắt đầu tạo thông báo cho account - Account ID: {}, Type: {}, Message: {}", accountId, type, message);
 
             Notification notification = Notification.builder()
                     .accountId(accountId)
@@ -204,13 +198,10 @@ public class NotificationServiceImpl implements NotificationService {
                     .isRead(false)
                     .build();
 
-            log.info("Notification object created for account: {}", notification);
 
             Notification saved = notificationRepository.save(notification);
             notificationRepository.flush(); // Force immediate write to database
 
-            log.info("Created notification successfully - ID: {}, account: {}, type: {}, message: {}",
-                    saved.getId(), accountId, type, message);
         } catch (Exception e) {
             log.error("Error creating notification for account: {}, type: {}, message: {}",
                     accountId, type, message, e);

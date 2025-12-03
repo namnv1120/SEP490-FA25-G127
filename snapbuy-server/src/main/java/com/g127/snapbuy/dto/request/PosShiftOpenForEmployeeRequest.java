@@ -1,5 +1,6 @@
 package com.g127.snapbuy.dto.request;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -17,6 +18,7 @@ public class PosShiftOpenForEmployeeRequest {
     @DecimalMin(value = "0", message = "Số tiền ban đầu không được âm")
     private BigDecimal initialCash;
 
+    @Valid
     private List<CashDenominationRequest> cashDenominations; // Chi tiết mệnh giá tiền khi mở ca
 }
 

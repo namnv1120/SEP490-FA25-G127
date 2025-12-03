@@ -73,7 +73,7 @@ const RevenueReport = () => {
         );
         message.error(
           productError.response?.data?.message ||
-          "Lỗi khi tải dữ liệu doanh thu sản phẩm. Vui lòng thử lại."
+            "Lỗi khi tải dữ liệu doanh thu sản phẩm. Vui lòng thử lại."
         );
         setProductRevenueData([]);
       }
@@ -270,7 +270,7 @@ const RevenueReport = () => {
       console.error("Lỗi khi tải dữ liệu doanh thu:", error);
       message.error(
         error.response?.data?.message ||
-        "Lỗi khi tải dữ liệu doanh thu. Vui lòng thử lại."
+          "Lỗi khi tải dữ liệu doanh thu. Vui lòng thử lại."
       );
       setRevenueData(null);
       setDetailedData([]);
@@ -348,7 +348,7 @@ const RevenueReport = () => {
       // Thêm dòng tổng tiền
       const accountName = selectedAccountId
         ? salesAccounts.find((acc) => acc.id === selectedAccountId)?.fullName ||
-        ""
+          ""
         : "Tất cả nhân viên";
 
       const totalRow = worksheet.addRow([
@@ -571,8 +571,8 @@ const RevenueReport = () => {
               periodType === "monthly"
                 ? "Biểu đồ doanh thu và số đơn hàng theo ngày trong tháng"
                 : periodType === "yearly"
-                  ? "Biểu đồ doanh thu và số đơn hàng theo tháng trong năm"
-                  : "Biểu đồ doanh thu và số đơn hàng theo ngày",
+                ? "Biểu đồ doanh thu và số đơn hàng theo tháng trong năm"
+                : "Biểu đồ doanh thu và số đơn hàng theo ngày",
             align: "center",
             style: {
               fontSize: "16px",
@@ -1000,9 +1000,9 @@ const RevenueReport = () => {
                                 <h3 className="text-white mb-0">
                                   {revenueData.orderCount > 0
                                     ? formatCurrency(
-                                      revenueData.totalRevenue /
-                                      revenueData.orderCount
-                                    )
+                                        revenueData.totalRevenue /
+                                          revenueData.orderCount
+                                      )
                                     : "0 đ"}
                                 </h3>
                               </div>
@@ -1069,8 +1069,8 @@ const RevenueReport = () => {
                                           {periodType === "monthly"
                                             ? "Doanh thu từng ngày trong tháng (cột)"
                                             : periodType === "yearly"
-                                              ? "Doanh thu từng tháng trong năm (cột)"
-                                              : "Doanh thu từng ngày trong khoảng thời gian (cột)"}
+                                            ? "Doanh thu từng tháng trong năm (cột)"
+                                            : "Doanh thu từng ngày trong khoảng thời gian (cột)"}
                                         </span>
                                       </div>
                                     </div>
@@ -1090,8 +1090,8 @@ const RevenueReport = () => {
                                           {periodType === "monthly"
                                             ? "Số đơn hàng từng ngày trong tháng (đường)"
                                             : periodType === "yearly"
-                                              ? "Số đơn hàng từng tháng trong năm (đường)"
-                                              : "Số đơn hàng từng ngày trong khoảng thời gian (đường)"}
+                                            ? "Số đơn hàng từng tháng trong năm (đường)"
+                                            : "Số đơn hàng từng ngày trong khoảng thời gian (đường)"}
                                         </span>
                                       </div>
                                     </div>
@@ -1187,30 +1187,20 @@ const RevenueReport = () => {
                             </div>
                           </div>
                           <div className="card-body">
-                            {selectedAccountId &&
-                              productRevenueData.length > 0 && (
-                                <div className="alert alert-info mb-3 text-center">
-                                  <strong>Tổng tiền: </strong>
-                                  {formatCurrency(
-                                    productRevenueData.reduce(
-                                      (sum, item) =>
-                                        sum + (item.totalRevenue || 0),
-                                      0
-                                    )
-                                  )}
-                                </div>
-                              )}
                             {productRevenueData &&
-                              Array.isArray(productRevenueData) &&
-                              productRevenueData.length > 0 ? (
+                            Array.isArray(productRevenueData) &&
+                            productRevenueData.length > 0 ? (
                               <PrimeDataTable
                                 column={[
                                   {
                                     header: "STT",
                                     field: "index",
                                     body: (rowData, { rowIndex }) => {
+                                      if (rowData.isTotal) {
+                                        return "-";
+                                      }
                                       return (
-                                        (currentPage - 1) * rows + rowIndex + 1
+                                        (currentPage - 1) * rows + rowIndex
                                       );
                                     },
                                     sortable: false,
@@ -1219,16 +1209,25 @@ const RevenueReport = () => {
                                   {
                                     header: "Tên sản phẩm",
                                     field: "productName",
+                                    body: (rowData) => {
+                                      if (rowData.isTotal) {
+                                        return "-";
+                                      }
+                                      return rowData.productName;
+                                    },
                                     sortable: true,
                                   },
                                   {
                                     header: "Giá bán",
                                     field: "sellingPrice",
                                     body: (rowData) => {
+                                      if (rowData.isTotal) {
+                                        return "-";
+                                      }
                                       const sellingPrice =
                                         rowData.totalSold > 0
                                           ? rowData.totalRevenue /
-                                          rowData.totalSold
+                                            rowData.totalSold
                                           : 0;
                                       return formatCurrency(sellingPrice);
                                     },
@@ -1239,6 +1238,9 @@ const RevenueReport = () => {
                                     header: "Số lượng",
                                     field: "totalSold",
                                     body: (rowData) => {
+                                      if (rowData.isTotal) {
+                                        return "-";
+                                      }
                                       return new Intl.NumberFormat(
                                         "vi-VN"
                                       ).format(rowData.totalSold || 0);
@@ -1258,8 +1260,25 @@ const RevenueReport = () => {
                                     className: "text-start",
                                   },
                                 ]}
-                                data={productRevenueData || []}
-                                totalRecords={productRevenueData?.length || 0}
+                                data={(() => {
+                                  const totalRevenue =
+                                    productRevenueData.reduce(
+                                      (sum, item) =>
+                                        sum + (item.totalRevenue || 0),
+                                      0
+                                    );
+                                  const totalRow = {
+                                    isTotal: true,
+                                    productId: "total-row",
+                                    productName: "-",
+                                    totalSold: 0,
+                                    totalRevenue: totalRevenue,
+                                  };
+                                  return [totalRow, ...productRevenueData];
+                                })()}
+                                totalRecords={
+                                  (productRevenueData?.length || 0) + 1
+                                }
                                 currentPage={currentPage}
                                 setCurrentPage={setCurrentPage}
                                 rows={rows}

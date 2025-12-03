@@ -94,15 +94,25 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
       const provincesData = await getProvinces();
       setProvinces(provincesData || []);
 
-      // Tìm province code từ tên
-      const province = provincesData.find(p => p.name === cityName);
+      const normalize = (str) => (str || "").trim().toLowerCase();
+
+      // Tìm province code từ tên (dùng so khớp mềm để tránh lệch tên)
+      let province =
+        provincesData.find((p) => normalize(p.name) === normalize(cityName)) ||
+        provincesData.find((p) => normalize(cityName).includes(normalize(p.name))) ||
+        provincesData.find((p) => normalize(p.name).includes(normalize(cityName)));
+
       if (province) {
         setSelectedProvinceCode(province.code);
         const wardsData = await getWardsByProvince(province.code);
         setWards(wardsData || []);
+      } else {
+        // Không tìm thấy province tương ứng: giữ nguyên city/ward text nhưng không disable select
+        setSelectedProvinceCode(null);
+        setWards([]);
       }
     } catch (error) {
-      console.error('Error loading location data:', error);
+      console.error("Error loading location data:", error);
     }
   };
 
@@ -134,8 +144,8 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
 
     if (formData.phone && formData.phone.length > 20) {
       newErrors.phone = "Số điện thoại không được vượt quá 20 ký tự.";
-    } else if (formData.phone && !/^[0-9+\-()\s]{6,20}$/.test(formData.phone)) {
-      newErrors.phone = "Số điện thoại không đúng định dạng.";
+    } else if (formData.phone && !/^[0-9+\-()\s]{10,20}$/.test(formData.phone)) {
+      newErrors.phone = "Số điện thoại không đúng định dạng. Vui lòng nhập 10-20 chữ số.";
     }
 
     if (formData.address && formData.address.length > 100) {
@@ -165,25 +175,39 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
 
   // Xử lý khi chọn tỉnh/thành phố
   const handleProvinceChange = (value, option) => {
+    // Khi clear (value = null/undefined), reset city & ward
+    if (!value) {
+      setSelectedProvinceCode(null);
+      setWards([]);
+      setFormData((prev) => ({ ...prev, city: "", ward: "" }));
+      setErrors((prev) => ({ ...prev, city: "", ward: "" }));
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
-      city: option.label,
+      city: option?.label || "",
       ward: "",
     }));
     setSelectedProvinceCode(value);
     setWards([]);
     setErrors((prev) => ({ ...prev, city: "", ward: "" }));
 
-    if (value) {
-      loadWards(value);
-    }
+    loadWards(value);
   };
 
   // Xử lý khi chọn xã/phường
   const handleWardChange = (value, option) => {
+    // Khi clear (value = null/undefined), reset ward
+    if (!value) {
+      setFormData((prev) => ({ ...prev, ward: "" }));
+      setErrors((prev) => ({ ...prev, ward: "" }));
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
-      ward: option.label,
+      ward: option?.label || "",
     }));
     setErrors((prev) => ({ ...prev, ward: "" }));
   };

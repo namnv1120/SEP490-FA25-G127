@@ -100,8 +100,8 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
 
     if (formData.phone && formData.phone.length > 20) {
       newErrors.phone = "Số điện thoại không được vượt quá 20 ký tự.";
-    } else if (formData.phone && !/^[0-9+\-()\s]{6,20}$/.test(formData.phone)) {
-      newErrors.phone = "Số điện thoại không đúng định dạng.";
+    } else if (formData.phone && !/^[0-9+\-()\s]{10,20}$/.test(formData.phone)) {
+      newErrors.phone = "Số điện thoại không đúng định dạng. Vui lòng nhập 10-20 chữ số.";
     }
 
     if (formData.address && formData.address.length > 100) {
