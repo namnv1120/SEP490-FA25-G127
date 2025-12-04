@@ -47,78 +47,83 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
            """)
     List<Account> findByRoleName(@Param("roleName") String roleName);
 
-    @Query("""
-           select distinct a
-           from Account a
-           left join a.roles r
+    @Query(value = """
+           select distinct a.*
+           from accounts a
+           left join account_roles ar on a.account_id = ar.account_id
+           left join roles r on ar.role_id = r.role_id
            where (:keyword is null or :keyword = '' or
-                  lower(a.fullName) like lower(concat('%', :keyword, '%')) or
-                  lower(a.username) like lower(concat('%', :keyword, '%')) or
-                  lower(a.email) like lower(concat('%', :keyword, '%')) or
-                  lower(a.phone) like lower(concat('%', :keyword, '%')))
+                  dbo.RemoveVietnameseDiacritics(lower(a.full_name)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))) or
+                  dbo.RemoveVietnameseDiacritics(lower(a.username)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))) or
+                  dbo.RemoveVietnameseDiacritics(lower(a.email)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))) or
+                  dbo.RemoveVietnameseDiacritics(lower(a.phone)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))))
              and (:active is null or a.active = :active)
-             and (:roleName is null or :roleName = '' or r.roleName = :roleName)
-           order by a.fullName
-           """)
+             and (:roleName is null or :roleName = '' or r.role_name = :roleName)
+           order by a.full_name
+           """, nativeQuery = true)
     List<Account> searchAccounts(@Param("keyword") String keyword,
                                  @Param("active") Boolean active,
                                  @Param("roleName") String roleName);
 
     @Query(value = """
-           select distinct a
-           from Account a
-           left join a.roles r
+           select distinct a.*
+           from accounts a
+           left join account_roles ar on a.account_id = ar.account_id
+           left join roles r on ar.role_id = r.role_id
            where (:keyword is null or :keyword = '' or
-                  lower(a.fullName) like lower(concat('%', :keyword, '%')) or
-                  lower(a.username) like lower(concat('%', :keyword, '%')) or
-                  lower(a.email) like lower(concat('%', :keyword, '%')) or
-                  lower(a.phone) like lower(concat('%', :keyword, '%')))
+                  dbo.RemoveVietnameseDiacritics(lower(a.full_name)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))) or
+                  dbo.RemoveVietnameseDiacritics(lower(a.username)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))) or
+                  dbo.RemoveVietnameseDiacritics(lower(a.email)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))) or
+                  dbo.RemoveVietnameseDiacritics(lower(a.phone)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))))
              and (:active is null or a.active = :active)
-             and (:roleName is null or :roleName = '' or r.roleName = :roleName)
+             and (:roleName is null or :roleName = '' or r.role_name = :roleName)
            """,
            countQuery = """
-           select count(distinct a)
-           from Account a
-           left join a.roles r
+           select count(distinct a.account_id)
+           from accounts a
+           left join account_roles ar on a.account_id = ar.account_id
+           left join roles r on ar.role_id = r.role_id
            where (:keyword is null or :keyword = '' or
-                  lower(a.fullName) like lower(concat('%', :keyword, '%')) or
-                  lower(a.username) like lower(concat('%', :keyword, '%')) or
-                  lower(a.email) like lower(concat('%', :keyword, '%')) or
-                  lower(a.phone) like lower(concat('%', :keyword, '%')))
+                  dbo.RemoveVietnameseDiacritics(lower(a.full_name)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))) or
+                  dbo.RemoveVietnameseDiacritics(lower(a.username)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))) or
+                  dbo.RemoveVietnameseDiacritics(lower(a.email)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))) or
+                  dbo.RemoveVietnameseDiacritics(lower(a.phone)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))))
              and (:active is null or a.active = :active)
-             and (:roleName is null or :roleName = '' or r.roleName = :roleName)
-           """)
+             and (:roleName is null or :roleName = '' or r.role_name = :roleName)
+           """, nativeQuery = true)
     Page<Account> searchAccountsPage(@Param("keyword") String keyword,
                                      @Param("active") Boolean active,
                                      @Param("roleName") String roleName,
                                      Pageable pageable);
 
     @Query(value = """
-           select distinct a
-           from Account a
-           left join a.roles r
+           select distinct a.*
+           from accounts a
+           left join account_roles ar on a.account_id = ar.account_id
+           left join roles r on ar.role_id = r.role_id
            where (:keyword is null or :keyword = '' or
-                  lower(a.fullName) like lower(concat('%', :keyword, '%')) or
-                  lower(a.username) like lower(concat('%', :keyword, '%')) or
-                  lower(a.email) like lower(concat('%', :keyword, '%')) or
-                  lower(a.phone) like lower(concat('%', :keyword, '%')))
+                  dbo.RemoveVietnameseDiacritics(lower(a.full_name)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))) or
+                  dbo.RemoveVietnameseDiacritics(lower(a.username)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))) or
+                  dbo.RemoveVietnameseDiacritics(lower(a.email)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))) or
+                  dbo.RemoveVietnameseDiacritics(lower(a.phone)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))))
              and (:active is null or a.active = :active)
-             and r.roleName in (:roleNames)
+             and r.role_name in (:roleNames)
            """,
            countQuery = """
-           select count(distinct a)
-           from Account a
-           left join a.roles r
+           select count(distinct a.account_id)
+           from accounts a
+           left join account_roles ar on a.account_id = ar.account_id
+           left join roles r on ar.role_id = r.role_id
            where (:keyword is null or :keyword = '' or
-                  lower(a.fullName) like lower(concat('%', :keyword, '%')) or
-                  lower(a.username) like lower(concat('%', :keyword, '%')) or
-                  lower(a.email) like lower(concat('%', :keyword, '%')) or
-                  lower(a.phone) like lower(concat('%', :keyword, '%')))
+                  dbo.RemoveVietnameseDiacritics(lower(a.full_name)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))) or
+                  dbo.RemoveVietnameseDiacritics(lower(a.username)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))) or
+                  dbo.RemoveVietnameseDiacritics(lower(a.email)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))) or
+                  dbo.RemoveVietnameseDiacritics(lower(a.phone)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))))
              and (:active is null or a.active = :active)
-             and r.roleName in (:roleNames)
-           """)
+             and r.role_name in (:roleNames)
+           """, nativeQuery = true)
     Page<Account> searchStaffAccountsPage(@Param("keyword") String keyword,
-                                                                          @Param("active") Boolean active,
-                                                                          @Param("roleNames") java.util.List<String> roleNames,
-                                                                          Pageable pageable);
+                                          @Param("active") Boolean active,
+                                          @Param("roleNames") java.util.List<String> roleNames,
+                                          Pageable pageable);
 }

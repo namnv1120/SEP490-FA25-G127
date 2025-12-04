@@ -24,6 +24,24 @@ public class AccountController {
     private final AccountService accountService;
     private final EmailVerificationService emailVerificationService;
 
+    /**
+     * Map API sort field to the actual database column used in native queries.
+     * This prevents "Invalid column name" errors and avoids SQL injection via sortBy.
+     */
+    private String resolveAccountSortColumn(String sortBy) {
+        if (sortBy == null || sortBy.isBlank()) {
+            return "full_name";
+        }
+        return switch (sortBy) {
+            case "fullName" -> "full_name";
+            case "username" -> "username";
+            case "email" -> "email";
+            case "phone" -> "phone";
+            case "active" -> "active";
+            default -> "full_name";
+        };
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<AccountResponse> createAccount(@Valid @RequestBody AccountCreateRequest req) {
@@ -238,12 +256,13 @@ public class AccountController {
                                                                           @RequestParam(defaultValue = "10") int size,
                                                                           @RequestParam(defaultValue = "fullName") String sortBy,
                                                                           @RequestParam(defaultValue = "ASC") String sortDir) {
+        String sortColumn = resolveAccountSortColumn(sortBy);
         var direction = "DESC".equalsIgnoreCase(sortDir)
                 ? Sort.Direction.DESC
                 : Sort.Direction.ASC;
         var pageable = PageRequest.of(
                 Math.max(page, 0), Math.min(Math.max(size, 1), 200),
-                Sort.by(direction, sortBy)
+                Sort.by(direction, sortColumn)
         );
         ApiResponse<PageResponse<AccountResponse>> response = new ApiResponse<>();
         response.setResult(accountService.searchAccountsPaged(keyword, active, role, pageable));
@@ -260,12 +279,13 @@ public class AccountController {
                                                                                @RequestParam(defaultValue = "10") int size,
                                                                                @RequestParam(defaultValue = "fullName") String sortBy,
                                                                                @RequestParam(defaultValue = "ASC") String sortDir) {
+        String sortColumn = resolveAccountSortColumn(sortBy);
         var direction = "DESC".equalsIgnoreCase(sortDir)
                 ? Sort.Direction.DESC
                 : Sort.Direction.ASC;
         var pageable = PageRequest.of(
                 Math.max(page, 0), Math.min(Math.max(size, 1), 200),
-                Sort.by(direction, sortBy)
+                Sort.by(direction, sortColumn)
         );
         ApiResponse<PageResponse<AccountResponse>> response = new ApiResponse<>();
         response.setResult(accountService.searchStaffAccountsPaged(keyword, active, role, pageable));

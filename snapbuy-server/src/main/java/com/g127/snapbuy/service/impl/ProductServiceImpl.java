@@ -653,7 +653,9 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public PageResponse<ProductResponse> searchByKeyword(String keyword, Pageable pageable) {
-        Page<Product> productPage = productRepository.searchByKeyword(keyword, null, null, null,
+        // Trim keyword to handle leading/trailing whitespace
+        String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+        Page<Product> productPage = productRepository.searchByKeyword(trimmedKeyword, null, null, null,
             PageRequest.of(
                 pageable.getPageNumber(),
                 pageable.getPageSize()

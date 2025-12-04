@@ -26,6 +26,22 @@ public class RoleController {
 
     private final RoleService roleService;
 
+    /**
+     * Map API sort field to the actual database column used in native queries.
+     * This prevents "Invalid column name" errors and avoids SQL injection via sortBy.
+     */
+    private String resolveRoleSortColumn(String sortBy) {
+        if (sortBy == null || sortBy.isBlank()) {
+            return "role_name";
+        }
+        return switch (sortBy) {
+            case "roleName" -> "role_name";
+            case "description" -> "description";
+            case "active" -> "active";
+            default -> "role_name";
+        };
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<RoleResponse> createRole(@Valid @RequestBody RoleCreateRequest req) {
@@ -139,13 +155,14 @@ public class RoleController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "roleName") String sortBy,
             @RequestParam(defaultValue = "ASC") String sortDir) {
+        String sortColumn = resolveRoleSortColumn(sortBy);
         var direction = "DESC".equalsIgnoreCase(sortDir)
                 ? Sort.Direction.DESC
                 : Sort.Direction.ASC;
         var pageable = PageRequest.of(
                 Math.max(page, 0),
                 Math.min(Math.max(size, 1), 200),
-                Sort.by(direction, sortBy)
+                Sort.by(direction, sortColumn)
         );
         ApiResponse<PageResponse<RoleResponse>> response = new ApiResponse<>();
         response.setResult(roleService.searchRolesPaged(keyword, active, pageable));

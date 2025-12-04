@@ -200,63 +200,63 @@ DECLARE @defaultCustomerId UNIQUEIDENTIFIER = '00000000-0000-0000-0000-000000000
 
 -- Tháng 12/2025
 INSERT INTO orders (order_number, customer_id, account_id, order_date, order_status, payment_status, total_amount, discount_amount, tax_amount, created_date, updated_date)
-VALUES ('ORD202512001', @defaultCustomerId, @salesAccountId, '2025-12-03 10:30:00', N'Hoàn thành', N'Đã thanh toán', 3740000, 0, 0, '2025-12-03 10:30:00', '2025-12-03 10:30:00'),
-       ('ORD202512002', @defaultCustomerId, @salesAccountId, '2025-12-15 14:20:00', N'Hoàn thành', N'Đã thanh toán', 5580000, 0, 0, '2025-12-15 14:20:00', '2025-12-15 14:20:00');
+VALUES ('ORD202512001', @defaultCustomerId, @salesAccountId, '2025-12-03 10:30:00', N'Hoàn tất', N'Đã thanh toán', 3740000, 0, 0, '2025-12-03 10:30:00', '2025-12-03 10:30:00'),
+       ('ORD202512002', @defaultCustomerId, @salesAccountId, '2025-12-15 14:20:00', N'Hoàn tất', N'Đã thanh toán', 5580000, 0, 0, '2025-12-15 14:20:00', '2025-12-15 14:20:00');
 
 -- Tháng 11/2025
 INSERT INTO orders (order_number, customer_id, account_id, order_date, order_status, payment_status, total_amount, discount_amount, tax_amount, created_date, updated_date)
-VALUES ('ORD202511001', @defaultCustomerId, @salesAccountId, '2025-11-05 09:15:00', N'Hoàn thành', N'Đã thanh toán', 4690000, 0, 0, '2025-11-05 09:15:00', '2025-11-05 09:15:00'),
-       ('ORD202511002', @defaultCustomerId, @salesAccountId, '2025-11-20 16:45:00', N'Hoàn thành', N'Đã thanh toán', 6180000, 0, 0, '2025-11-20 16:45:00', '2025-11-20 16:45:00');
+VALUES ('ORD202511001', @defaultCustomerId, @salesAccountId, '2025-11-05 09:15:00', N'Hoàn tất', N'Đã thanh toán', 4690000, 0, 0, '2025-11-05 09:15:00', '2025-11-05 09:15:00'),
+       ('ORD202511002', @defaultCustomerId, @salesAccountId, '2025-11-20 16:45:00', N'Hoàn tất', N'Đã thanh toán', 6180000, 0, 0, '2025-11-20 16:45:00', '2025-11-20 16:45:00');
 
 -- Tháng 10/2025
 INSERT INTO orders (order_number, customer_id, account_id, order_date, order_status, payment_status, total_amount, discount_amount, tax_amount, created_date, updated_date)
-VALUES ('ORD202510001', @defaultCustomerId, @salesAccountId, '2025-10-08 11:00:00', N'Hoàn thành', N'Đã thanh toán', 3290000, 0, 0, '2025-10-08 11:00:00', '2025-10-08 11:00:00'),
-       ('ORD202510002', @defaultCustomerId, @salesAccountId, '2025-10-22 13:30:00', N'Hoàn thành', N'Đã thanh toán', 4540000, 0, 0, '2025-10-22 13:30:00', '2025-10-22 13:30:00');
+VALUES ('ORD202510001', @defaultCustomerId, @salesAccountId, '2025-10-08 11:00:00', N'Hoàn tất', N'Đã thanh toán', 3290000, 0, 0, '2025-10-08 11:00:00', '2025-10-08 11:00:00'),
+       ('ORD202510002', @defaultCustomerId, @salesAccountId, '2025-10-22 13:30:00', N'Hoàn tất', N'Đã thanh toán', 4540000, 0, 0, '2025-10-22 13:30:00', '2025-10-22 13:30:00');
 
 -- Tháng 9/2025
 INSERT INTO orders (order_number, customer_id, account_id, order_date, order_status, payment_status, total_amount, discount_amount, tax_amount, created_date, updated_date)
-VALUES ('ORD202509001', @defaultCustomerId, @salesAccountId, '2025-09-10 10:20:00', N'Hoàn thành', N'Đã thanh toán', 5780000, 0, 0, '2025-09-10 10:20:00', '2025-09-10 10:20:00'),
-       ('ORD202509002', @defaultCustomerId, @salesAccountId, '2025-09-25 15:10:00', N'Hoàn thành', N'Đã thanh toán', 3140000, 0, 0, '2025-09-25 15:10:00', '2025-09-25 15:10:00');
+VALUES ('ORD202509001', @defaultCustomerId, @salesAccountId, '2025-09-10 10:20:00', N'Hoàn tất', N'Đã thanh toán', 5780000, 0, 0, '2025-09-10 10:20:00', '2025-09-10 10:20:00'),
+       ('ORD202509002', @defaultCustomerId, @salesAccountId, '2025-09-25 15:10:00', N'Hoàn tất', N'Đã thanh toán', 3140000, 0, 0, '2025-09-25 15:10:00', '2025-09-25 15:10:00');
 
 -- Tháng 8/2025
 INSERT INTO orders (order_number, customer_id, account_id, order_date, order_status, payment_status, total_amount, discount_amount, tax_amount, created_date, updated_date)
-VALUES ('ORD202508001', @defaultCustomerId, @salesAccountId, '2025-08-07 09:45:00', N'Hoàn thành', N'Đã thanh toán', 6840000, 0, 0, '2025-08-07 09:45:00', '2025-08-07 09:45:00'),
-       ('ORD202508002', @defaultCustomerId, @salesAccountId, '2025-08-18 14:25:00', N'Hoàn thành', N'Đã thanh toán', 4050000, 0, 0, '2025-08-18 14:25:00', '2025-08-18 14:25:00');
+VALUES ('ORD202508001', @defaultCustomerId, @salesAccountId, '2025-08-07 09:45:00', N'Hoàn tất', N'Đã thanh toán', 6840000, 0, 0, '2025-08-07 09:45:00', '2025-08-07 09:45:00'),
+       ('ORD202508002', @defaultCustomerId, @salesAccountId, '2025-08-18 14:25:00', N'Hoàn tất', N'Đã thanh toán', 4050000, 0, 0, '2025-08-18 14:25:00', '2025-08-18 14:25:00');
 
 -- Tháng 7/2025
 INSERT INTO orders (order_number, customer_id, account_id, order_date, order_status, payment_status, total_amount, discount_amount, tax_amount, created_date, updated_date)
-VALUES ('ORD202507001', @defaultCustomerId, @salesAccountId, '2025-07-12 11:30:00', N'Hoàn thành', N'Đã thanh toán', 5290000, 0, 0, '2025-07-12 11:30:00', '2025-07-12 11:30:00'),
-       ('ORD202507002', @defaultCustomerId, @salesAccountId, '2025-07-28 16:00:00', N'Hoàn thành', N'Đã thanh toán', 3680000, 0, 0, '2025-07-28 16:00:00', '2025-07-28 16:00:00');
+VALUES ('ORD202507001', @defaultCustomerId, @salesAccountId, '2025-07-12 11:30:00', N'Hoàn tất', N'Đã thanh toán', 5290000, 0, 0, '2025-07-12 11:30:00', '2025-07-12 11:30:00'),
+       ('ORD202507002', @defaultCustomerId, @salesAccountId, '2025-07-28 16:00:00', N'Hoàn tất', N'Đã thanh toán', 3680000, 0, 0, '2025-07-28 16:00:00', '2025-07-28 16:00:00');
 
 -- Tháng 6/2025
 INSERT INTO orders (order_number, customer_id, account_id, order_date, order_status, payment_status, total_amount, discount_amount, tax_amount, created_date, updated_date)
-VALUES ('ORD202506001', @defaultCustomerId, @salesAccountId, '2025-06-03 10:15:00', N'Hoàn thành', N'Đã thanh toán', 7450000, 0, 0, '2025-06-03 10:15:00', '2025-06-03 10:15:00'),
-       ('ORD202506002', @defaultCustomerId, @salesAccountId, '2025-06-19 13:50:00', N'Hoàn thành', N'Đã thanh toán', 4980000, 0, 0, '2025-06-19 13:50:00', '2025-06-19 13:50:00');
+VALUES ('ORD202506001', @defaultCustomerId, @salesAccountId, '2025-06-03 10:15:00', N'Hoàn tất', N'Đã thanh toán', 7450000, 0, 0, '2025-06-03 10:15:00', '2025-06-03 10:15:00'),
+       ('ORD202506002', @defaultCustomerId, @salesAccountId, '2025-06-19 13:50:00', N'Hoàn tất', N'Đã thanh toán', 4980000, 0, 0, '2025-06-19 13:50:00', '2025-06-19 13:50:00');
 
 -- Tháng 5/2025
 INSERT INTO orders (order_number, customer_id, account_id, order_date, order_status, payment_status, total_amount, discount_amount, tax_amount, created_date, updated_date)
-VALUES ('ORD202505001', @defaultCustomerId, @salesAccountId, '2025-05-09 09:30:00', N'Hoàn thành', N'Đã thanh toán', 5840000, 0, 0, '2025-05-09 09:30:00', '2025-05-09 09:30:00'),
-       ('ORD202505002', @defaultCustomerId, @salesAccountId, '2025-05-24 15:20:00', N'Hoàn thành', N'Đã thanh toán', 3350000, 0, 0, '2025-05-24 15:20:00', '2025-05-24 15:20:00');
+VALUES ('ORD202505001', @defaultCustomerId, @salesAccountId, '2025-05-09 09:30:00', N'Hoàn tất', N'Đã thanh toán', 5840000, 0, 0, '2025-05-09 09:30:00', '2025-05-09 09:30:00'),
+       ('ORD202505002', @defaultCustomerId, @salesAccountId, '2025-05-24 15:20:00', N'Hoàn tất', N'Đã thanh toán', 3350000, 0, 0, '2025-05-24 15:20:00', '2025-05-24 15:20:00');
 
 -- Tháng 4/2025
 INSERT INTO orders (order_number, customer_id, account_id, order_date, order_status, payment_status, total_amount, discount_amount, tax_amount, created_date, updated_date)
-VALUES ('ORD202504001', @defaultCustomerId, @salesAccountId, '2025-04-06 11:10:00', N'Hoàn thành', N'Đã thanh toán', 6290000, 0, 0, '2025-04-06 11:10:00', '2025-04-06 11:10:00'),
-       ('ORD202504002', @defaultCustomerId, @salesAccountId, '2025-04-21 14:40:00', N'Hoàn thành', N'Đã thanh toán', 4120000, 0, 0, '2025-04-21 14:40:00', '2025-04-21 14:40:00');
+VALUES ('ORD202504001', @defaultCustomerId, @salesAccountId, '2025-04-06 11:10:00', N'Hoàn tất', N'Đã thanh toán', 6290000, 0, 0, '2025-04-06 11:10:00', '2025-04-06 11:10:00'),
+       ('ORD202504002', @defaultCustomerId, @salesAccountId, '2025-04-21 14:40:00', N'Hoàn tất', N'Đã thanh toán', 4120000, 0, 0, '2025-04-21 14:40:00', '2025-04-21 14:40:00');
 
 -- Tháng 3/2025
 INSERT INTO orders (order_number, customer_id, account_id, order_date, order_status, payment_status, total_amount, discount_amount, tax_amount, created_date, updated_date)
-VALUES ('ORD202503001', @defaultCustomerId, @salesAccountId, '2025-03-11 10:00:00', N'Hoàn thành', N'Đã thanh toán', 7180000, 0, 0, '2025-03-11 10:00:00', '2025-03-11 10:00:00'),
-       ('ORD202503002', @defaultCustomerId, @salesAccountId, '2025-03-27 16:15:00', N'Hoàn thành', N'Đã thanh toán', 5430000, 0, 0, '2025-03-27 16:15:00', '2025-03-27 16:15:00');
+VALUES ('ORD202503001', @defaultCustomerId, @salesAccountId, '2025-03-11 10:00:00', N'Hoàn tất', N'Đã thanh toán', 7180000, 0, 0, '2025-03-11 10:00:00', '2025-03-11 10:00:00'),
+       ('ORD202503002', @defaultCustomerId, @salesAccountId, '2025-03-27 16:15:00', N'Hoàn tất', N'Đã thanh toán', 5430000, 0, 0, '2025-03-27 16:15:00', '2025-03-27 16:15:00');
 
 -- Tháng 2/2025
 INSERT INTO orders (order_number, customer_id, account_id, order_date, order_status, payment_status, total_amount, discount_amount, tax_amount, created_date, updated_date)
-VALUES ('ORD202502001', @defaultCustomerId, @salesAccountId, '2025-02-08 09:40:00', N'Hoàn thành', N'Đã thanh toán', 4560000, 0, 0, '2025-02-08 09:40:00', '2025-02-08 09:40:00'),
-       ('ORD202502002', @defaultCustomerId, @salesAccountId, '2025-02-23 13:25:00', N'Hoàn thành', N'Đã thanh toán', 6820000, 0, 0, '2025-02-23 13:25:00', '2025-02-23 13:25:00');
+VALUES ('ORD202502001', @defaultCustomerId, @salesAccountId, '2025-02-08 09:40:00', N'Hoàn tất', N'Đã thanh toán', 4560000, 0, 0, '2025-02-08 09:40:00', '2025-02-08 09:40:00'),
+       ('ORD202502002', @defaultCustomerId, @salesAccountId, '2025-02-23 13:25:00', N'Hoàn tất', N'Đã thanh toán', 6820000, 0, 0, '2025-02-23 13:25:00', '2025-02-23 13:25:00');
 
 -- Tháng 1/2025
 INSERT INTO orders (order_number, customer_id, account_id, order_date, order_status, payment_status, total_amount, discount_amount, tax_amount, created_date, updated_date)
-VALUES ('ORD202501001', @defaultCustomerId, @salesAccountId, '2025-01-14 11:20:00', N'Hoàn thành', N'Đã thanh toán', 5270000, 0, 0, '2025-01-14 11:20:00', '2025-01-14 11:20:00'),
-       ('ORD202501002', @defaultCustomerId, @salesAccountId, '2025-01-29 15:35:00', N'Hoàn thành', N'Đã thanh toán', 3890000, 0, 0, '2025-01-29 15:35:00', '2025-01-29 15:35:00');
+VALUES ('ORD202501001', @defaultCustomerId, @salesAccountId, '2025-01-14 11:20:00', N'Hoàn tất', N'Đã thanh toán', 5270000, 0, 0, '2025-01-14 11:20:00', '2025-01-14 11:20:00'),
+       ('ORD202501002', @defaultCustomerId, @salesAccountId, '2025-01-29 15:35:00', N'Hoàn tất', N'Đã thanh toán', 3890000, 0, 0, '2025-01-29 15:35:00', '2025-01-29 15:35:00');
 
 
 -- Order Details cho 24 orders

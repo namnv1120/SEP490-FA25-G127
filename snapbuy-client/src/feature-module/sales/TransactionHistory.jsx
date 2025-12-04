@@ -18,7 +18,6 @@ const TransactionHistory = () => {
   const [dateRange, setDateRange] = useState([null, null]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const TransactionTypes = useMemo(
     () => [
@@ -45,10 +44,7 @@ const TransactionHistory = () => {
   }, [dateRange]);
 
   const loadTransactions = useCallback(async () => {
-    // Chỉ set loading cho lần đầu tiên, không set khi filter/search
-    if (isInitialLoad) {
-      setLoading(true);
-    }
+    setLoading(true);
     setError("");
     try {
       // Format date range cho LocalDateTime (giữ nguyên local timezone)
@@ -115,12 +111,10 @@ const TransactionHistory = () => {
 
       setListData(normalizedData);
       setTotalRecords(totalElements);
-      setIsInitialLoad(false);
     } catch {
       setError("Không thể tải dữ liệu. Vui lòng thử lại.");
       setListData([]);
       setTotalRecords(0);
-      setIsInitialLoad(false);
     } finally {
       setLoading(false);
     }
@@ -131,21 +125,6 @@ const TransactionHistory = () => {
     selectedReferenceType,
     dateRange,
     searchProduct,
-    isInitialLoad,
-  ]);
-
-  // Khi filter thay đổi -> reset về trang 1 và load
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCurrentPage(1);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [
-    searchProduct,
-    selectedTransactionType,
-    selectedReferenceType,
-    dateRangeKey,
-    rows,
   ]);
 
   // Load data khi currentPage hoặc các filter thay đổi
@@ -410,16 +389,16 @@ const TransactionHistory = () => {
                 <Spin size="large" />
               </div>
             ) : (
-            <PrimeDataTable
-              column={columns}
-              data={listData}
-              rows={rows}
-              setRows={setRows}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              totalRecords={totalRecords}
-              dataKey="key"
-              loading={loading && !isInitialLoad}
+              <PrimeDataTable
+                column={columns}
+                data={listData}
+                rows={rows}
+                setRows={setRows}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                totalRecords={totalRecords}
+                dataKey="key"
+                loading={loading}
                 serverSidePagination={true}
               />
             )}

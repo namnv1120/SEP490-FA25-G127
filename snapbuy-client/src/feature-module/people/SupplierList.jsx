@@ -11,6 +11,7 @@ import {
 } from "../../services/SupplierService";
 import { message, Spin } from "antd";
 import { exportToExcel } from "../../utils/excelUtils";
+import { removeVietnameseTones } from "../../utils/stringUtils";
 
 import AddSupplier from "../../core/modals/people/AddSupplierModal";
 import EditSupplier from "../../core/modals/people/EditSupplierModal";
@@ -95,11 +96,22 @@ const Suppliers = () => {
   const filteredList = listData.filter((item) => {
     // Filter theo search query
     if (searchQuery) {
+      const normalizedSearch = removeVietnameseTones(
+        searchQuery.trim().toLowerCase()
+      );
       const matchesSearch =
-        item.supplierName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.supplierCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.phone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.email?.toLowerCase().includes(searchQuery.toLowerCase());
+        removeVietnameseTones(item.supplierName?.toLowerCase() || "").includes(
+          normalizedSearch
+        ) ||
+        removeVietnameseTones(item.supplierCode?.toLowerCase() || "").includes(
+          normalizedSearch
+        ) ||
+        removeVietnameseTones(item.phone?.toLowerCase() || "").includes(
+          normalizedSearch
+        ) ||
+        removeVietnameseTones(item.email?.toLowerCase() || "").includes(
+          normalizedSearch
+        );
       if (!matchesSearch) return false;
     }
 
@@ -234,8 +246,9 @@ const Suppliers = () => {
       body: (data) => (
         <div className="d-flex align-items-center gap-2">
           <span
-            className={`badge fw-medium fs-10 ${data.status === "Hoạt động" ? "bg-success" : "bg-danger"
-              }`}
+            className={`badge fw-medium fs-10 ${
+              data.status === "Hoạt động" ? "bg-success" : "bg-danger"
+            }`}
           >
             {data.status}
           </span>

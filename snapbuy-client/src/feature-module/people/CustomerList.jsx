@@ -12,6 +12,7 @@ import {
   updateCustomer,
   toggleCustomerStatus,
 } from "../../services/CustomerService";
+import { removeVietnameseTones } from "../../utils/stringUtils";
 
 const Customers = () => {
   const [customerToDelete, setCustomerToDelete] = useState(null);
@@ -181,10 +182,19 @@ const Customers = () => {
 
     // Filter theo search query
     if (searchQuery) {
+      const normalizedSearch = removeVietnameseTones(
+        searchQuery.trim().toLowerCase()
+      );
       const matchesSearch =
-        item.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.customerCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.phone?.toLowerCase().includes(searchQuery.toLowerCase());
+        removeVietnameseTones(item.fullName?.toLowerCase() || "").includes(
+          normalizedSearch
+        ) ||
+        removeVietnameseTones(item.customerCode?.toLowerCase() || "").includes(
+          normalizedSearch
+        ) ||
+        removeVietnameseTones(item.phone?.toLowerCase() || "").includes(
+          normalizedSearch
+        );
       if (!matchesSearch) return false;
     }
 
@@ -521,7 +531,6 @@ const Customers = () => {
                 onChange={handleInputChange}
                 disabled={modalLoading}
                 placeholder="Nhập số điện thoại (10-15 chữ số)"
-                
               />
               <small className="text-muted">
                 Định dạng: 10-15 chữ số, có thể bắt đầu bằng dấu +

@@ -29,8 +29,8 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             "LEFT JOIN categories pc ON c.parent_category_id = pc.category_id " +
             "LEFT JOIN suppliers s ON p.supplier_id = s.supplier_id " +
             "WHERE (:keyword IS NULL OR :keyword = '' OR " +
-            "LOWER(p.product_code) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(p.product_name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "dbo.RemoveVietnameseDiacritics(LOWER(p.product_code)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :keyword, '%'))) OR " +
+            "dbo.RemoveVietnameseDiacritics(LOWER(p.product_name)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :keyword, '%')))) " +
             "AND (:active IS NULL OR p.active = :active) " +
             "AND (:categoryId IS NULL OR p.category_id = :categoryId OR " +
             "     (c.parent_category_id IS NOT NULL AND c.parent_category_id = :categoryId)) " +
@@ -41,8 +41,8 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             "LEFT JOIN categories pc ON c.parent_category_id = pc.category_id " +
             "LEFT JOIN suppliers s ON p.supplier_id = s.supplier_id " +
             "WHERE (:keyword IS NULL OR :keyword = '' OR " +
-            "LOWER(p.product_code) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(p.product_name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "dbo.RemoveVietnameseDiacritics(LOWER(p.product_code)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :keyword, '%'))) OR " +
+            "dbo.RemoveVietnameseDiacritics(LOWER(p.product_name)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :keyword, '%')))) " +
             "AND (:active IS NULL OR p.active = :active) " +
             "AND (:categoryId IS NULL OR p.category_id = :categoryId OR " +
             "     (c.parent_category_id IS NOT NULL AND c.parent_category_id = :categoryId)) " +

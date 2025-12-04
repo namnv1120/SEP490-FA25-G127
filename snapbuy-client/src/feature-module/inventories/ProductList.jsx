@@ -56,7 +56,7 @@ const ProductList = () => {
 
       const backendPage = Math.max(0, (currentPage || 1) - 1);
       const params = {
-        keyword: searchQuery || undefined,
+        keyword: searchQuery ? searchQuery.trim() : undefined,
         active: statusFilter,
         categoryId: categoryFilter || undefined,
         subCategoryId: subCategoryFilter || undefined,
@@ -78,7 +78,8 @@ const ProductList = () => {
           let subCategoryDisplay = "";
 
           if (product.subCategoryName) {
-            categoryDisplay = product.parentCategoryName || product.categoryName || "Không có";
+            categoryDisplay =
+              product.parentCategoryName || product.categoryName || "Không có";
             subCategoryDisplay = product.subCategoryName;
           } else if (product.parentCategoryId) {
             categoryDisplay = product.categoryName || "Không có";
@@ -116,7 +117,14 @@ const ProductList = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, rows, searchQuery, statusFilter, categoryFilter, subCategoryFilter]);
+  }, [
+    currentPage,
+    rows,
+    searchQuery,
+    statusFilter,
+    categoryFilter,
+    subCategoryFilter,
+  ]);
 
   useEffect(() => {
     fetchProducts();
@@ -374,8 +382,9 @@ const ProductList = () => {
       body: (data) => (
         <div className="d-flex align-items-center gap-2">
           <span
-            className={`badge fw-medium fs-10 ${data.status === "Hoạt động" ? "bg-success" : "bg-danger"
-              }`}
+            className={`badge fw-medium fs-10 ${
+              data.status === "Hoạt động" ? "bg-success" : "bg-danger"
+            }`}
           >
             {data.status}
           </span>
@@ -560,17 +569,17 @@ const ProductList = () => {
                     <Spin size="large" />
                   </div>
                 ) : (
-                <PrimeDataTable
-                  column={columns}
-                  data={products}
-                  rows={rows}
-                  setRows={setRows}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalRecords={totalRecords}
-                  dataKey="productId"
-                  serverSidePagination={true}
-                />
+                  <PrimeDataTable
+                    column={columns}
+                    data={products}
+                    rows={rows}
+                    setRows={setRows}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    totalRecords={totalRecords}
+                    dataKey="productId"
+                    serverSidePagination={true}
+                  />
                 )}
               </div>
             </div>

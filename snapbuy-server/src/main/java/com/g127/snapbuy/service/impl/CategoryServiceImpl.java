@@ -174,7 +174,9 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public PageResponse<CategoryResponse> searchParentCategoriesByKeyword(String keyword, Pageable pageable) {
-        Page<Category> categoryPage = categoryRepository.searchParentCategoriesByKeyword(keyword, pageable);
+        // Trim keyword to handle leading/trailing whitespace
+        String trimmedKeyword = (keyword != null) ? keyword.trim() : null;
+        Page<Category> categoryPage = categoryRepository.searchParentCategoriesByKeyword(trimmedKeyword, pageable);
         
         List<CategoryResponse> responseList = categoryPage.getContent().stream()
                 .map(categoryMapper::toResponse)
@@ -194,7 +196,9 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public PageResponse<CategoryResponse> searchSubCategoriesByKeyword(String keyword, Pageable pageable) {
-        Page<Category> categoryPage = categoryRepository.searchSubCategoriesByKeyword(keyword, pageable);
+        // Trim keyword to handle leading/trailing whitespace
+        String trimmedKeyword = (keyword != null) ? keyword.trim() : null;
+        Page<Category> categoryPage = categoryRepository.searchSubCategoriesByKeyword(trimmedKeyword, pageable);
         
         List<CategoryResponse> responseList = categoryPage.getContent().stream()
                 .map(categoryMapper::toResponse)

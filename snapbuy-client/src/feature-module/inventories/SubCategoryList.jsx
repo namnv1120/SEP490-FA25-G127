@@ -19,7 +19,7 @@ const SubCategoryList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
-  const [searchQuery, setSearchQuery] = useState(undefined);
+  const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState(null); // null=Tất cả, true=Hoạt động, false=Không hoạt động
   const [subCategories, setSubCategories] = useState([]);
   const [parentCategories, setParentCategories] = useState([]);
@@ -29,6 +29,7 @@ const SubCategoryList = () => {
   const [editSubCategoryId, setEditSubCategoryId] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const StatusOptions = useMemo(
     () => [
@@ -57,12 +58,13 @@ const SubCategoryList = () => {
 
   const fetchSubCategories = useCallback(async () => {
     try {
+      setLoading(true);
       setError(null);
 
       const backendPage = currentPage - 1;
 
       const result = await searchSubCategories(
-        searchQuery || "",
+        (searchQuery || "").trim(),
         backendPage,
         rows,
         "createdDate",
@@ -94,21 +96,21 @@ const SubCategoryList = () => {
           description: cat.description || "Không có",
           createddate: cat.createdDate
             ? new Date(cat.createdDate).toLocaleDateString("vi-VN", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-            })
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
             : "Không có",
           updateddate: cat.updatedDate
             ? new Date(cat.updatedDate).toLocaleDateString("vi-VN", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-            })
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
             : "Không có",
           status:
             cat.active === 1 || cat.active === true
@@ -124,14 +126,13 @@ const SubCategoryList = () => {
       console.error("❌ Lỗi khi tải danh sách danh mục con:", err);
       setError("Lỗi khi tải danh sách danh mục con. Vui lòng thử lại.");
     } finally {
-      void 0;
+      setLoading(false);
     }
   }, [currentPage, rows, searchQuery, parentCategories]);
 
   useEffect(() => {
     fetchSubCategories();
   }, [fetchSubCategories]);
-
 
   const handleRefresh = (e) => {
     if (e) e.preventDefault();
@@ -262,8 +263,9 @@ const SubCategoryList = () => {
       body: (data) => (
         <div className="d-flex align-items-center gap-2">
           <span
-            className={`badge fw-medium fs-10 ${data.status === "Hoạt động" ? "bg-success" : "bg-danger"
-              }`}
+            className={`badge fw-medium fs-10 ${
+              data.status === "Hoạt động" ? "bg-success" : "bg-danger"
+            }`}
           >
             {data.status}
           </span>
@@ -314,10 +316,7 @@ const SubCategoryList = () => {
                 <h6>Quản lý danh sách danh mục con</h6>
               </div>
             </div>
-            <TableTopHead
-              showExcel={false}
-              onRefresh={handleRefresh}
-            />
+            <TableTopHead showExcel={false} onRefresh={handleRefresh} />
             <div className="page-btn">
               <button
                 type="button"
@@ -377,24 +376,32 @@ const SubCategoryList = () => {
             </div>
             <div className="card-body p-0">
               <div className="table-responsive category-table">
-                <PrimeDataTable
-                  column={columns}
-                  data={subCategories.filter((cat) => {
-                    if (statusFilter === null) return true;
-                    return cat.active === statusFilter;
-                  })}
-                  rows={rows}
-                  setRows={setRows}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalRecords={
-                    statusFilter === null
-                      ? totalRecords
-                      : subCategories.filter((cat) => cat.active === statusFilter).length
-                  }
-                  dataKey="categoryId"
-                  serverSidePagination={statusFilter === null}
-                />
+                {loading ? (
+                  <div className="d-flex justify-content-center p-5">
+                    <span className="spinner-border text-primary" role="status" />
+                  </div>
+                ) : (
+                  <PrimeDataTable
+                    column={columns}
+                    data={subCategories.filter((cat) => {
+                      if (statusFilter === null) return true;
+                      return cat.active === statusFilter;
+                    })}
+                    rows={rows}
+                    setRows={setRows}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    totalRecords={
+                      statusFilter === null
+                        ? totalRecords
+                        : subCategories.filter(
+                            (cat) => cat.active === statusFilter
+                          ).length
+                    }
+                    dataKey="categoryId"
+                    serverSidePagination={statusFilter === null}
+                  />
+                )}
               </div>
             </div>
           </div>

@@ -20,8 +20,6 @@ const OrderHistory = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [accountNamesMap, setAccountNamesMap] = useState({});
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -67,12 +65,12 @@ const OrderHistory = () => {
   };
 
   const loadOrders = useCallback(async () => {
-    if (isInitialLoad) setLoading(true);
+    setLoading(true);
     setError("");
     try {
       const params = {};
-      if (debouncedSearchTerm?.trim())
-        params.searchTerm = debouncedSearchTerm.trim();
+      if (searchTerm?.trim())
+        params.searchTerm = searchTerm.trim();
       if (selectedStatus?.trim()) params.orderStatus = selectedStatus.trim();
       if (dateRange[0] && dateRange[1]) {
         const fromDate = new Date(dateRange[0]);
@@ -183,7 +181,6 @@ const OrderHistory = () => {
       setAccountNamesMap(accountNames);
       setFilteredData(sortedData);
 
-      setIsInitialLoad(false);
     } catch (err) {
       console.error("=== Lỗi khi gọi API ===", err);
       setError(
@@ -193,16 +190,10 @@ const OrderHistory = () => {
       );
       setFilteredData([]);
 
-      setIsInitialLoad(false);
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearchTerm, selectedStatus, selectedPaymentStatus, dateRange, isInitialLoad]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearchTerm(searchTerm), 500);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [searchTerm, selectedStatus, selectedPaymentStatus, dateRange]);
 
   useEffect(() => {
     loadOrders();
@@ -835,7 +826,7 @@ const OrderHistory = () => {
                 setCurrentPage={setCurrentPage}
                 totalRecords={filteredData.length}
                 dataKey="key"
-                loading={loading && !isInitialLoad}
+                loading={loading}
                 serverSidePagination={false}
               />
             )}

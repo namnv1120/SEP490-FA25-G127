@@ -9,6 +9,7 @@ import { message, Slider, Spin } from "antd";
 import { exportToExcel } from "../../utils/excelUtils";
 import { getAllProductPrices } from "../../services/ProductPriceService";
 import ImportProductPrice from "./ImportProductPrice";
+import { removeVietnameseTones } from "../../utils/stringUtils";
 
 const ProductPriceList = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -43,7 +44,10 @@ const ProductPriceList = () => {
 
   // Khởi tạo priceRange khi dữ liệu thay đổi
   useEffect(() => {
-    if (priceRangeValues.min >= 0 && priceRangeValues.max > priceRangeValues.min) {
+    if (
+      priceRangeValues.min >= 0 &&
+      priceRangeValues.max > priceRangeValues.min
+    ) {
       setPriceRange([priceRangeValues.min, priceRangeValues.max]);
     }
   }, [priceRangeValues]);
@@ -83,7 +87,9 @@ const ProductPriceList = () => {
     } catch (err) {
       console.error("❌ Lỗi khi tải danh sách giá sản phẩm:", err);
       setError("Không thể tải danh sách giá sản phẩm. Vui lòng thử lại sau.");
-      message.error("Không thể tải danh sách giá sản phẩm. Vui lòng thử lại sau.");
+      message.error(
+        "Không thể tải danh sách giá sản phẩm. Vui lòng thử lại sau."
+      );
     } finally {
       setLoading(false);
     }
@@ -138,17 +144,25 @@ const ProductPriceList = () => {
   const filteredList = productPrices.filter((item) => {
     // Filter theo search query
     if (searchQuery) {
+      const normalizedSearch = removeVietnameseTones(
+        searchQuery.trim().toLowerCase()
+      );
       const matchesSearch =
-        item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.productId
-          ?.toString()
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase());
+        removeVietnameseTones(item.productName?.toLowerCase() || "").includes(
+          normalizedSearch
+        ) ||
+        removeVietnameseTones(
+          item.productId?.toString().toLowerCase() || ""
+        ).includes(normalizedSearch);
       if (!matchesSearch) return false;
     }
 
     // Filter theo khoảng giá
-    if (priceRange && priceRange[0] !== undefined && priceRange[1] !== undefined) {
+    if (
+      priceRange &&
+      priceRange[0] !== undefined &&
+      priceRange[1] !== undefined
+    ) {
       const unitPrice = item.rawUnitPrice || 0;
       if (unitPrice < priceRange[0] || unitPrice > priceRange[1]) {
         return false;
@@ -340,13 +354,17 @@ const ProductPriceList = () => {
                     onChange={(e) => {
                       setSearchQuery(e.target.value);
                       setCurrentPage(1);
+                      // Hiệu ứng loading ngắn khi tìm kiếm
+                      setLoading(true);
+                      setTimeout(() => setLoading(false), 200);
                     }}
                   />
                 </div>
                 <div style={{ minWidth: "300px", flex: 1, maxWidth: "400px" }}>
                   <div className="mb-2">
                     <label className="form-label small text-muted mb-1">
-                      Khoảng giá: {priceRange[0]?.toLocaleString() || "0"} đ - {priceRange[1]?.toLocaleString() || "0"} đ
+                      Khoảng giá: {priceRange[0]?.toLocaleString() || "0"} đ -{" "}
+                      {priceRange[1]?.toLocaleString() || "0"} đ
                     </label>
                   </div>
                   {priceRangeValues.max > priceRangeValues.min && (
@@ -358,11 +376,19 @@ const ProductPriceList = () => {
                       onChange={(value) => {
                         setPriceRange(value);
                         setCurrentPage(1);
+                        // Hiệu ứng loading ngắn khi thay đổi khoảng giá
+                        setLoading(true);
+                        setTimeout(() => setLoading(false), 200);
                       }}
                       tooltip={{
                         formatter: (value) => `${value?.toLocaleString()} đ`,
                       }}
-                      step={Math.max(1000, Math.floor((priceRangeValues.max - priceRangeValues.min) / 100))}
+                      step={Math.max(
+                        1000,
+                        Math.floor(
+                          (priceRangeValues.max - priceRangeValues.min) / 100
+                        )
+                      )}
                     />
                   )}
                 </div>
@@ -375,17 +401,17 @@ const ProductPriceList = () => {
                     <Spin size="large" />
                   </div>
                 ) : (
-                <PrimeDataTable
-                  column={columns}
-                  data={filteredList}
-                  rows={rows}
-                  setRows={setRows}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalRecords={filteredList.length}
-                  dataKey="priceId"
-                  loading={loading}
-                />
+                  <PrimeDataTable
+                    column={columns}
+                    data={filteredList}
+                    rows={rows}
+                    setRows={setRows}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    totalRecords={filteredList.length}
+                    dataKey="priceId"
+                    loading={loading}
+                  />
                 )}
               </div>
             </div>

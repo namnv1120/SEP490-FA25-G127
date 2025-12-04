@@ -44,7 +44,7 @@ const RoleList = () => {
       const sortBy = "roleName";
       const sortDir = "ASC";
       const params = {
-        keyword: searchQuery,
+        keyword: searchQuery ? searchQuery.trim() : "",
         active: statusFilter,
         page: backendPage,
         size: rows,
@@ -70,8 +70,8 @@ const RoleList = () => {
       } else {
         message.error(
           error.response?.data?.message ||
-          error.message ||
-          "Lỗi khi lấy danh sách vai trò"
+            error.message ||
+            "Lỗi khi lấy danh sách vai trò"
         );
       }
     } finally {
@@ -88,7 +88,7 @@ const RoleList = () => {
       console.error("❌ Lỗi khi chuyển đổi trạng thái vai trò:", err);
       message.error(
         err.response?.data?.message ||
-        "Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại."
+          "Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại."
       );
     }
   };
@@ -222,8 +222,9 @@ const RoleList = () => {
         return (
           <div className="d-flex align-items-center gap-2">
             <span
-              className={`badge fw-medium fs-10 ${active ? "bg-success" : "bg-danger"
-                }`}
+              className={`badge fw-medium fs-10 ${
+                active ? "bg-success" : "bg-danger"
+              }`}
             >
               {active ? "Hoạt động" : "Không hoạt động"}
             </span>

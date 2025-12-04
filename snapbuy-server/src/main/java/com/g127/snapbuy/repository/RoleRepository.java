@@ -16,21 +16,21 @@ public interface RoleRepository extends JpaRepository<Role, UUID> {
     boolean existsByRoleNameIgnoreCase(String roleName);
 
     @Query(value = """
-           select r
-           from Role r
+           select r.*
+           from roles r
            where (:keyword is null or :keyword = '' or
-                  lower(r.roleName) like lower(concat('%', :keyword, '%')) or
-                  lower(r.description) like lower(concat('%', :keyword, '%')))
+                  dbo.RemoveVietnameseDiacritics(lower(r.role_name)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))) or
+                  dbo.RemoveVietnameseDiacritics(lower(r.description)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))))
              and (:active is null or r.active = :active)
            """,
            countQuery = """
-           select count(r)
-           from Role r
+           select count(r.role_id)
+           from roles r
            where (:keyword is null or :keyword = '' or
-                  lower(r.roleName) like lower(concat('%', :keyword, '%')) or
-                  lower(r.description) like lower(concat('%', :keyword, '%')))
+                  dbo.RemoveVietnameseDiacritics(lower(r.role_name)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))) or
+                  dbo.RemoveVietnameseDiacritics(lower(r.description)) like dbo.RemoveVietnameseDiacritics(lower(concat('%', :keyword, '%'))))
              and (:active is null or r.active = :active)
-           """)
+           """, nativeQuery = true)
     Page<Role> searchRolesPage(@Param("keyword") String keyword,
                                 @Param("active") Boolean active,
                                 Pageable pageable);

@@ -15,12 +15,12 @@ import java.util.UUID;
 
 @Repository
 public interface CustomerRepository extends JpaRepository<Customer, UUID> {
-    @Query("""
-        SELECT c FROM Customer c
-        WHERE (LOWER(c.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-           OR LOWER(c.phone) LIKE LOWER(CONCAT('%', :keyword, '%')))
-           AND c.active = true
-    """)
+    @Query(value = """
+        SELECT c.* FROM customers c
+        WHERE (dbo.RemoveVietnameseDiacritics(LOWER(c.full_name)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :keyword, '%')))
+           OR dbo.RemoveVietnameseDiacritics(LOWER(c.phone)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :keyword, '%'))))
+           AND c.active = 1
+    """, nativeQuery = true)
     List<Customer> searchByKeyword(@Param("keyword") String keyword);
 
     Customer getCustomerByPhone(String phone);

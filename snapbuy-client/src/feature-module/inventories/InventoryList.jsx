@@ -8,6 +8,7 @@ import { getAllInventories } from "../../services/InventoryService";
 import { message, Spin } from "antd";
 import EditInventory from "../../core/modals/inventories/EditInventoryModal";
 import ProductDetailModal from "../../core/modals/inventories/ProductDetailModal";
+import { removeVietnameseTones } from "../../utils/stringUtils";
 
 const InventoryList = () => {
   const [inventoryList, setInventoryList] = useState([]);
@@ -92,12 +93,16 @@ const InventoryList = () => {
   const filteredList = inventoryList.filter((item) => {
     // Filter theo search query
     if (searchQuery) {
+      const normalizedSearch = removeVietnameseTones(
+        searchQuery.trim().toLowerCase()
+      );
       const matchesSearch =
-        item.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.productId
-          ?.toString()
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase());
+        removeVietnameseTones(item.productName?.toLowerCase() || "").includes(
+          normalizedSearch
+        ) ||
+        removeVietnameseTones(
+          item.productId?.toString().toLowerCase() || ""
+        ).includes(normalizedSearch);
       if (!matchesSearch) return false;
     }
 
@@ -198,7 +203,9 @@ const InventoryList = () => {
           case "Thiếu hàng":
             return <span className="badge bg-danger">Thiếu hàng</span>;
           case "Cần đặt hàng":
-            return <span className="badge bg-warning text-dark">Cần đặt hàng</span>;
+            return (
+              <span className="badge bg-warning text-dark">Cần đặt hàng</span>
+            );
           case "Quá tồn":
             return <span className="badge bg-warning text-dark">Quá tồn</span>;
           case "Ổn định":
@@ -233,7 +240,6 @@ const InventoryList = () => {
     },
   ];
 
-
   return (
     <div className="page-wrapper">
       <div className="content">
@@ -260,7 +266,6 @@ const InventoryList = () => {
           </div>
         )}
 
-
         <div className="card table-list-card no-search shadow-sm">
           <div className="card-header d-flex align-items-center justify-content-between flex-wrap bg-light-subtle px-4 py-3">
             <h5 className="mb-0 fw-semibold">
@@ -279,6 +284,9 @@ const InventoryList = () => {
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
                     setCurrentPage(1);
+                    // Hiệu ứng loading ngắn khi tìm kiếm (đồng bộ với Account/Role/Product)
+                    setLoading(true);
+                    setTimeout(() => setLoading(false), 200);
                   }}
                 />
               </div>
@@ -293,6 +301,9 @@ const InventoryList = () => {
                     const v = s?.value;
                     setStatusFilter(v || null);
                     setCurrentPage(1);
+                    // Hiệu ứng loading ngắn khi đổi trạng thái lọc
+                    setLoading(true);
+                    setTimeout(() => setLoading(false), 200);
                   }}
                   placeholder="Chọn trạng thái"
                   className="w-100"
@@ -308,16 +319,16 @@ const InventoryList = () => {
                   <Spin size="large" />
                 </div>
               ) : (
-              <PrimeDataTable
-                column={columns}
-                data={filteredList}
-                rows={rows}
-                setRows={setRows}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-                totalRecords={filteredList.length}
-                dataKey="inventoryId"
-                loading={false}
+                <PrimeDataTable
+                  column={columns}
+                  data={filteredList}
+                  rows={rows}
+                  setRows={setRows}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  totalRecords={filteredList.length}
+                  dataKey="inventoryId"
+                  loading={false}
                 />
               )}
             </div>

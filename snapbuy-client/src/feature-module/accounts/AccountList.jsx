@@ -46,7 +46,7 @@ const AccountList = () => {
       const sortBy = "fullName";
       const sortDir = "ASC";
       const params = {
-        keyword: searchQuery,
+        keyword: searchQuery ? searchQuery.trim() : "",
         active: statusFilter,
         role: roleFilter,
         page: backendPage,
@@ -76,8 +76,8 @@ const AccountList = () => {
       } else {
         message.error(
           error.response?.data?.message ||
-          error.message ||
-          "Lỗi khi lấy danh sách tài khoản"
+            error.message ||
+            "Lỗi khi lấy danh sách tài khoản"
         );
       }
     } finally {
@@ -117,7 +117,7 @@ const AccountList = () => {
       console.error("❌ Lỗi khi chuyển đổi trạng thái tài khoản:", err);
       message.error(
         err.response?.data?.message ||
-        "Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại."
+          "Lỗi khi chuyển đổi trạng thái. Vui lòng thử lại."
       );
     }
   };
@@ -138,7 +138,7 @@ const AccountList = () => {
       console.error("❌ Lỗi khi xoá tài khoản:", err);
       message.error(
         err.response?.data?.message ||
-        "Lỗi khi xoá tài khoản. Vui lòng thử lại."
+          "Lỗi khi xoá tài khoản. Vui lòng thử lại."
       );
     }
   };
@@ -246,8 +246,9 @@ const AccountList = () => {
         return (
           <div className="d-flex align-items-center gap-2">
             <span
-              className={`badge fw-medium fs-10 ${active ? "bg-success" : "bg-danger"
-                }`}
+              className={`badge fw-medium fs-10 ${
+                active ? "bg-success" : "bg-danger"
+              }`}
             >
               {active ? "Hoạt động" : "Không hoạt động"}
             </span>

@@ -26,12 +26,12 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
     @Query(value = "SELECT c.* FROM categories c " +
             "WHERE (c.parent_category_id IS NULL) " +
             "AND (:keyword IS NULL OR :keyword = '' OR " +
-            "LOWER(c.category_name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "dbo.RemoveVietnameseDiacritics(LOWER(c.category_name)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :keyword, '%')))) " +
             "ORDER BY c.created_date DESC",
             countQuery = "SELECT COUNT(c.category_id) FROM categories c " +
             "WHERE (c.parent_category_id IS NULL) " +
             "AND (:keyword IS NULL OR :keyword = '' OR " +
-            "LOWER(c.category_name) LIKE LOWER(CONCAT('%', :keyword, '%')))",
+            "dbo.RemoveVietnameseDiacritics(LOWER(c.category_name)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :keyword, '%'))))",
             nativeQuery = true)
     Page<Category> searchParentCategoriesByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
@@ -40,15 +40,15 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
             "LEFT JOIN categories p ON c.parent_category_id = p.category_id " +
             "WHERE (c.parent_category_id IS NOT NULL) " +
             "AND (:keyword IS NULL OR :keyword = '' OR " +
-            "LOWER(c.category_name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(p.category_name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "dbo.RemoveVietnameseDiacritics(LOWER(c.category_name)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :keyword, '%'))) OR " +
+            "dbo.RemoveVietnameseDiacritics(LOWER(p.category_name)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :keyword, '%')))) " +
             "ORDER BY c.created_date DESC",
             countQuery = "SELECT COUNT(c.category_id) FROM categories c " +
             "LEFT JOIN categories p ON c.parent_category_id = p.category_id " +
             "WHERE (c.parent_category_id IS NOT NULL) " +
             "AND (:keyword IS NULL OR :keyword = '' OR " +
-            "LOWER(c.category_name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(p.category_name) LIKE LOWER(CONCAT('%', :keyword, '%')))",
+            "dbo.RemoveVietnameseDiacritics(LOWER(c.category_name)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :keyword, '%'))) OR " +
+            "dbo.RemoveVietnameseDiacritics(LOWER(p.category_name)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :keyword, '%'))))",
             nativeQuery = true)
     Page<Category> searchSubCategoriesByKeyword(@Param("keyword") String keyword, Pageable pageable);
 }
