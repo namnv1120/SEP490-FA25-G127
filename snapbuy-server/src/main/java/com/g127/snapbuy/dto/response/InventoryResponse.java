@@ -12,6 +12,7 @@ import java.util.UUID;
 public class InventoryResponse {
     private UUID inventoryId;
     private UUID productId;
+    private String productCode;
     private String productName;
     private Integer quantityInStock;
     private Integer minimumStock;

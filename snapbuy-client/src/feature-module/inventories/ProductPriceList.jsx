@@ -1,11 +1,12 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import ProductDetailModal from "../../core/modals/inventories/ProductDetailModal";
 import { allRoutes } from "../../routes/AllRoutes";
 import CommonFooter from "../../components/footer/CommonFooter";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
-import { message, Slider, Spin } from "antd";
+import { message, Spin } from "antd";
+import CommonSelect from "../../components/select/common-select";
 import { exportToExcel } from "../../utils/excelUtils";
 import { getAllProductPrices } from "../../services/ProductPriceService";
 import ImportProductPrice from "./ImportProductPrice";
@@ -21,36 +22,20 @@ const ProductPriceList = () => {
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [priceRange, setPriceRange] = useState([0, 0]);
+  const [priceCondition, setPriceCondition] = useState(null); // Điều kiện so sánh giá bán vs giá nhập
   const [loading, setLoading] = useState(false);
 
   const route = allRoutes;
 
-  // Tính toán min và max giá từ dữ liệu
-  const priceRangeValues = useMemo(() => {
-    if (!productPrices || productPrices.length === 0) {
-      return { min: 0, max: 1000000 };
-    }
-    const prices = productPrices
-      .map((p) => p.rawUnitPrice)
-      .filter((p) => p != null && !isNaN(p));
-    if (prices.length === 0) {
-      return { min: 0, max: 1000000 };
-    }
-    const min = Math.floor(Math.min(...prices));
-    const max = Math.ceil(Math.max(...prices));
-    return { min, max };
-  }, [productPrices]);
-
-  // Khởi tạo priceRange khi dữ liệu thay đổi
-  useEffect(() => {
-    if (
-      priceRangeValues.min >= 0 &&
-      priceRangeValues.max > priceRangeValues.min
-    ) {
-      setPriceRange([priceRangeValues.min, priceRangeValues.max]);
-    }
-  }, [priceRangeValues]);
+  // Các tùy chọn điều kiện so sánh giá
+  const priceConditionOptions = [
+    { value: null, label: "Tất cả" },
+    { value: "gt", label: "Lớn hơn (>)" },
+    { value: "gte", label: "Lớn hơn hoặc bằng (≥)" },
+    { value: "eq", label: "Bằng (=)" },
+    { value: "lt", label: "Nhỏ hơn (<)" },
+    { value: "lte", label: "Nhỏ hơn hoặc bằng (≤)" },
+  ];
 
   const fetchProductPrices = useCallback(async () => {
     try {
@@ -62,6 +47,7 @@ const ProductPriceList = () => {
       const mappedPrices = data.map((price) => ({
         priceId: price.priceId,
         productId: price.productId,
+        productCode: price.productCode || "Không có",
         productName: price.productName || "Không có",
         unitPrice: `${price.unitPrice?.toLocaleString() || "0.00"} đ`,
         costPrice: `${price.costPrice?.toLocaleString() || "0.00"} đ`,
@@ -157,15 +143,28 @@ const ProductPriceList = () => {
       if (!matchesSearch) return false;
     }
 
-    // Filter theo khoảng giá
-    if (
-      priceRange &&
-      priceRange[0] !== undefined &&
-      priceRange[1] !== undefined
-    ) {
+    // Filter theo điều kiện giá (so sánh giá bán với giá nhập)
+    if (priceCondition) {
       const unitPrice = item.rawUnitPrice || 0;
-      if (unitPrice < priceRange[0] || unitPrice > priceRange[1]) {
-        return false;
+      const costPrice = item.rawCostPrice || 0;
+      switch (priceCondition) {
+        case "gt": // Giá bán lớn hơn giá nhập
+          if (!(unitPrice > costPrice)) return false;
+          break;
+        case "gte": // Giá bán lớn hơn hoặc bằng giá nhập
+          if (!(unitPrice >= costPrice)) return false;
+          break;
+        case "eq": // Giá bán bằng giá nhập
+          if (unitPrice !== costPrice) return false;
+          break;
+        case "lt": // Giá bán nhỏ hơn giá nhập
+          if (!(unitPrice < costPrice)) return false;
+          break;
+        case "lte": // Giá bán nhỏ hơn hoặc bằng giá nhập
+          if (!(unitPrice <= costPrice)) return false;
+          break;
+        default:
+          break;
       }
     }
 
@@ -226,6 +225,12 @@ const ProductPriceList = () => {
       ),
       sortable: false,
       key: "checked",
+    },
+    {
+      header: "Mã sản phẩm",
+      field: "productCode",
+      key: "productCode",
+      sortable: true,
     },
     {
       header: "Tên sản phẩm",
@@ -360,37 +365,24 @@ const ProductPriceList = () => {
                     }}
                   />
                 </div>
-                <div style={{ minWidth: "300px", flex: 1, maxWidth: "400px" }}>
-                  <div className="mb-2">
-                    <label className="form-label small text-muted mb-1">
-                      Khoảng giá: {priceRange[0]?.toLocaleString() || "0"} đ -{" "}
-                      {priceRange[1]?.toLocaleString() || "0"} đ
-                    </label>
-                  </div>
-                  {priceRangeValues.max > priceRangeValues.min && (
-                    <Slider
-                      range
-                      min={priceRangeValues.min}
-                      max={priceRangeValues.max}
-                      value={priceRange}
-                      onChange={(value) => {
-                        setPriceRange(value);
-                        setCurrentPage(1);
-                        // Hiệu ứng loading ngắn khi thay đổi khoảng giá
-                        setLoading(true);
-                        setTimeout(() => setLoading(false), 200);
-                      }}
-                      tooltip={{
-                        formatter: (value) => `${value?.toLocaleString()} đ`,
-                      }}
-                      step={Math.max(
-                        1000,
-                        Math.floor(
-                          (priceRangeValues.max - priceRangeValues.min) / 100
-                        )
-                      )}
-                    />
-                  )}
+                <div style={{ minWidth: "220px" }}>
+                  <CommonSelect
+                    options={priceConditionOptions}
+                    value={
+                      priceConditionOptions.find(
+                        (o) => o.value === priceCondition
+                      ) || priceConditionOptions[0]
+                    }
+                    onChange={(s) => {
+                      const v = s?.value;
+                      setPriceCondition(v || null);
+                      setCurrentPage(1);
+                      setLoading(true);
+                      setTimeout(() => setLoading(false), 200);
+                    }}
+                    placeholder="Giá bán so với giá nhập"
+                    className="w-100"
+                  />
                 </div>
               </div>
             </div>

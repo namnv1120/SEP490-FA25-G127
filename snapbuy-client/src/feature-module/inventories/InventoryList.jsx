@@ -59,6 +59,7 @@ const InventoryList = () => {
         .filter((item) => item && item.inventoryId != null)
         .map((item) => ({
           inventoryId: item.inventoryId,
+          productCode: item.productCode || "Không có",
           productId: item.productId || "Không có",
           productName: item.productName || "Không có",
           quantityInStock: item.quantityInStock ?? 0,
@@ -169,6 +170,12 @@ const InventoryList = () => {
       ),
       sortable: false,
       key: "checked",
+    },
+    {
+      header: "Mã sản phẩm",
+      field: "productCode",
+      key: "productCode",
+      sortable: true,
     },
     {
       header: "Tên sản phẩm",

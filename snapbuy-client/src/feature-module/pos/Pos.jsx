@@ -395,7 +395,7 @@ const Pos = () => {
     }
   };
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (adjustCartQuantity = true) => {
     try {
       setLoading(true);
       const data = await getAllProducts();
@@ -440,6 +440,7 @@ const Pos = () => {
       const mappedProducts = await Promise.all(mappedProductsPromises);
       setProducts(mappedProducts);
 
+      // Cập nhật cartItems với stock mới
       setCartItems((prevCartItems) => {
         if (prevCartItems.length === 0) return prevCartItems;
 
@@ -450,7 +451,13 @@ const Pos = () => {
           if (updatedProduct) {
             const newStock =
               updatedProduct.quantityInStock || updatedProduct.stock || 0;
-            const adjustedQuantity = Math.min(cartItem.quantity, newStock);
+
+            // Nếu adjustCartQuantity = true và chưa tạo đơn hàng, điều chỉnh quantity theo stock
+            // Nếu adjustCartQuantity = false (sau khi tạo đơn hàng), giữ nguyên quantity
+            const adjustedQuantity = adjustCartQuantity
+              ? Math.min(cartItem.quantity, newStock)
+              : cartItem.quantity;
+
             return {
               ...cartItem,
               stock: newStock,
@@ -1086,7 +1093,7 @@ const Pos = () => {
 
       setShowPaymentMethodModal(false);
       message.success("Đã tạo đơn hàng thành công!");
-      await fetchProducts();
+      await fetchProducts(false); // false = không điều chỉnh quantity vì đơn hàng đã được tạo
 
       if (paymentMethod === "cash") {
         setShowCashPaymentModal(true);
@@ -1268,16 +1275,16 @@ const Pos = () => {
 
     // Listener cho postMessage từ trang return của MoMo
     const handleMomoMessage = async (event) => {
-      if (event.data && event.data.source === 'momo') {
+      if (event.data && event.data.source === "momo") {
         momoMessageReceived = true;
         const { status } = event.data;
-        
+
         console.log("📩 Received MoMo postMessage:", event.data);
-        
-        if (status === 'success') {
+
+        if (status === "success") {
           // Đợi một chút để backend xử lý IPN
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+
           // Kiểm tra lại trạng thái đơn hàng
           try {
             const orderData = await getOrderById(orderId);
@@ -1287,10 +1294,10 @@ const Pos = () => {
                 clearInterval(momoPollingIntervalRef.current);
                 momoPollingIntervalRef.current = null;
               }
-              window.removeEventListener('message', handleMomoMessage);
-              
+              window.removeEventListener("message", handleMomoMessage);
+
               setShowMomoModal(false);
-              
+
               // Thanh toán MoMo đã thành công, thử complete order
               // Nếu lỗi (do đã được complete bởi IPN), vẫn xem như thành công
               let finalOrder = orderData;
@@ -1298,7 +1305,9 @@ const Pos = () => {
                 const completedOrder = await completeOrder(orderId);
                 finalOrder = completedOrder;
               } catch (completeError) {
-                console.log("Order already completed by MoMo IPN, using existing data...");
+                console.log(
+                  "Order already completed by MoMo IPN, using existing data..."
+                );
                 // Đơn có thể đã được complete bởi MoMo IPN, lấy lại thông tin mới nhất
                 try {
                   finalOrder = await getOrderById(orderId);
@@ -1306,17 +1315,17 @@ const Pos = () => {
                   // Sử dụng orderData hiện tại
                 }
               }
-              
+
               setCompletedOrderForPrint(finalOrder);
               setShowOrderSuccessModal(true);
             }
           } catch (err) {
             console.error("Error checking order after MoMo message:", err);
           }
-        } else if (status === 'failed') {
+        } else if (status === "failed") {
           // Chỉ xử lý thất bại nếu chưa kiểm tra được thành công
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
           try {
             const orderData = await getOrderById(orderId);
             // Nếu đơn đã thanh toán thành công, không hiển thị lỗi
@@ -1326,14 +1335,14 @@ const Pos = () => {
           } catch {
             // Ignore error
           }
-          
+
           // Dừng polling và hiển thị lỗi
           if (momoPollingIntervalRef.current) {
             clearInterval(momoPollingIntervalRef.current);
             momoPollingIntervalRef.current = null;
           }
-          window.removeEventListener('message', handleMomoMessage);
-          
+          window.removeEventListener("message", handleMomoMessage);
+
           setShowMomoModal(false);
           message.error("Thanh toán MoMo thất bại hoặc đã bị hủy!");
           handlePaymentCompleted();
@@ -1342,7 +1351,7 @@ const Pos = () => {
     };
 
     // Đăng ký listener
-    window.addEventListener('message', handleMomoMessage);
+    window.addEventListener("message", handleMomoMessage);
 
     const pollInterval = setInterval(async () => {
       pollCount++;
@@ -1362,7 +1371,7 @@ const Pos = () => {
         if (orderData.paymentStatus === "Đã thanh toán") {
           clearInterval(pollInterval);
           momoPollingIntervalRef.current = null;
-          window.removeEventListener('message', handleMomoMessage);
+          window.removeEventListener("message", handleMomoMessage);
 
           setShowMomoModal(false);
 
@@ -1373,7 +1382,9 @@ const Pos = () => {
             const completedOrder = await completeOrder(orderId);
             finalOrder = completedOrder;
           } catch (completeError) {
-            console.log("Order already completed by MoMo IPN, fetching latest data...");
+            console.log(
+              "Order already completed by MoMo IPN, fetching latest data..."
+            );
             // Đơn có thể đã được complete bởi MoMo IPN, lấy lại thông tin mới nhất
             try {
               finalOrder = await getOrderById(orderId);
@@ -1381,21 +1392,22 @@ const Pos = () => {
               // Sử dụng orderData hiện tại nếu không lấy được
             }
           }
-          
+
           setCompletedOrderForPrint(finalOrder);
           setShowOrderSuccessModal(true);
           return;
         }
 
         // Chỉ xử lý thất bại nếu trạng thái rõ ràng là "Thất bại" hoặc "Đã hủy"
-        const paymentFailed = orderData.paymentStatus === "Thất bại" || 
-                              orderData.paymentStatus === "Đã hủy" ||
-                              orderData.orderStatus === "Đã hủy";
+        const paymentFailed =
+          orderData.paymentStatus === "Thất bại" ||
+          orderData.paymentStatus === "Đã hủy" ||
+          orderData.orderStatus === "Đã hủy";
 
         if (paymentFailed) {
           clearInterval(pollInterval);
           momoPollingIntervalRef.current = null;
-          window.removeEventListener('message', handleMomoMessage);
+          window.removeEventListener("message", handleMomoMessage);
           setShowMomoModal(false);
           message.error("Thanh toán MoMo thất bại hoặc đơn hàng đã bị hủy!");
           handlePaymentCompleted();
@@ -1405,7 +1417,7 @@ const Pos = () => {
         if (error.response?.status === 401) {
           clearInterval(pollInterval);
           momoPollingIntervalRef.current = null;
-          window.removeEventListener('message', handleMomoMessage);
+          window.removeEventListener("message", handleMomoMessage);
           setShowMomoModal(false);
           message.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!");
           return;
@@ -1418,7 +1430,7 @@ const Pos = () => {
       if (pollCount >= maxPollCount) {
         clearInterval(pollInterval);
         momoPollingIntervalRef.current = null;
-        window.removeEventListener('message', handleMomoMessage);
+        window.removeEventListener("message", handleMomoMessage);
         setShowMomoModal(false);
         message.error("Thanh toán MoMo quá thời gian. Vui lòng thử lại!");
         handlePaymentCompleted();

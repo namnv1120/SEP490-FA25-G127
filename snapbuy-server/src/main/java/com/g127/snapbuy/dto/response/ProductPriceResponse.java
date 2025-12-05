@@ -15,6 +15,7 @@ public class ProductPriceResponse {
     private UUID priceId;
 
     private UUID productId;
+    private String productCode;
     private String productName;
 
     private BigDecimal unitPrice;

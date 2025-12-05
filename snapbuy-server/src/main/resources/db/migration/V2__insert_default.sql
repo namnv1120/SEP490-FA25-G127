@@ -198,10 +198,10 @@ VALUES ((SELECT product_id FROM products WHERE product_code = 'PRD001'), 50, 10,
 DECLARE @salesAccountId UNIQUEIDENTIFIER = (SELECT account_id FROM accounts WHERE username = N'sales');
 DECLARE @defaultCustomerId UNIQUEIDENTIFIER = '00000000-0000-0000-0000-000000000001';
 
--- Tháng 12/2025
+-- Tháng 12/2024
 INSERT INTO orders (order_number, customer_id, account_id, order_date, order_status, payment_status, total_amount, discount_amount, tax_amount, created_date, updated_date)
-VALUES ('ORD202512001', @defaultCustomerId, @salesAccountId, '2025-12-03 10:30:00', N'Hoàn tất', N'Đã thanh toán', 3740000, 0, 0, '2025-12-03 10:30:00', '2025-12-03 10:30:00'),
-       ('ORD202512002', @defaultCustomerId, @salesAccountId, '2025-12-15 14:20:00', N'Hoàn tất', N'Đã thanh toán', 5580000, 0, 0, '2025-12-15 14:20:00', '2025-12-15 14:20:00');
+VALUES ('ORD241203001', @defaultCustomerId, @salesAccountId, '2024-12-03 10:30:00', N'Hoàn tất', N'Đã thanh toán', 3740000, 0, 0, '2024-12-03 10:30:00', '2024-12-03 10:30:00'),
+       ('ORD241215002', @defaultCustomerId, @salesAccountId, '2024-12-15 14:20:00', N'Hoàn tất', N'Đã thanh toán', 5580000, 0, 0, '2024-12-15 14:20:00', '2024-12-15 14:20:00');
 
 -- Tháng 11/2025
 INSERT INTO orders (order_number, customer_id, account_id, order_date, order_status, payment_status, total_amount, discount_amount, tax_amount, created_date, updated_date)
@@ -260,20 +260,20 @@ VALUES ('ORD202501001', @defaultCustomerId, @salesAccountId, '2025-01-14 11:20:0
 
 
 -- Order Details cho 24 orders
--- Order 1 - Tháng 12/2025
+-- Order 1 - Tháng 12/2024
 INSERT INTO order_detail (order_id, product_id, quantity, unit_price, discount)
-VALUES ((SELECT order_id FROM orders WHERE order_number = 'ORD202512001'),
+VALUES ((SELECT order_id FROM orders WHERE order_number = 'ORD241203001'),
         (SELECT product_id FROM products WHERE product_code = 'PRD001'), 2, 1850000, 0),
-       ((SELECT order_id FROM orders WHERE order_number = 'ORD202512001'),
+       ((SELECT order_id FROM orders WHERE order_number = 'ORD241203001'),
         (SELECT product_id FROM products WHERE product_code = 'PRD009'), 1, 550000, 10);
 
--- Order 2 - Tháng 12/2025
+-- Order 2 - Tháng 12/2024
 INSERT INTO order_detail (order_id, product_id, quantity, unit_price, discount)
-VALUES ((SELECT order_id FROM orders WHERE order_number = 'ORD202512002'),
+VALUES ((SELECT order_id FROM orders WHERE order_number = 'ORD241215002'),
         (SELECT product_id FROM products WHERE product_code = 'PRD005'), 1, 2890000, 0),
-       ((SELECT order_id FROM orders WHERE order_number = 'ORD202512002'),
+       ((SELECT order_id FROM orders WHERE order_number = 'ORD241215002'),
         (SELECT product_id FROM products WHERE product_code = 'PRD007'), 1, 1590000, 0),
-       ((SELECT order_id FROM orders WHERE order_number = 'ORD202512002'),
+       ((SELECT order_id FROM orders WHERE order_number = 'ORD241215002'),
         (SELECT product_id FROM products WHERE product_code = 'PRD006'), 1, 890000, 0);
 
 -- Order 3 - Tháng 11/2025
@@ -443,8 +443,8 @@ VALUES ((SELECT order_id FROM orders WHERE order_number = 'ORD202501002'),
 INSERT INTO payments (order_id, payment_method, amount, payment_status, payment_date, created_date)
 VALUES 
 -- Tháng 12/2025
-((SELECT order_id FROM orders WHERE order_number = 'ORD202512001'), N'Tiền mặt', 3740000, N'Đã thanh toán', '2025-12-03 10:30:00', '2025-12-03 10:30:00'),
-((SELECT order_id FROM orders WHERE order_number = 'ORD202512002'), N'Chuyển khoản', 5580000, N'Đã thanh toán', '2025-12-15 14:20:00', '2025-12-15 14:20:00'),
+((SELECT order_id FROM orders WHERE order_number = 'ORD241203001'), N'Tiền mặt', 3740000, N'Đã thanh toán', '2024-12-03 10:30:00', '2024-12-03 10:30:00'),
+((SELECT order_id FROM orders WHERE order_number = 'ORD241215002'), N'Chuyển khoản', 5580000, N'Đã thanh toán', '2024-12-15 14:20:00', '2024-12-15 14:20:00'),
 -- Tháng 11/2025
 ((SELECT order_id FROM orders WHERE order_number = 'ORD202511001'), N'Tiền mặt', 4690000, N'Đã thanh toán', '2025-11-05 09:15:00', '2025-11-05 09:15:00'),
 ((SELECT order_id FROM orders WHERE order_number = 'ORD202511002'), N'Chuyển khoản', 6180000, N'Đã thanh toán', '2025-11-20 16:45:00', '2025-11-20 16:45:00'),

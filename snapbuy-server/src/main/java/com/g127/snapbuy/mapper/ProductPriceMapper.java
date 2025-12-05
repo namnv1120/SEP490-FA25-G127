@@ -10,6 +10,7 @@ import org.mapstruct.*;
 public interface ProductPriceMapper {
 
     @Mapping(source = "product.productId", target = "productId")
+    @Mapping(source = "product.productCode", target = "productCode")
     @Mapping(source = "product.productName", target = "productName")
     ProductPriceResponse toResponse(ProductPrice entity);
 
