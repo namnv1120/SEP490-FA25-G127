@@ -3,8 +3,8 @@
  * Tập trung quản lý URL và cấu hình API
  */
 
-// Base URL cho API - Thay đổi tại đây khi deploy
-export const API_BASE_URL = "http://localhost";
+// Base URL cho API - Rỗng = relative URL (hoạt động cả local Docker và production)
+export const API_BASE_URL = "";
 
 // Các endpoint API
 export const API_ENDPOINTS = {
