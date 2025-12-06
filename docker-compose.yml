@@ -1,0 +1,98 @@
+services:
+  # SQL Server Database
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: snapbuy-db
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${DB_PASSWORD:-Snapbuy25}
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - snapbuy-network
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -Q "SELECT 1" -C || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # Database initialization - creates SnapBuy database
+  init-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: snapbuy-init-db
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - snapbuy-network
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        echo "Waiting for SQL Server..."
+        sleep 5
+        echo "Creating database SnapBuy..."
+        /opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$${DB_PASSWORD}" -C -Q "IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'SnapBuy') CREATE DATABASE SnapBuy"
+        echo "Database initialization completed!"
+    environment:
+      - ACCEPT_EULA=Y
+      - DB_PASSWORD=${DB_PASSWORD:-Snapbuy25}
+
+  # Spring Boot Backend
+  backend:
+    build:
+      context: ./snapbuy-server
+      dockerfile: Dockerfile
+    container_name: snapbuy-backend
+    environment:
+      - DB_HOST=db
+      - DB_PORT=1433
+      - DB_NAME=${DB_NAME:-SnapBuy}
+      - DB_USERNAME=${DB_USERNAME:-sa}
+      - DB_PASSWORD=${DB_PASSWORD:-Snapbuy25}
+      - MAIL_HOST=${MAIL_HOST:-smtp.gmail.com}
+      - MAIL_PORT=${MAIL_PORT:-587}
+      - MAIL_USERNAME=${MAIL_USERNAME:-}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
+      - UPLOAD_DIR=/app/uploads
+      - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS:-2592000000}
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - snapbuy-network
+    depends_on:
+      db:
+        condition: service_healthy
+      init-db:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # React Frontend with Nginx
+  frontend:
+    build:
+      context: ./snapbuy-client
+      dockerfile: Dockerfile
+    container_name: snapbuy-frontend
+    ports:
+      - "80:80"
+    networks:
+      - snapbuy-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  snapbuy-network:
+    driver: bridge
+
+volumes:
+  sqlserver_data:
+    driver: local
+  uploads_data:
+    driver: local

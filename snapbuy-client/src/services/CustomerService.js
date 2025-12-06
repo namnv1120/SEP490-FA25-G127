@@ -1,19 +1,7 @@
 import axios from "axios";
+import { API_ENDPOINTS, getAuthHeaders } from "./apiConfig";
 
-const REST_API_BASE_URL = "http://localhost:8080/api/customers";
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("authToken");
-  if (!token) throw new Error("Chưa đăng nhập hoặc token không tồn tại");
-  const tokenType = localStorage.getItem("authTokenType") || "Bearer";
-
-  return {
-    headers: {
-      Authorization: `${tokenType} ${token}`,
-      "Content-Type": "application/json",
-    },
-  };
-};
+const REST_API_BASE_URL = API_ENDPOINTS.CUSTOMERS;
 
 export const getAllCustomers = async () => {
   try {

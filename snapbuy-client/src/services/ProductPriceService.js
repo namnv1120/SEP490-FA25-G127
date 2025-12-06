@@ -1,19 +1,8 @@
 /* eslint-disable no-useless-catch */
 import axios from "axios";
+import { API_ENDPOINTS, getAuthHeaders } from "./apiConfig";
 
-const REST_API_BASE_URL = "http://localhost:8080/api/product-prices";
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("authToken");
-  const tokenType = localStorage.getItem("authTokenType") || "Bearer";
-
-  return {
-    headers: {
-      Authorization: `${tokenType} ${token}`,
-      "Content-Type": "application/json",
-    },
-  };
-};
+const REST_API_BASE_URL = API_ENDPOINTS.PRODUCT_PRICES;
 
 export const getAllProductPrices = async () => {
   try {

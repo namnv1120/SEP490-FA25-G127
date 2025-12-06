@@ -1,18 +1,7 @@
 import axios from "axios";
+import { API_ENDPOINTS, getAuthHeaders } from "./apiConfig";
 
-const REST_API_BASE_URL = "http://localhost:8080/api/notification-settings";
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("authToken");
-  const tokenType = localStorage.getItem("authTokenType") || "Bearer";
-  if (!token) throw new Error("Unauthorized: No token found");
-  return {
-    headers: {
-      Authorization: `${tokenType} ${token}`,
-      "Content-Type": "application/json",
-    },
-  };
-};
+const REST_API_BASE_URL = API_ENDPOINTS.NOTIFICATION_SETTINGS;
 
 export const getNotificationSettings = async () => {
   try {
@@ -26,13 +15,14 @@ export const getNotificationSettings = async () => {
 
 export const updateNotificationSettings = async (settings) => {
   try {
-    const response = await axios.put(REST_API_BASE_URL, settings, getAuthHeaders());
+    const response = await axios.put(
+      REST_API_BASE_URL,
+      settings,
+      getAuthHeaders()
+    );
     return response.data?.result || response.data;
   } catch (error) {
     console.error("Error updating notification settings:", error);
     throw error;
   }
 };
-
-
-

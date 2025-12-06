@@ -1,18 +1,8 @@
 // src/services/InventoryTransactionsService.js
 import axios from "axios";
+import { API_ENDPOINTS, getAuthHeaders } from "./apiConfig";
 
-const API_BASE_URL = "http://localhost:8080/api/inventory-transactions";
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("authToken");
-  const tokenType = localStorage.getItem("authTokenType") || "Bearer";
-  return {
-    headers: {
-      Authorization: `${tokenType} ${token}`,
-      "Content-Type": "application/json",
-    },
-  };
-};
+const API_BASE_URL = API_ENDPOINTS.INVENTORY_TRANSACTIONS;
 
 export const getTransactions = async ({
   page = 0,
@@ -34,7 +24,8 @@ export const getTransactions = async ({
     params.append("dir", dir);
 
     if (productId) params.append("productId", productId);
-    if (productName && productName.trim()) params.append("productName", productName.trim());
+    if (productName && productName.trim())
+      params.append("productName", productName.trim());
     if (transactionType) params.append("transactionType", transactionType);
     if (referenceType) params.append("referenceType", referenceType);
     if (from) params.append("from", from);
@@ -75,8 +66,7 @@ export const getTransactions = async ({
     else if (Array.isArray(rawData)) {
       content = rawData;
       totalElements = content.length;
-    }
-    else {
+    } else {
       console.warn("Cấu trúc không hỗ trợ:", rawData);
       content = [];
       totalElements = 0;

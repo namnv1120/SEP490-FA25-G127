@@ -1,19 +1,7 @@
 import axios from "axios";
+import { API_ENDPOINTS, getAuthHeaders } from "./apiConfig";
 
-const REST_API_BASE_URL = "http://localhost:8080/api/pos-settings";
-
-// Helper function để lấy headers với token
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("authToken");
-  const tokenType = localStorage.getItem("authTokenType") || "Bearer";
-
-  return {
-    headers: {
-      Authorization: `${tokenType} ${token}`,
-      "Content-Type": "application/json",
-    },
-  };
-};
+const REST_API_BASE_URL = API_ENDPOINTS.POS_SETTINGS;
 
 export const getPosSettings = async () => {
   const response = await axios.get(REST_API_BASE_URL, getAuthHeaders());
@@ -21,6 +9,10 @@ export const getPosSettings = async () => {
 };
 
 export const updatePosSettings = async (settings) => {
-  const response = await axios.put(REST_API_BASE_URL, settings, getAuthHeaders());
+  const response = await axios.put(
+    REST_API_BASE_URL,
+    settings,
+    getAuthHeaders()
+  );
   return response.data?.result || response.data;
 };

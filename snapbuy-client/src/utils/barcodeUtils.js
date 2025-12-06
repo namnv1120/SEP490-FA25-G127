@@ -1,7 +1,8 @@
-import { saveAs } from 'file-saver';
-import axios from 'axios';
+import { saveAs } from "file-saver";
+import axios from "axios";
+import { API_ENDPOINTS } from "../services/apiConfig";
 
-const REST_API_BASE_URL = "http://localhost:8080/api/products";
+const REST_API_BASE_URL = API_ENDPOINTS.PRODUCTS;
 
 // Hàm lấy header kèm token
 const getAuthHeaders = () => {
@@ -22,7 +23,7 @@ const getAuthHeaders = () => {
  */
 export const generateRandomBarcode = (length = 13) => {
   // Tạo dãy số ngẫu nhiên
-  let barcode = '';
+  let barcode = "";
   for (let i = 0; i < length; i++) {
     barcode += Math.floor(Math.random() * 10).toString();
   }
@@ -36,17 +37,23 @@ export const generateRandomBarcode = (length = 13) => {
  * @param {number} height - Height của barcode image (mặc định 100)
  * @returns {Promise<string>} - Data URL của barcode image
  */
-export const getBarcodeImageFromBackend = async (barcode, width = 300, height = 100) => {
+export const getBarcodeImageFromBackend = async (
+  barcode,
+  width = 300,
+  height = 100
+) => {
   if (!barcode || barcode.trim().length === 0) {
     return null;
   }
 
   try {
     const response = await axios.get(
-      `${REST_API_BASE_URL}/barcode-image/${encodeURIComponent(barcode)}?width=${width}&height=${height}`,
+      `${REST_API_BASE_URL}/barcode-image/${encodeURIComponent(
+        barcode
+      )}?width=${width}&height=${height}`,
       {
         ...getAuthHeaders(),
-        responseType: 'blob'
+        responseType: "blob",
       }
     );
 
@@ -58,7 +65,7 @@ export const getBarcodeImageFromBackend = async (barcode, width = 300, height = 
       reader.readAsDataURL(response.data);
     });
   } catch (error) {
-    console.error('Error getting barcode image from backend:', error);
+    console.error("Error getting barcode image from backend:", error);
     return null;
   }
 };
@@ -70,33 +77,43 @@ export const getBarcodeImageFromBackend = async (barcode, width = 300, height = 
  * @param {number} width - Width của barcode image
  * @param {number} height - Height của barcode image
  */
-export const downloadBarcode = async (barcode, productName = 'SanPham', width = 300, height = 100) => {
+export const downloadBarcode = async (
+  barcode,
+  productName = "SanPham",
+  width = 300,
+  height = 100
+) => {
   if (!barcode || barcode.trim().length === 0) {
-    throw new Error('Barcode không được để trống');
+    throw new Error("Barcode không được để trống");
   }
 
   try {
     const response = await axios.get(
-      `${REST_API_BASE_URL}/barcode-image/${encodeURIComponent(barcode)}?width=${width}&height=${height}`,
+      `${REST_API_BASE_URL}/barcode-image/${encodeURIComponent(
+        barcode
+      )}?width=${width}&height=${height}`,
       {
         ...getAuthHeaders(),
-        responseType: 'blob'
+        responseType: "blob",
       }
     );
 
     // Tạo tên file tiếng Việt
     const sanitizedProductName = productName
-      .replace(/[^a-zA-Z0-9\sÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵýỷỹ]/g, '')
-      .replace(/\s+/g, '_')
+      .replace(
+        /[^a-zA-Z0-9\sÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵýỷỹ]/g,
+        ""
+      )
+      .replace(/\s+/g, "_")
       .trim();
-    
+
     const fileName = `Ma_Vach_${sanitizedProductName}_${barcode}.png`;
-    
+
     // Download file
     saveAs(response.data, fileName);
   } catch (error) {
-    console.error('Error downloading barcode:', error);
-    throw new Error('Không thể tải barcode');
+    console.error("Error downloading barcode:", error);
+    throw new Error("Không thể tải barcode");
   }
 };
 
@@ -107,7 +124,12 @@ export const downloadBarcode = async (barcode, productName = 'SanPham', width = 
  * @param {number} width - Width của barcode image
  * @param {number} height - Height của barcode image
  */
-export const displayBarcodePreview = async (barcode, containerId, width = 300, height = 100) => {
+export const displayBarcodePreview = async (
+  barcode,
+  containerId,
+  width = 300,
+  height = 100
+) => {
   if (!barcode || barcode.trim().length === 0) {
     return;
   }
@@ -119,33 +141,40 @@ export const displayBarcodePreview = async (barcode, containerId, width = 300, h
   }
 
   // Clear container và hiển thị loading
-  container.innerHTML = '<div class="text-center"><small class="text-muted">Đang tải barcode...</small></div>';
+  container.innerHTML =
+    '<div class="text-center"><small class="text-muted">Đang tải barcode...</small></div>';
 
   try {
-    const imageDataUrl = await getBarcodeImageFromBackend(barcode, width, height);
-    
+    const imageDataUrl = await getBarcodeImageFromBackend(
+      barcode,
+      width,
+      height
+    );
+
     if (!imageDataUrl) {
-      container.innerHTML = '<p class="text-danger small">Không thể tải barcode</p>';
+      container.innerHTML =
+        '<p class="text-danger small">Không thể tải barcode</p>';
       return;
     }
 
     // Tạo img element
-    const img = document.createElement('img');
+    const img = document.createElement("img");
     img.src = imageDataUrl;
     img.alt = `Barcode: ${barcode}`;
-    img.style.maxWidth = '100%';
-    img.style.width = '100%';
-    img.style.height = 'auto';
-    img.style.display = 'block';
-    img.style.margin = '0 auto';
-    img.style.objectFit = 'contain';
-    img.className = 'barcode-preview-image';
+    img.style.maxWidth = "100%";
+    img.style.width = "100%";
+    img.style.height = "auto";
+    img.style.display = "block";
+    img.style.margin = "0 auto";
+    img.style.objectFit = "contain";
+    img.className = "barcode-preview-image";
 
     // Clear và thêm image
-    container.innerHTML = '';
+    container.innerHTML = "";
     container.appendChild(img);
   } catch (error) {
-    console.error('Error displaying barcode:', error);
-    container.innerHTML = '<p class="text-danger small">Không thể hiển thị barcode</p>';
+    console.error("Error displaying barcode:", error);
+    container.innerHTML =
+      '<p class="text-danger small">Không thể hiển thị barcode</p>';
   }
 };

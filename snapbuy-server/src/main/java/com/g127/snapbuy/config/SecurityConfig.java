@@ -71,7 +71,12 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration c = new CorsConfiguration();
         c.setAllowCredentials(true);
-        c.setAllowedOrigins(List.of("http://localhost:5173"));
+        // Allow both Vite dev server and Docker Nginx
+        c.setAllowedOrigins(List.of(
+            "http://localhost:5173",  // Vite dev server
+            "http://localhost",       // Docker Nginx (port 80)
+            "http://localhost:80"     // Docker Nginx explicit
+        ));
         c.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         c.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With"));
         c.setExposedHeaders(List.of("Authorization"));

@@ -1,19 +1,7 @@
 import axios from "axios";
+import { API_ENDPOINTS, getAuthHeaders } from "./apiConfig";
 
-const REST_API_BASE_URL = "http://localhost:8080/api/revenue";
-
-// Hàm lấy header có token
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("authToken");
-  const tokenType = localStorage.getItem("authTokenType") || "Bearer";
-
-  return {
-    headers: {
-      Authorization: `${tokenType} ${token}`,
-      "Content-Type": "application/json",
-    },
-  };
-};
+const REST_API_BASE_URL = API_ENDPOINTS.REVENUE;
 
 // Lấy doanh thu theo ngày
 export const getDailyRevenue = async (date) => {
@@ -55,7 +43,7 @@ export const getCustomRevenue = async (startDate, endDate) => {
 export const getProductRevenue = async (fromDate, toDate, accountId = null) => {
   const encodedFrom = encodeURIComponent(fromDate);
   const encodedTo = encodeURIComponent(toDate);
-  let url = `http://localhost:8080/api/reports/products-revenue?from=${encodedFrom}&to=${encodedTo}`;
+  let url = `${API_ENDPOINTS.REPORTS.PRODUCTS_REVENUE}?from=${encodedFrom}&to=${encodedTo}`;
   if (accountId) {
     url += `&accountId=${accountId}`;
   }

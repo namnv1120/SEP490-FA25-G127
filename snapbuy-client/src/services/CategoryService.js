@@ -1,20 +1,8 @@
 /* eslint-disable no-useless-catch */
 import axios from "axios";
+import { API_ENDPOINTS, getAuthHeaders } from "./apiConfig";
 
-const REST_API_BASE_URL = "http://localhost:8080/api/categories";
-
-// Helper function để lấy headers với token
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("authToken");
-  const tokenType = localStorage.getItem("authTokenType") || "Bearer";
-
-  return {
-    headers: {
-      Authorization: `${tokenType} ${token}`,
-      "Content-Type": "application/json",
-    },
-  };
-};
+const REST_API_BASE_URL = API_ENDPOINTS.CATEGORIES;
 
 export const getAllCategories = async () => {
   try {
@@ -104,14 +92,20 @@ export const toggleCategoryStatus = async (categoryId) => {
   }
 };
 
-export const searchParentCategories = async (keyword, page = 0, size = 10, sortBy = 'createdDate', sortDir = 'DESC') => {
+export const searchParentCategories = async (
+  keyword,
+  page = 0,
+  size = 10,
+  sortBy = "createdDate",
+  sortDir = "DESC"
+) => {
   try {
     const params = new URLSearchParams();
-    if (keyword) params.append('keyword', keyword);
-    params.append('page', page);
-    params.append('size', size);
-    params.append('sortBy', sortBy);
-    params.append('sortDir', sortDir);
+    if (keyword) params.append("keyword", keyword);
+    params.append("page", page);
+    params.append("size", size);
+    params.append("sortBy", sortBy);
+    params.append("sortDir", sortDir);
     const url = `${REST_API_BASE_URL}/search-parent-categories?${params}`;
     const response = await axios.get(url, getAuthHeaders());
     return response.data?.result || response.data;
@@ -121,14 +115,20 @@ export const searchParentCategories = async (keyword, page = 0, size = 10, sortB
   }
 };
 
-export const searchSubCategories = async (keyword, page = 0, size = 10, sortBy = 'createdDate', sortDir = 'DESC') => {
+export const searchSubCategories = async (
+  keyword,
+  page = 0,
+  size = 10,
+  sortBy = "createdDate",
+  sortDir = "DESC"
+) => {
   try {
     const params = new URLSearchParams();
-    if (keyword) params.append('keyword', keyword);
-    params.append('page', page);
-    params.append('size', size);
-    params.append('sortBy', sortBy);
-    params.append('sortDir', sortDir);
+    if (keyword) params.append("keyword", keyword);
+    params.append("page", page);
+    params.append("size", size);
+    params.append("sortBy", sortBy);
+    params.append("sortDir", sortDir);
     const url = `${REST_API_BASE_URL}/search-sub-categories?${params}`;
     const response = await axios.get(url, getAuthHeaders());
     return response.data?.result || response.data;

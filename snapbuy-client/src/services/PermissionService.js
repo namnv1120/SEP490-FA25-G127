@@ -1,6 +1,7 @@
 import axios from "axios";
+import { API_ENDPOINTS } from "./apiConfig";
 
-const REST_API_BASE_URL = "http://localhost:8080/api/permissions";
+const REST_API_BASE_URL = API_ENDPOINTS.PERMISSIONS;
 
 const getAuthHeader = () => {
   const token = localStorage.getItem("authToken");

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ColorPicker } from 'antd';
+import { ColorPicker } from "antd";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import {
@@ -20,9 +20,24 @@ import {
 } from "../../core/redux/themeSettingSlice";
 import { allRoutes } from "../../routes/AllRoutes";
 
+// Import theme layout images
+import layoutDefault from "../../assets/img/theme/default.svg";
+import layoutMini from "../../assets/img/theme/mini.svg";
+import layoutTwoColumn from "../../assets/img/theme/two-column.svg";
+import layoutHorizontal from "../../assets/img/theme/horizontal.svg";
+import layoutDetached from "../../assets/img/theme/detached.svg";
+import layoutWithoutHeader from "../../assets/img/theme/without-header.svg";
+import layoutRtl from "../../assets/img/theme/rtl.svg";
+
+// Import sidebar background images
+import sidebarBg01 from "../../assets/img/theme/sidebar-bg-01.svg";
+import sidebarBg02 from "../../assets/img/theme/sidebar-bg-02.svg";
+import sidebarBg03 from "../../assets/img/theme/sidebar-bg-03.svg";
+import sidebarBg04 from "../../assets/img/theme/sidebar-bg-04.svg";
+import sidebarBg05 from "../../assets/img/theme/sidebar-bg-05.svg";
+import sidebarBg06 from "../../assets/img/theme/sidebar-bg-06.svg";
+
 const ThemeSettings = () => {
-
-
   const dispatch = useDispatch();
 
   // Redux state selectors
@@ -33,12 +48,20 @@ const ThemeSettings = () => {
     (state) => state.themeSetting.dataTopBarColor
   );
   const dataTheme = useSelector((state) => state.themeSetting.dataTheme);
-  const dataSidebarAll = useSelector((state) => state.themeSetting.dataSidebarAll);
+  const dataSidebarAll = useSelector(
+    (state) => state.themeSetting.dataSidebarAll
+  );
   const dataColorAll = useSelector((state) => state.themeSetting.dataColorAll);
-  const dataTopBarColorAll = useSelector((state) => state.themeSetting.dataTopBarColorAll);
-  const dataTopbarAll = useSelector((state) => state.themeSetting.dataTopbarAll);
+  const dataTopBarColorAll = useSelector(
+    (state) => state.themeSetting.dataTopBarColorAll
+  );
+  const dataTopbarAll = useSelector(
+    (state) => state.themeSetting.dataTopbarAll
+  );
   const dataSidebar = useSelector((state) => state.themeSetting.dataSidebar);
-  const dataSidebarBg = useSelector((state) => state.themeSetting.dataSidebarBg);
+  const dataSidebarBg = useSelector(
+    (state) => state.themeSetting.dataSidebarBg
+  );
   const dataTopbarBg = useSelector((state) => state.themeSetting.dataTopbarBg);
   const dataColor = useSelector((state) => state.themeSetting.dataColor);
 
@@ -55,17 +78,20 @@ const ThemeSettings = () => {
   );
 
   const rgbString2 = React.useMemo(
-    () => (typeof colorRgb2 === "string" ? colorRgb2 : colorRgb2?.toRgbString()),
+    () =>
+      typeof colorRgb2 === "string" ? colorRgb2 : colorRgb2?.toRgbString(),
     [colorRgb2]
   );
 
   const rgbString3 = React.useMemo(
-    () => (typeof colorRgb3 === "string" ? colorRgb3 : colorRgb3?.toRgbString()),
+    () =>
+      typeof colorRgb3 === "string" ? colorRgb3 : colorRgb3?.toRgbString(),
     [colorRgb3]
   );
 
   const rgbString4 = React.useMemo(
-    () => (typeof colorRgb4 === "string" ? colorRgb4 : colorRgb4?.toRgbString()),
+    () =>
+      typeof colorRgb4 === "string" ? colorRgb4 : colorRgb4?.toRgbString(),
     [colorRgb4]
   );
 
@@ -124,7 +150,21 @@ const ThemeSettings = () => {
     setColorRgb2(`rgb(${dataTopbarAll})`);
     setColorRgb3(`rgb(${dataTopBarColorAll})`);
     setColorRgb4(`rgb(${dataColorAll})`);
-  }, [dataLayout, dataWidth, dataSidebar, dataSidebarAll, dataTheme, dataSidebarBg, dataTopBarColor, dataTopBar, dataTopbarBg, dataColor, dataColorAll, dataTopBarColorAll, dataTopbarAll]);
+  }, [
+    dataLayout,
+    dataWidth,
+    dataSidebar,
+    dataSidebarAll,
+    dataTheme,
+    dataSidebarBg,
+    dataTopBarColor,
+    dataTopBar,
+    dataTopbarBg,
+    dataColor,
+    dataColorAll,
+    dataTopBarColorAll,
+    dataTopbarAll,
+  ]);
 
   return (
     <>
@@ -172,7 +212,10 @@ const ThemeSettings = () => {
                   Select Layouts
                 </button>
               </h2>
-              <div id="layoutsetting" className="accordion-collapse collapse show">
+              <div
+                id="layoutsetting"
+                className="accordion-collapse collapse show"
+              >
                 <div className="accordion-body border-top px-0 py-3 pb-0">
                   <div className="row gx-3">
                     <div className="col-4">
@@ -187,7 +230,7 @@ const ThemeSettings = () => {
                         />
                         <label htmlFor="defaultLayout">
                           <span className="d-block mb-2 layout-img">
-                            <img src="src/assets/img/theme/default.svg" alt="img" />
+                            <img src={layoutDefault} alt="img" />
                           </span>
                           <span className="layout-type">Default</span>
                         </label>
@@ -205,7 +248,7 @@ const ThemeSettings = () => {
                         />
                         <label htmlFor="miniLayout">
                           <span className="d-block mb-2 layout-img">
-                            <img src="src/assets/img/theme/mini.svg" alt="img" />
+                            <img src={layoutMini} alt="img" />
                           </span>
                           <span className="layout-type">Mini</span>
                         </label>
@@ -223,7 +266,7 @@ const ThemeSettings = () => {
                         />
                         <label htmlFor="twocolumnLayout">
                           <span className="d-block mb-2 layout-img">
-                            <img src="src/assets/img/theme/two-column.svg" alt="img" />
+                            <img src={layoutTwoColumn} alt="img" />
                           </span>
                           <span className="layout-type">Two Column</span>
                         </label>
@@ -241,7 +284,7 @@ const ThemeSettings = () => {
                         />
                         <label htmlFor="horizontalLayout">
                           <span className="d-block mb-2 layout-img">
-                            <img src="src/assets/img/theme/horizontal.svg" alt="img" />
+                            <img src={layoutHorizontal} alt="img" />
                           </span>
                           <span className="layout-type">Horizontal</span>
                         </label>
@@ -259,7 +302,7 @@ const ThemeSettings = () => {
                         />
                         <label htmlFor="detachedLayout">
                           <span className="d-block mb-2 layout-img">
-                            <img src="src/assets/img/theme/detached.svg" alt="img" />
+                            <img src={layoutDetached} alt="img" />
                           </span>
                           <span className="layout-type">Detached</span>
                         </label>
@@ -272,24 +315,27 @@ const ThemeSettings = () => {
                           name="LayoutTheme"
                           id="without-headerLayout"
                           defaultValue="without-header"
-                          checked={dataLayout === "without-header" ? true : false}
+                          checked={
+                            dataLayout === "without-header" ? true : false
+                          }
                           onChange={() => handleLayoutChange("without-header")}
                         />
                         <label htmlFor="without-headerLayout">
                           <span className="d-block mb-2 layout-img">
-                            <img
-                              src="src/assets/img/theme/without-header.svg"
-                              alt="img"
-                            />
+                            <img src={layoutWithoutHeader} alt="img" />
                           </span>
                           <span className="layout-type">Without Header</span>
                         </label>
                       </div>
                     </div>
                     <div className="col-4">
-                      <Link to={allRoutes.RTL} onClick={() => dispatch(setRtl('layout-mode-rtl'))} className="theme-layout mb-3">
+                      <Link
+                        to={allRoutes.RTL}
+                        onClick={() => dispatch(setRtl("layout-mode-rtl"))}
+                        className="theme-layout mb-3"
+                      >
                         <span className="d-block mb-2 layout-img">
-                          <img src="src/assets/img/theme/rtl.svg" alt="img" />
+                          <img src={layoutRtl} alt="img" />
                         </span>
                         <span className="layout-type d-block">RTL</span>
                       </Link>
@@ -310,7 +356,10 @@ const ThemeSettings = () => {
                   Layout Width
                 </button>
               </h2>
-              <div id="sidebarsetting" className="accordion-collapse collapse show">
+              <div
+                id="sidebarsetting"
+                className="accordion-collapse collapse show"
+              >
                 <div className="accordion-body px-0 py-3 border-top">
                   <div className="d-flex align-items-center">
                     <div className="theme-width m-1 me-2">
@@ -322,7 +371,10 @@ const ThemeSettings = () => {
                         checked={dataWidth === "fluid" ? true : false}
                         onChange={() => handleLayoutWidthChange("fluid")}
                       />
-                      <label htmlFor="fluidWidth" className="d-block rounded fs-12">
+                      <label
+                        htmlFor="fluidWidth"
+                        className="d-block rounded fs-12"
+                      >
                         <i className="ti ti-layout-list me-1" />
                         Fluid Layout
                       </label>
@@ -336,7 +388,10 @@ const ThemeSettings = () => {
                         checked={dataWidth === "box" ? true : false}
                         onChange={() => handleLayoutWidthChange("box")}
                       />
-                      <label htmlFor="boxWidth" className="d-block rounded fs-12">
+                      <label
+                        htmlFor="boxWidth"
+                        className="d-block rounded fs-12"
+                      >
                         <i className="ti ti-layout-distribute-horizontal me-1" />
                         Boxed Layout
                       </label>
@@ -357,7 +412,10 @@ const ThemeSettings = () => {
                   Top Bar Color
                 </button>
               </h2>
-              <div id="colorsetting" className="accordion-collapse collapse show">
+              <div
+                id="colorsetting"
+                className="accordion-collapse collapse show"
+              >
                 <div className="accordion-body pb-1 px-0 py-3 border-top">
                   <p className="mb-2 text-gray-9">Solid Colors</p>
                   <div className="d-flex align-items-center flex-wrap">
@@ -392,7 +450,10 @@ const ThemeSettings = () => {
                         checked={dataTopBar === "whiterock" ? true : false}
                         onChange={() => handleTopBarColorChange("whiterock")}
                       />
-                      <label htmlFor="whiterockTopbar" className="topbar-bg-2" />
+                      <label
+                        htmlFor="whiterockTopbar"
+                        className="topbar-bg-2"
+                      />
                     </div>
                     <div className="theme-colorselect theme-colorselect-rounded mb-3 me-3">
                       <input
@@ -416,8 +477,15 @@ const ThemeSettings = () => {
                       />
                       <label htmlFor="bluehazeTopbar" className="topbar-bg-4" />
                     </div>
-                    <div className={`theme-colorselect box-style position-relative theme-colorselect-rounded mb-3 mt-0 ${dataTopBar === 'all' ? 'active' : ''}`} onClick={() => handleTopBarColorChange('all')}>
-                      <div className="select-color position-absolute"><i className="ti ti-palette"></i></div>
+                    <div
+                      className={`theme-colorselect box-style position-relative theme-colorselect-rounded mb-3 mt-0 ${
+                        dataTopBar === "all" ? "active" : ""
+                      }`}
+                      onClick={() => handleTopBarColorChange("all")}
+                    >
+                      <div className="select-color position-absolute">
+                        <i className="ti ti-palette"></i>
+                      </div>
                       <ColorPicker
                         format={formatRgb}
                         value={colorRgb2}
@@ -436,10 +504,17 @@ const ThemeSettings = () => {
                         name="topbar"
                         id="topbar-color-7"
                         defaultValue="topbarcolorseven"
-                        checked={dataTopBar === "topbarcolorseven" ? true : false}
-                        onChange={() => handleTopBarColorChange("topbarcolorseven")}
+                        checked={
+                          dataTopBar === "topbarcolorseven" ? true : false
+                        }
+                        onChange={() =>
+                          handleTopBarColorChange("topbarcolorseven")
+                        }
                       />
-                      <label htmlFor="topbar-color-7" className="bg-sidebar-color-7" />
+                      <label
+                        htmlFor="topbar-color-7"
+                        className="bg-sidebar-color-7"
+                      />
                     </div>
                     <div className="theme-colorselect theme-colorselect-rounded mb-3 me-3">
                       <input
@@ -447,10 +522,17 @@ const ThemeSettings = () => {
                         name="topbar"
                         id="topbar-color-8"
                         defaultValue="topbarcoloreight"
-                        checked={dataTopBar === "topbarcoloreight" ? true : false}
-                        onChange={() => handleTopBarColorChange("topbarcoloreight")}
+                        checked={
+                          dataTopBar === "topbarcoloreight" ? true : false
+                        }
+                        onChange={() =>
+                          handleTopBarColorChange("topbarcoloreight")
+                        }
                       />
-                      <label htmlFor="topbar-color-8" className="bg-sidebar-color-8" />
+                      <label
+                        htmlFor="topbar-color-8"
+                        className="bg-sidebar-color-8"
+                      />
                     </div>
                     <div className="theme-colorselect theme-colorselect-rounded mb-3 me-3">
                       <input
@@ -458,10 +540,17 @@ const ThemeSettings = () => {
                         name="topbar"
                         id="topbar-color-9"
                         defaultValue="topbarcolornine"
-                        checked={dataTopBar === "topbarcolornine" ? true : false}
-                        onChange={() => handleTopBarColorChange("topbarcolornine")}
+                        checked={
+                          dataTopBar === "topbarcolornine" ? true : false
+                        }
+                        onChange={() =>
+                          handleTopBarColorChange("topbarcolornine")
+                        }
                       />
-                      <label htmlFor="topbar-color-9" className="bg-sidebar-color-9" />
+                      <label
+                        htmlFor="topbar-color-9"
+                        className="bg-sidebar-color-9"
+                      />
                     </div>
                     <div className="theme-colorselect theme-colorselect-rounded mb-3 me-3">
                       <input
@@ -470,9 +559,14 @@ const ThemeSettings = () => {
                         id="topbar-color-10"
                         defaultValue="topbarcolorten"
                         checked={dataTopBar === "topbarcolorten" ? true : false}
-                        onChange={() => handleTopBarColorChange("topbarcolorten")}
+                        onChange={() =>
+                          handleTopBarColorChange("topbarcolorten")
+                        }
                       />
-                      <label htmlFor="topbar-color-10" className="bg-sidebar-color-10" />
+                      <label
+                        htmlFor="topbar-color-10"
+                        className="bg-sidebar-color-10"
+                      />
                     </div>
                     <div className="theme-colorselect theme-colorselect-rounded mb-3 me-3">
                       <input
@@ -480,10 +574,17 @@ const ThemeSettings = () => {
                         name="topbar"
                         id="topbar-color-11"
                         defaultValue="topbarcoloreleven"
-                        checked={dataTopBar === "topbarcoloreleven" ? true : false}
-                        onChange={() => handleTopBarColorChange("topbarcoloreleven")}
+                        checked={
+                          dataTopBar === "topbarcoloreleven" ? true : false
+                        }
+                        onChange={() =>
+                          handleTopBarColorChange("topbarcoloreleven")
+                        }
                       />
-                      <label htmlFor="topbar-color-11" className="bg-sidebar-color-11" />
+                      <label
+                        htmlFor="topbar-color-11"
+                        className="bg-sidebar-color-11"
+                      />
                     </div>
                     <div className="theme-colorselect theme-colorselect-rounded mb-3 me-3">
                       <input
@@ -491,10 +592,17 @@ const ThemeSettings = () => {
                         name="topbar"
                         id="topbar-color-12"
                         defaultValue="topbarcolortwelve"
-                        checked={dataTopBar === "topbarcolortwelve" ? true : false}
-                        onChange={() => handleTopBarColorChange("topbarcolortwelve")}
+                        checked={
+                          dataTopBar === "topbarcolortwelve" ? true : false
+                        }
+                        onChange={() =>
+                          handleTopBarColorChange("topbarcolortwelve")
+                        }
                       />
-                      <label htmlFor="topbar-color-12" className="bg-sidebar-color-12" />
+                      <label
+                        htmlFor="topbar-color-12"
+                        className="bg-sidebar-color-12"
+                      />
                     </div>
                     <div className="theme-colorselect theme-colorselect-rounded mb-3 me-3">
                       <input
@@ -502,10 +610,17 @@ const ThemeSettings = () => {
                         name="topbar"
                         id="topbar-color-13"
                         defaultValue="topbarcolorthirteen"
-                        checked={dataTopBar === "topbarcolorthirteen" ? true : false}
-                        onChange={() => handleTopBarColorChange("topbarcolorthirteen")}
+                        checked={
+                          dataTopBar === "topbarcolorthirteen" ? true : false
+                        }
+                        onChange={() =>
+                          handleTopBarColorChange("topbarcolorthirteen")
+                        }
                       />
-                      <label htmlFor="topbar-color-13" className="bg-sidebar-color-13" />
+                      <label
+                        htmlFor="topbar-color-13"
+                        className="bg-sidebar-color-13"
+                      />
                     </div>
                     <div className="theme-colorselect theme-colorselect-rounded mb-3 me-3">
                       <input
@@ -513,10 +628,17 @@ const ThemeSettings = () => {
                         name="topbar"
                         id="topbar-color-14"
                         defaultValue="topbarcolorfourteen"
-                        checked={dataTopBar === "topbarcolorfourteen" ? true : false}
-                        onChange={() => handleTopBarColorChange("topbarcolorfourteen")}
+                        checked={
+                          dataTopBar === "topbarcolorfourteen" ? true : false
+                        }
+                        onChange={() =>
+                          handleTopBarColorChange("topbarcolorfourteen")
+                        }
                       />
-                      <label htmlFor="topbar-color-14" className="bg-sidebar-color-14" />
+                      <label
+                        htmlFor="topbar-color-14"
+                        className="bg-sidebar-color-14"
+                      />
                     </div>
                   </div>
                 </div>
@@ -534,7 +656,10 @@ const ThemeSettings = () => {
                   Sidebar Color
                 </button>
               </h2>
-              <div id="sidebarsetting" className="accordion-collapse collapse show">
+              <div
+                id="sidebarsetting"
+                className="accordion-collapse collapse show"
+              >
                 <div className="accordion-body px-0 py-3 border-top">
                   <p className="mb-2 text-gray-9">Solid Colors</p>
                   <div className="d-flex align-items-center">
@@ -558,8 +683,12 @@ const ThemeSettings = () => {
                         name="sidebar"
                         id="bgcolorSidebar"
                         defaultValue="sidebarcolorone"
-                        checked={dataSidebar === "sidebarcolorone" ? true : false}
-                        onChange={() => handleDataSidebarChange("sidebarcolorone")}
+                        checked={
+                          dataSidebar === "sidebarcolorone" ? true : false
+                        }
+                        onChange={() =>
+                          handleDataSidebarChange("sidebarcolorone")
+                        }
                       />
                       <label
                         htmlFor="bgcolorSidebar"
@@ -572,8 +701,12 @@ const ThemeSettings = () => {
                         name="sidebar"
                         id="bgcolor2Sidebar"
                         defaultValue="sidebarcolortwo"
-                        checked={dataSidebar === "sidebarcolortwo" ? true : false}
-                        onChange={() => handleDataSidebarChange("sidebarcolortwo")}
+                        checked={
+                          dataSidebar === "sidebarcolortwo" ? true : false
+                        }
+                        onChange={() =>
+                          handleDataSidebarChange("sidebarcolortwo")
+                        }
                       />
                       <label
                         htmlFor="bgcolor2Sidebar"
@@ -586,8 +719,12 @@ const ThemeSettings = () => {
                         name="sidebar"
                         id="bgcolor3Sidebar"
                         defaultValue="sidebarcolorthree"
-                        checked={dataSidebar === "sidebarcolorthree" ? true : false}
-                        onChange={() => handleDataSidebarChange("sidebarcolorthree")}
+                        checked={
+                          dataSidebar === "sidebarcolorthree" ? true : false
+                        }
+                        onChange={() =>
+                          handleDataSidebarChange("sidebarcolorthree")
+                        }
                       />
                       <label
                         htmlFor="bgcolor3Sidebar"
@@ -600,8 +737,12 @@ const ThemeSettings = () => {
                         name="sidebar"
                         id="bgcolor4Sidebar"
                         defaultValue="sidebarcolorfour"
-                        checked={dataSidebar === "sidebarcolorfour" ? true : false}
-                        onChange={() => handleDataSidebarChange("sidebarcolorfour")}
+                        checked={
+                          dataSidebar === "sidebarcolorfour" ? true : false
+                        }
+                        onChange={() =>
+                          handleDataSidebarChange("sidebarcolorfour")
+                        }
                       />
                       <label
                         htmlFor="bgcolor4Sidebar"
@@ -614,8 +755,12 @@ const ThemeSettings = () => {
                         name="sidebar"
                         id="bgcolor5Sidebar"
                         defaultValue="sidebarcolorfive"
-                        checked={dataSidebar === "sidebarcolorfive" ? true : false}
-                        onChange={() => handleDataSidebarChange("sidebarcolorfive")}
+                        checked={
+                          dataSidebar === "sidebarcolorfive" ? true : false
+                        }
+                        onChange={() =>
+                          handleDataSidebarChange("sidebarcolorfive")
+                        }
                       />
                       <label
                         htmlFor="bgcolor5Sidebar"
@@ -628,16 +773,27 @@ const ThemeSettings = () => {
                         name="sidebar"
                         id="bgcolor6Sidebar"
                         defaultValue="sidebarcolorsix"
-                        checked={dataSidebar === "sidebarcolorsix" ? true : false}
-                        onChange={() => handleDataSidebarChange("sidebarcolorsix")}
+                        checked={
+                          dataSidebar === "sidebarcolorsix" ? true : false
+                        }
+                        onChange={() =>
+                          handleDataSidebarChange("sidebarcolorsix")
+                        }
                       />
                       <label
                         htmlFor="bgcolor6Sidebar"
                         className="d-block bg-sidebar-color-6 mb-2"
                       ></label>
                     </div>
-                    <div className={`theme-colorselect oval-style position-relative m-1 mt-0 ${dataSidebar === 'all' ? 'active' : ''}`} onClick={() => handleDataSidebarChange('all')}>
-                      <div className="select-color position-absolute"><i className="ti ti-palette"></i></div>
+                    <div
+                      className={`theme-colorselect oval-style position-relative m-1 mt-0 ${
+                        dataSidebar === "all" ? "active" : ""
+                      }`}
+                      onClick={() => handleDataSidebarChange("all")}
+                    >
+                      <div className="select-color position-absolute">
+                        <i className="ti ti-palette"></i>
+                      </div>
                       <ColorPicker
                         format={formatRgb}
                         value={colorRgb}
@@ -656,8 +812,12 @@ const ThemeSettings = () => {
                         name="sidebar"
                         id="bgcolor7Sidebar"
                         defaultValue="sidebarcolorseven"
-                        checked={dataSidebar === "sidebarcolorseven" ? true : false}
-                        onChange={() => handleDataSidebarChange("sidebarcolorseven")}
+                        checked={
+                          dataSidebar === "sidebarcolorseven" ? true : false
+                        }
+                        onChange={() =>
+                          handleDataSidebarChange("sidebarcolorseven")
+                        }
                       />
                       <label
                         htmlFor="bgcolor7Sidebar"
@@ -670,8 +830,12 @@ const ThemeSettings = () => {
                         name="sidebar"
                         id="bgcolor8Sidebar"
                         defaultValue="sidebarcoloreight"
-                        checked={dataSidebar === "sidebarcoloreight" ? true : false}
-                        onChange={() => handleDataSidebarChange("sidebarcoloreight")}
+                        checked={
+                          dataSidebar === "sidebarcoloreight" ? true : false
+                        }
+                        onChange={() =>
+                          handleDataSidebarChange("sidebarcoloreight")
+                        }
                       />
                       <label
                         htmlFor="bgcolor8Sidebar"
@@ -684,8 +848,12 @@ const ThemeSettings = () => {
                         name="sidebar"
                         id="bgcolor9Sidebar"
                         defaultValue="sidebarcolornine"
-                        checked={dataSidebar === "sidebarcolornine" ? true : false}
-                        onChange={() => handleDataSidebarChange("sidebarcolornine")}
+                        checked={
+                          dataSidebar === "sidebarcolornine" ? true : false
+                        }
+                        onChange={() =>
+                          handleDataSidebarChange("sidebarcolornine")
+                        }
                       />
                       <label
                         htmlFor="bgcolor9Sidebar"
@@ -698,8 +866,12 @@ const ThemeSettings = () => {
                         name="sidebar"
                         id="bgcolor10Sidebar"
                         defaultValue="sidebarcolorten"
-                        checked={dataSidebar === "sidebarcolorten" ? true : false}
-                        onChange={() => handleDataSidebarChange("sidebarcolorten")}
+                        checked={
+                          dataSidebar === "sidebarcolorten" ? true : false
+                        }
+                        onChange={() =>
+                          handleDataSidebarChange("sidebarcolorten")
+                        }
                       />
                       <label
                         htmlFor="bgcolor10Sidebar"
@@ -712,8 +884,12 @@ const ThemeSettings = () => {
                         name="sidebar"
                         id="bgcolor11Sidebar"
                         defaultValue="sidebarcoloreleven"
-                        checked={dataSidebar === "sidebarcoloreleven" ? true : false}
-                        onChange={() => handleDataSidebarChange("sidebarcoloreleven")}
+                        checked={
+                          dataSidebar === "sidebarcoloreleven" ? true : false
+                        }
+                        onChange={() =>
+                          handleDataSidebarChange("sidebarcoloreleven")
+                        }
                       />
                       <label
                         htmlFor="bgcolor11Sidebar"
@@ -726,8 +902,12 @@ const ThemeSettings = () => {
                         name="sidebar"
                         id="bgcolor12Sidebar"
                         defaultValue="sidebarcolortwelve"
-                        checked={dataSidebar === "sidebarcolortwelve" ? true : false}
-                        onChange={() => handleDataSidebarChange("sidebarcolortwelve")}
+                        checked={
+                          dataSidebar === "sidebarcolortwelve" ? true : false
+                        }
+                        onChange={() =>
+                          handleDataSidebarChange("sidebarcolortwelve")
+                        }
                       />
                       <label
                         htmlFor="bgcolor12Sidebar"
@@ -740,8 +920,12 @@ const ThemeSettings = () => {
                         name="sidebar"
                         id="bgcolor13Sidebar"
                         defaultValue="sidebarcolorthirteen"
-                        checked={dataSidebar === "sidebarcolorthirteen" ? true : false}
-                        onChange={() => handleDataSidebarChange("sidebarcolorthirteen")}
+                        checked={
+                          dataSidebar === "sidebarcolorthirteen" ? true : false
+                        }
+                        onChange={() =>
+                          handleDataSidebarChange("sidebarcolorthirteen")
+                        }
                       />
                       <label
                         htmlFor="bgcolor13Sidebar"
@@ -754,15 +938,18 @@ const ThemeSettings = () => {
                         name="sidebar"
                         id="bgcolor14Sidebar"
                         defaultValue="sidebarcolorfourteen"
-                        checked={dataSidebar === "sidebarcolorfourteen" ? true : false}
-                        onChange={() => handleDataSidebarChange("sidebarcolorfourteen")}
+                        checked={
+                          dataSidebar === "sidebarcolorfourteen" ? true : false
+                        }
+                        onChange={() =>
+                          handleDataSidebarChange("sidebarcolorfourteen")
+                        }
                       />
                       <label
                         htmlFor="bgcolor14Sidebar"
                         className="d-block bg-sidebar-color-14 mb-2"
                       ></label>
                     </div>
-
                   </div>
                 </div>
               </div>
@@ -779,7 +966,10 @@ const ThemeSettings = () => {
                   Theme Mode
                 </button>
               </h2>
-              <div id="modesetting" className="accordion-collapse collapse show">
+              <div
+                id="modesetting"
+                className="accordion-collapse collapse show"
+              >
                 <div className="accordion-body px-0 py3 border-top">
                   <div className="d-flex align-items-center">
                     <div className="theme-mode flex-fill text-center w-100 me-3">
@@ -872,11 +1062,7 @@ const ThemeSettings = () => {
                         onChange={() => handleDataSidebarBgChange("sidebarbg1")}
                       />
                       <label htmlFor="sidebarBg1" className="d-block rounded">
-                        <img
-                          src="src/assets/img/theme/sidebar-bg-01.svg"
-                          alt="img"
-                          className="rounded"
-                        />
+                        <img src={sidebarBg01} alt="img" className="rounded" />
                       </label>
                     </div>
                     <div className="theme-sidebarbg me-3 mb-3">
@@ -889,11 +1075,7 @@ const ThemeSettings = () => {
                         onChange={() => handleDataSidebarBgChange("sidebarbg2")}
                       />
                       <label htmlFor="sidebarBg2" className="d-block rounded">
-                        <img
-                          src="src/assets/img/theme/sidebar-bg-02.svg"
-                          alt="img"
-                          className="rounded"
-                        />
+                        <img src={sidebarBg02} alt="img" className="rounded" />
                       </label>
                     </div>
                     <div className="theme-sidebarbg me-3 mb-3">
@@ -906,11 +1088,7 @@ const ThemeSettings = () => {
                         onChange={() => handleDataSidebarBgChange("sidebarbg3")}
                       />
                       <label htmlFor="sidebarBg3" className="d-block rounded">
-                        <img
-                          src="src/assets/img/theme/sidebar-bg-03.svg"
-                          alt="img"
-                          className="rounded"
-                        />
+                        <img src={sidebarBg03} alt="img" className="rounded" />
                       </label>
                     </div>
                     <div className="theme-sidebarbg me-3 mb-3">
@@ -923,11 +1101,7 @@ const ThemeSettings = () => {
                         onChange={() => handleDataSidebarBgChange("sidebarbg4")}
                       />
                       <label htmlFor="sidebarBg4" className="d-block rounded">
-                        <img
-                          src="src/assets/img/theme/sidebar-bg-04.svg"
-                          alt="img"
-                          className="rounded"
-                        />
+                        <img src={sidebarBg04} alt="img" className="rounded" />
                       </label>
                     </div>
                     <div className="theme-sidebarbg me-3 mb-3">
@@ -940,11 +1114,7 @@ const ThemeSettings = () => {
                         onChange={() => handleDataSidebarBgChange("sidebarbg5")}
                       />
                       <label htmlFor="sidebarBg5" className="d-block rounded">
-                        <img
-                          src="src/assets/img/theme/sidebar-bg-05.svg"
-                          alt="img"
-                          className="rounded"
-                        />
+                        <img src={sidebarBg05} alt="img" className="rounded" />
                       </label>
                     </div>
                     <div className="theme-sidebarbg me-3 mb-3">
@@ -957,11 +1127,7 @@ const ThemeSettings = () => {
                         onChange={() => handleDataSidebarBgChange("sidebarBg6")}
                       />
                       <label htmlFor="sidebarBg6" className="d-block rounded">
-                        <img
-                          src="src/assets/img/theme/sidebar-bg-06.svg"
-                          alt="img"
-                          className="rounded"
-                        />
+                        <img src={sidebarBg06} alt="img" className="rounded" />
                       </label>
                     </div>
                   </div>
@@ -980,7 +1146,10 @@ const ThemeSettings = () => {
                   Theme Colors
                 </button>
               </h2>
-              <div id="sidebarcolor" className="accordion-collapse collapse show">
+              <div
+                id="sidebarcolor"
+                className="accordion-collapse collapse show"
+              >
                 <div className="accordion-body pb-2 px-0 py-3 border-top">
                   <div className="d-flex align-items-center flex-wrap">
                     <div className="theme-colorsset me-2 mb-2">
@@ -1003,7 +1172,10 @@ const ThemeSettings = () => {
                         checked={dataColor === "brightblue" ? true : false}
                         onChange={() => handleDataColorChange("brightblue")}
                       />
-                      <label htmlFor="brightblueColor" className="theme-color-1" />
+                      <label
+                        htmlFor="brightblueColor"
+                        className="theme-color-1"
+                      />
                     </div>
                     <div className="theme-colorsset me-2 mb-2">
                       <input
@@ -1014,7 +1186,10 @@ const ThemeSettings = () => {
                         checked={dataColor === "lunargreen" ? true : false}
                         onChange={() => handleDataColorChange("lunargreen")}
                       />
-                      <label htmlFor="lunargreenColor" className="theme-color-2" />
+                      <label
+                        htmlFor="lunargreenColor"
+                        className="theme-color-2"
+                      />
                     </div>
                     <div className="theme-colorsset me-2 mb-2">
                       <input
@@ -1025,7 +1200,10 @@ const ThemeSettings = () => {
                         checked={dataColor === "lavendar" ? true : false}
                         onChange={() => handleDataColorChange("lavendar")}
                       />
-                      <label htmlFor="lavendarColor" className="theme-color-3" />
+                      <label
+                        htmlFor="lavendarColor"
+                        className="theme-color-3"
+                      />
                     </div>
                     <div className="theme-colorsset me-2 mb-2">
                       <input
@@ -1061,13 +1239,17 @@ const ThemeSettings = () => {
                         checked={dataColor === "orange" ? true : false}
                         onChange={() => handleDataColorChange("orange")}
                       />
-                      <label
-                        htmlFor="orangeColor"
-                        className="theme-color-6"
-                      />
+                      <label htmlFor="orangeColor" className="theme-color-6" />
                     </div>
-                    <div className={`theme-colorsset round-style select-theme-color position-relative  mb-2 ${dataColor === 'all' ? 'active' : ''}`} onClick={() => handleDataColorChange('all')}>
-                      <div className="select-color position-absolute"><i className="ti ti-palette"></i></div>
+                    <div
+                      className={`theme-colorsset round-style select-theme-color position-relative  mb-2 ${
+                        dataColor === "all" ? "active" : ""
+                      }`}
+                      onClick={() => handleDataColorChange("all")}
+                    >
+                      <div className="select-color position-absolute">
+                        <i className="ti ti-palette"></i>
+                      </div>
                       <ColorPicker
                         format={formatRgb}
                         value={colorRgb4}

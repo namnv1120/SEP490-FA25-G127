@@ -8,6 +8,13 @@ import { getImageUrl } from "../../utils/imageUtils";
 import { avator1 } from "../../utils/imagepath";
 import { getCurrentShift } from "../../services/ShiftService";
 
+// Import images
+import logoPng from "../../assets/img/logo.png";
+import logoWhitePng from "../../assets/img/logo-white.png";
+import logoSmallPng from "../../assets/img/logo-small.png";
+import clockIcon from "../../assets/img/icons/clock-icon.svg";
+import logOutIcon from "../../assets/img/icons/log-out.svg";
+
 const PosHeader = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentShift, setCurrentShift] = useState(null);
@@ -23,12 +30,12 @@ const PosHeader = () => {
     userInfo.role === "Nhân viên bán hàng"
       ? allRoutes.saledashboard
       : userInfo.role === "Chủ cửa hàng"
-        ? allRoutes.shopownerdashboard
-        : userInfo.role === "Quản trị viên"
-          ? allRoutes.admindashboard
-          : userInfo.role === "Nhân viên kho"
-            ? allRoutes.warehousedashboard
-            : allRoutes.shopownerdashboard;
+      ? allRoutes.shopownerdashboard
+      : userInfo.role === "Quản trị viên"
+      ? allRoutes.admindashboard
+      : userInfo.role === "Nhân viên kho"
+      ? allRoutes.warehousedashboard
+      : allRoutes.shopownerdashboard;
 
   const isStaff = userInfo.role === "Nhân viên bán hàng";
 
@@ -189,13 +196,13 @@ const PosHeader = () => {
         {/* Logo */}
         <div className="header-left active">
           <Link to={homeRoute} className="logo logo-normal">
-            <img src="src/assets/img/logo.png" alt="Img" />
+            <img src={logoPng} alt="Img" />
           </Link>
           <Link to={homeRoute} className="logo logo-white">
-            <img src="src/assets/img/logo-white.png" alt="Img" />
+            <img src={logoWhitePng} alt="Img" />
           </Link>
           <Link to={homeRoute} className="logo-small">
-            <img src="src/assets/img/logo-small.png" alt="Img" />
+            <img src={logoSmallPng} alt="Img" />
           </Link>
         </div>
         {/* Header Menu */}
@@ -203,11 +210,7 @@ const PosHeader = () => {
           {/* Search */}
           <li className="nav-item time-nav">
             <span className="bg-teal text-white d-inline-flex align-items-center">
-              <img
-                src="src/assets/img/icons/clock-icon.svg"
-                alt="img"
-                className="me-2"
-              />
+              <img src={clockIcon} alt="img" className="me-2" />
               {formatTime24h(currentTime)}
             </span>
           </li>
@@ -450,7 +453,7 @@ const PosHeader = () => {
                     }}
                   >
                     <img
-                      src="src/assets/img/icons/log-out.svg"
+                      src={logOutIcon}
                       className="me-2"
                       alt="img"
                       style={{ width: "16px", height: "16px" }}

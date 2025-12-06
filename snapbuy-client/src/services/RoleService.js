@@ -1,11 +1,12 @@
-import axios from 'axios';
+import axios from "axios";
+import { API_ENDPOINTS } from "./apiConfig";
 
-const REST_API_BASE_URL = 'http://localhost:8080/api/roles';
+const REST_API_BASE_URL = API_ENDPOINTS.ROLES;
 
 const getAuthHeader = () => {
-  const token = localStorage.getItem('authToken');
-  const tokenType = localStorage.getItem('authTokenType') || 'Bearer';
-  if (!token) throw new Error('Không tìm thấy token xác thực!');
+  const token = localStorage.getItem("authToken");
+  const tokenType = localStorage.getItem("authTokenType") || "Bearer";
+  if (!token) throw new Error("Không tìm thấy token xác thực!");
   return { Authorization: `${tokenType} ${token}` };
 };
 
@@ -16,7 +17,9 @@ export const getAllRoles = async () => {
     });
     return response.data.result || response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách vai trò!');
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi lấy danh sách vai trò!"
+    );
   }
 };
 
@@ -27,7 +30,9 @@ export const getRoleById = async (roleId) => {
     });
     return response.data.result || response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách vai trò!');
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi lấy danh sách vai trò!"
+    );
   }
 };
 
@@ -38,18 +43,24 @@ export const createRole = async (roleData) => {
     });
     return response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Lỗi khi tạo vai trò!');
+    throw new Error(error.response?.data?.message || "Lỗi khi tạo vai trò!");
   }
 };
 
 export const updateRole = async (roleId, updatedData) => {
   try {
-    const response = await axios.put(`${REST_API_BASE_URL}/${roleId}`, updatedData, {
-      headers: getAuthHeader(),
-    });
+    const response = await axios.put(
+      `${REST_API_BASE_URL}/${roleId}`,
+      updatedData,
+      {
+        headers: getAuthHeader(),
+      }
+    );
     return response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật vai trò!');
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi cập nhật vai trò!"
+    );
   }
 };
 
@@ -60,18 +71,23 @@ export const deleteRole = async (roleId) => {
     });
     return response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Lỗi khi xóa vai trò!');
+    throw new Error(error.response?.data?.message || "Lỗi khi xóa vai trò!");
   }
 };
 
 export const listPermissions = async (roleId) => {
   try {
-    const response = await axios.get(`${REST_API_BASE_URL}/${roleId}/permissions`, {
-      headers: getAuthHeader(),
-    });
+    const response = await axios.get(
+      `${REST_API_BASE_URL}/${roleId}/permissions`,
+      {
+        headers: getAuthHeader(),
+      }
+    );
     return response.data.result || response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách quyền!');
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi lấy danh sách quyền!"
+    );
   }
 };
 
@@ -84,7 +100,7 @@ export const addPermission = async (roleId, permissionId) => {
     );
     return response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Lỗi khi thêm quyền!');
+    throw new Error(error.response?.data?.message || "Lỗi khi thêm quyền!");
   }
 };
 
@@ -96,7 +112,7 @@ export const removePermission = async (roleId, permissionId) => {
     );
     return response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Lỗi khi xóa quyền!');
+    throw new Error(error.response?.data?.message || "Lỗi khi xóa quyền!");
   }
 };
 
@@ -109,7 +125,7 @@ export const setPermissions = async (roleId, permissionsData) => {
     );
     return response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật quyền!');
+    throw new Error(error.response?.data?.message || "Lỗi khi cập nhật quyền!");
   }
 };
 
@@ -123,22 +139,33 @@ export const toggleRoleStatus = async (roleId) => {
     );
     return response.data.result || response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Lỗi khi chuyển đổi trạng thái vai trò!');
+    throw new Error(
+      error.response?.data?.message || "Lỗi khi chuyển đổi trạng thái vai trò!"
+    );
   }
 };
 
 // Search roles với pagination
-export const searchRolesPaged = async ({ keyword, active, page = 0, size = 10, sortBy = 'roleName', sortDir = 'ASC' }) => {
+export const searchRolesPaged = async ({
+  keyword,
+  active,
+  page = 0,
+  size = 10,
+  sortBy = "roleName",
+  sortDir = "ASC",
+}) => {
   try {
     const params = { page, size, sortBy, sortDir };
     if (keyword && keyword.trim()) params.keyword = keyword.trim();
-    if (typeof active === 'boolean') params.active = active;
+    if (typeof active === "boolean") params.active = active;
     const response = await axios.get(`${REST_API_BASE_URL}/search-paged`, {
       headers: getAuthHeader(),
       params,
     });
     return response.data.result || response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to search roles (paged)!');
+    throw new Error(
+      error.response?.data?.message || "Failed to search roles (paged)!"
+    );
   }
 };

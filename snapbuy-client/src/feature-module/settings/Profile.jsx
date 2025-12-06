@@ -7,10 +7,13 @@ import SettingsSideBar from "../../feature-module/settings/SettingsSideBar";
 import { message } from "antd";
 import { getMyInfo } from "../../services/AccountService";
 import { getImageUrl } from "../../utils/imageUtils";
+import { API_ENDPOINTS } from "../../services/apiConfig";
 import PageLoader from "../../components/loading/PageLoader.jsx";
 
 const pickFirstDefined = (...values) =>
-  values.find((value) => value !== undefined && value !== null && value !== "") ?? "";
+  values.find(
+    (value) => value !== undefined && value !== null && value !== ""
+  ) ?? "";
 
 const Profile = () => {
   const [formData, setFormData] = useState({
@@ -96,10 +99,10 @@ const Profile = () => {
         formDataToSend.append("removeAvatar", "true");
       }
 
-      const response = await fetch(`http://localhost:8080/api/accounts/${formData.id}`, {
-        method: 'PUT',
+      const response = await fetch(`${API_ENDPOINTS.ACCOUNTS}/${formData.id}`, {
+        method: "PUT",
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         },
         body: formDataToSend,
       });
@@ -134,7 +137,9 @@ const Profile = () => {
           }
 
           setCanEditEmail(!userEmail || userEmail.trim() === "");
-          window.dispatchEvent(new CustomEvent('profileUpdated', { detail: user }));
+          window.dispatchEvent(
+            new CustomEvent("profileUpdated", { detail: user })
+          );
         } catch (error) {
           message.error(error.message || "Không thể tải thông tin tài khoản");
         }
@@ -157,11 +162,17 @@ const Profile = () => {
         const user = response?.result || response || {};
 
         const avatarUrl = user?.avatarUrl || "";
-        const userEmail = pickFirstDefined(user?.email, user?.emailAddress) || "";
+        const userEmail =
+          pickFirstDefined(user?.email, user?.emailAddress) || "";
         setFormData({
           id: user?.id ?? user?.accountId ?? null,
           fullName: user?.fullName || "",
-          phone: pickFirstDefined(user?.phone, user?.phoneNumber, user?.contactNumber) || "",
+          phone:
+            pickFirstDefined(
+              user?.phone,
+              user?.phoneNumber,
+              user?.contactNumber
+            ) || "",
           email: userEmail,
           avatarUrl: avatarUrl,
         });
@@ -178,7 +189,8 @@ const Profile = () => {
         }
       } catch (error) {
         message.error(
-          error?.message || "Không thể tải thông tin tài khoản. Vui lòng thử lại."
+          error?.message ||
+            "Không thể tải thông tin tài khoản. Vui lòng thử lại."
         );
       } finally {
         setIsLoading(false);
@@ -275,9 +287,7 @@ const Profile = () => {
                         </div>
                         <div className="col-md-6">
                           <div className="mb-3">
-                            <label className="form-label">
-                              Số điện thoại
-                            </label>
+                            <label className="form-label">Số điện thoại</label>
                             <input
                               type="text"
                               className="form-control"
@@ -291,7 +301,10 @@ const Profile = () => {
                         <div className="col-md-6">
                           <div className="mb-3">
                             <label className="form-label">
-                              Email {canEditEmail && <span className="text-danger">*</span>}
+                              Email{" "}
+                              {canEditEmail && (
+                                <span className="text-danger">*</span>
+                              )}
                             </label>
                             {canEditEmail ? (
                               <>
@@ -303,7 +316,9 @@ const Profile = () => {
                                   placeholder="Nhập email"
                                   disabled={saving}
                                 />
-                                <small className="text-muted">Email dùng để lấy lại mật khẩu</small>
+                                <small className="text-muted">
+                                  Email dùng để lấy lại mật khẩu
+                                </small>
                               </>
                             ) : (
                               <>
@@ -313,9 +328,14 @@ const Profile = () => {
                                   value={formData.email || ""}
                                   readOnly
                                   disabled
-                                  style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                                  style={{
+                                    backgroundColor: "#f5f5f5",
+                                    cursor: "not-allowed",
+                                  }}
                                 />
-                                <small className="text-muted">Email chỉ có thể thay đổi ở phần Email</small>
+                                <small className="text-muted">
+                                  Email chỉ có thể thay đổi ở phần Email
+                                </small>
                               </>
                             )}
                           </div>
@@ -323,10 +343,18 @@ const Profile = () => {
                       </div>
 
                       <div className="text-end settings-bottom-btn mt-0">
-                        <button type="button" className="btn btn-secondary me-2" disabled={saving}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary me-2"
+                          disabled={saving}
+                        >
                           Huỷ
                         </button>
-                        <button type="submit" className="btn btn-primary" disabled={saving}>
+                        <button
+                          type="submit"
+                          className="btn btn-primary"
+                          disabled={saving}
+                        >
                           {saving ? "Đang lưu..." : "Lưu thay đổi"}
                         </button>
                       </div>

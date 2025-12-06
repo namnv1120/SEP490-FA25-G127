@@ -1,19 +1,7 @@
 import axios from "axios";
+import { API_ENDPOINTS, getAuthHeaders } from "./apiConfig";
 
-const REST_API_BASE_URL = "http://localhost:8080/api/orders";
-
-// Hàm lấy header có token
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("authToken");
-  const tokenType = localStorage.getItem("authTokenType") || "Bearer";
-
-  return {
-    headers: {
-      Authorization: `${tokenType} ${token}`,
-      "Content-Type": "application/json",
-    },
-  };
-};
+const REST_API_BASE_URL = API_ENDPOINTS.ORDERS;
 
 export const getAllOrders = async (params = {}) => {
   const response = await axios.get(REST_API_BASE_URL, {
@@ -92,9 +80,12 @@ export const getMyOrdersByDateTimeRange = async (fromISO, toISO) => {
 };
 
 export const getOrdersByAccountAndRange = async (accountId, fromISO, toISO) => {
-  const response = await axios.get(`${REST_API_BASE_URL}/by-account/${accountId}/by-range`, {
-    ...getAuthHeaders(),
-    params: { from: fromISO, to: toISO },
-  });
+  const response = await axios.get(
+    `${REST_API_BASE_URL}/by-account/${accountId}/by-range`,
+    {
+      ...getAuthHeaders(),
+      params: { from: fromISO, to: toISO },
+    }
+  );
   return response.data?.result || response.data || [];
 };

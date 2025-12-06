@@ -1,6 +1,5 @@
 import { box } from "./imagepath";
-
-const API_BASE_URL = "http://localhost:8080";
+import { API_BASE_URL } from "../services/apiConfig";
 
 export const getImageUrl = (imageUrl) => {
   // Nếu imageUrl null, trống hoặc chỉ có khoảng trắng, trả về ảnh mặc định từ assets
@@ -19,5 +18,5 @@ export const getImageUrl = (imageUrl) => {
 
 export const handleImageError = (e, fallbackImage) => {
   e.target.src = fallbackImage;
-  e.target.onerror = null; 
+  e.target.onerror = null;
 };

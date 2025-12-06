@@ -1,19 +1,7 @@
 import axios from "axios";
+import { API_ENDPOINTS, getAuthHeaders } from "./apiConfig";
 
-const REST_API_BASE_URL = "http://localhost:8080/api/promotions";
-
-// Helper function để lấy headers với token
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("authToken");
-  const tokenType = localStorage.getItem("authTokenType") || "Bearer";
-
-  return {
-    headers: {
-      Authorization: `${tokenType} ${token}`,
-      "Content-Type": "application/json",
-    },
-  };
-};
+const REST_API_BASE_URL = API_ENDPOINTS.PROMOTIONS;
 
 // Lấy tất cả khuyến mãi
 export const getAllPromotions = async () => {
@@ -72,7 +60,13 @@ export const getBestDiscountInfoForProduct = async (productId, unitPrice) => {
       ? `${REST_API_BASE_URL}/product/${productId}/discount-info?unitPrice=${unitPrice}`
       : `${REST_API_BASE_URL}/product/${productId}/discount-info`;
     const response = await axios.get(url, getAuthHeaders());
-    return response.data?.result || { discountType: null, discountValue: 0, discountPercent: 0 };
+    return (
+      response.data?.result || {
+        discountType: null,
+        discountValue: 0,
+        discountPercent: 0,
+      }
+    );
   } catch (error) {
     console.error("Error getting discount info for product:", error);
     return { discountType: null, discountValue: 0, discountPercent: 0 };
