@@ -42,11 +42,9 @@ services:
       - ACCEPT_EULA=Y
       - DB_PASSWORD=${DB_PASSWORD:-Snapbuy25}
 
-  # Spring Boot Backend
+  # Spring Boot Backend (from Docker Hub)
   backend:
-    build:
-      context: ./snapbuy-server
-      dockerfile: Dockerfile
+    image: namnv11/snapbuy-backend:latest
     container_name: snapbuy-backend
     environment:
       - DB_HOST=db
@@ -73,11 +71,9 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
-  # React Frontend with Nginx
+  # React Frontend with Nginx (from Docker Hub)
   frontend:
-    build:
-      context: ./snapbuy-client
-      dockerfile: Dockerfile
+    image: namnv11/snapbuy-frontend:latest
     container_name: snapbuy-frontend
     ports:
       - "80:80"
