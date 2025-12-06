@@ -50,7 +50,7 @@ const CloseShiftModal = forwardRef(({
           </Button>
         </div>
       }
-      width={500}
+      width={700}
       centered
     >
       {/* Shift Info */}
@@ -83,7 +83,11 @@ const CloseShiftModal = forwardRef(({
       {/* Cash Denomination Input */}
       <div style={{ marginBottom: 16 }}>
         <Text strong style={{ fontSize: 14, marginBottom: 8, display: 'block' }}>
-          Tiền thực tế trong két
+          <i className="ti ti-coins" style={{ marginRight: 8 }}></i>
+          Chi tiết mệnh giá tiền trong két
+        </Text>
+        <Text type="secondary" style={{ fontSize: 12, marginBottom: 12, display: 'block' }}>
+          Nhập số lượng từng loại tờ tiền hiện có trong két
         </Text>
         <CashDenominationInput
           ref={cashDenominationRef}

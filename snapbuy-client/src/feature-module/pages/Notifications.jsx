@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Modal } from "antd";
 import {
     getAllNotifications,
     markAsRead,
@@ -109,18 +110,82 @@ const Notifications = () => {
     };
 
     // Handle delete
+    // const handleDelete = async (notificationId) => {
+    //     Modal.confirm({
+    //         title: (
+    //             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    //                 <i className="ti ti-alert-triangle" style={{ color: '#faad14', fontSize: '24px' }}></i>
+    //                 <span style={{ fontSize: '16px', fontWeight: 600 }}>Xác nhận xóa thông báo</span>
+    //             </div>
+    //         ),
+    //         content: (
+    //             <div style={{ paddingLeft: '36px', fontSize: '14px', color: '#666' }}>
+    //                 Bạn có chắc chắn muốn xóa thông báo này? Hành động này không thể hoàn tác.
+    //             </div>
+    //         ),
+    //         okText: "Xóa",
+    //         cancelText: "Hủy",
+    //         okButtonProps: {
+    //             danger: true,
+    //             size: 'middle'
+    //         },
+    //         cancelButtonProps: {
+    //             size: 'middle'
+    //         },
+    //         centered: true,
+    //         icon: null,
+    //         width: 480,
+    //         onOk: async () => {
+    //             try {
+    //                 await deleteNotification(notificationId);
+    //                 setNotifications(notifications.filter((n) => n.id !== notificationId));
+    //                 // Refresh to get updated count and list
+    //                 fetchNotifications();
+    //             } catch (error) {
+    //                 console.error("Error deleting notification:", error);
+    //             }
+    //         }
+    //     });
+    // };
+
     const handleDelete = async (notificationId) => {
-        if (window.confirm("Bạn có chắc muốn xóa thông báo này?")) {
-            try {
-                await deleteNotification(notificationId);
-                setNotifications(notifications.filter((n) => n.id !== notificationId));
-                // Refresh to get updated count and list
-                fetchNotifications();
-            } catch (error) {
-                console.error("Error deleting notification:", error);
-            }
-        }
+        Modal.confirm({
+            title: "Xóa thông báo",
+            content: (
+                <>
+                    <div style={{ marginBottom: 4 }}>
+                        Bạn có chắc chắn muốn xóa thông báo này?
+                    </div>
+                    <div style={{ fontSize: 13, color: "#888" }}>
+                        Thao tác này không thể hoàn tác.
+                    </div>
+                </>
+            ),
+            okText: "Xóa",
+            cancelText: "Hủy",
+            okButtonProps: {
+                danger: true,
+                size: "middle",
+            },
+            cancelButtonProps: {
+                size: "middle",
+            },
+            centered: true,
+            width: 420,
+            onOk: async () => {
+                try {
+                    await deleteNotification(notificationId);
+                    setNotifications((prev) =>
+                        prev.filter((n) => n.id !== notificationId)
+                    );
+                    fetchNotifications();
+                } catch (error) {
+                    console.error("Error deleting notification:", error);
+                }
+            },
+        });
     };
+
 
     // Get notification icon (black/white style)
     const getNotificationIcon = (type) => {

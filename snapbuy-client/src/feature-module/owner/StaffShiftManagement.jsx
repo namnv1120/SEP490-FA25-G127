@@ -353,6 +353,7 @@ const StaffShiftManagement = () => {
     }
     setSelectedEmployee(employee);
     setInitialCash(0);
+    setOpenCashDenominations([]); // Reset denomination data
     setOpenShiftModalVisible(true);
   };
 
@@ -969,7 +970,7 @@ const StaffShiftManagement = () => {
           cancelText="Hủy"
           confirmLoading={loading}
           centered
-          width={500}
+          width={700}
         >
           {selectedEmployee && (
             <div>
@@ -992,102 +993,30 @@ const StaffShiftManagement = () => {
               <div className="mb-3">
                 <label
                   className="form-label fw-bold"
-                  style={{ fontSize: "13px", marginBottom: "4px" }}
+                  style={{ fontSize: "14px", marginBottom: "8px" }}
                 >
-                  <i className="ti ti-cash me-1"></i>
-                  Số tiền ban đầu trong két:
+                  <i className="ti ti-coins me-1"></i>
+                  Chi tiết mệnh giá tiền ban đầu trong két:
                 </label>
-                <InputNumber
-                  style={{ width: "100%" }}
-                  value={initialCash}
-                  onChange={(value) => {
-                    if (value === null || value === undefined) {
-                      setInitialCash(0);
-                      return;
-                    }
-                    if (typeof value === 'number' && !isNaN(value) && value >= 0) {
-                      setInitialCash(value);
-                    } else {
-                      message.warning("Vui lòng chỉ nhập số dương!");
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    // Chặn các ký tự không phải số, dấu chấm, dấu phẩy, phím điều hướng, và phím điều khiển
-                    const allowedKeys = [
-                      'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
-                      'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
-                      'Home', 'End'
-                    ];
-                    const isNumber = /[0-9]/.test(e.key);
-                    const isAllowedKey = allowedKeys.includes(e.key);
-                    const isCtrlA = e.ctrlKey && e.key === 'a';
-                    const isCtrlC = e.ctrlKey && e.key === 'c';
-                    const isCtrlV = e.ctrlKey && e.key === 'v';
-                    const isCtrlX = e.ctrlKey && e.key === 'x';
-
-                    if (!isNumber && !isAllowedKey && !isCtrlA && !isCtrlC && !isCtrlV && !isCtrlX) {
-                      e.preventDefault();
-                      message.warning("Vui lòng chỉ nhập số!");
-                    }
-                  }}
-                  onPaste={(e) => {
-                    e.preventDefault();
-                    const pastedText = e.clipboardData.getData('text');
-                    const numericValue = pastedText.replace(/[^\d]/g, '');
-                    if (numericValue) {
-                      const num = parseFloat(numericValue);
-                      if (!isNaN(num) && num >= 0) {
-                        setInitialCash(num);
-                        message.success("Đã dán số tiền");
-                      } else {
-                        message.warning("Dữ liệu dán không hợp lệ! Vui lòng chỉ dán số.");
-                      }
-                    }
-                  }}
-                  formatter={(value) =>
-                    `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                  }
-                  parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
-                  min={0}
-                  step={10000}
-                  placeholder="Nhập số tiền ban đầu"
-                />
                 <small
-                  className="text-muted d-block mt-1"
-                  style={{ fontSize: "11px" }}
+                  className="text-muted d-block mb-2"
+                  style={{ fontSize: "12px" }}
                 >
-                  Số tiền hiện có trong két trước khi bắt đầu ca
+                  Nhập số lượng từng loại tờ tiền hiện có trong két trước khi bắt đầu ca
                 </small>
-
-                {/* Component nhập chi tiết mệnh giá tiền */}
-                <div className="mt-3">
-                  <label
-                    className="form-label fw-bold"
-                    style={{ fontSize: "13px", marginBottom: "4px" }}
-                  >
-                    <i className="ti ti-coins me-1"></i>
-                    Chi tiết mệnh giá tiền (tùy chọn):
-                  </label>
-                  <small
-                    className="text-muted d-block mb-2"
-                    style={{ fontSize: "11px" }}
-                  >
-                    Nhập số lượng từng loại tờ tiền để theo dõi chi tiết
-                  </small>
-                  <CashDenominationInput
-                    ref={openCashDenominationRef}
-                    value={openCashDenominations}
-                    onChange={(denoms) => {
-                      setOpenCashDenominations(denoms);
-                      const total = denoms.reduce(
-                        (sum, d) => sum + d.denomination * d.quantity,
-                        0
-                      );
-                      setInitialCash(total);
-                    }}
-                    expectedTotal={initialCash}
-                  />
-                </div>
+                <CashDenominationInput
+                  ref={openCashDenominationRef}
+                  value={openCashDenominations}
+                  onChange={(denoms) => {
+                    setOpenCashDenominations(denoms);
+                    const total = denoms.reduce(
+                      (sum, d) => sum + d.denomination * d.quantity,
+                      0
+                    );
+                    setInitialCash(total);
+                  }}
+                  expectedTotal={null}
+                />
               </div>
             </div>
           )}
@@ -1110,7 +1039,7 @@ const StaffShiftManagement = () => {
           cancelText="Hủy"
           confirmLoading={loading}
           centered
-          width={500}
+          width={700}
         >
           {employeeToClose && (
             <div>
@@ -1137,102 +1066,30 @@ const StaffShiftManagement = () => {
               <div className="mb-3">
                 <label
                   className="form-label fw-bold"
-                  style={{ fontSize: "13px", marginBottom: "4px" }}
+                  style={{ fontSize: "14px", marginBottom: "8px" }}
                 >
-                  <i className="ti ti-cash me-1"></i>
-                  Số tiền cuối ca trong két:
+                  <i className="ti ti-coins me-1"></i>
+                  Chi tiết mệnh giá tiền cuối ca trong két:
                 </label>
-                <InputNumber
-                  style={{ width: "100%" }}
-                  value={closingCash}
-                  onChange={(value) => {
-                    if (value === null || value === undefined) {
-                      setClosingCash(0);
-                      return;
-                    }
-                    if (typeof value === 'number' && !isNaN(value) && value >= 0) {
-                      setClosingCash(value);
-                    } else {
-                      message.warning("Vui lòng chỉ nhập số dương!");
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    // Chặn các ký tự không phải số, dấu chấm, dấu phẩy, phím điều hướng, và phím điều khiển
-                    const allowedKeys = [
-                      'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
-                      'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
-                      'Home', 'End'
-                    ];
-                    const isNumber = /[0-9]/.test(e.key);
-                    const isAllowedKey = allowedKeys.includes(e.key);
-                    const isCtrlA = e.ctrlKey && e.key === 'a';
-                    const isCtrlC = e.ctrlKey && e.key === 'c';
-                    const isCtrlV = e.ctrlKey && e.key === 'v';
-                    const isCtrlX = e.ctrlKey && e.key === 'x';
-
-                    if (!isNumber && !isAllowedKey && !isCtrlA && !isCtrlC && !isCtrlV && !isCtrlX) {
-                      e.preventDefault();
-                      message.warning("Vui lòng chỉ nhập số!");
-                    }
-                  }}
-                  onPaste={(e) => {
-                    e.preventDefault();
-                    const pastedText = e.clipboardData.getData('text');
-                    const numericValue = pastedText.replace(/[^\d]/g, '');
-                    if (numericValue) {
-                      const num = parseFloat(numericValue);
-                      if (!isNaN(num) && num >= 0) {
-                        setClosingCash(num);
-                        message.success("Đã dán số tiền");
-                      } else {
-                        message.warning("Dữ liệu dán không hợp lệ! Vui lòng chỉ dán số.");
-                      }
-                    }
-                  }}
-                  formatter={(value) =>
-                    `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                  }
-                  parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
-                  min={0}
-                  step={10000}
-                  placeholder="Nhập số tiền cuối ca"
-                />
                 <small
-                  className="text-muted d-block mt-1"
-                  style={{ fontSize: "11px" }}
+                  className="text-muted d-block mb-2"
+                  style={{ fontSize: "12px" }}
                 >
-                  Số tiền hiện có trong két khi kết thúc ca
+                  Nhập số lượng từng loại tờ tiền hiện có trong két khi kết thúc ca
                 </small>
-
-                {/* Component nhập chi tiết mệnh giá tiền */}
-                <div className="mt-3">
-                  <label
-                    className="form-label fw-bold"
-                    style={{ fontSize: "13px", marginBottom: "4px" }}
-                  >
-                    <i className="ti ti-coins me-1"></i>
-                    Chi tiết mệnh giá tiền (tùy chọn):
-                  </label>
-                  <small
-                    className="text-muted d-block mb-2"
-                    style={{ fontSize: "11px" }}
-                  >
-                    Nhập số lượng từng loại tờ tiền để theo dõi chi tiết
-                  </small>
-                  <CashDenominationInput
-                    ref={closeCashDenominationRef}
-                    value={closeCashDenominations}
-                    onChange={(denoms) => {
-                      setCloseCashDenominations(denoms);
-                      const total = denoms.reduce(
-                        (sum, d) => sum + d.denomination * d.quantity,
-                        0
-                      );
-                      setClosingCash(total);
-                    }}
-                    expectedTotal={closingCash}
-                  />
-                </div>
+                <CashDenominationInput
+                  ref={closeCashDenominationRef}
+                  value={closeCashDenominations}
+                  onChange={(denoms) => {
+                    setCloseCashDenominations(denoms);
+                    const total = denoms.reduce(
+                      (sum, d) => sum + d.denomination * d.quantity,
+                      0
+                    );
+                    setClosingCash(total);
+                  }}
+                  expectedTotal={null}
+                />
               </div>
               <div className="mb-3">
                 <label
