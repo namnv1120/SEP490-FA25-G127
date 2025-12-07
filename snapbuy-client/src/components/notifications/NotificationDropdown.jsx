@@ -131,21 +131,21 @@ const NotificationDropdown = () => {
   }, [fetchNotifications]);
 
   // Handle mark as read
-  const handleMarkAsRead = async (notificationId) => {
-    try {
-      await markAsRead(notificationId);
-      setNotifications(
-        notifications.map((n) =>
-          n.id === notificationId ? { ...n, isRead: true } : n
-        )
-      );
-      setUnreadCount(Math.max(0, unreadCount - 1));
-      // Refresh to get updated data
-      fetchNotifications();
-    } catch (error) {
-      console.error("Error marking as read:", error);
-    }
-  };
+  // const handleMarkAsRead = async (notificationId) => {
+  //   try {
+  //     await markAsRead(notificationId);
+  //     setNotifications(
+  //       notifications.map((n) =>
+  //         n.id === notificationId ? { ...n, isRead: true } : n
+  //       )
+  //     );
+  //     setUnreadCount(Math.max(0, unreadCount - 1));
+  //     // Refresh to get updated data
+  //     fetchNotifications();
+  //   } catch (error) {
+  //     console.error("Error marking as read:", error);
+  //   }
+  // };
 
   // Handle mark all as read
   const handleMarkAllAsRead = async () => {
@@ -258,11 +258,6 @@ const NotificationDropdown = () => {
           cancelable: true,
         });
         window.dispatchEvent(event);
-        console.log(
-          "Dispatched purchaseOrderNotificationClicked event",
-          notification
-        );
-        // Không navigate vì đã ở trang purchase order rồi
       } else {
         navigate(url);
       }

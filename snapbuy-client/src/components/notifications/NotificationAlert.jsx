@@ -70,13 +70,6 @@ const NotificationAlert = () => {
 
       const currentUnreadCount = unreadNotifications.length;
 
-      console.log(
-        "[NotificationAlert] Unread count:",
-        currentUnreadCount,
-        "Previous:",
-        previousUnreadCount.current
-      );
-
       // Check if there are new notifications
       if (
         !isInitialLoad.current &&
@@ -84,10 +77,6 @@ const NotificationAlert = () => {
       ) {
         const newNotificationsCount =
           currentUnreadCount - previousUnreadCount.current;
-        console.log(
-          "[NotificationAlert] New notifications detected:",
-          newNotificationsCount
-        );
         showSummaryNotification(newNotificationsCount);
       }
 
@@ -96,7 +85,6 @@ const NotificationAlert = () => {
 
       // Mark initial load as complete
       if (isInitialLoad.current) {
-        console.log("[NotificationAlert] Initial load complete");
         isInitialLoad.current = false;
       }
     } catch (error) {

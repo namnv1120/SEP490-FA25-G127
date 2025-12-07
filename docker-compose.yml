@@ -76,7 +76,7 @@ services:
     image: namnv11/snapbuy-frontend:latest
     container_name: snapbuy-frontend
     ports:
-      - "80:80"
+      - "3000:80"
     networks:
       - snapbuy-network
     depends_on:

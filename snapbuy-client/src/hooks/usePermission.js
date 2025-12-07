@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { getMyInfo } from '../services/AccountService';
+import { useState, useEffect } from "react";
+import { getMyInfo } from "../services/AccountService";
 
 const usePermission = () => {
   const [userRole, setUserRole] = useState(null);
@@ -11,6 +11,15 @@ const usePermission = () => {
       try {
         setLoading(true);
 
+        // Kiểm tra token trước khi gọi API
+        const token = localStorage.getItem("authToken");
+        if (!token) {
+          setUserRole(null);
+          setUserInfo(null);
+          setLoading(false);
+          return;
+        }
+
         // Lấy thông tin user
         const userData = await getMyInfo();
         const user = userData.result || userData;
@@ -18,13 +27,13 @@ const usePermission = () => {
 
         // Lấy role đầu tiên của user
         if (user.roles && Array.isArray(user.roles) && user.roles.length > 0) {
-          const roleName = user.roles[0].replace('ROLE_', '');
+          const roleName = user.roles[0].replace("ROLE_", "");
           setUserRole(roleName);
         } else {
           setUserRole(null);
         }
       } catch (error) {
-        console.error('Lỗi khi lấy thông tin user:', error);
+        console.error("Lỗi khi lấy thông tin user:", error);
         setUserRole(null);
       } finally {
         setLoading(false);
@@ -55,4 +64,3 @@ const usePermission = () => {
 };
 
 export default usePermission;
-
