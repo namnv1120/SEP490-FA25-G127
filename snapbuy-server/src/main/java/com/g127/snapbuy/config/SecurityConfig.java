@@ -75,7 +75,10 @@ public class SecurityConfig {
         c.setAllowedOrigins(List.of(
             "http://localhost:5173",  // Vite dev server
             "http://localhost",       // Docker Nginx (port 80)
-            "http://localhost:80"     // Docker Nginx explicit
+            "http://localhost:80",    // Docker Nginx explicit
+            "http://localhost:3000",  // Docker frontend on port 3000
+            "https://snapbuy.com.vn", // Production
+            "https://www.snapbuy.com.vn" // Production with www
         ));
         c.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         c.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With"));
