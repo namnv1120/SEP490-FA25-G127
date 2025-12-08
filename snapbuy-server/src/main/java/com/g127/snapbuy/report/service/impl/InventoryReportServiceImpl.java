@@ -1,17 +1,16 @@
-package com.g127.snapbuy.service.impl;
+package com.g127.snapbuy.report.service.impl;
 
-import com.g127.snapbuy.dto.response.InventoryReportFullResponse;
-import com.g127.snapbuy.dto.response.InventoryReportOverviewResponse;
-import com.g127.snapbuy.dto.response.InventoryReportResponse;
+import com.g127.snapbuy.inventory.dto.response.InventoryReportFullResponse;
+import com.g127.snapbuy.inventory.dto.response.InventoryReportOverviewResponse;
+import com.g127.snapbuy.inventory.dto.response.InventoryReportResponse;
 import com.g127.snapbuy.entity.Inventory;
 import com.g127.snapbuy.entity.Product;
 import com.g127.snapbuy.entity.ProductPrice;
 import com.g127.snapbuy.repository.InventoryRepository;
-import com.g127.snapbuy.repository.InventoryTransactionRepository;
-import com.g127.snapbuy.repository.OrderDetailRepository;
+
 import com.g127.snapbuy.repository.ProductPriceRepository;
 import com.g127.snapbuy.repository.ProductRepository;
-import com.g127.snapbuy.service.InventoryReportService;
+import com.g127.snapbuy.report.service.InventoryReportService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;
@@ -34,8 +33,7 @@ public class InventoryReportServiceImpl implements InventoryReportService {
 
     private final ProductRepository productRepository;
     private final InventoryRepository inventoryRepository;
-    private final InventoryTransactionRepository inventoryTransactionRepository;
-    private final OrderDetailRepository orderDetailRepository;
+
     private final ProductPriceRepository productPriceRepository;
     private final EntityManager entityManager;
 

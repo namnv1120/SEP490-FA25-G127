@@ -1,8 +1,8 @@
-package com.g127.snapbuy.controller;
+package com.g127.snapbuy.report.controller;
 
-import com.g127.snapbuy.dto.ApiResponse;
-import com.g127.snapbuy.dto.response.InventoryReportFullResponse;
-import com.g127.snapbuy.service.InventoryReportService;
+import com.g127.snapbuy.response.ApiResponse;
+import com.g127.snapbuy.inventory.dto.response.InventoryReportFullResponse;
+import com.g127.snapbuy.report.service.InventoryReportService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;

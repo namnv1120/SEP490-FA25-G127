@@ -3,7 +3,7 @@ package com.g127.snapbuy.report.service.impl;
 import com.g127.snapbuy.inventory.dto.response.InventoryReportFullResponse;
 import com.g127.snapbuy.inventory.dto.response.InventoryReportOverviewResponse;
 import com.g127.snapbuy.inventory.dto.response.InventoryReportResponse;
-import com.g127.snapbuy.service.impl.InventoryReportServiceImpl;
+import com.g127.snapbuy.report.service.impl.InventoryReportServiceImpl;
 import com.g127.snapbuy.entity.*;
 import com.g127.snapbuy.repository.*;
 import jakarta.persistence.EntityManager;

@@ -1,6 +1,6 @@
-package com.g127.snapbuy.service;
+package com.g127.snapbuy.report.service;
 
-import com.g127.snapbuy.dto.response.InventoryReportFullResponse;
+import com.g127.snapbuy.inventory.dto.response.InventoryReportFullResponse;
 
 import java.time.LocalDate;
 
