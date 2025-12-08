@@ -35,6 +35,7 @@ export const allRoutes = {
   productreport: "/product-report",
   customerreport: "/customer-report",
   supplierreport: "/supplier-report",
+  inventoryreport: "/inventory-report",
 
   ownerstaffaccounts: "/staff-accounts",
   staffshiftreport: "/staff-shifts",

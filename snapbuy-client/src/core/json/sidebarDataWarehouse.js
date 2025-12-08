@@ -97,4 +97,20 @@ export const SidebarDataWarehouse = [
       },
     ],
   },
+  {
+    tittle: "Báo cáo",
+    hasSubRoute: true,
+    icon: "chart-bar",
+    showSubRoute: false,
+    activeRoute: "reports",
+    subRoutes: [
+      {
+        tittle: "Tồn kho",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/inventory-report",
+        subRoutes: [],
+      },
+    ],
+  },
 ];

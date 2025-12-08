@@ -97,6 +97,9 @@ const CustomerReport = lazy(() =>
 const SupplierReport = lazy(() =>
   import("./feature-module/reports/SupplierReport")
 );
+const InventoryReport = lazy(() =>
+  import("./feature-module/reports/InventoryReport")
+);
 const TransactionHistory = lazy(() =>
   import("./feature-module/sales/TransactionHistory")
 );
@@ -152,6 +155,7 @@ const componentsMap = {
   ProductReport,
   CustomerReport,
   SupplierReport,
+  InventoryReport,
   TransactionHistory,
   OrderHistory,
   PosSystemSettings,

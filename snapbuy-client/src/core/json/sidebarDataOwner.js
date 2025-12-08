@@ -190,6 +190,13 @@ export const SidebarDataOwner = [
         route: "/supplier-report",
         subRoutes: [],
       },
+      {
+        tittle: "Tồn kho",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/inventory-report",
+        subRoutes: [],
+      },
     ],
   },
 ];
