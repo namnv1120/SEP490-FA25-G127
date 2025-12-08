@@ -160,6 +160,13 @@ export const SidebarDataAdmin = [
         route: "/supplier-report",
         subRoutes: [],
       },
+      {
+        tittle: "Tồn kho",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/inventory-report",
+        subRoutes: [],
+      },
     ],
   },
   {

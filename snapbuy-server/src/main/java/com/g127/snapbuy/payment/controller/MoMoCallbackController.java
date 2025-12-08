@@ -95,18 +95,18 @@ public class MoMoCallbackController {
                     .orElseThrow(() -> new RuntimeException("Order not found: " + orderNumber));
 
             // Find payment
-            Payment payment = paymentRepository.findByOrderId(order.getId())
+            Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId())
                     .stream()
                     .filter(p -> "MoMo".equalsIgnoreCase(p.getPaymentMethod()))
                     .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Payment not found for order: " + orderNumber));
+                    .orElseThrow(() -> new RuntimeException("MoMo payment not found for order: " + orderNumber));
 
             // Update payment based on result code
             if (resultCode == 0) {
                 // Payment successful
                 payment.setPaymentStatus("Đã thanh toán");
-                payment.setTransactionId(transId);
-                payment.setUpdatedDate(LocalDateTime.now());
+                payment.setTransactionReference(transId);
+                payment.setPaymentDate(LocalDateTime.now());
 
                 // Update order status to completed
                 order.setOrderStatus("Hoàn thành");
@@ -122,8 +122,8 @@ public class MoMoCallbackController {
                 ));
             } else {
                 // Payment failed
-                payment.setPaymentStatus(PaymentStatus.FAILED);
-                payment.setUpdatedDate(LocalDateTime.now());
+                payment.setPaymentStatus("Thất bại");
+                payment.setPaymentDate(LocalDateTime.now());
                 paymentRepository.save(payment);
 
                 log.warn("Payment failed for order: {}, resultCode: {}, message: {}", orderNumber, resultCode, message);
