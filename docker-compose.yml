@@ -58,6 +58,8 @@ services:
       - MAIL_PASSWORD=${MAIL_PASSWORD:-}
       - UPLOAD_DIR=/app/uploads
       - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS:-2592000000}
+      - APP_BASE_URL=${APP_BASE_URL:-http://localhost:8080}
+      - MOMO_TARGET=${MOMO_TARGET:-dev}
     ports:
       - "8080:8080"
     volumes:

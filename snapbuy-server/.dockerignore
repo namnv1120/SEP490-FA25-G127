@@ -1,8 +1,41 @@
+# Build artifacts (keep only JAR)
+
 target/
-!target/*.jar
-.git
+!target/\*.jar
+
+# Git files
+
+.git/
 .gitignore
+.gitattributes
+
+# IDE
+
 .idea/
-*.iml
-*.log
+_.iml
+_.iws
+\*.ipr
+.vscode/
+
+# Logs
+
+\*.log
+logs/
+
+# Uploads (should be volume-mounted)
+
 uploads/
+
+# Documentation
+
+README.md
+\*.md
+
+# Environment
+
+.env
+.env.\*
+
+# Maven wrapper jar (already in .mvn/)
+
+.mvn/wrapper/maven-wrapper.jar

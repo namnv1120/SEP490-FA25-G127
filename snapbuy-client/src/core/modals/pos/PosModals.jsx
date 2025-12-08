@@ -795,7 +795,7 @@ const PosModals = ({
                     const isCtrlC = e.ctrlKey && e.key === 'c';
                     const isCtrlV = e.ctrlKey && e.key === 'v';
                     const isCtrlX = e.ctrlKey && e.key === 'x';
-                    
+
                     // Chặn dấu trừ, dấu cộng, và ký tự e/E
                     if (
                       e.key === "-" ||
@@ -807,7 +807,7 @@ const PosModals = ({
                       message.warning("Vui lòng chỉ nhập số dương!");
                       return;
                     }
-                    
+
                     if (!isNumber && !isAllowedKey && !isCtrlA && !isCtrlC && !isCtrlV && !isCtrlX) {
                       e.preventDefault();
                       message.warning("Vui lòng chỉ nhập số!");
@@ -2037,7 +2037,7 @@ const PosModals = ({
                       const isCtrlC = e.ctrlKey && e.key === 'c';
                       const isCtrlV = e.ctrlKey && e.key === 'v';
                       const isCtrlX = e.ctrlKey && e.key === 'x';
-                      
+
                       // Chặn dấu trừ, dấu cộng, và ký tự e/E
                       if (
                         e.key === "-" ||
@@ -2049,7 +2049,7 @@ const PosModals = ({
                         message.warning("Vui lòng chỉ nhập số dương!");
                         return;
                       }
-                      
+
                       if (!isNumber && !isAllowedKey && !isCtrlA && !isCtrlC && !isCtrlV && !isCtrlX) {
                         e.preventDefault();
                         message.warning("Vui lòng chỉ nhập số!");

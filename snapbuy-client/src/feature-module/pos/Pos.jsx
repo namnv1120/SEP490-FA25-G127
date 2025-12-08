@@ -1725,15 +1725,13 @@ const Pos = () => {
                     <Slider
                       ref={sliderRef}
                       {...settings}
-                      className={`tabs owl-carousel pos-category ${
-                        categories.length + 1 < 6 ? "center-mode" : ""
-                      }`}
+                      className={`tabs owl-carousel pos-category ${categories.length + 1 < 6 ? "center-mode" : ""
+                        }`}
                     >
                       <div
                         onClick={() => setActiveTab("all")}
-                        className={`owl-item ${
-                          activeTab === "all" ? "active" : ""
-                        }`}
+                        className={`owl-item ${activeTab === "all" ? "active" : ""
+                          }`}
                         id="all"
                       >
                         <Link to="#">
@@ -1763,9 +1761,8 @@ const Pos = () => {
                           <div
                             key={category.id}
                             onClick={() => setActiveTab(category.id)}
-                            className={`owl-item ${
-                              activeTab === category.id ? "active" : ""
-                            }`}
+                            className={`owl-item ${activeTab === category.id ? "active" : ""
+                              }`}
                             id={category.id}
                           >
                             <Link to="#">
@@ -2465,7 +2462,7 @@ const Pos = () => {
                             )}
                             {createdOrder &&
                               createdOrder.paymentStatus ===
-                                "Chưa thanh toán" && (
+                              "Chưa thanh toán" && (
                                 <tr>
                                   <td className="fw-bold">Còn nợ:</td>
                                   <td className="text-end fw-bold text-danger">
@@ -2478,7 +2475,7 @@ const Pos = () => {
                               )}
                             {createdOrder &&
                               createdOrder.paymentStatus ===
-                                "Đã thanh toán" && (
+                              "Đã thanh toán" && (
                                 <tr>
                                   <td className="fw-bold">Còn nợ:</td>
                                   <td className="text-end fw-bold text-success">
