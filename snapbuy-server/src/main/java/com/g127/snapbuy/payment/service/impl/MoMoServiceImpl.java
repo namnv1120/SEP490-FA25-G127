@@ -27,6 +27,9 @@ public class MoMoServiceImpl implements MoMoService {
 
     private final OrderRepository orderRepository;
 
+    @Value("${app.base.url}")
+    private String baseUrl;
+
     @Value("${momo.dev.endpoint}")
     private String momoEndpoint;
 
@@ -56,10 +59,11 @@ public class MoMoServiceImpl implements MoMoService {
             String requestId = UUID.randomUUID().toString();
             String momoOrderId = order.getOrderNumber() + "-" + System.currentTimeMillis();
 
-             String returnUrl = "http://localhost:8080/api/payments/momo/return";
-             String notifyUrl = "http://localhost:8080/api/payments/momo/notify";
-//            String returnUrl = "https://nonrecoiling-edris-provincially.ngrok-free.dev/api/payments/momo/return";
-//            String notifyUrl = "https://nonrecoiling-edris-provincially.ngrok-free.dev/api/payments/momo/notify";
+            // Use base URL from application properties
+            String returnUrl = baseUrl + "/api/payments/momo/return";
+            String notifyUrl = baseUrl + "/api/payments/momo/notify";
+
+            log.info("MoMo Payment URLs - Return: {}, Notify: {}", returnUrl, notifyUrl);
 
             String orderInfo = "Thanh toán đơn hàng " + order.getOrderNumber();
 
