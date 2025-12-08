@@ -2,8 +2,6 @@ package com.g127.snapbuy.payment.controller;
 
 import com.g127.snapbuy.entity.Order;
 import com.g127.snapbuy.entity.Payment;
-import com.g127.snapbuy.enums.OrderStatus;
-import com.g127.snapbuy.enums.PaymentStatus;
 import com.g127.snapbuy.repository.OrderRepository;
 import com.g127.snapbuy.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
@@ -106,13 +104,12 @@ public class MoMoCallbackController {
             // Update payment based on result code
             if (resultCode == 0) {
                 // Payment successful
-                payment.setPaymentStatus(PaymentStatus.PAID);
+                payment.setPaymentStatus("Đã thanh toán");
                 payment.setTransactionId(transId);
                 payment.setUpdatedDate(LocalDateTime.now());
 
-                // Update order status
-                order.setOrderStatus(OrderStatus.COMPLETED);
-                order.setUpdatedDate(LocalDateTime.now());
+                // Update order status to completed
+                order.setOrderStatus("Hoàn thành");
 
                 orderRepository.save(order);
                 paymentRepository.save(payment);
