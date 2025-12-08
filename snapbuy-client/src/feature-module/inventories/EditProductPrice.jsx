@@ -127,10 +127,6 @@ const EditProductPrice = () => {
       newErrors.costPrice = "Giá nhập không được âm";
     }
 
-    if (unitPrice > 0 && costPrice >= 0 && unitPrice < costPrice) {
-      newErrors.unitPrice = "Giá bán không được thấp hơn giá nhập";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };

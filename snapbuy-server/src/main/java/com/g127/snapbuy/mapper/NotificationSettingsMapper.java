@@ -1,7 +1,7 @@
 package com.g127.snapbuy.mapper;
 
-import com.g127.snapbuy.dto.request.NotificationSettingsUpdateRequest;
-import com.g127.snapbuy.dto.response.NotificationSettingsResponse;
+import com.g127.snapbuy.notification.dto.request.NotificationSettingsUpdateRequest;
+import com.g127.snapbuy.notification.dto.response.NotificationSettingsResponse;
 import com.g127.snapbuy.entity.NotificationSettings;
 import org.mapstruct.*;
 

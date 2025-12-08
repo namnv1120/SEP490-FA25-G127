@@ -25,11 +25,16 @@ WORKDIR /app
 # Create uploads directory
 RUN mkdir -p /app/uploads
 
+# Set timezone to Asia/Ho_Chi_Minh
+RUN apk add --no-cache tzdata && \
+    cp /usr/share/zoneinfo/Asia/Ho_Chi_Minh /etc/localtime && \
+    echo "Asia/Ho_Chi_Minh" > /etc/timezone
+
 # Copy the built jar
 COPY --from=build /app/target/*.jar app.jar
 
 # Expose port
 EXPOSE 8080
 
-# Set the entry point
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Set the entry point with timezone JVM parameter
+ENTRYPOINT ["java", "-Duser.timezone=Asia/Ho_Chi_Minh", "-jar", "app.jar"]

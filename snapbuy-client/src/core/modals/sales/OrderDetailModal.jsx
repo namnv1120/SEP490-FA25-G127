@@ -82,11 +82,15 @@ const OrderDetailModal = ({ show, onHide, order, accountNamesMap = {} }) => {
     const map = {
       "Chờ xác nhận": { color: "orange", text: "Chờ xác nhận" },
       "Hoàn tất": { color: "green", text: "Hoàn tất" },
+      "Chờ hoàn hàng": { color: "gold", text: "Chờ hoàn hàng" },
       "Đã hủy": { color: "red", text: "Đã hủy" },
+      "Trả hàng": { color: "blue", text: "Trả hàng" },
       "PENDING": { color: "orange", text: "Chờ xác nhận" },
       "COMPLETED": { color: "green", text: "Hoàn tất" },
       "CANCELLED": { color: "red", text: "Đã hủy" },
       "CANCELED": { color: "red", text: "Đã hủy" },
+      "RETURNED": { color: "blue", text: "Trả hàng" },
+      "PENDING_RETURN": { color: "gold", text: "Chờ hoàn hàng" },
     };
     const key = Object.keys(map).find(k => k.toLowerCase() === status?.toLowerCase());
     const tag = map[key] || { color: "default", text: status || "Không rõ" };
@@ -97,10 +101,14 @@ const OrderDetailModal = ({ show, onHide, order, accountNamesMap = {} }) => {
     const map = {
       "Đã thanh toán": { color: "green", text: "Đã thanh toán" },
       "Chưa thanh toán": { color: "orange", text: "Chưa thanh toán" },
+      "Thất bại": { color: "red", text: "Thất bại" },
+      "Đã hoàn tiền": { color: "blue", text: "Đã hoàn tiền" },
       "PAID": { color: "green", text: "Đã thanh toán" },
       "PAYMENT_COMPLETED": { color: "green", text: "Đã thanh toán" },
       "UNPAID": { color: "orange", text: "Chưa thanh toán" },
       "PENDING": { color: "orange", text: "Chưa thanh toán" },
+      "FAILED": { color: "red", text: "Thất bại" },
+      "REFUNDED": { color: "blue", text: "Đã hoàn tiền" },
     };
     const key = Object.keys(map).find(k => k.toLowerCase() === status?.toLowerCase());
     const tag = map[key] || { color: "default", text: status || "Không rõ" };

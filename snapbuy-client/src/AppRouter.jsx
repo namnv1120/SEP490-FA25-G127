@@ -85,6 +85,7 @@ const AddPurchaseOrder = lazy(() =>
 const EditPurchaseOrder = lazy(() =>
   import("./feature-module/sales/EditPurchaseOrder")
 );
+const ReturnOrder = lazy(() => import("./feature-module/sales/ReturnOrder"));
 const RevenueReport = lazy(() =>
   import("./feature-module/reports/RevenueReport")
 );
@@ -113,7 +114,9 @@ const StaffShiftManagement = lazy(() =>
 const PromotionList = lazy(() =>
   import("./feature-module/promotions/PromotionList.jsx")
 );
-const Notifications = lazy(() => import("./feature-module/pages/Notifications"));
+const Notifications = lazy(() =>
+  import("./feature-module/pages/Notifications")
+);
 const NotFound = lazy(() => import("./feature-module/pages/NotFound"));
 
 const componentsMap = {
@@ -148,6 +151,7 @@ const componentsMap = {
   PurchaseOrder,
   AddPurchaseOrder,
   EditPurchaseOrder,
+  ReturnOrder,
   RevenueReport,
   ProductReport,
   CustomerReport,

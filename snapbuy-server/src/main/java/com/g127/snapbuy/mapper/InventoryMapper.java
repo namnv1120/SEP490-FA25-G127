@@ -1,8 +1,8 @@
 package com.g127.snapbuy.mapper;
 
-import com.g127.snapbuy.dto.request.InventoryCreateRequest;
-import com.g127.snapbuy.dto.request.InventoryUpdateRequest;
-import com.g127.snapbuy.dto.response.InventoryResponse;
+import com.g127.snapbuy.inventory.dto.request.InventoryCreateRequest;
+import com.g127.snapbuy.inventory.dto.request.InventoryUpdateRequest;
+import com.g127.snapbuy.inventory.dto.response.InventoryResponse;
 import com.g127.snapbuy.entity.Inventory;
 import org.mapstruct.*;
 

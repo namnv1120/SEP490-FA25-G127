@@ -11,6 +11,14 @@ export const getAllOrders = async (params = {}) => {
   return response.data?.result || response.data || [];
 };
 
+export const getReturnOrders = async (params = {}) => {
+  const response = await axios.get(`${REST_API_BASE_URL}/returns`, {
+    ...getAuthHeaders(),
+    params: params,
+  });
+  return response.data?.result || response.data || [];
+};
+
 export const getOrderById = async (id) => {
   const response = await axios.get(
     `${REST_API_BASE_URL}/${id}`,
@@ -56,6 +64,24 @@ export const completeOrder = async (orderId) => {
 export const cancelOrder = async (orderId) => {
   const response = await axios.post(
     `${REST_API_BASE_URL}/${orderId}/cancel`,
+    {},
+    getAuthHeaders()
+  );
+  return response.data?.result || response.data;
+};
+
+export const markOrderForReturn = async (orderId) => {
+  const response = await axios.post(
+    `${REST_API_BASE_URL}/${orderId}/mark-for-return`,
+    {},
+    getAuthHeaders()
+  );
+  return response.data?.result || response.data;
+};
+
+export const revertReturnStatus = async (orderId) => {
+  const response = await axios.post(
+    `${REST_API_BASE_URL}/${orderId}/revert-return`,
     {},
     getAuthHeaders()
   );

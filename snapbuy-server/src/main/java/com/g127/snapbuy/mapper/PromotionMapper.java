@@ -1,8 +1,8 @@
 package com.g127.snapbuy.mapper;
 
-import com.g127.snapbuy.dto.request.PromotionCreateRequest;
-import com.g127.snapbuy.dto.request.PromotionUpdateRequest;
-import com.g127.snapbuy.dto.response.PromotionResponse;
+import com.g127.snapbuy.promotion.dto.request.PromotionCreateRequest;
+import com.g127.snapbuy.promotion.dto.request.PromotionUpdateRequest;
+import com.g127.snapbuy.promotion.dto.response.PromotionResponse;
 import com.g127.snapbuy.entity.Product;
 import com.g127.snapbuy.entity.Promotion;
 import org.mapstruct.*;

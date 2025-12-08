@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { message, Modal, Table, Tag, InputNumber } from "antd";
+import { message, Modal, Table, Tag, Spin } from "antd";
 import PrimeDataTable from "../../components/data-table";
 import TableTopHead from "../../components/table-top-head";
 import CommonSelect from "../../components/select/common-select";
@@ -759,20 +759,26 @@ const StaffShiftManagement = () => {
           </div>
           <div className="card-body p-0">
             <div className="table-responsive staff-table">
-              <PrimeDataTable
-                key={`staff-table-${activeShifts.length}-${activeShiftsLoaded}`}
-                data={staffList}
-                column={staffColumns}
-                loading={false}
-                emptyMessage="Không có nhân viên nào"
-                dataKey="id"
-                rows={rows}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-                totalRecords={totalRecords}
-                serverSidePagination={true}
+              {loading ? (
+                <div className="d-flex justify-content-center p-5">
+                  <Spin size="large" />
+                </div>
+              ) : (
+                <PrimeDataTable
+                  key={`staff-table-${activeShifts.length}-${activeShiftsLoaded}`}
+                  data={staffList}
+                  column={staffColumns}
+                  loading={false}
+                  emptyMessage="Không có nhân viên nào"
+                  dataKey="id"
+                  rows={rows}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  totalRecords={totalRecords}
+                  serverSidePagination={true}
 
-              />
+                />
+              )}
             </div>
           </div>
         </div>

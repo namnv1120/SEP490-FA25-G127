@@ -90,11 +90,6 @@ const ImportProductPrice = ({ visible, onClose, onImportSuccess }) => {
           rowErrors.push("Giá nhập không được âm");
         }
 
-        // Validate Unit Price >= Cost Price
-        if (unitPrice !== null && costPrice !== null && unitPrice < costPrice) {
-          rowErrors.push("Giá bán không được thấp hơn giá nhập");
-        }
-
         if (rowErrors.length > 0) {
           errors[index] = `Dòng ${rowNum}: ${rowErrors.join("; ")}`;
         }
@@ -156,7 +151,7 @@ const ImportProductPrice = ({ visible, onClose, onImportSuccess }) => {
       (p) =>
         p.productCode &&
         p.productCode.trim().toLowerCase() ===
-          (row["Mã sản phẩm"] || "").trim().toLowerCase()
+        (row["Mã sản phẩm"] || "").trim().toLowerCase()
     );
 
     return {
@@ -228,12 +223,12 @@ const ImportProductPrice = ({ visible, onClose, onImportSuccess }) => {
     {
       Cột: "Giá bán",
       "Quy tắc":
-        "BẮT BUỘC. Phải lớn hơn 0. Phải lớn hơn hoặc bằng giá nhập. Có thể nhập số nguyên hoặc số thập phân.",
+        "BẮT BUỘC. Phải lớn hơn 0. Có thể nhập số nguyên hoặc số thập phân.",
     },
     {
       Cột: "Giá nhập",
       "Quy tắc":
-        "BẮT BUỘC. Phải lớn hơn hoặc bằng 0. Phải nhỏ hơn hoặc bằng giá bán. Có thể nhập số nguyên hoặc số thập phân.",
+        "BẮT BUỘC. Phải lớn hơn hoặc bằng 0. Có thể nhập số nguyên hoặc số thập phân.",
     },
     { Cột: "", "Quy tắc": "" },
     {
@@ -250,11 +245,10 @@ const ImportProductPrice = ({ visible, onClose, onImportSuccess }) => {
       "Quy tắc":
         "3. Nếu sản phẩm đã có giá, hệ thống sẽ cập nhật giá hiện tại.",
     },
-    { Cột: "", "Quy tắc": "4. Giá bán phải luôn lớn hơn hoặc bằng giá nhập." },
     {
       Cột: "",
       "Quy tắc":
-        "5. Có thể bỏ qua các dòng không cần cập nhật, chỉ cập nhật những sản phẩm cần thiết.",
+        "4. Có thể bỏ qua các dòng không cần cập nhật, chỉ cập nhật những sản phẩm cần thiết.",
     },
   ];
 

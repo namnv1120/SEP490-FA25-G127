@@ -1,8 +1,8 @@
 package com.g127.snapbuy.mapper;
 
-import com.g127.snapbuy.dto.request.CategoryCreateRequest;
-import com.g127.snapbuy.dto.request.CategoryUpdateRequest;
-import com.g127.snapbuy.dto.response.CategoryResponse;
+import com.g127.snapbuy.product.dto.request.CategoryCreateRequest;
+import com.g127.snapbuy.product.dto.request.CategoryUpdateRequest;
+import com.g127.snapbuy.product.dto.response.CategoryResponse;
 import com.g127.snapbuy.entity.Category;
 import org.mapstruct.*;
 
