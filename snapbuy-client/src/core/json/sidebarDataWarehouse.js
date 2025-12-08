@@ -66,10 +66,17 @@ export const SidebarDataWarehouse = [
     activeRoute: "sales",
     subRoutes: [
       {
-        tittle: "Đơn đặt hàng",
+        tittle: "Đơn nhập hàng",
         hasSubRoute: false,
         showSubRoute: false,
         route: "/purchase-orders",
+        subRoutes: [],
+      },
+      {
+        tittle: "Đơn hoàn hàng",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/return-orders",
         subRoutes: [],
       },
       {
@@ -93,22 +100,6 @@ export const SidebarDataWarehouse = [
         hasSubRoute: false,
         showSubRoute: false,
         route: "/suppliers",
-        subRoutes: [],
-      },
-    ],
-  },
-  {
-    tittle: "Báo cáo",
-    hasSubRoute: true,
-    icon: "chart-bar",
-    showSubRoute: false,
-    activeRoute: "reports",
-    subRoutes: [
-      {
-        tittle: "Tồn kho",
-        hasSubRoute: false,
-        showSubRoute: false,
-        route: "/inventory-report",
         subRoutes: [],
       },
     ],

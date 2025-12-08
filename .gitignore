@@ -1,2 +1,44 @@
-.idea
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+
+# Environment variables
 .env
+.env.local
+.env.*.local
+
+# Build outputs
+target/
+dist/
+build/
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Uploads (development only)
+uploads/
+!uploads/.gitkeep
+
+# Database backup
+*.bak
+*.sql
+
+# Docker
+.dockerignore

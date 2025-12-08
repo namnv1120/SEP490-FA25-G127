@@ -25,6 +25,7 @@ export const allRoutes = {
   purchaseorders: "/purchase-orders",
   addpurchaseorder: "/purchase-orders/add",
   editpurchaseorder: "/purchase-orders/edit/:id",
+  returnorders: "/return-orders",
 
   accounts: "/accounts",
   rolespermission: "/roles-permissions",

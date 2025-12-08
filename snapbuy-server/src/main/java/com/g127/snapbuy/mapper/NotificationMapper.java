@@ -1,6 +1,6 @@
 package com.g127.snapbuy.mapper;
 
-import com.g127.snapbuy.dto.response.NotificationResponse;
+import com.g127.snapbuy.notification.dto.response.NotificationResponse;
 import com.g127.snapbuy.entity.Notification;
 import org.mapstruct.Mapper;
 

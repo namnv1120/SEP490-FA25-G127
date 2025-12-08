@@ -59,7 +59,21 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    let finalValue = value;
+
+    // Tên khuyến mãi: chỉ cho phép chữ, số, -, %, khoảng trắng, và xóa khoảng trắng đầu
+    if (name === "promotionName") {
+      finalValue = value.replace(/^[\s]+/, ""); // Xóa khoảng trắng đầu
+      finalValue = finalValue.replace(/[^a-zA-Z0-9\-% ]/g, ""); // Chỉ cho phép chữ, số, -, %, space
+    }
+
+    // Giá trị giảm giá: chỉ cho phép số
+    if (name === "discountValue") {
+      finalValue = value.replace(/[^0-9.]/g, ""); // Chỉ cho phép số và dấu chấm
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: finalValue }));
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -178,9 +192,8 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
               <input
                 type="text"
                 name="promotionName"
-                className={`form-control ${
-                  errors.promotionName ? "is-invalid" : ""
-                }`}
+                className={`form-control ${errors.promotionName ? "is-invalid" : ""
+                  }`}
                 value={formData.promotionName}
                 onChange={handleInputChange}
                 placeholder="Nhập tên khuyến mãi"
@@ -218,21 +231,24 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
                 Giá trị giảm giá <span className="text-danger">*</span>
               </label>
               <input
-                type="number"
+                type="text"
                 name="discountValue"
-                className={`form-control ${
-                  errors.discountValue ? "is-invalid" : ""
-                }`}
+                className={`form-control ${errors.discountValue ? "is-invalid" : ""
+                  }`}
                 value={formData.discountValue}
                 onChange={handleInputChange}
+                onKeyPress={(e) => {
+                  // Chặn mọi ký tự không phải số hoặc dấu chấm
+                  if (!/[0-9.]/.test(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
                 placeholder={
                   formData.discountType === "Giảm theo phần trăm"
                     ? "Nhập % giảm giá"
                     : "Nhập số tiền giảm"
                 }
                 disabled={loading}
-                step="0.01"
-                min="0"
               />
               {errors.discountValue && (
                 <div className="invalid-feedback">{errors.discountValue}</div>
@@ -321,9 +337,8 @@ const AddPromotionModal = ({ isOpen, onClose, onSuccess }) => {
               <div className="input-group">
                 <input
                   type="text"
-                  className={`form-control ${
-                    errors.productIds ? "is-invalid" : ""
-                  }`}
+                  className={`form-control ${errors.productIds ? "is-invalid" : ""
+                    }`}
                   value={
                     formData.productIds.length > 0
                       ? `Đã chọn ${formData.productIds.length} sản phẩm`

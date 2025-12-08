@@ -1,9 +1,9 @@
 package com.g127.snapbuy.mapper;
 
 
-import com.g127.snapbuy.dto.request.ProductCreateRequest;
-import com.g127.snapbuy.dto.request.ProductUpdateRequest;
-import com.g127.snapbuy.dto.response.ProductResponse;
+import com.g127.snapbuy.product.dto.request.ProductCreateRequest;
+import com.g127.snapbuy.product.dto.request.ProductUpdateRequest;
+import com.g127.snapbuy.product.dto.response.ProductResponse;
 import com.g127.snapbuy.entity.Product;
 import org.mapstruct.*;
 

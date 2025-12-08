@@ -1,8 +1,8 @@
 package com.g127.snapbuy.mapper;
 
-import com.g127.snapbuy.dto.request.SupplierCreateRequest;
-import com.g127.snapbuy.dto.request.SupplierUpdateRequest;
-import com.g127.snapbuy.dto.response.SupplierResponse;
+import com.g127.snapbuy.supplier.dto.request.SupplierCreateRequest;
+import com.g127.snapbuy.supplier.dto.request.SupplierUpdateRequest;
+import com.g127.snapbuy.supplier.dto.response.SupplierResponse;
 import com.g127.snapbuy.entity.Supplier;
 import org.mapstruct.*;
 import org.springframework.data.domain.Page;

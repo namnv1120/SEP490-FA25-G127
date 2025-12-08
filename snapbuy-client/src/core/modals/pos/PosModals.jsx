@@ -331,6 +331,7 @@ const PosModals = ({
   const getOrderStatus = (order) => {
     // Map API status to Vietnamese status
     const status = order.orderStatus || order.status || "";
+    const statusLower = status.toLowerCase();
 
     if (
       status === "Hoàn tất" ||
@@ -346,6 +347,15 @@ const PosModals = ({
     ) {
       return "Đã hủy";
     }
+    // Check for return-related statuses - exclude from "Chờ xác nhận"
+    if (
+      statusLower === "chờ hoàn hàng" ||
+      statusLower === "pending_return" ||
+      statusLower === "trả hàng" ||
+      statusLower === "returned"
+    ) {
+      return null; // Don't show in any tab
+    }
     // Default to "Chờ xác nhận"
     return "Chờ xác nhận";
   };
@@ -355,6 +365,8 @@ const PosModals = ({
     return orders
       .filter((order) => {
         const orderStatus = getOrderStatus(order);
+        // Filter out orders with null status (return orders)
+        if (orderStatus === null) return false;
         return orderStatus === status;
       })
       .filter((order) => {
@@ -783,7 +795,7 @@ const PosModals = ({
                     const isCtrlC = e.ctrlKey && e.key === 'c';
                     const isCtrlV = e.ctrlKey && e.key === 'v';
                     const isCtrlX = e.ctrlKey && e.key === 'x';
-                    
+
                     // Chặn dấu trừ, dấu cộng, và ký tự e/E
                     if (
                       e.key === "-" ||
@@ -795,7 +807,7 @@ const PosModals = ({
                       message.warning("Vui lòng chỉ nhập số dương!");
                       return;
                     }
-                    
+
                     if (!isNumber && !isAllowedKey && !isCtrlA && !isCtrlC && !isCtrlV && !isCtrlX) {
                       e.preventDefault();
                       message.warning("Vui lòng chỉ nhập số!");
@@ -2025,7 +2037,7 @@ const PosModals = ({
                       const isCtrlC = e.ctrlKey && e.key === 'c';
                       const isCtrlV = e.ctrlKey && e.key === 'v';
                       const isCtrlX = e.ctrlKey && e.key === 'x';
-                      
+
                       // Chặn dấu trừ, dấu cộng, và ký tự e/E
                       if (
                         e.key === "-" ||
@@ -2037,7 +2049,7 @@ const PosModals = ({
                         message.warning("Vui lòng chỉ nhập số dương!");
                         return;
                       }
-                      
+
                       if (!isNumber && !isAllowedKey && !isCtrlA && !isCtrlC && !isCtrlV && !isCtrlX) {
                         e.preventDefault();
                         message.warning("Vui lòng chỉ nhập số!");

@@ -186,6 +186,13 @@ export const authRoutes = [
     protected: true,
   },
   {
+    id: 16.1,
+    path: routes.returnorders,
+    name: "return-orders",
+    componentKey: "ReturnOrder",
+    protected: true,
+  },
+  {
     id: 17,
     path: routes.revenuereport,
     name: "revenue-report",

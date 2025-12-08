@@ -1,6 +1,6 @@
 package com.g127.snapbuy.mapper;
 
-import com.g127.snapbuy.dto.response.InventoryTransactionResponse;
+import com.g127.snapbuy.inventory.dto.response.InventoryTransactionResponse;
 import com.g127.snapbuy.entity.InventoryTransaction;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

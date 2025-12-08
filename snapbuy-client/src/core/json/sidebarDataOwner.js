@@ -80,10 +80,17 @@ export const SidebarDataOwner = [
     activeRoute: "sales",
     subRoutes: [
       {
-        tittle: "Đơn đặt hàng",
+        tittle: "Đơn nhập hàng",
         hasSubRoute: false,
         showSubRoute: false,
         route: "/purchase-orders",
+        subRoutes: [],
+      },
+      {
+        tittle: "Đơn hoàn hàng",
+        hasSubRoute: false,
+        showSubRoute: false,
+        route: "/return-orders",
         subRoutes: [],
       },
       {

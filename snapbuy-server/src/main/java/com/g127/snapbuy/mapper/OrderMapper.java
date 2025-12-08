@@ -1,9 +1,9 @@
 package com.g127.snapbuy.mapper;
 
-import com.g127.snapbuy.dto.response.AccountResponse;
-import com.g127.snapbuy.dto.response.OrderDetailResponse;
-import com.g127.snapbuy.dto.response.OrderResponse;
-import com.g127.snapbuy.dto.response.PaymentResponse;
+import com.g127.snapbuy.account.dto.response.AccountResponse;
+import com.g127.snapbuy.order.dto.response.OrderDetailResponse;
+import com.g127.snapbuy.order.dto.response.OrderResponse;
+import com.g127.snapbuy.payment.dto.response.PaymentResponse;
 import com.g127.snapbuy.entity.Order;
 import com.g127.snapbuy.entity.OrderDetail;
 import com.g127.snapbuy.entity.Payment;
@@ -21,6 +21,7 @@ public interface OrderMapper {
     @Mapping(source = "customer.customerId", target = "customerId")
     @Mapping(source = "customer.fullName", target = "customerName", defaultValue = "Guest Customer")
     @Mapping(source = "account.accountId", target = "accountId")
+    @Mapping(source = "updatedDate", target = "updatedDate")
     @Mapping(target = "accountName", expression = "java(order.getAccount() != null ? (order.getAccount().getFullName() != null ? order.getAccount().getFullName() : order.getAccount().getUsername()) : null)")
     @Mapping(target = "account", expression = "java(mapAccount(order, accountMapper))")
     OrderResponse toBaseResponse(Order order, @Context AccountMapper accountMapper);

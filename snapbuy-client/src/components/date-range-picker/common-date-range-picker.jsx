@@ -20,7 +20,7 @@ const CommonDateRangePicker = ({ value, onChange, className }) => {
     if (value && Array.isArray(value) && value[0] && value[1]) {
       return [dayjs(value[0]), dayjs(value[1])];
     }
-    return [dayjs().subtract(6, 'days'), dayjs()];
+    return [null, null];
   };
 
   const [dates, setDates] = useState(getDayjsDates());
@@ -32,13 +32,13 @@ const CommonDateRangePicker = ({ value, onChange, className }) => {
     if (value && Array.isArray(value) && value[0] && value[1]) {
       setDates([dayjs(value[0]), dayjs(value[1])]);
     } else if (!value || (Array.isArray(value) && (!value[0] || !value[1]))) {
-      // Reset về default nếu value là null hoặc empty
-      const defaultDates = [dayjs().subtract(6, 'days'), dayjs()];
-      setDates(defaultDates);
+      // Nếu null thì giữ nguyên null (không set default)
+      setDates([null, null]);
     }
   }, [value]);
 
   const predefinedRanges = {
+    'Toàn bộ': null,
     'Hôm nay': [dayjs(), dayjs()],
     'Hôm qua': [dayjs().subtract(1, 'day'), dayjs().subtract(1, 'day')],
     '7 ngày qua': [dayjs().subtract(6, 'day'), dayjs()],
@@ -56,11 +56,20 @@ const CommonDateRangePicker = ({ value, onChange, className }) => {
       setTimeout(() => rangeRef.current?.focus(), 0);
     } else {
       const newDates = predefinedRanges[key];
-      setDates(newDates);
-      setCustomVisible(false);
-      // Gọi onChange với Date objects
-      if (onChange) {
-        onChange([newDates[0].toDate(), newDates[1].toDate()]);
+      if (newDates === null) {
+        // "Toàn bộ" - reset về null
+        setDates([null, null]);
+        setCustomVisible(false);
+        if (onChange) {
+          onChange([null, null]);
+        }
+      } else {
+        setDates(newDates);
+        setCustomVisible(false);
+        // Gọi onChange với Date objects
+        if (onChange) {
+          onChange([newDates[0].toDate(), newDates[1].toDate()]);
+        }
       }
     }
   };
@@ -85,9 +94,9 @@ const CommonDateRangePicker = ({ value, onChange, className }) => {
     { key: 'Tùy chọn ngày', label: 'Tùy chọn ngày' },
   ];
 
-  const displayValue = dates[0] && dates[1] 
+  const displayValue = dates[0] && dates[1]
     ? `${dates[0].format(dateFormat)} - ${dates[1].format(dateFormat)}`
-    : '';
+    : 'Toàn bộ thời gian';
 
   return (
     <div className={className} style={{ position: 'relative' }}>

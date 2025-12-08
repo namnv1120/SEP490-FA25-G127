@@ -103,6 +103,13 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       const rowErrors = [];
       const rowNum = index + 1;
 
+      // Kiểm tra dòng trống (từ Excel)
+      if (row._excelRowNumber) {
+        rowErrors.push(`Dòng ${row._excelRowNumber} trong Excel bị trống. Vui lòng xóa dòng trống trong file Excel trước khi import!`);
+        errors[index] = `Dòng ${rowNum}: ${rowErrors.join("; ")}`;
+        return; // Bỏ qua các validation khác cho dòng trống
+      }
+
       // Validate Product Code
       const productCode = (row.productCode || "").trim();
       if (!productCode) {
