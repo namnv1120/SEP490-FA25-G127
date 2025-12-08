@@ -1,7 +1,7 @@
 package com.g127.snapbuy.exception;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import com.g127.snapbuy.dto.ApiResponse;
+import com.g127.snapbuy.response.ApiResponse;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

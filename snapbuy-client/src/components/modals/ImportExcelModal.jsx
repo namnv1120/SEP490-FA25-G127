@@ -80,7 +80,14 @@ const ImportExcelModal = ({
 
       // Đọc dữ liệu từ row 2 trở đi, bỏ qua header row
       const jsonData = [];
-      worksheet.eachRow({ includeEmpty: false, firstRow: 2 }, (row) => {
+
+      // Lấy số dòng thực tế của worksheet (bao gồm cả dòng trống)
+      const lastRowNumber = worksheet.rowCount;
+
+      // Duyệt qua tất cả các dòng từ 2 đến cuối (bao gồm cả dòng trống)
+      for (let rowNumber = 2; rowNumber <= lastRowNumber; rowNumber++) {
+        const row = worksheet.getRow(rowNumber);
+
         // Kiểm tra xem row này có phải là header row không (so sánh với headers)
         const rowValues = [];
         row.eachCell({ includeEmpty: true }, (cell) => {
@@ -91,7 +98,7 @@ const ImportExcelModal = ({
         const isHeaderRow = rowValues.length === headers.length &&
           rowValues.every((val, idx) => val === headers[idx] || (val === "" && headers[idx] === ""));
         if (isHeaderRow) {
-          return; // Bỏ qua header row nếu bị lặp lại
+          continue; // Bỏ qua header row nếu bị lặp lại
         }
 
         const rowData = {};
@@ -121,11 +128,19 @@ const ImportExcelModal = ({
           }
         });
 
-        // Chỉ thêm row nếu có ít nhất một giá trị không rỗng
+        // Nếu dòng có dữ liệu thì thêm vào
         if (hasData && Object.keys(rowData).length > 0) {
           jsonData.push(rowData);
+        } else {
+          // Nếu dòng trống, thêm một dòng rỗng với thông tin dòng Excel
+          const emptyRowData = {};
+          headers.forEach(header => {
+            emptyRowData[header] = "";
+          });
+          emptyRowData._excelRowNumber = rowNumber; // Lưu số dòng trong Excel
+          jsonData.push(emptyRowData);
         }
-      });
+      }
 
       if (jsonData.length === 0) {
         message.warning("File Excel không có dữ liệu!");
@@ -506,7 +521,17 @@ const ImportExcelModal = ({
             `}
           </style>
           <Table
-            columns={columns}
+            columns={[
+              {
+                title: 'STT',
+                key: 'stt',
+                width: 60,
+                fixed: 'left',
+                align: 'center',
+                render: (text, record, index) => index + 2,
+              },
+              ...columns
+            ]}
             dataSource={fileData.map((row, index) => ({
               ...row,
               error: validationErrors[index] || null,

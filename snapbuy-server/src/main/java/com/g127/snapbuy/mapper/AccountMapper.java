@@ -1,8 +1,8 @@
 package com.g127.snapbuy.mapper;
 
-import com.g127.snapbuy.dto.request.AccountCreateRequest;
-import com.g127.snapbuy.dto.request.AccountUpdateRequest;
-import com.g127.snapbuy.dto.response.AccountResponse;
+import com.g127.snapbuy.account.dto.request.AccountCreateRequest;
+import com.g127.snapbuy.account.dto.request.AccountUpdateRequest;
+import com.g127.snapbuy.account.dto.response.AccountResponse;
 import com.g127.snapbuy.entity.Account;
 import org.mapstruct.*;
 

@@ -53,21 +53,43 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
             @Param("endDate") LocalDateTime endDate,
             @Param("paymentStatus") String paymentStatus);
 
-    @Query("""
-        SELECT DISTINCT o FROM Order o
-        LEFT JOIN o.customer c
-        LEFT JOIN o.account a
+    @Query(value = """
+        SELECT DISTINCT o.*
+        FROM orders o
+        LEFT JOIN customers c ON o.customer_id = c.customer_id
+        LEFT JOIN accounts a ON o.account_id = a.account_id
         WHERE (:searchTerm IS NULL OR :searchTerm = '' OR
-               LOWER(o.orderNumber) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR
-               LOWER(c.fullName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR
-               LOWER(a.fullName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR
-               LOWER(a.username) LIKE LOWER(CONCAT('%', :searchTerm, '%')))
-        AND (:orderStatus IS NULL OR :orderStatus = '' OR o.orderStatus = :orderStatus)
-        AND (:fromDate IS NULL OR o.orderDate >= :fromDate)
-        AND (:toDate IS NULL OR o.orderDate <= :toDate)
-        ORDER BY o.orderDate DESC
-        """)
+               dbo.RemoveVietnameseDiacritics(LOWER(o.order_number)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :searchTerm, '%'))) OR
+               dbo.RemoveVietnameseDiacritics(LOWER(c.full_name)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :searchTerm, '%'))) OR
+               dbo.RemoveVietnameseDiacritics(LOWER(a.full_name)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :searchTerm, '%'))) OR
+               dbo.RemoveVietnameseDiacritics(LOWER(a.username)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :searchTerm, '%'))))
+        AND (:orderStatus IS NULL OR :orderStatus = '' OR o.order_status = :orderStatus)
+        AND (:fromDate IS NULL OR o.order_date >= :fromDate)
+        AND (:toDate IS NULL OR o.order_date <= :toDate)
+        ORDER BY o.order_date DESC
+        """, nativeQuery = true)
     List<Order> searchOrders(
+            @Param("searchTerm") String searchTerm,
+            @Param("orderStatus") String orderStatus,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate);
+
+    @Query(value = """
+        SELECT DISTINCT o.*
+        FROM orders o
+        LEFT JOIN customers c ON o.customer_id = c.customer_id
+        LEFT JOIN accounts a ON o.account_id = a.account_id
+        WHERE (:searchTerm IS NULL OR :searchTerm = '' OR
+               dbo.RemoveVietnameseDiacritics(LOWER(o.order_number)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :searchTerm, '%'))) OR
+               dbo.RemoveVietnameseDiacritics(LOWER(c.full_name)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :searchTerm, '%'))) OR
+               dbo.RemoveVietnameseDiacritics(LOWER(a.full_name)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :searchTerm, '%'))) OR
+               dbo.RemoveVietnameseDiacritics(LOWER(a.username)) LIKE dbo.RemoveVietnameseDiacritics(LOWER(CONCAT('%', :searchTerm, '%'))))
+        AND (:orderStatus IS NULL OR :orderStatus = '' OR o.order_status = :orderStatus)
+        AND (:fromDate IS NULL OR o.updated_date >= :fromDate)
+        AND (:toDate IS NULL OR o.updated_date <= :toDate)
+        ORDER BY o.updated_date DESC
+        """, nativeQuery = true)
+    List<Order> searchReturnOrders(
             @Param("searchTerm") String searchTerm,
             @Param("orderStatus") String orderStatus,
             @Param("fromDate") LocalDateTime fromDate,

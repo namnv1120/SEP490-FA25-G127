@@ -1,7 +1,7 @@
 package com.g127.snapbuy.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.g127.snapbuy.service.TokenBlacklistService;
+import com.g127.snapbuy.auth.service.TokenBlacklistService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;

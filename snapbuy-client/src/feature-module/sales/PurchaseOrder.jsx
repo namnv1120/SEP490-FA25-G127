@@ -1000,8 +1000,8 @@ tr:hover { background-color: #f5f5f5; }
           <div className="page-header">
             <div className="add-item d-flex">
               <div className="page-title">
-                <h4 className="fw-bold">Đơn đặt hàng</h4>
-                <h6>Quản lý danh sách đơn đặt hàng về kho</h6>
+                <h4 className="fw-bold">Đơn nhập hàng</h4>
+                <h6>Quản lý danh sách đơn nhập hàng về kho</h6>
               </div>
             </div>
             <TableTopHead

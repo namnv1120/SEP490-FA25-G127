@@ -1,7 +1,7 @@
 package com.g127.snapbuy.mapper;
 
-import com.g127.snapbuy.dto.response.PurchaseOrderDetailResponse;
-import com.g127.snapbuy.dto.response.PurchaseOrderResponse;
+import com.g127.snapbuy.inventory.dto.response.PurchaseOrderDetailResponse;
+import com.g127.snapbuy.inventory.dto.response.PurchaseOrderResponse;
 import com.g127.snapbuy.entity.Account;
 import com.g127.snapbuy.entity.PurchaseOrder;
 import com.g127.snapbuy.entity.PurchaseOrderDetail;

@@ -5,9 +5,9 @@ import PrimeDataTable from "../../components/data-table";
 import CommonSelect from "../../components/select/common-select";
 import CommonDateRangePicker from "../../components/date-range-picker/common-date-range-picker";
 import { getAllOrders, cancelOrder } from "../../services/OrderService";
-import { getAccountById } from "../../services/AccountService";
+import { getAccountById, getMyInfo } from "../../services/AccountService";
 import OrderDetailModal from "../../core/modals/sales/OrderDetailModal";
-import { message, Modal, Spin } from "antd";
+import { message, Spin } from "antd";
 
 const OrderHistory = () => {
   const [filteredData, setFilteredData] = useState([]);
@@ -22,7 +22,6 @@ const OrderHistory = () => {
   const [accountNamesMap, setAccountNamesMap] = useState({});
   const [showModal, setShowModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [actionLoading, setActionLoading] = useState(false);
 
   const OrderStatuses = [
     { value: "", label: "Tất cả" },
@@ -68,9 +67,19 @@ const OrderHistory = () => {
     setLoading(true);
     setError("");
     try {
+      // Get current user info and role
+      const userInfo = await getMyInfo();
+      const currentUser = userInfo.result || userInfo;
+      const currentUserId = currentUser?.id;
+      const currentUserRole = localStorage.getItem("role");
+
+      // Check if user is owner or admin
+      const isOwnerOrAdmin =
+        currentUserRole === "Chủ cửa hàng" ||
+        currentUserRole === "Quản trị viên";
+
       const params = {};
-      if (searchTerm?.trim())
-        params.searchTerm = searchTerm.trim();
+      if (searchTerm?.trim()) params.searchTerm = searchTerm.trim();
       if (selectedStatus?.trim()) params.orderStatus = selectedStatus.trim();
       if (dateRange[0] && dateRange[1]) {
         const fromDate = new Date(dateRange[0]);
@@ -122,10 +131,18 @@ const OrderHistory = () => {
         };
       });
 
+      // FILTER THEO ROLE: Nhân viên chỉ thấy đơn của mình, Owner/Admin thấy tất cả
+      let filteredByRole = normalizedData;
+      if (!isOwnerOrAdmin && currentUserId) {
+        filteredByRole = normalizedData.filter(
+          (order) => order.accountId === currentUserId
+        );
+      }
+
       // Lấy danh sách accountId duy nhất
       const uniqueAccountIds = [
         ...new Set(
-          normalizedData.map((item) => item.accountId).filter(Boolean)
+          filteredByRole.map((item) => item.accountId).filter(Boolean)
         ),
       ];
 
@@ -144,7 +161,7 @@ const OrderHistory = () => {
       );
 
       // Update normalizedData with account names (use accountName from backend if available, otherwise fetch)
-      const dataWithAccountNames = normalizedData.map((item) => ({
+      const dataWithAccountNames = filteredByRole.map((item) => ({
         ...item,
         accountName:
           item.accountName ||
@@ -160,13 +177,14 @@ const OrderHistory = () => {
 
           // Map các giá trị tiếng Anh sang tiếng Việt
           const statusMap = {
-            "unpaid": "chưa thanh toán",
-            "paid": "đã thanh toán",
-            "payment_completed": "đã thanh toán",
-            "pending": "chưa thanh toán",
+            unpaid: "chưa thanh toán",
+            paid: "đã thanh toán",
+            payment_completed: "đã thanh toán",
+            pending: "chưa thanh toán",
           };
 
-          const normalizedPaymentStatus = statusMap[paymentStatus] || paymentStatus;
+          const normalizedPaymentStatus =
+            statusMap[paymentStatus] || paymentStatus;
           return normalizedPaymentStatus === selectedPayment;
         });
       }
@@ -180,7 +198,6 @@ const OrderHistory = () => {
 
       setAccountNamesMap(accountNames);
       setFilteredData(sortedData);
-
     } catch (err) {
       console.error("=== Lỗi khi gọi API ===", err);
       setError(
@@ -189,7 +206,6 @@ const OrderHistory = () => {
         "Không thể tải dữ liệu đơn hàng."
       );
       setFilteredData([]);
-
     } finally {
       setLoading(false);
     }
@@ -219,11 +235,15 @@ const OrderHistory = () => {
     const map = {
       "chờ xác nhận": { class: "bg-warning", text: "Chờ xác nhận" },
       "hoàn tất": { class: "bg-success", text: "Hoàn tất" },
+      "chờ hoàn hàng": { class: "bg-warning text-dark", text: "Chờ hoàn hàng" },
       "đã hủy": { class: "bg-danger", text: "Đã hủy" },
+      "trả hàng": { class: "bg-info", text: "Trả hàng" },
       PENDING: { class: "bg-warning", text: "Chờ xác nhận" },
       COMPLETED: { class: "bg-success", text: "Hoàn tất" },
       CANCELLED: { class: "bg-danger", text: "Đã hủy" },
       CANCELED: { class: "bg-danger", text: "Đã hủy" },
+      RETURNED: { class: "bg-info", text: "Trả hàng" },
+      PENDING_RETURN: { class: "bg-warning text-dark", text: "Chờ hoàn hàng" },
     };
     const key = Object.keys(map).find(
       (k) => k.toLowerCase() === status?.toLowerCase()
@@ -306,12 +326,14 @@ const OrderHistory = () => {
       if (id) selectedIds.add(id);
     });
 
-    return filteredData.filter(order => {
+    return filteredData.filter((order) => {
       const orderId = normalizeOrderId(order.orderId);
       if (!orderId) return false;
-      return selectedIds.has(orderId) ||
+      return (
+        selectedIds.has(orderId) ||
         selectedIds.has(order.orderId?.toString()) ||
-        selectedIds.has(order.orderId);
+        selectedIds.has(order.orderId)
+      );
     });
   };
 
@@ -389,136 +411,15 @@ const OrderHistory = () => {
           } catch (err) {
             errorCount++;
             const errorMsg =
-              err.response?.data?.message || err.message || "Lỗi không xác định";
+              err.response?.data?.message ||
+              err.message ||
+              "Lỗi không xác định";
             errorMessages.push(`${order.orderNumber}: ${errorMsg}`);
           }
         }
 
         if (successCount > 0) {
           message.success(`Đã hủy ${successCount} đơn hàng thành công!`);
-        }
-        if (errorCount > 0) {
-          message.error({
-            content: (
-              <div>
-                <p>Có {errorCount} đơn hàng xử lý thất bại:</p>
-                <ul
-                  style={{
-                    marginTop: 8,
-                    paddingLeft: 20,
-                    maxHeight: 200,
-                    overflowY: "auto",
-                  }}
-                >
-                  {errorMessages.slice(0, 5).map((msg, idx) => (
-                    <li key={idx}>{msg}</li>
-                  ))}
-                  {errorMessages.length > 5 && (
-                    <li>... và {errorMessages.length - 5} lỗi khác</li>
-                  )}
-                </ul>
-              </div>
-            ),
-            duration: 8,
-          });
-        }
-
-        // Uncheck all checkboxes (giống PurchaseOrder.jsx)
-        document
-          .querySelectorAll('.table-list-card input[type="checkbox"]:checked')
-          .forEach((cb) => {
-            cb.checked = false;
-          });
-
-        await loadOrders();
-        setActionLoading(false);
-      },
-    });
-  };
-
-  // Handle refund orders
-  const handleRefundOrders = async () => {
-    const selected = getSelectedOrders();
-    if (selected.length === 0) {
-      message.warning("Vui lòng chọn ít nhất một đơn hàng để hoàn tiền!");
-      return;
-    }
-
-    // Phân loại đơn hợp lệ và không hợp lệ
-    const validOrders = [];
-    const invalidOrders = [];
-
-    selected.forEach((order) => {
-      const paymentStatus = order.paymentStatus?.toLowerCase() || "";
-      const orderStatus = order.orderStatus?.toLowerCase() || "";
-
-      // Chỉ có thể hoàn tiền cho đơn đã thanh toán hoặc hoàn tất
-      if (
-        paymentStatus === "đã thanh toán" ||
-        paymentStatus === "paid" ||
-        paymentStatus === "payment_completed" ||
-        orderStatus === "hoàn tất" ||
-        orderStatus === "completed"
-      ) {
-        validOrders.push(order);
-      } else {
-        invalidOrders.push(
-          `${order.orderNumber} (${order.orderStatus || "N/A"})`
-        );
-      }
-    });
-
-    // Hiển thị cảnh báo cho các đơn không hợp lệ
-    if (invalidOrders.length > 0) {
-      message.warning({
-        content: (
-          <div>
-            <p>Không thể hoàn tiền cho các đơn sau:</p>
-            <ul style={{ marginTop: 8, paddingLeft: 20 }}>
-              {invalidOrders.slice(0, 5).map((item, idx) => (
-                <li key={idx}>{item}</li>
-              ))}
-              {invalidOrders.length > 5 && (
-                <li>... và {invalidOrders.length - 5} đơn khác</li>
-              )}
-            </ul>
-          </div>
-        ),
-        duration: 5,
-      });
-    }
-
-    if (validOrders.length === 0) {
-      // message.error("Không có đơn hàng nào có thể hoàn tiền!");
-      return;
-    }
-
-    Modal.confirm({
-      title: "Xác nhận hoàn tiền",
-      content: `Bạn có chắc chắn muốn hoàn tiền cho ${validOrders.length} đơn hàng đã chọn?`,
-      okText: "Đồng ý",
-      cancelText: "Hủy",
-      onOk: async () => {
-        setActionLoading(true);
-        let successCount = 0;
-        let errorCount = 0;
-        const errorMessages = [];
-
-        for (const order of validOrders) {
-          try {
-            // For refund, we use cancelOrder because backend handles it based on payment status
-            await cancelOrder(order.orderId);
-            successCount++;
-          } catch (err) {
-            errorCount++;
-            const errorMsg =
-              err.response?.data?.message || err.message || "Lỗi không xác định";
-            errorMessages.push(`${order.orderNumber}: ${errorMsg}`);
-          }
-        }
-
-        if (successCount > 0) {
-          message.success(`Đã hoàn tiền cho ${successCount} đơn hàng thành công!`);
         }
         if (errorCount > 0) {
           message.error({
@@ -705,26 +606,6 @@ const OrderHistory = () => {
             showExcel={false}
             showMail={false}
           />
-          <div className="page-btn d-flex align-items-center gap-2">
-            <button
-              type="button"
-              className="btn btn-danger"
-              onClick={handleCancelOrders}
-              disabled={actionLoading}
-            >
-              <i className="ti ti-x me-1" />
-              Huỷ đơn
-            </button>
-            <button
-              type="button"
-              className="btn btn-warning"
-              onClick={handleRefundOrders}
-              disabled={actionLoading}
-            >
-              <i className="ti ti-refund me-1" />
-              Hoàn tiền
-            </button>
-          </div>
         </div>
 
         {/* Bộ lọc */}

@@ -1,8 +1,8 @@
 package com.g127.snapbuy.mapper;
 
-import com.g127.snapbuy.dto.request.CustomerCreateRequest;
-import com.g127.snapbuy.dto.request.CustomerUpdateRequest;
-import com.g127.snapbuy.dto.response.CustomerResponse;
+import com.g127.snapbuy.customer.dto.request.CustomerCreateRequest;
+import com.g127.snapbuy.customer.dto.request.CustomerUpdateRequest;
+import com.g127.snapbuy.customer.dto.response.CustomerResponse;
 import com.g127.snapbuy.entity.Customer;
 import org.mapstruct.*;
 

@@ -71,9 +71,23 @@ const EditPromotionModal = ({ isOpen, onClose, onSuccess, promotionId }) => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+
+    let finalValue = type === "checkbox" ? checked : value;
+
+    // Tên khuyến mãi: chỉ cho phép chữ, số, -, %, khoảng trắng, và xóa khoảng trắng đầu
+    if (name === "promotionName" && type !== "checkbox") {
+      finalValue = value.replace(/^[\s]+/, ""); // Xóa khoảng trắng đầu
+      finalValue = finalValue.replace(/[^a-zA-Z0-9\-% ]/g, ""); // Chỉ cho phép chữ, số, -, %, space
+    }
+
+    // Giá trị giảm giá: chỉ cho phép số
+    if (name === "discountValue" && type !== "checkbox") {
+      finalValue = value.replace(/[^0-9.]/g, ""); // Chỉ cho phép số và dấu chấm
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: finalValue,
     }));
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
@@ -234,20 +248,24 @@ const EditPromotionModal = ({ isOpen, onClose, onSuccess, promotionId }) => {
                 Giá trị giảm giá <span className="text-danger">*</span>
               </label>
               <input
-                type="number"
+                type="text"
                 name="discountValue"
                 className={`form-control ${errors.discountValue ? "is-invalid" : ""
                   }`}
                 value={formData.discountValue}
                 onChange={handleInputChange}
+                onKeyPress={(e) => {
+                  // Chặn mọi ký tự không phải số hoặc dấu chấm
+                  if (!/[0-9.]/.test(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
                 placeholder={
                   formData.discountType === "Giảm theo phần trăm"
                     ? "Nhập % giảm giá"
                     : "Nhập số tiền giảm"
                 }
                 disabled={loading}
-                step="0.01"
-                min="0"
               />
               {errors.discountValue && (
                 <div className="invalid-feedback">{errors.discountValue}</div>

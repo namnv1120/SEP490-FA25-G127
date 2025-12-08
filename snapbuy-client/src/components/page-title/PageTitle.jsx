@@ -47,6 +47,7 @@ const routeNameMap = {
   "customer-report": "Báo cáo khách hàng",
   "supplier-report": "Báo cáo nhà cung cấp",
   promotions: "Khuyến mãi",
+  "return-orders": "Đơn trả hàng",
 };
 
 const PageTitle = () => {
