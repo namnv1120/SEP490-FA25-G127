@@ -100,11 +100,11 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public List<PaymentResponse> getPaymentsByOrder(UUID orderId) {
-        Order order = orderRepository.findById(orderId)
+        orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
-        Payment payment = paymentRepository.findByOrder(order);
-        if (payment == null) return List.of();
-        return List.of(toResponse(payment));
+        List<Payment> payments = paymentRepository.findByOrder_OrderId(orderId);
+        if (payments == null || payments.isEmpty()) return List.of();
+        return payments.stream().map(this::toResponse).toList();
     }
 
     @Override

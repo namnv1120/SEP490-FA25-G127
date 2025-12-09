@@ -221,6 +221,13 @@ export const authRoutes = [
     protected: true,
   },
   {
+    id: 21,
+    path: routes.inventoryreport,
+    name: "inventory-report",
+    componentKey: "InventoryReport",
+    protected: true,
+  },
+  {
     id: 24,
     path: routes.promotions,
     name: "promotions",

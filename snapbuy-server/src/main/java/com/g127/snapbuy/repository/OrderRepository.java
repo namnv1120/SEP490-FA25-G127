@@ -104,4 +104,8 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     List<Order> findByAccountAndOrderDateBetween(@Param("accountId") UUID accountId,
                                                  @Param("start") LocalDateTime start,
                                                  @Param("end") LocalDateTime end);
+
+    // Find order by order number
+    Optional<Order> findByOrderNumber(String orderNumber);
 }
+

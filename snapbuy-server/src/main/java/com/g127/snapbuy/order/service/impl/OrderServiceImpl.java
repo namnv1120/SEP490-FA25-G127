@@ -278,7 +278,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
-        Payment payment = paymentRepository.findByOrder(order);
+        Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
 
         OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
         BigDecimal subtotal = details.stream()
@@ -295,7 +295,7 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.findAll().stream()
                 .map(order -> {
                     List<OrderDetail> details = orderDetailRepository.findByOrder(order);
-                    Payment payment = paymentRepository.findByOrder(order);
+                    Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
                     OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
                     BigDecimal subtotal = details.stream()
                             .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
@@ -335,7 +335,7 @@ public class OrderServiceImpl implements OrderService {
         return orders.stream()
                 .map(order -> {
                     List<OrderDetail> details = orderDetailRepository.findByOrder(order);
-                    Payment payment = paymentRepository.findByOrder(order);
+                    Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
                     OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
                     BigDecimal subtotal = details.stream()
                             .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
@@ -375,7 +375,7 @@ public class OrderServiceImpl implements OrderService {
         return orders.stream()
                 .map(order -> {
                     List<OrderDetail> details = orderDetailRepository.findByOrder(order);
-                    Payment payment = paymentRepository.findByOrder(order);
+                    Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
                     OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
                     BigDecimal subtotal = details.stream()
                             .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
@@ -399,7 +399,7 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalStateException("Đơn hàng đã ở trạng thái hủy, không thể hủy lại.");
         }
 
-        Payment payment = paymentRepository.findByOrder(order);
+        Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
         if (payment == null) throw new NoSuchElementException("Không tìm thấy thanh toán của đơn hàng");
 
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
@@ -496,7 +496,7 @@ public class OrderServiceImpl implements OrderService {
         
         // Trả về response
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
-        Payment payment = paymentRepository.findByOrder(order);
+        Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
         OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
         
         BigDecimal subtotal = details.stream()
@@ -529,7 +529,7 @@ public class OrderServiceImpl implements OrderService {
         
         // Trả về response
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
-        Payment payment = paymentRepository.findByOrder(order);
+        Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
         OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
         
         BigDecimal subtotal = details.stream()
@@ -565,7 +565,7 @@ public class OrderServiceImpl implements OrderService {
         // Reload order sau khi finalizePayment để lấy dữ liệu mới nhất
         order = orderRepository.findById(id).orElseThrow();
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
-        Payment payment = paymentRepository.findByOrder(order);
+        Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
         OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
         BigDecimal subtotal = details.stream()
                 .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
@@ -630,7 +630,7 @@ public class OrderServiceImpl implements OrderService {
             return;
         }
 
-        Payment payment = paymentRepository.findByOrder(order);
+        Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
         if (payment == null) {
             throw new NoSuchElementException("Không tìm thấy thanh toán cho đơn hàng");
         }
@@ -736,7 +736,7 @@ public class OrderServiceImpl implements OrderService {
         }
         return orders.stream().map(order -> {
             List<OrderDetail> details = orderDetailRepository.findByOrder(order);
-            Payment payment = paymentRepository.findByOrder(order);
+            Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
             return orderMapper.toResponse(order, details, payment, accountMapper);
         }).toList();
     }
@@ -750,7 +750,7 @@ public class OrderServiceImpl implements OrderService {
         }
         return orders.stream().map(order -> {
             List<OrderDetail> details = orderDetailRepository.findByOrder(order);
-            Payment payment = paymentRepository.findByOrder(order);
+            Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
             return orderMapper.toResponse(order, details, payment, accountMapper);
         }).toList();
     }
