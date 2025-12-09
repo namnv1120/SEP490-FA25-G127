@@ -52,10 +52,13 @@ public class SecurityConfig {
                 })
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/auth/forgot-password/**").permitAll()
                         .requestMatchers("/api/payments/momo/notify").permitAll()
+                        .requestMatchers("/api/payments/momo/local-notify").permitAll()
                         .requestMatchers("/api/payments/momo/return").permitAll()
+                        .requestMatchers("/momo-return.html").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .anyRequest().authenticated()
                 )

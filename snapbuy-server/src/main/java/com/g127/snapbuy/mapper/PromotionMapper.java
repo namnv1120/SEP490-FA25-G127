@@ -24,6 +24,7 @@ public interface PromotionMapper {
     @Mapping(target = "promotionId", ignore = true)
     @Mapping(target = "products", ignore = true)
     @Mapping(target = "createdDate", ignore = true)
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntity(@MappingTarget Promotion entity, PromotionUpdateRequest request);
 
     @Mapping(target = "productIds", expression = "java(mapProductIds(entity.getProducts()))")

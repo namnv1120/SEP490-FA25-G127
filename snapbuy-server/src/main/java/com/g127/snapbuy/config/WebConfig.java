@@ -32,6 +32,10 @@ public class WebConfig implements WebMvcConfigurer {
 
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations(resourceLocation);
+
+        // Serve static files (for MoMo return page)
+        registry.addResourceHandler("/**")
+                .addResourceLocations("classpath:/static/");
     }
 }
 

@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # SQL Server Database
   db:
@@ -57,8 +55,13 @@ services:
       - ACCEPT_EULA=Y
       - DB_PASSWORD=${DB_PASSWORD:-Snapbuy25}
 
-  # Spring Boot Backend (from Docker Hub)
+  # Spring Boot Backend
+  # Option 1: Pull from Docker Hub -> docker compose pull && docker compose up -d
+  # Option 2: Build from source -> docker compose build && docker compose up -d
   backend:
+    build:
+      context: ./snapbuy-server
+      dockerfile: Dockerfile
     image: namnv11/snapbuy-backend:latest
     container_name: snapbuy-backend
     environment:
@@ -74,6 +77,7 @@ services:
       - UPLOAD_DIR=/app/uploads
       - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS:-2592000000}
       - APP_BASE_URL=${APP_BASE_URL:-http://localhost:8080}
+      - FRONTEND_BASE_URL=${FRONTEND_BASE_URL:-http://localhost:5173}
       - MOMO_TARGET=${MOMO_TARGET:-dev}
       - JAVA_OPTS=-Xms512m -Xmx1024m -XX:+UseG1GC -XX:MaxGCPauseMillis=200
     ports:
@@ -87,6 +91,12 @@ services:
         condition: service_healthy
       init-db:
         condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
     restart: unless-stopped
     deploy:
       resources:
@@ -102,10 +112,15 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # React Frontend with Nginx (from Docker Hub)
+  # React Frontend with Nginx
+  # Option 1: Pull from Docker Hub -> docker compose pull && docker compose up -d
+  # Option 2: Build from source -> docker compose build && docker compose up -d
   # Note: Frontend only exposes port 80 internally
   # External access via nginx-proxy on port 80/443
   frontend:
+    build:
+      context: ./snapbuy-client
+      dockerfile: Dockerfile
     image: namnv11/snapbuy-frontend:latest
     container_name: snapbuy-frontend
     expose:
@@ -170,7 +185,7 @@ services:
           "--quiet",
           "--tries=1",
           "--spider",
-          "http://localhost/health || exit 1",
+          "http://localhost/health",
         ]
       interval: 30s
       timeout: 5s

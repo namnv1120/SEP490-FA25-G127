@@ -36,6 +36,6 @@ public class PromotionCreateRequest {
     private LocalDateTime endDate;
 
     @NotNull
-    @Size(min = 1)
+    @Size(min = 1, message = "Phải chọn ít nhất 1 sản phẩm để áp dụng khuyến mãi")
     private List<UUID> productIds;
 }

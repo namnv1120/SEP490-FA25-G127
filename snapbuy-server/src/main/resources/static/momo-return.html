@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>MoMo</title>
+</head>
+
+<body>
+
+  <script>
+    (function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      const resultCode = urlParams.get('resultCode');
+      const orderId = urlParams.get('orderId');
+      const message = urlParams.get('message');
+
+      console.log('🎯 MoMo Return - ResultCode:', resultCode, 'OrderId:', orderId);
+
+      // Xác định backend URL (localhost hoặc production)
+      const backendUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:8080'
+        : window.location.origin;
+
+      // Gọi API async (không đợi response)
+      fetch(backendUrl + '/api/payments/momo/local-notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: orderId,
+          resultCode: parseInt(resultCode) || 0,
+          transId: 'LOCAL-' + Date.now(),
+          message: message || (resultCode === '0' ? 'Successful' : 'Failed')
+        }),
+        keepalive: true // Đảm bảo request vẫn gửi khi tab đóng
+      }).then(result => {
+        console.log('✅ Local callback triggered');
+      }).catch(error => {
+        console.error('❌ Error calling local-notify:', error);
+      });
+
+      // ĐÓNG TAB NGAY LẬP TỨC (không đợi API)
+      window.close();
+
+      // Thử nhiều cách đóng tab
+      setTimeout(() => {
+        window.open('', '_self', '');
+        window.close();
+      }, 50);
+
+      // Fallback cuối: Nếu vẫn không đóng được, hiển thị message đơn giản
+      setTimeout(() => {
+        document.body.innerHTML = '<div style="font-family:Arial;text-align:center;padding:50px">Vui lòng đóng tab này</div>';
+      }, 300);
+    })();
+  </script>
+</body>
+
+</html>

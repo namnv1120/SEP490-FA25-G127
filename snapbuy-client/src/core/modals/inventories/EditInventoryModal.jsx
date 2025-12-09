@@ -9,14 +9,28 @@ const EditInventory = ({ visible, onClose, inventory, onUpdated }) => {
     maximumStock: "",
     reorderPoint: "",
   });
+  const [inputValues, setInputValues] = useState({
+    minimumStock: "",
+    maximumStock: "",
+    reorderPoint: "",
+  });
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (inventory && visible) {
+      const minStock = inventory.minimumStock ?? "";
+      const maxStock = inventory.maximumStock ?? "";
+      const reorderPt = inventory.reorderPoint ?? "";
+
       setFormData({
-        minimumStock: inventory.minimumStock || "",
-        maximumStock: inventory.maximumStock || "",
-        reorderPoint: inventory.reorderPoint || "",
+        minimumStock: minStock,
+        maximumStock: maxStock,
+        reorderPoint: reorderPt,
+      });
+      setInputValues({
+        minimumStock: minStock.toString(),
+        maximumStock: maxStock.toString(),
+        reorderPoint: reorderPt.toString(),
       });
       setErrors({});
     }
@@ -69,36 +83,60 @@ const EditInventory = ({ visible, onClose, inventory, onUpdated }) => {
       newErrors.reorderPoint = "Điểm đặt hàng lại phải lớn hơn tồn kho tối thiểu.";
     }
 
-    if (!isNaN(maxStock) && !isNaN(reorder) && reorder >= maxStock) {
-      newErrors.reorderPoint = "Điểm đặt hàng lại phải nhỏ hơn tồn kho tối đa.";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    // Chặn nhập số âm - chỉ cho phép số dương hoặc rỗng
-    let numericValue = value;
-    if (value !== "" && value !== "-") {
-      const num = parseFloat(value);
-      if (!isNaN(num) && num < 0) {
-        return; // Không cho phép số âm
-      }
-      // Chỉ lưu nếu là số hợp lệ hoặc rỗng
-      if (value === "" || (!isNaN(num) && num >= 0)) {
-        numericValue = value;
-      } else {
-        return;
-      }
+
+    // Cho phép xóa hết hoặc nhập số
+    if (value === "" || value === "-") {
+      setInputValues((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+      return;
     }
-    
+
+    const numValue = parseInt(value);
+    if (!isNaN(numValue) && numValue >= 0) {
+      setInputValues((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+
+    setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const handleInputBlur = (name) => {
+    const value = inputValues[name];
+
+    // Nếu trống hoặc không hợp lệ, set về 0
+    if (value === "" || value === "-" || isNaN(parseInt(value))) {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: 0,
+      }));
+      setInputValues((prev) => ({
+        ...prev,
+        [name]: "0",
+      }));
+      return;
+    }
+
+    const numValue = parseInt(value);
+    const finalValue = Math.max(0, numValue);
+
     setFormData((prev) => ({
       ...prev,
-      [name]: numericValue,
+      [name]: finalValue,
     }));
-    setErrors((prev) => ({ ...prev, [name]: "" }));
+    setInputValues((prev) => ({
+      ...prev,
+      [name]: finalValue.toString(),
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -157,20 +195,13 @@ const EditInventory = ({ visible, onClose, inventory, onUpdated }) => {
             Tồn kho tối thiểu <span className="text-danger">*</span>
           </label>
           <input
-            type="number"
+            type="text"
             name="minimumStock"
             className={`form-control ${errors.minimumStock ? "is-invalid" : ""}`}
-            value={formData.minimumStock}
+            value={inputValues.minimumStock}
             onChange={handleInputChange}
-            min="0"
-            step="1"
+            onBlur={() => handleInputBlur("minimumStock")}
             disabled={loading}
-            onKeyDown={(e) => {
-              // Chặn nhập dấu trừ và dấu cộng
-              if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === "E") {
-                e.preventDefault();
-              }
-            }}
           />
           {errors.minimumStock && (
             <div className="invalid-feedback">
@@ -184,20 +215,13 @@ const EditInventory = ({ visible, onClose, inventory, onUpdated }) => {
             Tồn kho tối đa <span className="text-danger">*</span>
           </label>
           <input
-            type="number"
+            type="text"
             name="maximumStock"
             className={`form-control ${errors.maximumStock ? "is-invalid" : ""}`}
-            value={formData.maximumStock}
+            value={inputValues.maximumStock}
             onChange={handleInputChange}
-            min="0"
-            step="1"
+            onBlur={() => handleInputBlur("maximumStock")}
             disabled={loading}
-            onKeyDown={(e) => {
-              // Chặn nhập dấu trừ và dấu cộng
-              if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === "E") {
-                e.preventDefault();
-              }
-            }}
           />
           {errors.maximumStock && (
             <div className="invalid-feedback">
@@ -211,20 +235,13 @@ const EditInventory = ({ visible, onClose, inventory, onUpdated }) => {
             Điểm đặt hàng lại <span className="text-danger">*</span>
           </label>
           <input
-            type="number"
+            type="text"
             name="reorderPoint"
             className={`form-control ${errors.reorderPoint ? "is-invalid" : ""}`}
-            value={formData.reorderPoint}
+            value={inputValues.reorderPoint}
             onChange={handleInputChange}
-            min="0"
-            step="1"
+            onBlur={() => handleInputBlur("reorderPoint")}
             disabled={loading}
-            onKeyDown={(e) => {
-              // Chặn nhập dấu trừ và dấu cộng
-              if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === "E") {
-                e.preventDefault();
-              }
-            }}
           />
           {errors.reorderPoint && (
             <div className="invalid-feedback">

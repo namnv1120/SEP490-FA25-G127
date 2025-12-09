@@ -183,7 +183,6 @@ public class OrderServiceImpl implements OrderService {
         if (payable.signum() < 0) payable = BigDecimal.ZERO;
 
         if (!isGuest) {
-            // Lấy % điểm tích lũy từ POS settings của chủ cửa hàng (global settings)
             BigDecimal loyaltyPointsPercent = BigDecimal.ZERO; // Mặc định 0%
             try {
                 List<Account> shopOwners = accountRepository.findByRoleName("Chủ cửa hàng");
@@ -195,11 +194,9 @@ public class OrderServiceImpl implements OrderService {
                     }
                 }
             } catch (Exception e) {
-                // Nếu không tìm thấy chủ cửa hàng, dùng giá trị mặc định 0%
                 log.warn("Không tìm thấy settings của chủ cửa hàng, sử dụng giá trị mặc định: {}", e.getMessage());
             }
 
-            // Tính điểm tích lũy: payable × loyaltyPointsPercent / 100
             pointsEarned = payable.multiply(loyaltyPointsPercent)
                     .divide(BigDecimal.valueOf(100), 0, RoundingMode.FLOOR)
                     .intValue();
@@ -262,10 +259,8 @@ public class OrderServiceImpl implements OrderService {
         resp.setPointsRedeemed(pointsRedeemed);
         resp.setPointsEarned(pointsEarned);
 
-        // Kiểm tra tồn kho thấp ngay sau khi tạo order (realtime notification)
         try {
             notificationSchedulerService.checkLowStock();
-            log.info("Đã kiểm tra tồn kho thấp sau khi tạo đơn hàng: {}", order.getOrderNumber());
         } catch (Exception e) {
             log.error("Lỗi khi kiểm tra tồn kho thấp sau order: {}", e.getMessage());
         }
@@ -314,7 +309,6 @@ public class OrderServiceImpl implements OrderService {
         String normalizedSearchTerm = (searchTerm == null || searchTerm.trim().isEmpty()) ? null : searchTerm.trim();
         String normalizedOrderStatus = (orderStatus == null || orderStatus.trim().isEmpty()) ? null : orderStatus.trim();
         
-        // Set time for date range
         LocalDateTime normalizedFromDate = null;
         LocalDateTime normalizedToDate = null;
         
@@ -354,7 +348,6 @@ public class OrderServiceImpl implements OrderService {
         String normalizedSearchTerm = (searchTerm == null || searchTerm.trim().isEmpty()) ? null : searchTerm.trim();
         String normalizedOrderStatus = (orderStatus == null || orderStatus.trim().isEmpty()) ? null : orderStatus.trim();
         
-        // Set time for date range
         LocalDateTime normalizedFromDate = null;
         LocalDateTime normalizedToDate = null;
         
@@ -394,7 +387,6 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
 
-        // Kiểm tra nếu đơn đã ở trạng thái "Đã hủy" thì không cho hủy nữa
         if ("Đã hủy".equalsIgnoreCase(order.getOrderStatus())) {
             throw new IllegalStateException("Đơn hàng đã ở trạng thái hủy, không thể hủy lại.");
         }
@@ -407,7 +399,7 @@ public class OrderServiceImpl implements OrderService {
         if ("Chưa thanh toán".equalsIgnoreCase(order.getPaymentStatus())) {
             for (OrderDetail d : details) {
                 addInventoryBack(d.getProduct(), d.getQuantity(), order.getAccount(),
-                        "Hủy đơn " + order.getOrderNumber());
+                        "Hủy đơn " + order.getOrderNumber(), "Hủy đơn");
             }
             
             Customer c = order.getCustomer();
@@ -432,7 +424,7 @@ public class OrderServiceImpl implements OrderService {
         } else if ("Đã thanh toán".equalsIgnoreCase(order.getPaymentStatus())) {
             for (OrderDetail d : details) {
                 addInventoryBack(d.getProduct(), d.getQuantity(), order.getAccount(),
-                        "Trả hàng từ đơn " + order.getOrderNumber());
+                        "Trả hàng mã đơn " + order.getOrderNumber(), "Trả hàng");
             }
 
             Customer c = order.getCustomer();
@@ -443,7 +435,6 @@ public class OrderServiceImpl implements OrderService {
 
                 int pointsRedeemed = order.getPointsRedeemed() == null ? 0 : order.getPointsRedeemed();
 
-                // Sử dụng pointsEarned đã lưu trong order thay vì tính lại
                 int earned = order.getPointsEarned() == null ? 0 : order.getPointsEarned();
                 long next = (long) cur - Math.max(0, earned) + pointsRedeemed;
                 if (next < 0) next = 0;
@@ -474,7 +465,6 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
         
-        // Kiểm tra trạng thái đơn hàng
         if ("Chờ hoàn hàng".equalsIgnoreCase(order.getOrderStatus())) {
             throw new IllegalStateException("Đơn hàng đã được đánh dấu chờ hoàn hàng.");
         }
@@ -484,17 +474,14 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalStateException("Không thể đánh dấu đơn hàng đã hủy hoặc đã trả.");
         }
         
-        // Chỉ cho phép đánh dấu đơn đã hoàn tất
         if (!"Hoàn tất".equalsIgnoreCase(order.getOrderStatus())) {
             throw new IllegalStateException("Chỉ có thể đánh dấu hoàn hàng cho đơn đã hoàn tất.");
         }
         
-        // Cập nhật trạng thái
         order.setOrderStatus("Chờ hoàn hàng");
         order.setUpdatedDate(LocalDateTime.now());
         orderRepository.save(order);
         
-        // Trả về response
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
         Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
         OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
@@ -505,8 +492,6 @@ public class OrderServiceImpl implements OrderService {
         resp.setSubtotal(subtotal);
         resp.setPointsRedeemed(order.getPointsRedeemed());
         resp.setPointsEarned(order.getPointsEarned());
-        
-        log.info("Đã đánh dấu đơn hàng {} chờ hoàn hàng", order.getOrderNumber());
         
         return resp;
     }
@@ -517,17 +502,14 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
         
-        // Chỉ cho phép revert đơn đang ở trạng thái "Chờ hoàn hàng"
         if (!"Chờ hoàn hàng".equalsIgnoreCase(order.getOrderStatus())) {
             throw new IllegalStateException("Chỉ có thể xóa phiếu hoàn hàng đang ở trạng thái chờ hoàn.");
         }
         
-        // Chuyển về trạng thái "Hoàn tất"
         order.setOrderStatus("Hoàn tất");
         order.setUpdatedDate(LocalDateTime.now());
         orderRepository.save(order);
         
-        // Trả về response
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
         Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
         OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
@@ -539,8 +521,6 @@ public class OrderServiceImpl implements OrderService {
         resp.setPointsRedeemed(order.getPointsRedeemed());
         resp.setPointsEarned(order.getPointsEarned());
         
-        log.info("Đã xóa phiếu hoàn hàng {}", order.getOrderNumber());
-        
         return resp;
     }
 
@@ -550,19 +530,16 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
 
-        // Kiểm tra nếu đơn hàng đã hoàn tất thì không cho phép complete lại
         if ("Hoàn tất".equalsIgnoreCase(order.getOrderStatus())) {
             throw new IllegalArgumentException("Đơn hàng đã hoàn tất, không thể thực hiện thao tác này.");
         }
 
-        // Kiểm tra nếu đơn hàng đã hủy thì không cho phép complete
         if ("Đã hủy".equalsIgnoreCase(order.getOrderStatus())) {
             throw new IllegalArgumentException("Đơn hàng đã hủy, không thể chuyển sang hoàn tất.");
         }
 
         finalizePayment(id);
 
-        // Reload order sau khi finalizePayment để lấy dữ liệu mới nhất
         order = orderRepository.findById(id).orElseThrow();
         List<OrderDetail> details = orderDetailRepository.findByOrder(order);
         Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
@@ -598,7 +575,7 @@ public class OrderServiceImpl implements OrderService {
 
         for (OrderDetail d : details) {
             addInventoryBack(d.getProduct(), d.getQuantity(), order.getAccount(),
-                    "Hủy đơn " + order.getOrderNumber() + " do thanh toán MoMo thất bại");
+                    "Hủy đơn " + order.getOrderNumber() + " do thanh toán MoMo thất bại", "Hủy đơn");
         }
 
         order.setOrderStatus("Đã hủy");
@@ -616,12 +593,10 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
 
-        // Kiểm tra nếu đơn hàng đã hoàn tất thì không cho phép finalize lại
         if ("Hoàn tất".equalsIgnoreCase(order.getOrderStatus())) {
             throw new IllegalArgumentException("Đơn hàng đã hoàn tất, không thể thực hiện thao tác này.");
         }
 
-        // Kiểm tra nếu đơn hàng đã hủy thì không cho phép finalize
         if ("Đã hủy".equalsIgnoreCase(order.getOrderStatus())) {
             throw new IllegalArgumentException("Đơn hàng đã hủy, không thể chuyển sang hoàn tất.");
         }
@@ -657,7 +632,6 @@ public class OrderServiceImpl implements OrderService {
                         }
                     }
                 } catch (Exception e) {
-                    // Nếu không tìm thấy chủ cửa hàng, dùng giá trị mặc định 0%
                     log.warn("Không tìm thấy settings của chủ cửa hàng, sử dụng giá trị mặc định: {}", e.getMessage());
                 }
                 pointsEarned = order.getTotalAmount().multiply(loyaltyPointsPercent)
@@ -666,7 +640,6 @@ public class OrderServiceImpl implements OrderService {
                 order.setPointsEarned(pointsEarned);
             }
 
-            // Chỉ cộng điểm tích lũy, không trừ pointsRedeemed vì đã trừ trong createOrder
             int currentPoints = customer.getPoints() == null ? 0 : customer.getPoints();
             long newPoints = (long) currentPoints + pointsEarned;
             if (newPoints < 0) newPoints = 0;
@@ -790,6 +763,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private void addInventoryBack(Product product, int quantity, Account account, String notes) {
+        addInventoryBack(product, quantity, account, notes, "Trả hàng");
+    }
+
+    private void addInventoryBack(Product product, int quantity, Account account, String notes, String transactionType) {
         Inventory inv = inventoryRepository.findByProduct(product)
                 .orElseThrow(() -> new NoSuchElementException(
                         "Không tìm thấy tồn kho cho sản phẩm: " + product.getProductName()));
@@ -801,7 +778,7 @@ public class OrderServiceImpl implements OrderService {
         InventoryTransaction trx = new InventoryTransaction();
         trx.setProduct(product);
         trx.setAccount(account);
-        trx.setTransactionType("Trả hàng");
+        trx.setTransactionType(transactionType);
         trx.setQuantity(quantity);
         trx.setReferenceType("Đơn hàng");
         trx.setReferenceId(null);

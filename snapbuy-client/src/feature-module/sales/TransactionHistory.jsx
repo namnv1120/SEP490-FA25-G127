@@ -25,6 +25,7 @@ const TransactionHistory = () => {
       { value: "Nhập kho", label: "Nhập kho" },
       { value: "Bán ra", label: "Bán ra" },
       { value: "Trả hàng", label: "Trả hàng" },
+      { value: "Hủy đơn", label: "Hủy đơn" },
     ],
     []
   );
@@ -37,11 +38,6 @@ const TransactionHistory = () => {
     ],
     []
   );
-
-  const dateRangeKey = useMemo(() => {
-    if (!dateRange[0] || !dateRange[1]) return "null";
-    return `${dateRange[0]?.getTime() || ""}-${dateRange[1]?.getTime() || ""}`;
-  }, [dateRange]);
 
   const loadTransactions = useCallback(async () => {
     setLoading(true);
@@ -192,6 +188,7 @@ const TransactionHistory = () => {
           "Nhập kho": { class: "bg-success text-white", text: "Nhập kho" },
           "Bán ra": { class: "bg-danger text-white", text: "Bán ra" },
           "Trả hàng": { class: "bg-info text-white", text: "Trả hàng" },
+          "Hủy đơn": { class: "bg-warning text-dark", text: "Hủy đơn" },
         }[data.transactionType] || {
           class: "bg-secondary text-white",
           text: data.transactionType || "Không xác định",
@@ -214,14 +211,15 @@ const TransactionHistory = () => {
       key: "quantity",
       sortable: true,
       body: (data) => {
-        // Nhập kho và Trả hàng -> hiển thị dấu +
+        // Nhập kho, Trả hàng, Hủy đơn -> hiển thị dấu +
         // Bán ra -> hiển thị dấu -
         let sign = "";
         let textColor = "";
 
         if (
           data.transactionType === "Nhập kho" ||
-          data.transactionType === "Trả hàng"
+          data.transactionType === "Trả hàng" ||
+          data.transactionType === "Hủy đơn"
         ) {
           sign = "+";
           textColor = "text-success";
