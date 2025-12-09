@@ -118,27 +118,27 @@ const EditPurchaseOrder = () => {
       }
 
       setNotes(data.notes || "");
-      
+
       // Tính phần trăm thuế từ số tiền thuế và tổng tiền hàng
       let taxPercent = 0;
       if (data.details && data.details.length > 0) {
         const isApproved = data.status?.toLowerCase() === "đã duyệt";
         const isWaitingConfirmation = data.status?.toLowerCase() === "chờ xác nhận";
         const isReceived = data.status?.toLowerCase() === "đã nhận hàng";
-        
+
         // Tính subtotal dựa trên trạng thái đơn
         const subtotal = data.details.reduce((sum, item) => {
           const receiveQty = item.receiveQuantity || item.receivedQuantity || 0;
           const quantity = item.quantity || 1;
           const unitPrice = item.unitPrice || 0;
-          
+
           const itemTotal = (isApproved || isWaitingConfirmation || isReceived) && receiveQty > 0
             ? receiveQty * unitPrice
             : quantity * unitPrice;
-          
+
           return sum + itemTotal;
         }, 0);
-        
+
         // Tính phần trăm thuế: (taxAmount / subtotal) * 100
         if (subtotal > 0 && data.taxAmount) {
           taxPercent = (data.taxAmount / subtotal) * 100;
@@ -329,6 +329,42 @@ const EditPurchaseOrder = () => {
     }
 
     setItems(newItems);
+  };
+
+  const handleItemBlur = (index, field) => {
+    const newItems = [...items];
+    const value = newItems[index][field];
+
+    if (value === "" || value === null || value === undefined) {
+      if (field === "quantity") {
+        newItems[index][field] = 1;
+      } else if (field === "unitPrice" || field === "receiveQuantity") {
+        newItems[index][field] = 0;
+      }
+
+      if (field === "quantity" || field === "unitPrice") {
+        const qty = parseFloat(newItems[index].quantity || 0);
+        const price = parseFloat(newItems[index].unitPrice || 0);
+
+        if (
+          orderStatus?.toLowerCase() === "đã duyệt" ||
+          orderStatus?.toLowerCase() === "chờ xác nhận"
+        ) {
+          const receiveQty = parseFloat(newItems[index].receiveQuantity || 0);
+          newItems[index].total = receiveQty * price;
+        } else {
+          newItems[index].total = qty * price;
+        }
+      }
+
+      if (field === "receiveQuantity") {
+        const price = parseFloat(newItems[index].unitPrice || 0);
+        const receiveQty = parseFloat(newItems[index].receiveQuantity || 0);
+        newItems[index].total = receiveQty * price;
+      }
+
+      setItems(newItems);
+    }
   };
 
   const addItem = () => {
@@ -535,13 +571,13 @@ const EditPurchaseOrder = () => {
                       </td>
                       <td>
                         <input
-                          type="number"
-                          min="1"
+                          type="text"
                           className="form-control"
                           value={item.quantity}
                           onChange={(e) =>
                             updateItem(index, "quantity", e.target.value)
                           }
+                          onBlur={() => handleItemBlur(index, "quantity")}
                           disabled={
                             orderStatus?.toLowerCase() === "đã duyệt" ||
                             orderStatus?.toLowerCase() === "chờ xác nhận"
@@ -556,10 +592,7 @@ const EditPurchaseOrder = () => {
                         orderStatus?.toLowerCase() === "chờ xác nhận") && (
                           <td>
                             <input
-                              type="number"
-                              min="0"
-                              max={item.quantity}
-                              step="1"
+                              type="text"
                               className="form-control"
                               value={item.receiveQuantity || 0}
                               onChange={(e) => {
@@ -576,6 +609,7 @@ const EditPurchaseOrder = () => {
                                   e.target.value
                                 );
                               }}
+                              onBlur={() => handleItemBlur(index, "receiveQuantity")}
                               placeholder={`Tối đa: ${item.quantity}`}
                               title={`Số lượng thực nhận (tối đa ${item.quantity})`}
                               disabled={
@@ -589,15 +623,13 @@ const EditPurchaseOrder = () => {
                         )}
                       <td>
                         <input
-                          type="number"
-                          min="0"
-                          step="1000"
+                          type="text"
                           className="form-control"
                           value={item.unitPrice || 0}
                           onChange={(e) => {
-                            const value = parseFloat(e.target.value) || 0;
-                            updateItem(index, "unitPrice", value);
+                            updateItem(index, "unitPrice", e.target.value);
                           }}
+                          onBlur={() => handleItemBlur(index, "unitPrice")}
                           disabled={
                             orderStatus?.toLowerCase() === "đã duyệt" ||
                             orderStatus?.toLowerCase() === "chờ xác nhận" ||

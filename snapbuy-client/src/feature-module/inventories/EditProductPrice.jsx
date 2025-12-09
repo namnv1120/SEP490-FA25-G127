@@ -26,6 +26,11 @@ const EditProductPrice = () => {
     costPrice: "",
   });
 
+  const [inputValues, setInputValues] = useState({
+    unitPrice: "",
+    costPrice: "",
+  });
+
   const [errors, setErrors] = useState({});
 
   const fetchProducts = useCallback(async () => {
@@ -57,6 +62,10 @@ const EditProductPrice = () => {
         unitPrice: data.unitPrice || "",
         costPrice: data.costPrice || "",
       });
+      setInputValues({
+        unitPrice: (data.unitPrice || "").toString(),
+        costPrice: (data.costPrice || "").toString(),
+      });
     } catch (error) {
       console.error("❌ Lỗi khi tải thông tin giá sản phẩm:", error);
       message.error("Lỗi khi tải thông tin giá sản phẩm");
@@ -74,24 +83,29 @@ const EditProductPrice = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    let processedValue = value;
-
     if (name === "unitPrice" || name === "costPrice") {
+      // Cho phép xóa hết hoặc nhập số
       if (value === "" || value === "-") {
-        processedValue = value;
-      } else {
-        const numValue = parseFloat(value);
-        if (isNaN(numValue) || numValue < 0) {
-          return;
-        }
-        processedValue = value;
+        setInputValues((prev) => ({
+          ...prev,
+          [name]: value,
+        }));
+        return;
       }
-    }
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: processedValue,
-    }));
+      const numValue = parseFloat(value);
+      if (!isNaN(numValue) && numValue >= 0) {
+        setInputValues((prev) => ({
+          ...prev,
+          [name]: value,
+        }));
+      }
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
 
     if (errors[name]) {
       setErrors((prev) => ({
@@ -99,14 +113,35 @@ const EditProductPrice = () => {
         [name]: "",
       }));
     }
+  };
 
-    if (name === "unitPrice" || name === "costPrice") {
-      setErrors((prev) => ({
+  const handlePriceBlur = (name) => {
+    const value = inputValues[name];
+
+    // Nếu trống hoặc không hợp lệ, set về 0
+    if (value === "" || value === "-" || isNaN(parseFloat(value))) {
+      setFormData((prev) => ({
         ...prev,
-        unitPrice: "",
-        costPrice: "",
+        [name]: 0,
       }));
+      setInputValues((prev) => ({
+        ...prev,
+        [name]: "0",
+      }));
+      return;
     }
+
+    const numValue = parseFloat(value);
+    const finalValue = Math.max(0, numValue);
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: finalValue,
+    }));
+    setInputValues((prev) => ({
+      ...prev,
+      [name]: finalValue.toString(),
+    }));
   };
 
   const validateForm = () => {
@@ -223,18 +258,14 @@ const EditProductPrice = () => {
                               ? "Đang tải dữ liệu..."
                               : "Chọn sản phẩm"}
                           </option>
-                          {!loadingProducts &&
-                            products.map((product) => (
-                              <option
-                                key={product.productId}
-                                value={product.productId}
-                              >
-                                {product.productCode} - {product.productName}
-                              </option>
-                            ))}
+                          {products.map((product) => (
+                            <option key={product.productId} value={product.productId}>
+                              {product.productName}
+                            </option>
+                          ))}
                         </select>
                         {errors.productId && (
-                          <div className="invalid-feedback d-block">
+                          <div className="invalid-feedback">
                             {errors.productId}
                           </div>
                         )}
@@ -250,25 +281,14 @@ const EditProductPrice = () => {
                           Giá bán (đ) <span className="text-danger">*</span>
                         </label>
                         <input
-                          type="number"
+                          type="text"
                           className={`form-control ${errors.unitPrice ? "is-invalid" : ""
                             }`}
                           name="unitPrice"
-                          value={formData.unitPrice}
+                          value={inputValues.unitPrice}
                           onChange={handleChange}
-                          onKeyDown={(e) => {
-                            if (
-                              e.key === "-" ||
-                              e.key === "+" ||
-                              e.key === "e" ||
-                              e.key === "E"
-                            ) {
-                              e.preventDefault();
-                            }
-                          }}
+                          onBlur={() => handlePriceBlur("unitPrice")}
                           placeholder="Nhập giá bán"
-                          step="0.01"
-                          min="0"
                         />
                         {errors.unitPrice && (
                           <div className="invalid-feedback">
@@ -284,25 +304,14 @@ const EditProductPrice = () => {
                           Giá nhập (đ) <span className="text-danger">*</span>
                         </label>
                         <input
-                          type="number"
+                          type="text"
                           className={`form-control ${errors.costPrice ? "is-invalid" : ""
                             }`}
                           name="costPrice"
-                          value={formData.costPrice}
+                          value={inputValues.costPrice}
                           onChange={handleChange}
-                          onKeyDown={(e) => {
-                            if (
-                              e.key === "-" ||
-                              e.key === "+" ||
-                              e.key === "e" ||
-                              e.key === "E"
-                            ) {
-                              e.preventDefault();
-                            }
-                          }}
+                          onBlur={() => handlePriceBlur("costPrice")}
                           placeholder="Nhập giá nhập"
-                          step="0.01"
-                          min="0"
                         />
                         {errors.costPrice && (
                           <div className="invalid-feedback">

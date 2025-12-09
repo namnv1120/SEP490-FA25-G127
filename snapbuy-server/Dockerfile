@@ -21,8 +21,8 @@ RUN ./mvnw package -DskipTests -B
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine
 
-# Install wget for healthcheck
-RUN apk add --no-cache wget tzdata
+# Install curl and wget for healthcheck
+RUN apk add --no-cache curl wget tzdata
 
 # Set timezone to Asia/Ho_Chi_Minh
 RUN cp /usr/share/zoneinfo/Asia/Ho_Chi_Minh /etc/localtime && \

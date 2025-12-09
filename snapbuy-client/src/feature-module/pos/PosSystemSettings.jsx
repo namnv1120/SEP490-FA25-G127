@@ -14,16 +14,63 @@ const PosSystemSettings = () => {
     discountPercent: 0,
     loyaltyPointsPercent: 0,
   });
+  const [inputValues, setInputValues] = useState({
+    taxPercent: "0",
+    discountPercent: "0",
+    loyaltyPointsPercent: "0",
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const handleInputChange = (field) => (event) => {
-    const value = parseFloat(event.target.value) || 0;
+    const value = event.target.value;
+
+    // Cho phép xóa hết hoặc nhập số
+    if (value === "" || value === "-") {
+      setInputValues((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+      return;
+    }
+
+    // Kiểm tra nếu là số hợp lệ
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue)) {
+      setInputValues((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    }
+  };
+
+  const handleInputBlur = (field) => () => {
+    const value = inputValues[field];
+
+    // Nếu trống hoặc không hợp lệ, set về 0
+    if (value === "" || value === "-" || isNaN(parseFloat(value))) {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: 0,
+      }));
+      setInputValues((prev) => ({
+        ...prev,
+        [field]: "0",
+      }));
+      return;
+    }
+
     // Giới hạn giá trị từ 0 đến 100
-    const clampedValue = Math.max(0, Math.min(100, value));
+    const numValue = parseFloat(value);
+    const clampedValue = Math.max(0, Math.min(100, numValue));
+
     setFormData((prev) => ({
       ...prev,
       [field]: clampedValue,
+    }));
+    setInputValues((prev) => ({
+      ...prev,
+      [field]: clampedValue.toString(),
     }));
   };
 
@@ -70,10 +117,16 @@ const PosSystemSettings = () => {
     setIsLoading(true);
     try {
       const settings = await getPosSettings();
-      setFormData({
+      const newFormData = {
         taxPercent: settings.taxPercent || 0,
         discountPercent: settings.discountPercent || 0,
         loyaltyPointsPercent: settings.loyaltyPointsPercent || 0,
+      };
+      setFormData(newFormData);
+      setInputValues({
+        taxPercent: (settings.taxPercent || 0).toString(),
+        discountPercent: (settings.discountPercent || 0).toString(),
+        loyaltyPointsPercent: (settings.loyaltyPointsPercent || 0).toString(),
       });
     } catch (error) {
       message.error(
@@ -138,14 +191,11 @@ const PosSystemSettings = () => {
                             </label>
                             <div className="input-group">
                               <input
-                                type="number"
+                                type="text"
                                 className="form-control"
-                                value={formData.taxPercent}
+                                value={inputValues.taxPercent}
                                 onChange={handleInputChange("taxPercent")}
-                                min="0"
-                                max="100"
-                                step="0.01"
-                                required
+                                onBlur={handleInputBlur("taxPercent")}
                                 disabled={saving}
                                 placeholder="0.00"
                               />
@@ -158,14 +208,11 @@ const PosSystemSettings = () => {
                             </label>
                             <div className="input-group">
                               <input
-                                type="number"
+                                type="text"
                                 className="form-control"
-                                value={formData.discountPercent}
+                                value={inputValues.discountPercent}
                                 onChange={handleInputChange("discountPercent")}
-                                min="0"
-                                max="100"
-                                step="0.01"
-                                required
+                                onBlur={handleInputBlur("discountPercent")}
                                 disabled={saving}
                                 placeholder="0.00"
                               />
@@ -178,14 +225,11 @@ const PosSystemSettings = () => {
                             </label>
                             <div className="input-group">
                               <input
-                                type="number"
+                                type="text"
                                 className="form-control"
-                                value={formData.loyaltyPointsPercent}
+                                value={inputValues.loyaltyPointsPercent}
                                 onChange={handleInputChange("loyaltyPointsPercent")}
-                                min="0"
-                                max="100"
-                                step="0.01"
-                                required
+                                onBlur={handleInputBlur("loyaltyPointsPercent")}
                                 disabled={saving}
                                 placeholder="0.00"
                               />

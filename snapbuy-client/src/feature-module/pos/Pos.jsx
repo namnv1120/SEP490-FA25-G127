@@ -37,6 +37,7 @@ import {
 const Pos = () => {
   const [activeTab, setActiveTab] = useState("all");
   const Location = useLocation();
+  const navigate = useNavigate();
 
   const GUEST_CUSTOMER_ID = "00000000-0000-0000-0000-000000000001";
   const [selectedCustomer, setSelectedCustomer] = useState(GUEST_CUSTOMER_ID);
@@ -57,6 +58,7 @@ const Pos = () => {
   const [allCategories, setAllCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [cartItems, setCartItems] = useState([]);
+  const [usePointsInput, setUsePointsInput] = useState("0");
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [barcodeInput, setBarcodeInput] = useState("");
@@ -253,33 +255,6 @@ const Pos = () => {
     });
   }, []);
 
-  // Handle MoMo payment result from URL
-  useEffect(() => {
-    const params = new URLSearchParams(Location.search);
-    const paymentResult = params.get('paymentResult');
-    const orderId = params.get('orderId');
-    const paymentMessage = params.get('message');
-
-    if (paymentResult !== null) {
-      if (paymentResult === '0') {
-        // Payment success
-        message.success('Thanh toán MoMo thành công!');
-        // Clear cart and reset
-        setCartItems([]);
-        setSelectedCustomer(GUEST_CUSTOMER_ID);
-        setAppliedPromotion(null);
-        setReceivedAmount('');
-        setCustomPaymentAmount('');
-      } else {
-        // Payment failed
-        message.error(`Thanh toán MoMo thất bại: ${paymentMessage || 'Lỗi không xác định'}`);
-      }
-
-      // Clean URL params after showing message
-      navigate('/pos', { replace: true });
-    }
-  }, [Location.search, navigate]);
-
   useEffect(() => {
     const handler = () => setShowShiftModal(true);
     const closeHandler = () => setShowCloseShiftModal(true); // Open close shift modal
@@ -336,7 +311,6 @@ const Pos = () => {
     loadShift();
   }, []);
 
-  const navigate = useNavigate();
   const { userRole } = usePermission();
   const checkedRef = useRef(false);
   useEffect(() => {
@@ -1111,18 +1085,19 @@ const Pos = () => {
         usePoints: totals.pointsUsed || 0,
       };
 
-      message.loading("Đang tạo đơn hàng...", 0);
+      message.loading(paymentMethod === "momo" ? "Đang tạo link thanh toán MoMo..." : "Đang tạo đơn hàng...", 0);
       const orderResult = await createOrder(orderData);
       message.destroy();
 
       setCreatedOrder(orderResult);
-      setSelectedPaymentMethod(paymentMethod); // Save selected payment method
-
+      setSelectedPaymentMethod(paymentMethod);
       setShowPaymentMethodModal(false);
-      message.success("Đã tạo đơn hàng thành công!");
-      await fetchProducts(false); // false = không điều chỉnh quantity vì đơn hàng đã được tạo
+
+      // Fetch products async (không block UI)
+      fetchProducts(false);
 
       if (paymentMethod === "cash") {
+        message.success("Đã tạo đơn hàng thành công!");
         setShowCashPaymentModal(true);
       } else if (paymentMethod === "momo") {
         const momoPayUrl =
@@ -1131,12 +1106,15 @@ const Pos = () => {
             ? orderResult.payment.notes.substring("PAYURL:".length)
             : null);
         if (momoPayUrl) {
+          // Save orderId to localStorage
+          localStorage.setItem("pendingMomoOrderId", orderResult.orderId);
+          localStorage.setItem("pendingMomoOrderNumber", orderResult.orderNumber);
+
+          // Mở modal ngay lập tức (tab sẽ tự động mở từ useEffect)
           setShowMomoModal(true);
           startMoMoPaymentPolling(orderResult.orderId);
         } else {
-          message.error(
-            "Không thể tạo link thanh toán MoMo. Vui lòng thử lại!"
-          );
+          message.error("Không thể tạo link thanh toán MoMo. Vui lòng thử lại!");
         }
       }
     } catch {
@@ -1308,19 +1286,28 @@ const Pos = () => {
 
     // Listener cho postMessage từ trang return của MoMo
     const handleMomoMessage = async (event) => {
+      // Chỉ xử lý message từ cùng origin để bảo mật
+      if (event.origin !== window.location.origin) {
+        console.log("🚫 Ignored message from different origin:", event.origin);
+        return;
+      }
+
       if (event.data && event.data.source === "momo") {
         momoMessageReceived = true;
         const { status } = event.data;
 
         console.log("📩 Received MoMo postMessage:", event.data);
+        message.loading("Đang xử lý kết quả thanh toán...", 0);
 
         if (status === "success") {
           // Đợi một chút để backend xử lý IPN
-          await new Promise((resolve) => setTimeout(resolve, 1500));
+          await new Promise((resolve) => setTimeout(resolve, 2000));
 
           // Kiểm tra lại trạng thái đơn hàng
           try {
             const orderData = await getOrderById(orderId);
+            console.log("📦 Order data after payment:", orderData);
+
             if (orderData && orderData.paymentStatus === "Đã thanh toán") {
               // Dừng polling
               if (momoPollingIntervalRef.current) {
@@ -1329,7 +1316,9 @@ const Pos = () => {
               }
               window.removeEventListener("message", handleMomoMessage);
 
+              message.destroy();
               setShowMomoModal(false);
+              message.success("Thanh toán MoMo thành công!");
 
               // Thanh toán MoMo đã thành công, thử complete order
               // Nếu lỗi (do đã được complete bởi IPN), vẫn xem như thành công
@@ -1351,9 +1340,15 @@ const Pos = () => {
 
               setCompletedOrderForPrint(finalOrder);
               setShowOrderSuccessModal(true);
+            } else {
+              message.destroy();
+              message.warning("Đang chờ xác nhận thanh toán từ MoMo...");
+              console.log("⏳ Payment not confirmed yet, continuing polling");
             }
           } catch (err) {
+            message.destroy();
             console.error("Error checking order after MoMo message:", err);
+            message.error("Lỗi khi kiểm tra trạng thái đơn hàng");
           }
         } else if (status === "failed") {
           // Chỉ xử lý thất bại nếu chưa kiểm tra được thành công
@@ -1363,6 +1358,7 @@ const Pos = () => {
             const orderData = await getOrderById(orderId);
             // Nếu đơn đã thanh toán thành công, không hiển thị lỗi
             if (orderData && orderData.paymentStatus === "Đã thanh toán") {
+              message.destroy();
               return;
             }
           } catch {
@@ -1376,6 +1372,7 @@ const Pos = () => {
           }
           window.removeEventListener("message", handleMomoMessage);
 
+          message.destroy();
           setShowMomoModal(false);
           message.error("Thanh toán MoMo thất bại hoặc đã bị hủy!");
           handlePaymentCompleted();
@@ -2101,23 +2098,34 @@ const Pos = () => {
                                 điểm):
                               </label>
                               <input
-                                type="number"
+                                type="text"
                                 className="form-control form-control-sm"
-                                min="0"
-                                max={Math.min(
-                                  selectedCustomerData.points ?? 0,
-                                  Math.floor(totals.totalBeforePoints)
-                                )}
-                                value={usePoints}
+                                value={usePointsInput}
                                 onChange={(e) => {
-                                  const value = parseInt(e.target.value) || 0;
+                                  const value = e.target.value;
+                                  if (value === "" || value === "-") {
+                                    setUsePointsInput(value);
+                                    return;
+                                  }
+                                  const numValue = parseInt(value);
+                                  if (!isNaN(numValue) && numValue >= 0) {
+                                    setUsePointsInput(value);
+                                  }
+                                }}
+                                onBlur={() => {
+                                  if (usePointsInput === "" || usePointsInput === "-" || isNaN(parseInt(usePointsInput))) {
+                                    setUsePoints(0);
+                                    setUsePointsInput("0");
+                                    return;
+                                  }
+                                  const value = parseInt(usePointsInput);
                                   const maxUsable = Math.min(
                                     selectedCustomerData.points ?? 0,
                                     Math.floor(totals.totalBeforePoints)
                                   );
-                                  setUsePoints(
-                                    Math.max(0, Math.min(value, maxUsable))
-                                  );
+                                  const finalValue = Math.max(0, Math.min(value, maxUsable));
+                                  setUsePoints(finalValue);
+                                  setUsePointsInput(finalValue.toString());
                                 }}
                                 placeholder="Nhập số điểm muốn sử dụng"
                               />

@@ -72,6 +72,7 @@ services:
       - UPLOAD_DIR=/app/uploads
       - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS:-2592000000}
       - APP_BASE_URL=${APP_BASE_URL:-http://localhost:8080}
+      - FRONTEND_BASE_URL=${FRONTEND_BASE_URL:-http://localhost:5173}
       - MOMO_TARGET=${MOMO_TARGET:-dev}
       - JAVA_OPTS=-Xms512m -Xmx1024m -XX:+UseG1GC -XX:MaxGCPauseMillis=200
     ports:
@@ -86,15 +87,11 @@ services:
       init-db:
         condition: service_completed_successfully
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl -f http://localhost:8080/api/health || exit 1",
-        ]
-      interval: 30s
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/health || exit 1"]
+      interval: 15s
       timeout: 10s
-      retries: 3
-      start_period: 60s
+      retries: 5
+      start_period: 90s
     restart: unless-stopped
     deploy:
       resources:
@@ -178,7 +175,7 @@ services:
           "--quiet",
           "--tries=1",
           "--spider",
-          "http://localhost/health || exit 1",
+          "http://localhost/health",
         ]
       interval: 30s
       timeout: 5s

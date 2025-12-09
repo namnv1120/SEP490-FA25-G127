@@ -141,7 +141,7 @@ const ShopOwnerDashboard = () => {
 
   // Payment method breakdown
   const paymentMethodData = useMemo(() => {
-    const methods = { CASH: 0, MOMO: 0, OTHER: 0 };
+    const methods = { CASH: 0, MOMO: 0 };
 
     dashboardData.orders.forEach((order) => {
       if (
@@ -152,21 +152,19 @@ const ShopOwnerDashboard = () => {
       const method = (
         order.payment?.paymentMethod ||
         order.paymentMethod ||
-        "OTHER"
+        "CASH"
       )
         .toString()
         .toUpperCase();
 
       if (method.includes("MOMO")) methods.MOMO++;
-      else if (method.includes("CASH") || method.includes("TIỀN MẶT"))
-        methods.CASH++;
-      else methods.OTHER++;
+      else methods.CASH++;
     });
 
     return {
-      labels: ["Tiền mặt", "MoMo", "Khác"],
-      data: [methods.CASH, methods.MOMO, methods.OTHER],
-      backgroundColor: ["#0E9384", "#E04F16", "#3B82F6"],
+      labels: ["Tiền mặt", "MoMo"],
+      data: [methods.CASH, methods.MOMO],
+      backgroundColor: ["#0E9384", "#E04F16"],
     };
   }, [dashboardData.orders]);
 
@@ -766,8 +764,8 @@ const ShopOwnerDashboard = () => {
                             <td>
                               {formatDate(
                                 order.orderDate ||
-                                  order.createdDate ||
-                                  order.createdAt
+                                order.createdDate ||
+                                order.createdAt
                               )}
                             </td>
                             <td>{order.customer?.fullName || "Khách lẻ"}</td>
@@ -776,13 +774,16 @@ const ShopOwnerDashboard = () => {
                             </td>
                             <td>
                               <span
-                                className={`badge ${
-                                  (order.paymentStatus || "")
+                                className={`badge ${(order.paymentStatus || "")
                                     .toString()
                                     .toLowerCase() === "đã thanh toán"
                                     ? "badge-success"
-                                    : "badge-warning"
-                                }`}
+                                    : (order.paymentStatus || "")
+                                      .toString()
+                                      .toLowerCase() === "thất bại"
+                                      ? "badge-danger"
+                                      : "badge-info"
+                                  }`}
                               >
                                 {order.paymentStatus || "Chưa thanh toán"}
                               </span>

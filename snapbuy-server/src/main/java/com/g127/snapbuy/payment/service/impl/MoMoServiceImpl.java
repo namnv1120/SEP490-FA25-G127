@@ -30,6 +30,9 @@ public class MoMoServiceImpl implements MoMoService {
     @Value("${app.base.url}")
     private String baseUrl;
 
+    @Value("${frontend.base.url:http://localhost:5173}")
+    private String frontendUrl;
+
     @Value("${momo.dev.endpoint}")
     private String momoEndpoint;
 
@@ -59,11 +62,8 @@ public class MoMoServiceImpl implements MoMoService {
             String requestId = UUID.randomUUID().toString();
             String momoOrderId = order.getOrderNumber() + "-" + System.currentTimeMillis();
 
-            // Use base URL from application properties
             String returnUrl = baseUrl + "/api/payments/momo/return";
             String notifyUrl = baseUrl + "/api/payments/momo/notify";
-
-            log.info("MoMo Payment URLs - Return: {}, Notify: {}", returnUrl, notifyUrl);
 
             String orderInfo = "Thanh toán đơn hàng " + order.getOrderNumber();
 

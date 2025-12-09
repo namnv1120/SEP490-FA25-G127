@@ -99,6 +99,25 @@ const AddPurchaseOrder = () => {
     setItems(newItems);
   };
 
+  const handleItemBlur = (index, field) => {
+    const newItems = [...items];
+    const value = newItems[index][field];
+
+    if (value === "" || value === null || value === undefined) {
+      if (field === "quantity") {
+        newItems[index][field] = 1;
+      } else if (field === "unitPrice") {
+        newItems[index][field] = 0;
+      }
+
+      const qty = parseFloat(newItems[index].quantity || 0);
+      const price = parseFloat(newItems[index].unitPrice || 0);
+      newItems[index].total = qty * price;
+
+      setItems(newItems);
+    }
+  };
+
   const addItem = () => {
     setItems([...items, { product: null, quantity: 1, unitPrice: 0, total: 0 }]);
   };
@@ -250,25 +269,24 @@ const AddPurchaseOrder = () => {
                       </td>
                       <td>
                         <input
-                          type="number"
-                          min="1"
+                          type="text"
                           className="form-control"
                           value={item.quantity}
                           onChange={(e) =>
                             updateItem(index, "quantity", e.target.value)
                           }
+                          onBlur={() => handleItemBlur(index, "quantity")}
                         />
                       </td>
                       <td>
                         <input
-                          type="number"
-                          min="0"
-                          step="0.01"
+                          type="text"
                           className="form-control"
                           value={item.unitPrice}
                           onChange={(e) =>
                             updateItem(index, "unitPrice", e.target.value)
                           }
+                          onBlur={() => handleItemBlur(index, "unitPrice")}
                         />
                       </td>
                       <td>{item.total.toLocaleString("vi-VN")} ₫</td>

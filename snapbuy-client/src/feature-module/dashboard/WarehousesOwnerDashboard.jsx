@@ -45,8 +45,6 @@ const WarehousesOwnerDashboard = () => {
       try {
         setLoading(true);
 
-        console.log("=== Loading Warehouse Dashboard Data ===");
-
         const [
           inventoriesData,
           productsData,
@@ -76,11 +74,6 @@ const WarehousesOwnerDashboard = () => {
           }),
         ]);
 
-        console.log("Inventories loaded:", inventoriesData);
-        console.log("Products loaded:", productsData);
-        console.log("Transactions loaded:", transactionsData);
-        console.log("Purchase orders loaded:", purchaseOrdersData);
-
         setInventories(Array.isArray(inventoriesData) ? inventoriesData : []);
         setProducts(Array.isArray(productsData) ? productsData : []);
         setTransactions(
@@ -97,7 +90,6 @@ const WarehousesOwnerDashboard = () => {
         const userData = userInfoData.result || userInfoData;
         setUserInfo({ fullName: userData.fullName || "" });
 
-        console.log("=== Warehouse Dashboard Data Loaded Successfully ===");
       } catch (error) {
         console.error("Error fetching warehouse data:", error);
       } finally {
@@ -108,7 +100,6 @@ const WarehousesOwnerDashboard = () => {
     fetchData();
   }, []);
 
-  // Calculate inventory statistics (với logic cảnh báo hợp lý)
   const inventoryStats = useMemo(() => {
     let totalValue = 0;
     let criticalStock = 0; // Dưới tồn kho tối thiểu
@@ -118,19 +109,12 @@ const WarehousesOwnerDashboard = () => {
     let totalSKUs = inventories.length;
     let totalCategories = new Set();
 
-    console.log("=== Calculating Inventory Stats ===");
-
-    inventories.forEach((inv, index) => {
-      if (index === 0) {
-        console.log("Sample inventory item:", inv);
-      }
-
+    inventories.forEach((inv) => {
       const qty = Number(inv.quantityInStock || inv.stockQuantity || 0);
       const minStock = Number(inv.minimumStock || 0);
       const maxStock = Number(inv.maximumStock || Infinity);
       const reorderPoint = Number(inv.reorderPoint || minStock || 10);
 
-      // ✅ Join với products array để lấy giá và category
       const product = products.find(p => p.productId === inv.productId);
       const price = Number(
         product?.unitPrice ||
@@ -143,16 +127,6 @@ const WarehousesOwnerDashboard = () => {
       // Đếm số danh mục
       const categoryName = product?.categoryName || inv.categoryName || "Khác";
       totalCategories.add(categoryName);
-
-      if (index < 3) {
-        console.log(`--- Inventory ${index} ---`);
-        console.log("Quantity:", qty);
-        console.log("Min Stock:", minStock);
-        console.log("Reorder Point:", reorderPoint);
-        console.log("Max Stock:", maxStock);
-        console.log("Price:", price);
-        console.log("Value:", qty * price);
-      }
 
       totalValue += qty * price;
 
@@ -168,14 +142,6 @@ const WarehousesOwnerDashboard = () => {
       }
     });
 
-    console.log("Total Value:", totalValue);
-    console.log("Total Categories:", totalCategories.size);
-    console.log("Critical Stock:", criticalStock);
-    console.log("Low Stock (Reorder):", lowStock);
-    console.log("Out of Stock:", outOfStock);
-    console.log("Over Stock:", overStock);
-    console.log("Total SKUs:", totalSKUs);
-
     return {
       totalValue,
       totalCategories: totalCategories.size,
@@ -187,7 +153,6 @@ const WarehousesOwnerDashboard = () => {
     };
   }, [inventories, products]);
 
-  // Stock level distribution (dựa trên minimumStock, reorderPoint, maximumStock)
   const stockDistribution = useMemo(() => {
     const ranges = {
       "Hết hàng": 0,
@@ -222,7 +187,6 @@ const WarehousesOwnerDashboard = () => {
     };
   }, [inventories]);
 
-  // Recent transactions
   const recentTransactions = useMemo(() => {
     return [...transactions]
       .sort((a, b) => {
@@ -287,7 +251,6 @@ const WarehousesOwnerDashboard = () => {
       }
     });
 
-    // Sắp xếp theo priority, sau đó theo số lượng
     return alerts
       .sort((a, b) => {
         if (a.priority !== b.priority) return a.priority - b.priority;
@@ -301,14 +264,7 @@ const WarehousesOwnerDashboard = () => {
     const categoryStock = {};
     const categoryDetails = {};
 
-    console.log("=== Calculating Inventory by Category ===");
-
-    inventories.forEach((inv, index) => {
-      if (index === 0) {
-        console.log("Sample inventory for category:", inv);
-      }
-
-      // ✅ SỬA: Join với products array để lấy category
+    inventories.forEach((inv) => {
       const product = products.find(p => p.productId === inv.productId);
       const category =
         product?.category?.categoryName ||
@@ -317,14 +273,7 @@ const WarehousesOwnerDashboard = () => {
         inv.categoryName ||
         "Khác";
 
-      // ✅ SỬA: quantityInStock thay vì stockQuantity
       const qty = Number(inv.quantityInStock || inv.stockQuantity || 0);
-
-      if (index === 0) {
-        console.log("Found product:", product);
-        console.log("Category name:", category);
-        console.log("Quantity:", qty);
-      }
 
       if (qty > 0) {
         categoryStock[category] = (categoryStock[category] || 0) + qty;
@@ -340,9 +289,6 @@ const WarehousesOwnerDashboard = () => {
       }
     });
 
-    console.log("Category stock map:", categoryStock);
-
-    // Chuyển đổi sang mảng và sắp xếp
     const sorted = Object.entries(categoryStock)
       .sort(([, a], [, b]) => b - a);
 
@@ -375,24 +321,7 @@ const WarehousesOwnerDashboard = () => {
       last30Days.push({ date: dateStr, in: 0, out: 0 });
     }
 
-    console.log("=== Processing Transactions ===");
-    console.log("Total transactions:", transactions.length);
-
-    // Đếm các loại transaction
-    const typeCount = {};
     transactions.forEach((txn) => {
-      const type = (txn.transactionType || "").toString();
-      typeCount[type] = (typeCount[type] || 0) + 1;
-    });
-    console.log("Transaction types breakdown:", typeCount);
-
-    transactions.forEach((txn, index) => {
-      if (index < 3) {
-        console.log(`--- Transaction ${index} ---`);
-        console.log("Full transaction:", txn);
-        console.log("Type:", txn.transactionType);
-      }
-
       const txnDate = new Date(txn.transactionDate || txn.createdDate);
       const dateStr = txnDate.toISOString().split("T")[0];
       const dayData = last30Days.find((d) => d.date === dateStr);
@@ -401,17 +330,10 @@ const WarehousesOwnerDashboard = () => {
         const qty = Number(txn.quantity || 0);
         const type = (txn.transactionType || "").toString().toUpperCase();
 
-        // ✅ SỬA: Backend trả về "Nhập kho" (IN) và "Bán ra" (OUT)
         if (type.includes("NHẬP") || type === "IN") {
           dayData.in += qty;
-          if (index < 5) console.log(`✅ Added ${qty} to IN for ${dateStr} (type: ${type})`);
         } else if (type.includes("XUẤT") || type === "OUT" || type.includes("BÁN")) {
-          // "Bán ra" = xuất kho
           dayData.out += qty;
-          if (index < 5) console.log(`❌ Added ${qty} to OUT for ${dateStr} (type: ${type})`);
-        } else {
-          // Fallback: nếu không match, log để debug
-          if (index < 5) console.warn(`⚠️ Unknown transaction type: "${type}" (original: "${txn.transactionType}")`);
         }
       }
     });
@@ -473,7 +395,6 @@ const WarehousesOwnerDashboard = () => {
     dataLabels: { enabled: false },
   };
 
-  // Top 10 categories for chart
   const topCategoriesChart = useMemo(() => {
     const top10 = inventoryByCategory.details.slice(0, 10);
     return {
@@ -713,7 +634,6 @@ const WarehousesOwnerDashboard = () => {
           </div>
         </div>
 
-        {/* Alert if any stock issues */}
         {(inventoryStats.outOfStock > 0 || inventoryStats.criticalStock > 0 || inventoryStats.lowStock > 0) && (
           <div className={`alert ${inventoryStats.outOfStock > 0 || inventoryStats.criticalStock > 0 ? 'alert-danger' : 'alert-warning'} alert-dismissible fade show mb-4`}>
             <div>
@@ -756,7 +676,6 @@ const WarehousesOwnerDashboard = () => {
           </div>
         )}
 
-        {/* Info alert for overstock */}
         {inventoryStats.overStock > 0 && (
           <div className="alert alert-info alert-dismissible fade show mb-4">
             <div>
@@ -775,7 +694,6 @@ const WarehousesOwnerDashboard = () => {
           </div>
         )}
 
-        {/* Charts Row 1 - Phân bố mức tồn kho và Cảnh báo */}
         <div className="row">
           {/* Stock Distribution */}
           <div className="col-lg-6 d-flex">
@@ -801,7 +719,6 @@ const WarehousesOwnerDashboard = () => {
             </div>
           </div>
 
-          {/* Stock Alerts - Cảnh báo tồn kho */}
           <div className="col-lg-6 d-flex">
             <div className="card flex-fill">
               <div className="card-header">
@@ -943,8 +860,8 @@ const WarehousesOwnerDashboard = () => {
                             <td>
                               <span
                                 className={`badge ${index < 3
-                                    ? "badge-soft-success"
-                                    : "badge-soft-secondary"
+                                  ? "badge-soft-success"
+                                  : "badge-soft-secondary"
                                   }`}
                               >
                                 {index + 1}
@@ -1047,20 +964,31 @@ const WarehousesOwnerDashboard = () => {
                       {recentTransactions.length > 0 ? (
                         recentTransactions.map((txn, index) => {
                           const type = (txn.transactionType || "").toString().toUpperCase();
-                          // ✅ SỬA: Backend trả về "Nhập kho" (IN) và "Bán ra" (OUT)
                           const isIn = type.includes("NHẬP") || type === "IN";
                           const isOut = type.includes("XUẤT") || type === "OUT" || type.includes("BÁN");
-                          // ✅ SỬA: Transaction có productName trực tiếp
+                          const isReturn = type.includes("TRẢ");
                           const productName = txn.productName || "Không xác định";
+
+                          let badgeClass = "secondary";
+                          let displayText = txn.transactionType;
+
+                          if (isIn) {
+                            badgeClass = "success";
+                            displayText = "Nhập hàng";
+                          } else if (isOut) {
+                            badgeClass = "danger";
+                            displayText = "Xuất hàng";
+                          } else if (isReturn) {
+                            badgeClass = "info";
+                            displayText = "Trả hàng";
+                          }
+
                           return (
                             <tr key={index}>
                               <td>{productName}</td>
                               <td className="text-end">
-                                <span
-                                  className={`badge badge-${isIn ? "success" : isOut ? "danger" : "secondary"
-                                    }`}
-                                >
-                                  {isIn ? "Nhập" : isOut ? "Xuất" : txn.transactionType}
+                                <span className={`badge badge-${badgeClass}`}>
+                                  {displayText}
                                 </span>
                               </td>
                               <td className="text-end fw-semibold">

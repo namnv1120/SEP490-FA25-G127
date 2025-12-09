@@ -115,3 +115,17 @@ export const getOrdersByAccountAndRange = async (accountId, fromISO, toISO) => {
   );
   return response.data?.result || response.data || [];
 };
+
+// Simulate MoMo IPN callback for local development
+export const simulateMoMoCallback = async (momoOrderId, resultCode = 0) => {
+  const response = await axios.post(
+    `${API_ENDPOINTS.BASE_URL}/api/payments/momo/local-notify`,
+    {
+      orderId: momoOrderId,
+      resultCode: resultCode,
+      transId: `LOCAL-${Date.now()}`,
+      message: resultCode === 0 ? "Successful" : "Failed"
+    }
+  );
+  return response.data;
+};

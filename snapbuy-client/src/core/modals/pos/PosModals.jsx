@@ -189,7 +189,7 @@ const PosModals = ({
     computeExpectedDrawer,
   ]);
 
-  // Extract MoMo payUrl from created order
+  // Extract MoMo payUrl from created order and auto-open tab
   useEffect(() => {
     if (createdOrder && showMomoModal) {
       let foundPayUrl = null;
@@ -887,7 +887,6 @@ const PosModals = ({
         title="Thanh toán qua MoMo"
         open={showMomoModal}
         onCancel={() => {
-          // Just close the modal when cancel is clicked
           if (onMomoModalClose) {
             onMomoModalClose();
           }
@@ -933,9 +932,8 @@ const PosModals = ({
             </>
           ) : (
             <div className="text-center py-4">
-              <p className="text-danger">
-                Chưa có QR code thanh toán. Vui lòng thử lại.
-              </p>
+              <Spin size="large" />
+              <p className="text-muted mt-3">Đang tạo mã thanh toán...</p>
             </div>
           )}
         </div>
