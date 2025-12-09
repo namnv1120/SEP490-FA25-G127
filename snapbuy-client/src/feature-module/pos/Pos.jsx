@@ -253,6 +253,33 @@ const Pos = () => {
     });
   }, []);
 
+  // Handle MoMo payment result from URL
+  useEffect(() => {
+    const params = new URLSearchParams(Location.search);
+    const paymentResult = params.get('paymentResult');
+    const orderId = params.get('orderId');
+    const paymentMessage = params.get('message');
+
+    if (paymentResult !== null) {
+      if (paymentResult === '0') {
+        // Payment success
+        message.success('Thanh toán MoMo thành công!');
+        // Clear cart and reset
+        setCartItems([]);
+        setSelectedCustomer(GUEST_CUSTOMER_ID);
+        setAppliedPromotion(null);
+        setReceivedAmount('');
+        setCustomPaymentAmount('');
+      } else {
+        // Payment failed
+        message.error(`Thanh toán MoMo thất bại: ${paymentMessage || 'Lỗi không xác định'}`);
+      }
+
+      // Clean URL params after showing message
+      navigate('/pos', { replace: true });
+    }
+  }, [Location.search, navigate]);
+
   useEffect(() => {
     const handler = () => setShowShiftModal(true);
     const closeHandler = () => setShowCloseShiftModal(true); // Open close shift modal

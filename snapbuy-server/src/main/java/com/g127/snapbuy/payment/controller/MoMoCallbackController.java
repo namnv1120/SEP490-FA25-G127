@@ -14,8 +14,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
+
 
 @RestController
 @RequestMapping("/api/payments/momo")
@@ -90,31 +91,39 @@ public class MoMoCallbackController {
             String orderNumber = orderId.substring(0, orderId.lastIndexOf("-"));
             log.info("Extracted order number: {} from momoOrderId: {}", orderNumber, orderId);
 
-            // Find order
-            Order order = orderRepository.findByOrderNumber(orderNumber)
+            // Find order by order number
+            List<Order> allOrders = orderRepository.findAll();
+            Order order = allOrders.stream()
+                    .filter(o -> orderNumber.equals(o.getOrderNumber()))
+                    .findFirst()
                     .orElseThrow(() -> new RuntimeException("Order not found: " + orderNumber));
 
-            // Find payment
-            Payment payment = paymentRepository.findByOrderId(order.getId())
-                    .stream()
-                    .filter(p -> "MoMo".equalsIgnoreCase(p.getPaymentMethod()))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Payment not found for order: " + orderNumber));
+            log.info("Found order: orderId={}, orderNumber={}", order.getOrderId(), order.getOrderNumber());
+
+            // Find payment by order
+            Payment payment = paymentRepository.findByOrder(order);
+            if (payment == null) {
+                throw new RuntimeException("Payment not found for order: " + orderNumber);
+            }
+            
+            log.info("Found payment: paymentId={}, method={}, status={}", 
+                    payment.getPaymentId(), payment.getPaymentMethod(), payment.getPaymentStatus());
 
             // Update payment based on result code
             if (resultCode == 0) {
                 // Payment successful
                 payment.setPaymentStatus("Đã thanh toán");
-                payment.setTransactionId(transId);
-                payment.setUpdatedDate(LocalDateTime.now());
+                payment.setTransactionReference(transId);
 
                 // Update order status to completed
                 order.setOrderStatus("Hoàn thành");
+                order.setPaymentStatus("Đã thanh toán");
 
                 orderRepository.save(order);
                 paymentRepository.save(payment);
 
-                log.info("Payment successful for order: {}, transId: {}", orderNumber, transId);
+                log.info("✅ Payment successful for order: {}, transId: {}", orderNumber, transId);
+                log.info("✅ Order status: {}, Payment status: {}", order.getOrderStatus(), payment.getPaymentStatus());
 
                 return ResponseEntity.ok(Map.of(
                         "message", "Payment processed successfully",
@@ -122,8 +131,7 @@ public class MoMoCallbackController {
                 ));
             } else {
                 // Payment failed
-                payment.setPaymentStatus(PaymentStatus.FAILED);
-                payment.setUpdatedDate(LocalDateTime.now());
+                payment.setPaymentStatus("Thất bại");
                 paymentRepository.save(payment);
 
                 log.warn("Payment failed for order: {}, resultCode: {}, message: {}", orderNumber, resultCode, message);
@@ -143,6 +151,9 @@ public class MoMoCallbackController {
         }
     }
 
+    @Value("${app.base.url}")
+    private String appBaseUrl;
+
     /**
      * Return URL endpoint - where user is redirected after payment
      */
@@ -155,13 +166,25 @@ public class MoMoCallbackController {
         String orderId = params.get("orderId");
         String message = params.get("message");
 
-        // Redirect to frontend with payment result
-        String frontendUrl = "http://localhost:3000/payment-result?resultCode=" + resultCode 
+        // Extract frontend base URL from appBaseUrl
+        // If appBaseUrl is https://snapbuy.com.vn, frontend is also at the same domain
+        String frontendBaseUrl = appBaseUrl.replace(":8080", ""); // Remove backend port if present
+        
+        // For local development: http://localhost:8080 -> http://localhost:3000
+        // For production: https://snapbuy.com.vn -> https://snapbuy.com.vn
+        if (frontendBaseUrl.contains("localhost")) {
+            frontendBaseUrl = frontendBaseUrl.replace("8080", "3000");
+        }
+
+        // Redirect to POS page with payment result
+        String redirectUrl = frontendBaseUrl + "/pos?paymentResult=" + resultCode 
                 + "&orderId=" + orderId 
-                + "&message=" + message;
+                + "&message=" + (message != null ? message : "");
+
+        log.info("Redirecting to: {}", redirectUrl);
 
         return ResponseEntity.status(HttpStatus.FOUND)
-                .header("Location", frontendUrl)
+                .header("Location", redirectUrl)
                 .build();
     }
 

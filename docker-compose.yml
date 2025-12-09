@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   # SQL Server Database
   db:
@@ -20,6 +22,19 @@ services:
       retries: 10
       start_period: 30s
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # Database initialization - creates SnapBuy database
   init-db:
@@ -60,6 +75,7 @@ services:
       - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS:-2592000000}
       - APP_BASE_URL=${APP_BASE_URL:-http://localhost:8080}
       - MOMO_TARGET=${MOMO_TARGET:-dev}
+      - JAVA_OPTS=-Xms512m -Xmx1024m -XX:+UseG1GC -XX:MaxGCPauseMillis=200
     ports:
       - "8080:8080"
     volumes:
@@ -72,17 +88,119 @@ services:
       init-db:
         condition: service_completed_successfully
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1536M
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # React Frontend with Nginx (from Docker Hub)
+  # Note: Frontend only exposes port 80 internally
+  # External access via nginx-proxy on port 80/443
   frontend:
     image: namnv11/snapbuy-frontend:latest
     container_name: snapbuy-frontend
-    ports:
-      - "3000:80"
+    expose:
+      - "80"
     networks:
       - snapbuy-network
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --quiet --tries=1 --spider http://localhost:80/health || exit 1",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  # Nginx Reverse Proxy with SSL
+  nginx-proxy:
+    build:
+      context: ./nginx-proxy
+      dockerfile: Dockerfile
+    container_name: snapbuy-nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-proxy/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx-proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - certbot_data:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+      - nginx_logs:/var/log/nginx
+    networks:
+      - snapbuy-network
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost/health || exit 1",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Certbot for SSL certificate renewal
+  certbot:
+    image: certbot/certbot:latest
+    container_name: snapbuy-certbot
+    volumes:
+      - certbot_data:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    networks:
+      - snapbuy-network
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot --webroot-path=/var/www/certbot; sleep 12h & wait $${!}; done;'"
     restart: unless-stopped
 
 networks:
@@ -93,4 +211,10 @@ volumes:
   sqlserver_data:
     driver: local
   uploads_data:
+    driver: local
+  certbot_data:
+    driver: local
+  certbot_www:
+    driver: local
+  nginx_logs:
     driver: local
