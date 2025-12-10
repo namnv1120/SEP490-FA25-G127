@@ -20,7 +20,7 @@ import SupplierDetailModal from "../../core/modals/people/SupplierDetailModal";
 const Suppliers = () => {
   const [listData, setListData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalRecords, setTotalRecords] = useState(0);
+  const [_totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");

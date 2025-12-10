@@ -7,7 +7,7 @@ import CommonDateRangePicker from "../../components/date-range-picker/common-dat
 import { getAllOrders, cancelOrder } from "../../services/OrderService";
 import { getAccountById, getMyInfo } from "../../services/AccountService";
 import OrderDetailModal from "../../core/modals/sales/OrderDetailModal";
-import { message, Spin } from "antd";
+import { message, Spin, Modal } from "antd";
 
 const OrderHistory = () => {
   const [filteredData, setFilteredData] = useState([]);
@@ -22,6 +22,7 @@ const OrderHistory = () => {
   const [accountNamesMap, setAccountNamesMap] = useState({});
   const [showModal, setShowModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [_actionLoading, setActionLoading] = useState(false);
 
   const OrderStatuses = [
     { value: "", label: "Tất cả" },
@@ -107,7 +108,7 @@ const OrderHistory = () => {
           item.payment?.paymentMethod ||
           item.paymentMethod ||
           (item.paymentStatus === "PAID" ||
-            item.paymentStatus === "PAYMENT_COMPLETED"
+          item.paymentStatus === "PAYMENT_COMPLETED"
             ? "Tiền mặt"
             : "-");
         return {
@@ -202,8 +203,8 @@ const OrderHistory = () => {
       console.error("=== Lỗi khi gọi API ===", err);
       setError(
         err.response?.data?.message ||
-        err.message ||
-        "Không thể tải dữ liệu đơn hàng."
+          err.message ||
+          "Không thể tải dữ liệu đơn hàng."
       );
       setFilteredData([]);
     } finally {
@@ -338,7 +339,7 @@ const OrderHistory = () => {
   };
 
   // Handle cancel orders
-  const handleCancelOrders = async () => {
+  const _handleCancelOrders = async () => {
     const selected = getSelectedOrders();
     if (selected.length === 0) {
       message.warning("Vui lòng chọn ít nhất một đơn hàng để hủy!");
@@ -521,12 +522,12 @@ const OrderHistory = () => {
       body: (data) =>
         data.orderDate
           ? new Date(data.orderDate).toLocaleString("vi-VN", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
           : "-",
     },
     {

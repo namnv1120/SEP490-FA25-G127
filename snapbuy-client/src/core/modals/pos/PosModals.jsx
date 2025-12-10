@@ -23,8 +23,11 @@ const PosModals = ({
   showCashPaymentModal,
   showMomoModal,
   showOrderSuccessModal,
+  showOrderCancelledModal,
   onCloseOrderSuccessModal,
+  onCloseOrderCancelledModal,
   completedOrderForPrint,
+  cancelledOrder,
   onCashPaymentConfirm,
   onMomoModalClose,
   onCompleteOrder,
@@ -34,11 +37,8 @@ const PosModals = ({
   onCloseShiftModal,
   currentShift,
   shiftLoading,
-  onOpenShift,
   onCloseShift,
 }) => {
-
-
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersSearchQuery, setOrdersSearchQuery] = useState("");
@@ -49,7 +49,7 @@ const PosModals = ({
   const [expectedDrawer, setExpectedDrawer] = useState(null);
   const [shiftNote, setShiftNote] = useState("");
   const [myAccountId, setMyAccountId] = useState(null);
-  const [openCashDenominations, setOpenCashDenominations] = useState([]);
+  const [_openCashDenominations, setOpenCashDenominations] = useState([]);
   const [closeCashDenominations, setCloseCashDenominations] = useState([]);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
   const [orderDetailLoading, setOrderDetailLoading] = useState(false);
@@ -59,11 +59,6 @@ const PosModals = ({
   const [showPrintReceiptModal, setShowPrintReceiptModal] = useState(false);
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
   const cashReceivedInputRef = useRef(null);
-
-
-
-
-
 
   useEffect(() => {
     setShiftAmount("");
@@ -76,7 +71,9 @@ const PosModals = ({
         const info = await getMyInfo();
         const u = info.result || info;
         setMyAccountId(u?.id || null);
-      } catch { void 0; }
+      } catch {
+        void 0;
+      }
     };
     if (showShiftModal) loadUser();
   }, [showShiftModal]);
@@ -127,7 +124,9 @@ const PosModals = ({
               dt <= toTs
             );
           });
-        } catch { void 0; }
+        } catch {
+          void 0;
+        }
       }
       const paid = (s) =>
         (s || "").toString().toLowerCase().includes("đã thanh toán") ||
@@ -221,7 +220,6 @@ const PosModals = ({
 
   // Handle payment method selection - will be passed from Pos.jsx
 
-
   // Calculate change amount
   const calculateChange = () => {
     if (!cashReceived) return 0;
@@ -296,7 +294,6 @@ const PosModals = ({
       }
       const data = await getAllOrders();
       setOrders(data || []);
-
     } catch {
       message.error("Không thể tải danh sách đơn hàng");
       setOrders([]);
@@ -415,7 +412,6 @@ const PosModals = ({
           orderDetail.customer = customerData;
         } catch {
           // If customer fetch fails, continue without customer data
-
         }
       }
 
@@ -453,7 +449,6 @@ const PosModals = ({
           orderData.customer = customerData;
         } catch {
           // If customer fetch fails, continue without customer data
-
         }
       }
 
@@ -469,7 +464,6 @@ const PosModals = ({
   };
 
   // Helper function to close all modals and clean up
-
 
   // Handle select order from order list - load order into POS
   const handleSelectOrder = async (order) => {
@@ -530,8 +524,9 @@ const PosModals = ({
       // Confirm before canceling
       Modal.confirm({
         title: "Xác nhận hủy đơn",
-        content: `Bạn có chắc chắn muốn hủy đơn hàng #${order.orderNumber || order.orderId
-          }?`,
+        content: `Bạn có chắc chắn muốn hủy đơn hàng #${
+          order.orderNumber || order.orderId
+        }?`,
         okText: "Hủy đơn",
         cancelText: "Không",
         okButtonProps: { danger: true },
@@ -539,6 +534,18 @@ const PosModals = ({
         onOk: async () => {
           try {
             setCancellingOrderId(order.orderId);
+
+            // Nếu đang hiện MoMo modal cho đơn này, đóng modal trước
+            if (
+              showMomoModal &&
+              createdOrder &&
+              order.orderId === createdOrder.orderId
+            ) {
+              if (onMomoModalClose) {
+                onMomoModalClose();
+              }
+            }
+
             await cancelOrder(order.orderId);
             message.success("Đã hủy đơn hàng thành công!");
 
@@ -546,10 +553,17 @@ const PosModals = ({
             try {
               const data = await getAllOrders();
               setOrders(data || []);
-            } catch { void 0; }
+            } catch {
+              void 0;
+            }
 
-            // Reset POS về trạng thái chưa tạo đơn (giống như khi thanh toán thành công)
-            if (onPaymentCompleted) {
+            // Chỉ reset POS nếu đơn bị hủy là đơn hiện tại đang được tạo
+            // Không reset nếu hủy đơn khác trong danh sách
+            if (
+              onPaymentCompleted &&
+              createdOrder &&
+              order.orderId === createdOrder.orderId
+            ) {
               await onPaymentCompleted();
             }
           } catch {
@@ -563,8 +577,6 @@ const PosModals = ({
       message.error("Không thể hủy đơn hàng này");
     }
   };
-
-
 
   // Format date
   const formatDate = (dateString) => {
@@ -671,7 +683,9 @@ const PosModals = ({
                 if (onSelectPaymentMethod) {
                   try {
                     await onSelectPaymentMethod("cash");
-                  } catch { void 0; }
+                  } catch {
+                    void 0;
+                  }
                 }
               }}
               style={{ fontSize: "16px" }}
@@ -687,7 +701,9 @@ const PosModals = ({
                 if (onSelectPaymentMethod) {
                   try {
                     await onSelectPaymentMethod("momo");
-                  } catch { void 0; }
+                  } catch {
+                    void 0;
+                  }
                 }
               }}
               style={{ fontSize: "16px" }}
@@ -769,8 +785,12 @@ const PosModals = ({
                       return;
                     }
                     // Kiểm tra nếu là số hợp lệ
-                    const numValue = value.replace(/[^\d]/g, '');
-                    if (numValue === value && (!isNaN(parseFloat(value)) && parseFloat(value) >= 0)) {
+                    const numValue = value.replace(/[^\d]/g, "");
+                    if (
+                      numValue === value &&
+                      !isNaN(parseFloat(value)) &&
+                      parseFloat(value) >= 0
+                    ) {
                       setCashReceived(value);
                     } else {
                       message.warning("Vui lòng chỉ nhập số dương!");
@@ -785,16 +805,25 @@ const PosModals = ({
                   onKeyDown={(e) => {
                     // Chặn các ký tự không phải số, phím điều hướng, và phím điều khiển
                     const allowedKeys = [
-                      'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
-                      'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
-                      'Home', 'End', '.'
+                      "Backspace",
+                      "Delete",
+                      "Tab",
+                      "Escape",
+                      "Enter",
+                      "ArrowLeft",
+                      "ArrowRight",
+                      "ArrowUp",
+                      "ArrowDown",
+                      "Home",
+                      "End",
+                      ".",
                     ];
                     const isNumber = /[0-9]/.test(e.key);
                     const isAllowedKey = allowedKeys.includes(e.key);
-                    const isCtrlA = e.ctrlKey && e.key === 'a';
-                    const isCtrlC = e.ctrlKey && e.key === 'c';
-                    const isCtrlV = e.ctrlKey && e.key === 'v';
-                    const isCtrlX = e.ctrlKey && e.key === 'x';
+                    const isCtrlA = e.ctrlKey && e.key === "a";
+                    const isCtrlC = e.ctrlKey && e.key === "c";
+                    const isCtrlV = e.ctrlKey && e.key === "v";
+                    const isCtrlX = e.ctrlKey && e.key === "x";
 
                     // Chặn dấu trừ, dấu cộng, và ký tự e/E
                     if (
@@ -808,22 +837,31 @@ const PosModals = ({
                       return;
                     }
 
-                    if (!isNumber && !isAllowedKey && !isCtrlA && !isCtrlC && !isCtrlV && !isCtrlX) {
+                    if (
+                      !isNumber &&
+                      !isAllowedKey &&
+                      !isCtrlA &&
+                      !isCtrlC &&
+                      !isCtrlV &&
+                      !isCtrlX
+                    ) {
                       e.preventDefault();
                       message.warning("Vui lòng chỉ nhập số!");
                     }
                   }}
                   onPaste={(e) => {
                     e.preventDefault();
-                    const pastedText = e.clipboardData.getData('text');
-                    const numericValue = pastedText.replace(/[^\d.]/g, '');
+                    const pastedText = e.clipboardData.getData("text");
+                    const numericValue = pastedText.replace(/[^\d.]/g, "");
                     if (numericValue) {
                       const num = parseFloat(numericValue);
                       if (!isNaN(num) && num >= 0) {
                         setCashReceived(numericValue);
                         message.success("Đã dán số tiền");
                       } else {
-                        message.warning("Dữ liệu dán không hợp lệ! Vui lòng chỉ dán số.");
+                        message.warning(
+                          "Dữ liệu dán không hợp lệ! Vui lòng chỉ dán số."
+                        );
                       }
                     }
                   }}
@@ -851,8 +889,9 @@ const PosModals = ({
               </label>
               <input
                 type="text"
-                className={`form-control ${calculateChange() >= 0 ? "text-success" : "text-danger"
-                  }`}
+                className={`form-control ${
+                  calculateChange() >= 0 ? "text-success" : "text-danger"
+                }`}
                 value={new Intl.NumberFormat("vi-VN", {
                   style: "currency",
                   currency: "VND",
@@ -1008,6 +1047,67 @@ const PosModals = ({
       </Modal>
       {/* /Order Success Modal */}
 
+      {/* Order Cancelled Modal */}
+      <Modal
+        title="Đã hủy"
+        open={showOrderCancelledModal}
+        onCancel={() => {
+          if (onCloseOrderCancelledModal) {
+            onCloseOrderCancelledModal();
+          }
+        }}
+        footer={null}
+        centered
+        width={400}
+        zIndex={10021}
+        mask={true}
+        maskClosable={true}
+        getContainer={false}
+      >
+        <div className="text-center py-4">
+          <div className="mb-4">
+            <div
+              className="mb-3"
+              style={{ fontSize: "64px", color: "#ff4d4f" }}
+            >
+              <i className="ti ti-circle-x" />
+            </div>
+            <h4 className="mb-2 text-danger">Thanh toán đã bị hủy!</h4>
+            {cancelledOrder && (
+              <>
+                <p className="text-muted mb-0">
+                  Mã đơn:{" "}
+                  <strong>
+                    #
+                    {cancelledOrder?.orderNumber ||
+                      cancelledOrder?.orderId ||
+                      "-"}
+                  </strong>
+                </p>
+                <p className="text-muted small mt-2">
+                  Giao dịch MoMo đã bị hủy hoặc quá thời gian.
+                  <br />
+                  Vui lòng thử lại hoặc chọn phương thức thanh toán khác.
+                </p>
+              </>
+            )}
+          </div>
+          <div className="d-flex gap-2 justify-content-center">
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                if (onCloseOrderCancelledModal) {
+                  onCloseOrderCancelledModal();
+                }
+              }}
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      </Modal>
+      {/* /Order Cancelled Modal */}
+
       {/* Print Receipt Modal */}
       <Modal
         title="Hóa đơn bán hàng"
@@ -1052,8 +1152,8 @@ const PosModals = ({
                     <span>Ngày: </span>
                     {formatDate(
                       orderToPrint.orderDate ||
-                      orderToPrint.createdAt ||
-                      orderToPrint.createdDate
+                        orderToPrint.createdAt ||
+                        orderToPrint.createdDate
                     )}
                   </div>
                   <div className="invoice-user-name">
@@ -1093,13 +1193,14 @@ const PosModals = ({
               </thead>
               <tbody>
                 {orderToPrint.orderDetails &&
-                  orderToPrint.orderDetails.length > 0 ? (
+                orderToPrint.orderDetails.length > 0 ? (
                   <>
                     {orderToPrint.orderDetails.map((item, index) => {
                       const unitPrice = item.unitPrice || 0;
                       const quantity = item.quantity || 0;
                       const discountPercent = item.discount || 0;
-                      const total = unitPrice * quantity * (1 - discountPercent / 100);
+                      const total =
+                        unitPrice * quantity * (1 - discountPercent / 100);
 
                       return (
                         <tr key={item.orderDetailId || index}>
@@ -1149,7 +1250,10 @@ const PosModals = ({
                                     const unitPrice = item.unitPrice || 0;
                                     const quantity = item.quantity || 0;
                                     const discountPercent = item.discount || 0;
-                                    const itemTotal = unitPrice * quantity * (1 - discountPercent / 100);
+                                    const itemTotal =
+                                      unitPrice *
+                                      quantity *
+                                      (1 - discountPercent / 100);
                                     return sum + itemTotal;
                                   },
                                   0
@@ -1167,15 +1271,15 @@ const PosModals = ({
                               const discountPercent =
                                 subtotal > 0
                                   ? ((discountAmount / subtotal) * 100).toFixed(
-                                    2
-                                  )
+                                      2
+                                    )
                                   : 0;
                               const afterDiscount = subtotal - discountAmount;
                               const taxPercent =
                                 afterDiscount > 0
                                   ? ((taxAmount / afterDiscount) * 100).toFixed(
-                                    2
-                                  )
+                                      2
+                                    )
                                   : 0;
 
                               return (
@@ -1296,8 +1400,9 @@ const PosModals = ({
                   title="Làm mới danh sách"
                 >
                   <i
-                    className={`ti ti-refresh ${ordersLoading ? "spinning" : ""
-                      }`}
+                    className={`ti ti-refresh ${
+                      ordersLoading ? "spinning" : ""
+                    }`}
                   />
                 </button>
                 <button
@@ -1430,8 +1535,8 @@ const PosModals = ({
                                     </span>{" "}
                                     {formatDate(
                                       order.orderDate ||
-                                      order.createdAt ||
-                                      order.createdDate
+                                        order.createdAt ||
+                                        order.createdDate
                                     )}
                                   </p>
                                 </div>
@@ -1562,8 +1667,8 @@ const PosModals = ({
                                     </span>{" "}
                                     {formatDate(
                                       order.orderDate ||
-                                      order.createdAt ||
-                                      order.createdDate
+                                        order.createdAt ||
+                                        order.createdDate
                                     )}
                                   </p>
                                 </div>
@@ -1680,8 +1785,8 @@ const PosModals = ({
                                     </span>{" "}
                                     {formatDate(
                                       order.orderDate ||
-                                      order.createdAt ||
-                                      order.createdDate
+                                        order.createdAt ||
+                                        order.createdDate
                                     )}
                                   </p>
                                 </div>
@@ -1776,8 +1881,8 @@ const PosModals = ({
                   <span className="fw-bold">Ngày đặt:</span>{" "}
                   {formatDate(
                     selectedOrderDetail.orderDate ||
-                    selectedOrderDetail.createdAt ||
-                    selectedOrderDetail.createdDate
+                      selectedOrderDetail.createdAt ||
+                      selectedOrderDetail.createdDate
                   )}
                 </p>
                 <p className="mb-2">
@@ -1800,12 +1905,13 @@ const PosModals = ({
                 </thead>
                 <tbody>
                   {selectedOrderDetail.orderDetails &&
-                    selectedOrderDetail.orderDetails.length > 0 ? (
+                  selectedOrderDetail.orderDetails.length > 0 ? (
                     selectedOrderDetail.orderDetails.map((item, index) => {
                       const unitPrice = item.unitPrice || 0;
                       const quantity = item.quantity || 0;
                       const discountPercent = item.discount || 0;
-                      const itemTotal = unitPrice * quantity * (1 - discountPercent / 100);
+                      const itemTotal =
+                        unitPrice * quantity * (1 - discountPercent / 100);
 
                       return (
                         <tr key={item.orderDetailId || index}>
@@ -1845,7 +1951,8 @@ const PosModals = ({
                         const unitPrice = item.unitPrice || 0;
                         const quantity = item.quantity || 0;
                         const discountPercent = item.discount || 0;
-                        const itemTotal = unitPrice * quantity * (1 - discountPercent / 100);
+                        const itemTotal =
+                          unitPrice * quantity * (1 - discountPercent / 100);
                         return sum + itemTotal;
                       }, 0) || 0;
 
@@ -1948,8 +2055,18 @@ const PosModals = ({
         footer={null}
         title={
           <div className="d-flex align-items-center">
-            <i className={`ti ${currentShift && currentShift.status === "Mở" ? "ti-x" : "ti-cash"} me-2 fs-5`}></i>
-            <span>{currentShift && currentShift.status === "Mở" ? "Đóng ca làm việc" : "Mở ca làm việc"}</span>
+            <i
+              className={`ti ${
+                currentShift && currentShift.status === "Mở"
+                  ? "ti-x"
+                  : "ti-cash"
+              } me-2 fs-5`}
+            ></i>
+            <span>
+              {currentShift && currentShift.status === "Mở"
+                ? "Đóng ca làm việc"
+                : "Mở ca làm việc"}
+            </span>
           </div>
         }
         width={800}
@@ -1990,7 +2107,9 @@ const PosModals = ({
                     {new Intl.NumberFormat("vi-VN", {
                       style: "currency",
                       currency: "VND",
-                    }).format(Number(expectedDrawer ?? (currentShift?.initialCash || 0)))}
+                    }).format(
+                      Number(expectedDrawer ?? (currentShift?.initialCash || 0))
+                    )}
                   </span>
                 </div>
               </div>
@@ -2013,8 +2132,12 @@ const PosModals = ({
                         return;
                       }
                       // Kiểm tra nếu là số hợp lệ
-                      const numValue = v.replace(/[^\d.]/g, '');
-                      if (numValue === v && (!isNaN(parseFloat(v)) && parseFloat(v) >= 0)) {
+                      const numValue = v.replace(/[^\d.]/g, "");
+                      if (
+                        numValue === v &&
+                        !isNaN(parseFloat(v)) &&
+                        parseFloat(v) >= 0
+                      ) {
                         setShiftAmount(v);
                       } else {
                         message.warning("Vui lòng chỉ nhập số dương!");
@@ -2025,16 +2148,25 @@ const PosModals = ({
                     onKeyDown={(e) => {
                       // Chặn các ký tự không phải số, phím điều hướng, và phím điều khiển
                       const allowedKeys = [
-                        'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
-                        'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
-                        'Home', 'End', '.'
+                        "Backspace",
+                        "Delete",
+                        "Tab",
+                        "Escape",
+                        "Enter",
+                        "ArrowLeft",
+                        "ArrowRight",
+                        "ArrowUp",
+                        "ArrowDown",
+                        "Home",
+                        "End",
+                        ".",
                       ];
                       const isNumber = /[0-9]/.test(e.key);
                       const isAllowedKey = allowedKeys.includes(e.key);
-                      const isCtrlA = e.ctrlKey && e.key === 'a';
-                      const isCtrlC = e.ctrlKey && e.key === 'c';
-                      const isCtrlV = e.ctrlKey && e.key === 'v';
-                      const isCtrlX = e.ctrlKey && e.key === 'x';
+                      const isCtrlA = e.ctrlKey && e.key === "a";
+                      const isCtrlC = e.ctrlKey && e.key === "c";
+                      const isCtrlV = e.ctrlKey && e.key === "v";
+                      const isCtrlX = e.ctrlKey && e.key === "x";
 
                       // Chặn dấu trừ, dấu cộng, và ký tự e/E
                       if (
@@ -2048,22 +2180,31 @@ const PosModals = ({
                         return;
                       }
 
-                      if (!isNumber && !isAllowedKey && !isCtrlA && !isCtrlC && !isCtrlV && !isCtrlX) {
+                      if (
+                        !isNumber &&
+                        !isAllowedKey &&
+                        !isCtrlA &&
+                        !isCtrlC &&
+                        !isCtrlV &&
+                        !isCtrlX
+                      ) {
                         e.preventDefault();
                         message.warning("Vui lòng chỉ nhập số!");
                       }
                     }}
                     onPaste={(e) => {
                       e.preventDefault();
-                      const pastedText = e.clipboardData.getData('text');
-                      const numericValue = pastedText.replace(/[^\d.]/g, '');
+                      const pastedText = e.clipboardData.getData("text");
+                      const numericValue = pastedText.replace(/[^\d.]/g, "");
                       if (numericValue) {
                         const num = parseFloat(numericValue);
                         if (!isNaN(num) && num >= 0) {
                           setShiftAmount(numericValue);
                           message.success("Đã dán số tiền");
                         } else {
-                          message.warning("Dữ liệu dán không hợp lệ! Vui lòng chỉ dán số.");
+                          message.warning(
+                            "Dữ liệu dán không hợp lệ! Vui lòng chỉ dán số."
+                          );
                         }
                       }
                     }}
@@ -2090,35 +2231,69 @@ const PosModals = ({
                   value={closeCashDenominations}
                   onChange={(denoms) => {
                     setCloseCashDenominations(denoms);
-                    const total = denoms.reduce((sum, d) => sum + d.value * d.quantity, 0);
+                    const total = denoms.reduce(
+                      (sum, d) => sum + d.value * d.quantity,
+                      0
+                    );
                     setShiftAmount(total.toString());
                   }}
                 />
 
                 {/* Hiển thị chênh lệch */}
                 {shiftAmount && !isNaN(shiftAmount) && (
-                  <div className={`mt-3 p-3 rounded ${Number(shiftAmount) - Number(expectedDrawer ?? (currentShift?.initialCash || 0)) >= 0
-                    ? 'bg-success-subtle'
-                    : 'bg-danger-subtle'
-                    }`}>
+                  <div
+                    className={`mt-3 p-3 rounded ${
+                      Number(shiftAmount) -
+                        Number(
+                          expectedDrawer ?? (currentShift?.initialCash || 0)
+                        ) >=
+                      0
+                        ? "bg-success-subtle"
+                        : "bg-danger-subtle"
+                    }`}
+                  >
                     <div className="d-flex justify-content-between align-items-center">
                       <span className="fw-bold">
-                        <i className={`ti ${Number(shiftAmount) - Number(expectedDrawer ?? (currentShift?.initialCash || 0)) >= 0
-                          ? 'ti-trending-up'
-                          : 'ti-trending-down'
-                          } me-2`}></i>
+                        <i
+                          className={`ti ${
+                            Number(shiftAmount) -
+                              Number(
+                                expectedDrawer ??
+                                  (currentShift?.initialCash || 0)
+                              ) >=
+                            0
+                              ? "ti-trending-up"
+                              : "ti-trending-down"
+                          } me-2`}
+                        ></i>
                         Chênh lệch:
                       </span>
-                      <span className={`fw-bold fs-5 ${Number(shiftAmount) - Number(expectedDrawer ?? (currentShift?.initialCash || 0)) >= 0
-                        ? 'text-success'
-                        : 'text-danger'
-                        }`}>
-                        {Number(shiftAmount) - Number(expectedDrawer ?? (currentShift?.initialCash || 0)) >= 0 ? '+' : ''}
+                      <span
+                        className={`fw-bold fs-5 ${
+                          Number(shiftAmount) -
+                            Number(
+                              expectedDrawer ?? (currentShift?.initialCash || 0)
+                            ) >=
+                          0
+                            ? "text-success"
+                            : "text-danger"
+                        }`}
+                      >
+                        {Number(shiftAmount) -
+                          Number(
+                            expectedDrawer ?? (currentShift?.initialCash || 0)
+                          ) >=
+                        0
+                          ? "+"
+                          : ""}
                         {new Intl.NumberFormat("vi-VN", {
                           style: "currency",
                           currency: "VND",
                         }).format(
-                          Number(shiftAmount) - Number(expectedDrawer ?? (currentShift?.initialCash || 0))
+                          Number(shiftAmount) -
+                            Number(
+                              expectedDrawer ?? (currentShift?.initialCash || 0)
+                            )
                         )}
                       </span>
                     </div>
@@ -2145,9 +2320,14 @@ const PosModals = ({
             </div>
           ) : (
             <div className="text-center py-5">
-              <i className="ti ti-info-circle text-muted" style={{ fontSize: '48px' }}></i>
+              <i
+                className="ti ti-info-circle text-muted"
+                style={{ fontSize: "48px" }}
+              ></i>
               <h5 className="mt-3 mb-2">Ca chưa được mở</h5>
-              <p className="text-muted">Vui lòng liên hệ quản lý để mở ca làm việc</p>
+              <p className="text-muted">
+                Vui lòng liên hệ quản lý để mở ca làm việc
+              </p>
             </div>
           )}
         </div>
@@ -2156,7 +2336,11 @@ const PosModals = ({
             <button
               className="btn btn-purple"
               onClick={async () => {
-                await onCloseShift(shiftAmount, shiftNote, closeCashDenominations);
+                await onCloseShift(
+                  shiftAmount,
+                  shiftNote,
+                  closeCashDenominations
+                );
                 setShiftAmount("");
                 setShiftNote("");
                 setCloseCashDenominations([]);

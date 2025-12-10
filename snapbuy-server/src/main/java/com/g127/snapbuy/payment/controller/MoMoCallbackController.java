@@ -134,12 +134,70 @@ public class MoMoCallbackController {
         String orderId = params.get("orderId");
         String message = params.get("message");
 
-        String redirectUrl = "/momo-return.html?resultCode=" + resultCode
-                + "&orderId=" + orderId 
-                + "&message=" + (message != null ? java.net.URLEncoder.encode(message, java.nio.charset.StandardCharsets.UTF_8) : "");
-        return ResponseEntity.status(HttpStatus.FOUND)
-                .header("Location", redirectUrl)
-                .build();
+        String html = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>MoMo Payment</title>
+            </head>
+            <body>
+                <script>
+                (function() {
+                    const resultCode = '%s';
+                    const orderId = '%s';
+                    const message = '%s';
+                    
+                    console.log('🎯 MoMo Return - ResultCode:', resultCode, 'OrderId:', orderId);
+                    
+                    // Xác định backend URL
+                    const backendUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                        ? 'http://localhost:8080'
+                        : window.location.origin;
+                    
+                    // Gọi API để cập nhật trạng thái
+                    fetch(backendUrl + '/api/payments/momo/local-notify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            orderId: orderId,
+                            resultCode: parseInt(resultCode) || 0,
+                            transId: 'LOCAL-' + Date.now(),
+                            message: message || (resultCode === '0' ? 'Successful' : 'Failed')
+                        }),
+                        keepalive: true
+                    }).then(() => {
+                        console.log('✅ Payment status updated');
+                    }).catch(error => {
+                        console.error('❌ Error updating payment:', error);
+                    });
+                    
+                    // Đóng tab ngay lập tức
+                    window.close();
+                    
+                    // Fallback: Thử các cách đóng tab khác
+                    setTimeout(() => {
+                        window.open('', '_self', '');
+                        window.close();
+                    }, 50);
+                    
+                    // Hiển thị message nếu không đóng được
+                    setTimeout(() => {
+                        document.body.innerHTML = '<div style="font-family:Arial;text-align:center;padding:50px;color:#666">Thanh toán hoàn tất. Vui lòng đóng tab này.</div>';
+                    }, 300);
+                })();
+                </script>
+            </body>
+            </html>
+            """.formatted(
+                resultCode != null ? resultCode : "0",
+                orderId != null ? orderId : "",
+                message != null ? message.replace("'", "\\'") : ""
+            );
+
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body(html);
     }
 
     private String signHmacSHA256(String data, String secretKey) throws Exception {

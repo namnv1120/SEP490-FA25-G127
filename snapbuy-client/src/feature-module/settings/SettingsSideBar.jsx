@@ -6,7 +6,7 @@ const SettingsSideBar = () => {
   const route = allRoutes;
   const location = useLocation();
 
-  const generalSettingPaths = useMemo(
+  const _generalSettingPaths = useMemo(
     () =>
       [
         route.profile,
@@ -15,17 +15,18 @@ const SettingsSideBar = () => {
         route.notification,
         route.connectedapps,
       ].filter(Boolean),
-    [route.profile, route.emailsettings, route.passwordsettings, route.notification, route.connectedapps]
+    [
+      route.profile,
+      route.emailsettings,
+      route.passwordsettings,
+      route.notification,
+      route.connectedapps,
+    ]
   );
 
-  const posSettingPaths = useMemo(
-    () =>
-      [
-        route.possystemsettings,
-      ].filter(Boolean),
-    [
-      route.possystemsettings,
-    ]
+  const _posSettingPaths = useMemo(
+    () => [route.possystemsettings].filter(Boolean),
+    [route.possystemsettings]
   );
 
   const sidebarContent = (
@@ -39,10 +40,10 @@ const SettingsSideBar = () => {
                 to="#"
                 className={
                   location.pathname === route.profile ||
-                    location.pathname === route.emailsettings ||
-                    location.pathname === route.passwordsettings ||
-                    location.pathname === route.notification ||
-                    location.pathname === route.connectedapps
+                  location.pathname === route.emailsettings ||
+                  location.pathname === route.passwordsettings ||
+                  location.pathname === route.notification ||
+                  location.pathname === route.connectedapps
                     ? "active subdrop"
                     : ""
                 }
@@ -54,7 +55,9 @@ const SettingsSideBar = () => {
                 <li>
                   <Link
                     to={route.profile}
-                    className={location.pathname === route.profile ? "active" : ""}
+                    className={
+                      location.pathname === route.profile ? "active" : ""
+                    }
                   >
                     Thông tin cá nhân
                   </Link>
@@ -62,7 +65,9 @@ const SettingsSideBar = () => {
                 <li>
                   <Link
                     to={route.emailsettings}
-                    className={location.pathname === route.emailsettings ? "active" : ""}
+                    className={
+                      location.pathname === route.emailsettings ? "active" : ""
+                    }
                   >
                     Email
                   </Link>
@@ -70,7 +75,11 @@ const SettingsSideBar = () => {
                 <li>
                   <Link
                     to={route.passwordsettings}
-                    className={location.pathname === route.passwordsettings ? "active" : ""}
+                    className={
+                      location.pathname === route.passwordsettings
+                        ? "active"
+                        : ""
+                    }
                   >
                     Mật khẩu
                   </Link>
@@ -78,7 +87,9 @@ const SettingsSideBar = () => {
                 <li>
                   <Link
                     to={route.notification}
-                    className={location.pathname === route.notification ? "active" : ""}
+                    className={
+                      location.pathname === route.notification ? "active" : ""
+                    }
                   >
                     Thông báo
                   </Link>
@@ -91,7 +102,9 @@ const SettingsSideBar = () => {
               <Link
                 to="#"
                 className={
-                  location.pathname === route.possystemsettings ? "active subdrop" : ""
+                  location.pathname === route.possystemsettings
+                    ? "active subdrop"
+                    : ""
                 }
               >
                 <i className="ti ti-shopping-cart fs-18"></i>
@@ -102,7 +115,9 @@ const SettingsSideBar = () => {
                   <Link
                     to={route.possystemsettings}
                     className={
-                      location.pathname === route.possystemsettings ? "active" : ""
+                      location.pathname === route.possystemsettings
+                        ? "active"
+                        : ""
                     }
                   >
                     Cài đặt hệ thống
@@ -119,7 +134,10 @@ const SettingsSideBar = () => {
   return (
     <div>
       <div className="settings-sidebar" id="sidebar2">
-        <div className="sidebar-inner slimscroll" style={{ overflowY: "auto", maxHeight: 800 }}>
+        <div
+          className="sidebar-inner slimscroll"
+          style={{ overflowY: "auto", maxHeight: 800 }}
+        >
           {sidebarContent}
         </div>
       </div>

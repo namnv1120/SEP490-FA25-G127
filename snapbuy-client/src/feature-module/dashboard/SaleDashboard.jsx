@@ -284,7 +284,7 @@ const SalesDashboard = () => {
         });
 
         grouped = Object.keys(dayMap).map((key) => {
-          const [y, m, d] = key.split("-");
+          const [, m, d] = key.split("-");
           return {
             label: `${d}/${m}`,
             revenue: dayMap[key],

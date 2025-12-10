@@ -4,7 +4,10 @@ import {
   getSupplierById,
   updateSupplier,
 } from "../../../services/SupplierService";
-import { getProvinces, getWardsByProvince } from "../../../services/LocationService";
+import {
+  getProvinces,
+  getWardsByProvince,
+} from "../../../services/LocationService";
 
 const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
@@ -68,7 +71,7 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
       setLoadingProvinces(true);
       const data = await getProvinces();
       setProvinces(data || []);
-    } catch (error) {
+    } catch {
       message.error("Không thể tải danh sách tỉnh/thành phố");
     } finally {
       setLoadingProvinces(false);
@@ -81,7 +84,7 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
       setLoadingWards(true);
       const data = await getWardsByProvince(provinceCode);
       setWards(data || []);
-    } catch (error) {
+    } catch {
       message.error("Không thể tải danh sách xã/phường");
     } finally {
       setLoadingWards(false);
@@ -89,7 +92,7 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
   };
 
   // Load provinces và wards khi edit (tìm province code từ tên city)
-  const loadProvincesAndWards = async (cityName, wardName) => {
+  const loadProvincesAndWards = async (cityName) => {
     try {
       const provincesData = await getProvinces();
       setProvinces(provincesData || []);
@@ -99,8 +102,12 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
       // Tìm province code từ tên (dùng so khớp mềm để tránh lệch tên)
       let province =
         provincesData.find((p) => normalize(p.name) === normalize(cityName)) ||
-        provincesData.find((p) => normalize(cityName).includes(normalize(p.name))) ||
-        provincesData.find((p) => normalize(p.name).includes(normalize(cityName)));
+        provincesData.find((p) =>
+          normalize(cityName).includes(normalize(p.name))
+        ) ||
+        provincesData.find((p) =>
+          normalize(p.name).includes(normalize(cityName))
+        );
 
       if (province) {
         setSelectedProvinceCode(province.code);
@@ -144,8 +151,12 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
 
     if (formData.phone && formData.phone.length > 20) {
       newErrors.phone = "Số điện thoại không được vượt quá 20 ký tự.";
-    } else if (formData.phone && !/^[0-9+\-()\s]{10,20}$/.test(formData.phone)) {
-      newErrors.phone = "Số điện thoại không đúng định dạng. Vui lòng nhập 10-20 chữ số.";
+    } else if (
+      formData.phone &&
+      !/^[0-9+\-()\s]{10,20}$/.test(formData.phone)
+    ) {
+      newErrors.phone =
+        "Số điện thoại không đúng định dạng. Vui lòng nhập 10-20 chữ số.";
     }
 
     if (formData.address && formData.address.length > 100) {
@@ -279,8 +290,9 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                 <input
                   type="text"
                   name="supplierCode"
-                  className={`form-control ${errors.supplierCode ? "is-invalid" : ""
-                    }`}
+                  className={`form-control ${
+                    errors.supplierCode ? "is-invalid" : ""
+                  }`}
                   value={formData.supplierCode}
                   onChange={handleInputChange}
                   disabled={loading}
@@ -299,8 +311,9 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                 <input
                   type="text"
                   name="supplierName"
-                  className={`form-control ${errors.supplierName ? "is-invalid" : ""
-                    }`}
+                  className={`form-control ${
+                    errors.supplierName ? "is-invalid" : ""
+                  }`}
                   value={formData.supplierName}
                   onChange={handleInputChange}
                   disabled={loading}
@@ -360,11 +373,13 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                   onChange={handleProvinceChange}
                   loading={loadingProvinces}
                   disabled={loading || loadingProvinces}
-                  style={{ width: '100%' }}
+                  style={{ width: "100%" }}
                   filterOption={(input, option) =>
-                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                    (option?.label ?? "")
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
                   }
-                  options={provinces.map(province => ({
+                  options={provinces.map((province) => ({
                     value: province.code,
                     label: province.name,
                   }))}
@@ -376,7 +391,10 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                   }}
                 />
                 {errors.city && (
-                  <div className="text-danger mt-1" style={{ fontSize: '0.875rem' }}>
+                  <div
+                    className="text-danger mt-1"
+                    style={{ fontSize: "0.875rem" }}
+                  >
                     {errors.city}
                   </div>
                 )}
@@ -394,11 +412,13 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                   onChange={handleWardChange}
                   loading={loadingWards}
                   disabled={loading || !selectedProvinceCode || loadingWards}
-                  style={{ width: '100%' }}
+                  style={{ width: "100%" }}
                   filterOption={(input, option) =>
-                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                    (option?.label ?? "")
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
                   }
-                  options={wards.map(ward => ({
+                  options={wards.map((ward) => ({
                     value: ward.name,
                     label: ward.name,
                   }))}
@@ -408,7 +428,10 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                   }}
                 />
                 {errors.ward && (
-                  <div className="text-danger mt-1" style={{ fontSize: '0.875rem' }}>
+                  <div
+                    className="text-danger mt-1"
+                    style={{ fontSize: "0.875rem" }}
+                  >
                     {errors.ward}
                   </div>
                 )}
@@ -423,8 +446,9 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                 <input
                   type="text"
                   name="address"
-                  className={`form-control ${errors.address ? "is-invalid" : ""
-                    }`}
+                  className={`form-control ${
+                    errors.address ? "is-invalid" : ""
+                  }`}
                   value={formData.address}
                   onChange={handleInputChange}
                   disabled={loading}
@@ -434,7 +458,6 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                 )}
               </div>
             </div>
-
           </div>
 
           <div className="modal-footer-btn mt-4 d-flex justify-content-end">

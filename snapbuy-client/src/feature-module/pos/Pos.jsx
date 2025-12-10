@@ -72,7 +72,9 @@ const Pos = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null); // "cash" or "momo"
   const [usePoints, setUsePoints] = useState(0); // Số điểm muốn sử dụng
   const [showOrderSuccessModal, setShowOrderSuccessModal] = useState(false);
+  const [showOrderCancelledModal, setShowOrderCancelledModal] = useState(false);
   const [completedOrderForPrint, setCompletedOrderForPrint] = useState(null); // Lưu order đã thanh toán để in
+  const [cancelledOrder, setCancelledOrder] = useState(null); // Lưu order bị hủy
   const [currentShift, setCurrentShift] = useState(null);
   const [shiftLoading, setShiftLoading] = useState(false);
   const [shiftNotOpenOverlay, setShiftNotOpenOverlay] = useState(false);
@@ -1085,7 +1087,12 @@ const Pos = () => {
         usePoints: totals.pointsUsed || 0,
       };
 
-      message.loading(paymentMethod === "momo" ? "Đang tạo link thanh toán MoMo..." : "Đang tạo đơn hàng...", 0);
+      message.loading(
+        paymentMethod === "momo"
+          ? "Đang tạo link thanh toán MoMo..."
+          : "Đang tạo đơn hàng...",
+        0
+      );
       const orderResult = await createOrder(orderData);
       message.destroy();
 
@@ -1108,13 +1115,18 @@ const Pos = () => {
         if (momoPayUrl) {
           // Save orderId to localStorage
           localStorage.setItem("pendingMomoOrderId", orderResult.orderId);
-          localStorage.setItem("pendingMomoOrderNumber", orderResult.orderNumber);
+          localStorage.setItem(
+            "pendingMomoOrderNumber",
+            orderResult.orderNumber
+          );
 
           // Mở modal ngay lập tức (tab sẽ tự động mở từ useEffect)
           setShowMomoModal(true);
           startMoMoPaymentPolling(orderResult.orderId);
         } else {
-          message.error("Không thể tạo link thanh toán MoMo. Vui lòng thử lại!");
+          message.error(
+            "Không thể tạo link thanh toán MoMo. Vui lòng thử lại!"
+          );
         }
       }
     } catch {
@@ -1282,114 +1294,9 @@ const Pos = () => {
 
     let pollCount = 0;
     const maxPollCount = 100; // 5 minutes (100 * 3 seconds)
-    let momoMessageReceived = false; // Flag để tránh xử lý trùng lặp
-
-    // Listener cho postMessage từ trang return của MoMo
-    const handleMomoMessage = async (event) => {
-      // Chỉ xử lý message từ cùng origin để bảo mật
-      if (event.origin !== window.location.origin) {
-        console.log("🚫 Ignored message from different origin:", event.origin);
-        return;
-      }
-
-      if (event.data && event.data.source === "momo") {
-        momoMessageReceived = true;
-        const { status } = event.data;
-
-        console.log("📩 Received MoMo postMessage:", event.data);
-        message.loading("Đang xử lý kết quả thanh toán...", 0);
-
-        if (status === "success") {
-          // Đợi một chút để backend xử lý IPN
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-
-          // Kiểm tra lại trạng thái đơn hàng
-          try {
-            const orderData = await getOrderById(orderId);
-            console.log("📦 Order data after payment:", orderData);
-
-            if (orderData && orderData.paymentStatus === "Đã thanh toán") {
-              // Dừng polling
-              if (momoPollingIntervalRef.current) {
-                clearInterval(momoPollingIntervalRef.current);
-                momoPollingIntervalRef.current = null;
-              }
-              window.removeEventListener("message", handleMomoMessage);
-
-              message.destroy();
-              setShowMomoModal(false);
-              message.success("Thanh toán MoMo thành công!");
-
-              // Thanh toán MoMo đã thành công, thử complete order
-              // Nếu lỗi (do đã được complete bởi IPN), vẫn xem như thành công
-              let finalOrder = orderData;
-              try {
-                const completedOrder = await completeOrder(orderId);
-                finalOrder = completedOrder;
-              } catch (completeError) {
-                console.log(
-                  "Order already completed by MoMo IPN, using existing data..."
-                );
-                // Đơn có thể đã được complete bởi MoMo IPN, lấy lại thông tin mới nhất
-                try {
-                  finalOrder = await getOrderById(orderId);
-                } catch {
-                  // Sử dụng orderData hiện tại
-                }
-              }
-
-              setCompletedOrderForPrint(finalOrder);
-              setShowOrderSuccessModal(true);
-            } else {
-              message.destroy();
-              message.warning("Đang chờ xác nhận thanh toán từ MoMo...");
-              console.log("⏳ Payment not confirmed yet, continuing polling");
-            }
-          } catch (err) {
-            message.destroy();
-            console.error("Error checking order after MoMo message:", err);
-            message.error("Lỗi khi kiểm tra trạng thái đơn hàng");
-          }
-        } else if (status === "failed") {
-          // Chỉ xử lý thất bại nếu chưa kiểm tra được thành công
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
-          try {
-            const orderData = await getOrderById(orderId);
-            // Nếu đơn đã thanh toán thành công, không hiển thị lỗi
-            if (orderData && orderData.paymentStatus === "Đã thanh toán") {
-              message.destroy();
-              return;
-            }
-          } catch {
-            // Ignore error
-          }
-
-          // Dừng polling và hiển thị lỗi
-          if (momoPollingIntervalRef.current) {
-            clearInterval(momoPollingIntervalRef.current);
-            momoPollingIntervalRef.current = null;
-          }
-          window.removeEventListener("message", handleMomoMessage);
-
-          message.destroy();
-          setShowMomoModal(false);
-          message.error("Thanh toán MoMo thất bại hoặc đã bị hủy!");
-          handlePaymentCompleted();
-        }
-      }
-    };
-
-    // Đăng ký listener
-    window.addEventListener("message", handleMomoMessage);
 
     const pollInterval = setInterval(async () => {
       pollCount++;
-
-      // Nếu đã nhận được message từ MoMo, để message handler xử lý
-      if (momoMessageReceived) {
-        return;
-      }
 
       try {
         const orderData = await getOrderById(orderId);
@@ -1401,7 +1308,6 @@ const Pos = () => {
         if (orderData.paymentStatus === "Đã thanh toán") {
           clearInterval(pollInterval);
           momoPollingIntervalRef.current = null;
-          window.removeEventListener("message", handleMomoMessage);
 
           setShowMomoModal(false);
 
@@ -1411,11 +1317,10 @@ const Pos = () => {
           try {
             const completedOrder = await completeOrder(orderId);
             finalOrder = completedOrder;
-          } catch (completeError) {
+          } catch {
             console.log(
               "Order already completed by MoMo IPN, fetching latest data..."
             );
-            // Đơn có thể đã được complete bởi MoMo IPN, lấy lại thông tin mới nhất
             try {
               finalOrder = await getOrderById(orderId);
             } catch {
@@ -1428,7 +1333,6 @@ const Pos = () => {
           return;
         }
 
-        // Chỉ xử lý thất bại nếu trạng thái rõ ràng là "Thất bại" hoặc "Đã hủy"
         const paymentFailed =
           orderData.paymentStatus === "Thất bại" ||
           orderData.paymentStatus === "Đã hủy" ||
@@ -1437,17 +1341,16 @@ const Pos = () => {
         if (paymentFailed) {
           clearInterval(pollInterval);
           momoPollingIntervalRef.current = null;
-          window.removeEventListener("message", handleMomoMessage);
           setShowMomoModal(false);
-          message.error("Thanh toán MoMo thất bại hoặc đơn hàng đã bị hủy!");
-          handlePaymentCompleted();
+
+          setCancelledOrder(orderData);
+          setShowOrderCancelledModal(true);
           return;
         }
       } catch (error) {
         if (error.response?.status === 401) {
           clearInterval(pollInterval);
           momoPollingIntervalRef.current = null;
-          window.removeEventListener("message", handleMomoMessage);
           setShowMomoModal(false);
           message.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!");
           return;
@@ -1460,10 +1363,11 @@ const Pos = () => {
       if (pollCount >= maxPollCount) {
         clearInterval(pollInterval);
         momoPollingIntervalRef.current = null;
-        window.removeEventListener("message", handleMomoMessage);
         setShowMomoModal(false);
-        message.error("Thanh toán MoMo quá thời gian. Vui lòng thử lại!");
-        handlePaymentCompleted();
+
+        // Hiển thị modal timeout thay vì message.error
+        setCancelledOrder(createdOrder);
+        setShowOrderCancelledModal(true);
       }
     }, 3000); // Poll every 3 seconds
 
@@ -1749,13 +1653,15 @@ const Pos = () => {
                     <Slider
                       ref={sliderRef}
                       {...settings}
-                      className={`tabs owl-carousel pos-category ${categories.length + 1 < 6 ? "center-mode" : ""
-                        }`}
+                      className={`tabs owl-carousel pos-category ${
+                        categories.length + 1 < 6 ? "center-mode" : ""
+                      }`}
                     >
                       <div
                         onClick={() => setActiveTab("all")}
-                        className={`owl-item ${activeTab === "all" ? "active" : ""
-                          }`}
+                        className={`owl-item ${
+                          activeTab === "all" ? "active" : ""
+                        }`}
                         id="all"
                       >
                         <Link to="#">
@@ -1785,8 +1691,9 @@ const Pos = () => {
                           <div
                             key={category.id}
                             onClick={() => setActiveTab(category.id)}
-                            className={`owl-item ${activeTab === category.id ? "active" : ""
-                              }`}
+                            className={`owl-item ${
+                              activeTab === category.id ? "active" : ""
+                            }`}
                             id={category.id}
                           >
                             <Link to="#">
@@ -2113,7 +2020,11 @@ const Pos = () => {
                                   }
                                 }}
                                 onBlur={() => {
-                                  if (usePointsInput === "" || usePointsInput === "-" || isNaN(parseInt(usePointsInput))) {
+                                  if (
+                                    usePointsInput === "" ||
+                                    usePointsInput === "-" ||
+                                    isNaN(parseInt(usePointsInput))
+                                  ) {
                                     setUsePoints(0);
                                     setUsePointsInput("0");
                                     return;
@@ -2123,7 +2034,10 @@ const Pos = () => {
                                     selectedCustomerData.points ?? 0,
                                     Math.floor(totals.totalBeforePoints)
                                   );
-                                  const finalValue = Math.max(0, Math.min(value, maxUsable));
+                                  const finalValue = Math.max(
+                                    0,
+                                    Math.min(value, maxUsable)
+                                  );
                                   setUsePoints(finalValue);
                                   setUsePointsInput(finalValue.toString());
                                 }}
@@ -2497,7 +2411,7 @@ const Pos = () => {
                             )}
                             {createdOrder &&
                               createdOrder.paymentStatus ===
-                              "Chưa thanh toán" && (
+                                "Chưa thanh toán" && (
                                 <tr>
                                   <td className="fw-bold">Còn nợ:</td>
                                   <td className="text-end fw-bold text-danger">
@@ -2510,7 +2424,7 @@ const Pos = () => {
                               )}
                             {createdOrder &&
                               createdOrder.paymentStatus ===
-                              "Đã thanh toán" && (
+                                "Đã thanh toán" && (
                                 <tr>
                                   <td className="fw-bold">Còn nợ:</td>
                                   <td className="text-end fw-bold text-success">
@@ -2582,19 +2496,35 @@ const Pos = () => {
         showCashPaymentModal={showCashPaymentModal}
         showMomoModal={showMomoModal}
         showOrderSuccessModal={showOrderSuccessModal}
+        showOrderCancelledModal={showOrderCancelledModal}
         onCloseOrderSuccessModal={() => {
           setShowOrderSuccessModal(false);
           setCompletedOrderForPrint(null);
           // Reset POS after closing success modal
           handlePaymentCompleted();
         }}
+        onCloseOrderCancelledModal={() => {
+          setShowOrderCancelledModal(false);
+          setCancelledOrder(null);
+          // Reset POS after closing cancelled modal
+          handlePaymentCompleted();
+        }}
+        cancelledOrder={cancelledOrder}
         completedOrderForPrint={completedOrderForPrint || createdOrder}
         onCashPaymentConfirm={() => {
           // Just close the modal
           setShowCashPaymentModal(false);
         }}
         onMomoModalClose={() => {
-          // Just close the modal
+          // Dừng polling nếu đang chạy
+          if (momoPollingIntervalRef.current) {
+            clearInterval(momoPollingIntervalRef.current);
+            momoPollingIntervalRef.current = null;
+          }
+          // Xóa localStorage để tránh load lại khi F5
+          localStorage.removeItem("pendingMomoOrderId");
+          localStorage.removeItem("pendingMomoOrderNumber");
+          // Close the modal
           setShowMomoModal(false);
         }}
         onCompleteOrder={async (orderId) => {

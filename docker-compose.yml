@@ -160,6 +160,7 @@ services:
     build:
       context: ./nginx-proxy
       dockerfile: Dockerfile
+    image: namnv11/snapbuy-nginx-proxy:latest
     container_name: snapbuy-nginx-proxy
     ports:
       - "80:80"

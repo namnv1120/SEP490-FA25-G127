@@ -20,10 +20,10 @@ const Customers = () => {
   const [listData, setListData] = useState([]);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalRecords, setTotalRecords] = useState(0);
+  const [_totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
-  const [genderFilter, setGenderFilter] = useState(null);
+  const [genderFilter, _setGenderFilter] = useState(null);
   const [statusFilter, setStatusFilter] = useState(null);
   const [loading, setLoading] = useState(false);
 

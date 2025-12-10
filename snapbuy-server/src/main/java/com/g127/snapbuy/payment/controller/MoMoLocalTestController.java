@@ -29,14 +29,6 @@ public class MoMoLocalTestController {
     @PostMapping("/local-notify")
     public ResponseEntity<Map<String, Object>> handleLocalNotify(@RequestBody Map<String, Object> payload) {
 
-        if (!"dev".equals(momoTarget)) {
-            log.warn("Local notify endpoint is only available in dev mode");
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "This endpoint is only available in dev mode"
-            ));
-        }
-
         try {
             String momoOrderId = (String) payload.get("orderId");
             Integer resultCode = payload.get("resultCode") != null 
@@ -82,6 +74,18 @@ public class MoMoLocalTestController {
                         "message", "Order already completed",
                         "orderId", order.getOrderId().toString(),
                         "orderNumber", order.getOrderNumber()
+                ));
+            }
+
+            // Kiểm tra nếu đơn đã bị hủy, từ chối thanh toán
+            if ("Đã hủy".equals(order.getOrderStatus())) {
+                log.warn("❌ Rejected MoMo payment for cancelled order: {}", order.getOrderNumber());
+                return ResponseEntity.ok(Map.of(
+                        "success", false,
+                        "message", "Cannot process payment: Order has been cancelled",
+                        "orderId", order.getOrderId().toString(),
+                        "orderNumber", order.getOrderNumber(),
+                        "orderStatus", order.getOrderStatus()
                 ));
             }
 

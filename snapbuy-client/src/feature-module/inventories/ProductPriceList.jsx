@@ -14,7 +14,7 @@ import { removeVietnameseTones } from "../../utils/stringUtils";
 
 const ProductPriceList = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalRecords, setTotalRecords] = useState(0);
+  const [_totalRecords, setTotalRecords] = useState(0);
   const [rows, setRows] = useState(10);
   const [productPrices, setProductPrices] = useState([]);
   const [error, setError] = useState(null);

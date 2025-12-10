@@ -58,7 +58,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/payments/momo/notify").permitAll()
                         .requestMatchers("/api/payments/momo/local-notify").permitAll()
                         .requestMatchers("/api/payments/momo/return").permitAll()
-                        .requestMatchers("/momo-return.html").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .anyRequest().authenticated()
                 )

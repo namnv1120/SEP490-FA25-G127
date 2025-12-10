@@ -12,10 +12,6 @@ import { SidebarDataWarehouse } from "../../core/json/sidebarDataWarehouse";
 import { SidebarDataSales } from "../../core/json/sidebarDataSales";
 import NotificationDropdown from "../notifications/NotificationDropdown";
 import {
-  avatar_02,
-  avatar_03,
-  avatar_13,
-  avatar_17,
   avator1,
   commandSvg,
   logoPng,
@@ -74,9 +70,9 @@ const Header = () => {
     const handleFullscreenChange = () => {
       setIsFullscreen(
         document.fullscreenElement ||
-        document.mozFullScreenElement ||
-        document.webkitFullscreenElement ||
-        document.msFullscreenElement
+          document.mozFullScreenElement ||
+          document.webkitFullscreenElement ||
+          document.msFullscreenElement
       );
     };
 
@@ -316,10 +312,11 @@ const Header = () => {
         <div
           className={`header-left
              ${toggle ? "" : "active"}
-             ${expandMenus || dataLayout === "layout-hovered"
-              ? "expand-menu"
-              : ""
-            }
+             ${
+               expandMenus || dataLayout === "layout-hovered"
+                 ? "expand-menu"
+                 : ""
+             }
              `}
           onMouseLeave={expandMenu}
           onMouseOver={expandMenuOpen}
@@ -329,12 +326,12 @@ const Header = () => {
               userRole === "Nhân viên bán hàng"
                 ? route.saledashboard
                 : userRole === "Chủ cửa hàng"
-                  ? route.shopownerdashboard
-                  : userRole === "Quản trị viên"
-                    ? route.admindashboard
-                    : userRole === "Nhân viên kho"
-                      ? route.warehousedashboard
-                      : route.shopownerdashboard
+                ? route.shopownerdashboard
+                : userRole === "Quản trị viên"
+                ? route.admindashboard
+                : userRole === "Nhân viên kho"
+                ? route.warehousedashboard
+                : route.shopownerdashboard
             }
             className="logo logo-normal"
           >
@@ -345,12 +342,12 @@ const Header = () => {
               userRole === "Nhân viên bán hàng"
                 ? route.saledashboard
                 : userRole === "Chủ cửa hàng"
-                  ? route.shopownerdashboard
-                  : userRole === "Quản trị viên"
-                    ? route.admindashboard
-                    : userRole === "Nhân viên kho"
-                      ? route.warehousedashboard
-                      : route.shopownerdashboard
+                ? route.shopownerdashboard
+                : userRole === "Quản trị viên"
+                ? route.admindashboard
+                : userRole === "Nhân viên kho"
+                ? route.warehousedashboard
+                : route.shopownerdashboard
             }
             className="logo logo-white"
           >
@@ -361,12 +358,12 @@ const Header = () => {
               userRole === "Nhân viên bán hàng"
                 ? route.saledashboard
                 : userRole === "Chủ cửa hàng"
-                  ? route.shopownerdashboard
-                  : userRole === "Quản trị viên"
-                    ? route.admindashboard
-                    : userRole === "Nhân viên kho"
-                      ? route.warehousedashboard
-                      : route.shopownerdashboard
+                ? route.shopownerdashboard
+                : userRole === "Quản trị viên"
+                ? route.admindashboard
+                : userRole === "Nhân viên kho"
+                ? route.warehousedashboard
+                : route.shopownerdashboard
             }
             className="logo-small"
           >
@@ -380,8 +377,8 @@ const Header = () => {
                 pathname.includes("tasks") || pathname.includes("pos")
                   ? "none"
                   : pathname.includes("compose")
-                    ? "none"
-                    : "",
+                  ? "none"
+                  : "",
             }}
             onClick={handlesidebar}
           >

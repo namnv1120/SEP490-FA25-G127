@@ -132,7 +132,7 @@ const ShopOwnerDashboard = () => {
 
     return {
       categories: last30Days.map((d) => {
-        const [y, m, day] = d.date.split("-");
+        const [_y, m, day] = d.date.split("-");
         return `${day}/${m}`;
       }),
       data: last30Days.map((d) => d.revenue),
@@ -764,8 +764,8 @@ const ShopOwnerDashboard = () => {
                             <td>
                               {formatDate(
                                 order.orderDate ||
-                                order.createdDate ||
-                                order.createdAt
+                                  order.createdDate ||
+                                  order.createdAt
                               )}
                             </td>
                             <td>{order.customer?.fullName || "Khách lẻ"}</td>
@@ -774,16 +774,17 @@ const ShopOwnerDashboard = () => {
                             </td>
                             <td>
                               <span
-                                className={`badge ${(order.paymentStatus || "")
+                                className={`badge ${
+                                  (order.paymentStatus || "")
                                     .toString()
                                     .toLowerCase() === "đã thanh toán"
                                     ? "badge-success"
                                     : (order.paymentStatus || "")
-                                      .toString()
-                                      .toLowerCase() === "thất bại"
-                                      ? "badge-danger"
-                                      : "badge-info"
-                                  }`}
+                                        .toString()
+                                        .toLowerCase() === "thất bại"
+                                    ? "badge-danger"
+                                    : "badge-info"
+                                }`}
                               >
                                 {order.paymentStatus || "Chưa thanh toán"}
                               </span>

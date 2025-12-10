@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { Modal, message, Select } from "antd";
 import { createSupplier } from "../../../services/SupplierService";
-import { getProvinces, getWardsByProvince } from "../../../services/LocationService";
+import {
+  getProvinces,
+  getWardsByProvince,
+} from "../../../services/LocationService";
 
 const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -56,7 +59,7 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
       setLoadingProvinces(true);
       const data = await getProvinces();
       setProvinces(data || []);
-    } catch (error) {
+    } catch {
       message.error("Không thể tải danh sách tỉnh/thành phố");
     } finally {
       setLoadingProvinces(false);
@@ -69,7 +72,7 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
       setLoadingWards(true);
       const data = await getWardsByProvince(provinceCode);
       setWards(data || []);
-    } catch (error) {
+    } catch {
       message.error("Không thể tải danh sách xã/phường");
     } finally {
       setLoadingWards(false);
@@ -89,19 +92,27 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
     if (!formData.supplierName.trim()) {
       newErrors.supplierName = "Vui lòng nhập tên nhà cung cấp.";
     } else if (formData.supplierName.length > 100) {
-      newErrors.supplierName = "Tên nhà cung cấp không được vượt quá 100 ký tự.";
+      newErrors.supplierName =
+        "Tên nhà cung cấp không được vượt quá 100 ký tự.";
     }
 
     if (formData.email && formData.email.length > 100) {
       newErrors.email = "Email không được vượt quá 100 ký tự.";
-    } else if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    } else if (
+      formData.email &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+    ) {
       newErrors.email = "Email không đúng định dạng. Vui lòng kiểm tra lại.";
     }
 
     if (formData.phone && formData.phone.length > 20) {
       newErrors.phone = "Số điện thoại không được vượt quá 20 ký tự.";
-    } else if (formData.phone && !/^[0-9+\-()\s]{10,20}$/.test(formData.phone)) {
-      newErrors.phone = "Số điện thoại không đúng định dạng. Vui lòng nhập 10-20 chữ số.";
+    } else if (
+      formData.phone &&
+      !/^[0-9+\-()\s]{10,20}$/.test(formData.phone)
+    ) {
+      newErrors.phone =
+        "Số điện thoại không đúng định dạng. Vui lòng nhập 10-20 chữ số.";
     }
 
     if (formData.address && formData.address.length > 100) {
@@ -154,8 +165,6 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
     }));
     setErrors((prev) => ({ ...prev, ward: "" }));
   };
-
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -232,16 +241,16 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
               <input
                 type="text"
                 name="supplierCode"
-                className={`form-control ${errors.supplierCode ? "is-invalid" : ""}`}
+                className={`form-control ${
+                  errors.supplierCode ? "is-invalid" : ""
+                }`}
                 value={formData.supplierCode}
                 onChange={handleInputChange}
                 placeholder="Nhập mã nhà cung cấp"
                 disabled={loading}
               />
               {errors.supplierCode && (
-                <div className="invalid-feedback">
-                  {errors.supplierCode}
-                </div>
+                <div className="invalid-feedback">{errors.supplierCode}</div>
               )}
             </div>
           </div>
@@ -254,16 +263,16 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
               <input
                 type="text"
                 name="supplierName"
-                className={`form-control ${errors.supplierName ? "is-invalid" : ""}`}
+                className={`form-control ${
+                  errors.supplierName ? "is-invalid" : ""
+                }`}
                 value={formData.supplierName}
                 onChange={handleInputChange}
                 placeholder="Nhập tên nhà cung cấp"
                 disabled={loading}
               />
               {errors.supplierName && (
-                <div className="invalid-feedback">
-                  {errors.supplierName}
-                </div>
+                <div className="invalid-feedback">{errors.supplierName}</div>
               )}
             </div>
           </div>
@@ -283,9 +292,7 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
                 disabled={loading}
               />
               {errors.email && (
-                <div className="invalid-feedback">
-                  {errors.email}
-                </div>
+                <div className="invalid-feedback">{errors.email}</div>
               )}
             </div>
           </div>
@@ -305,9 +312,7 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
                 disabled={loading}
               />
               {errors.phone && (
-                <div className="invalid-feedback">
-                  {errors.phone}
-                </div>
+                <div className="invalid-feedback">{errors.phone}</div>
               )}
             </div>
           </div>
@@ -323,11 +328,13 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
                 onChange={handleProvinceChange}
                 loading={loadingProvinces}
                 disabled={loading || loadingProvinces}
-                style={{ width: '100%' }}
+                style={{ width: "100%" }}
                 filterOption={(input, option) =>
-                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  (option?.label ?? "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
                 }
-                options={provinces.map(province => ({
+                options={provinces.map((province) => ({
                   value: province.code,
                   label: province.name,
                 }))}
@@ -339,7 +346,10 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
                 }}
               />
               {errors.city && (
-                <div className="text-danger mt-1" style={{ fontSize: '0.875rem' }}>
+                <div
+                  className="text-danger mt-1"
+                  style={{ fontSize: "0.875rem" }}
+                >
                   {errors.city}
                 </div>
               )}
@@ -357,11 +367,13 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
                 onChange={handleWardChange}
                 loading={loadingWards}
                 disabled={loading || !selectedProvinceCode || loadingWards}
-                style={{ width: '100%' }}
+                style={{ width: "100%" }}
                 filterOption={(input, option) =>
-                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  (option?.label ?? "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
                 }
-                options={wards.map(ward => ({
+                options={wards.map((ward) => ({
                   value: ward.name,
                   label: ward.name,
                 }))}
@@ -371,7 +383,10 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
                 }}
               />
               {errors.ward && (
-                <div className="text-danger mt-1" style={{ fontSize: '0.875rem' }}>
+                <div
+                  className="text-danger mt-1"
+                  style={{ fontSize: "0.875rem" }}
+                >
                   {errors.ward}
                 </div>
               )}
@@ -395,13 +410,10 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
                 disabled={loading}
               />
               {errors.address && (
-                <div className="invalid-feedback">
-                  {errors.address}
-                </div>
+                <div className="invalid-feedback">{errors.address}</div>
               )}
             </div>
           </div>
-
         </div>
 
         <div className="modal-footer-btn mt-4 d-flex justify-content-end">
