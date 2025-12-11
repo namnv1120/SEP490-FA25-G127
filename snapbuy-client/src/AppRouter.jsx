@@ -5,6 +5,7 @@ import { authRoutes, posPage, unAuthRoutes } from "./routes/path";
 import { base_path } from "./environment";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import NavigationGuard from "./components/common/NavigationGuard";
+import AdminRouter from "./admin/AdminRouter";
 
 // Khai báo component ở đây để path.jsx chỉ là cấu hình dữ liệu
 const Pos = lazy(() => import("./feature-module/pos/Pos"));
@@ -190,6 +191,10 @@ const AppRouter = () => {
     return (
       <>
         <Routes>
+          {/* Admin Portal Routes - Separate from main app */}
+          <Route path="/admin/*" element={<AdminRouter />} />
+
+          {/* Main Application Routes */}
           <Route path="/" element={<FeatureModule />}>
             <Route index element={<Navigate to="/login" replace />} />
             {renderRoutes(unAuthRoutes)}
