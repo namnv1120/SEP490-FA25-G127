@@ -5,6 +5,7 @@ import dayjs from "dayjs";
 import "dayjs/locale/vi";
 import CommonFooter from "../../components/footer/CommonFooter";
 import PrimeDataTable from "../../components/data-table";
+import { getInventoryReportByDate } from "../../services/InventoryReportService";
 
 dayjs.locale("vi");
 
@@ -42,32 +43,16 @@ const InventoryReport = () => {
             const formattedDate = dayjs(selectedDate).format("YYYY-MM-DD");
             console.log("Selected date:", formattedDate);
 
-            // Gọi API backend
-            const token = localStorage.getItem("authToken");
-            const response = await fetch(
-                `http://localhost:8080/api/reports/inventory?date=${formattedDate}`,
-                {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`,
-                    },
-                }
-            );
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
+            // Gọi API backend thông qua service
+            const data = await getInventoryReportByDate(formattedDate);
             console.log("API Response:", data);
 
-            if (data.result) {
+            if (data) {
                 // Set overview data
-                setComparisonOverview(data.result.overview);
+                setComparisonOverview(data.overview);
 
                 // Set detail data
-                setComparisonData(data.result.details || []);
+                setComparisonData(data.details || []);
 
                 message.success("Tải dữ liệu báo cáo thành công!");
             } else {
@@ -76,7 +61,10 @@ const InventoryReport = () => {
 
         } catch (error) {
             console.error("Error loading data:", error);
-            message.error("Lỗi khi tải dữ liệu. Vui lòng thử lại.");
+            message.error(
+                error.response?.data?.message ||
+                "Lỗi khi tải dữ liệu báo cáo. Vui lòng thử lại."
+            );
         } finally {
             setLoading(false);
         }

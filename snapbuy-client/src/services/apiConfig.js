@@ -33,7 +33,7 @@ export const API_ENDPOINTS = {
     PRODUCTS: `${API_BASE_URL}/api/reports/products`,
     PRODUCTS_REVENUE: `${API_BASE_URL}/api/reports/products-revenue`,
     SUPPLIERS: `${API_BASE_URL}/api/reports/suppliers`,
-    INVENTORIES: `${API_BASE_URL}/api/reports/inventories`,
+    INVENTORIES: `${API_BASE_URL}/api/reports/inventory`,
   },
 };
 
