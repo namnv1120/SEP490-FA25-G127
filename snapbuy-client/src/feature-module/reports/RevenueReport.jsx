@@ -73,7 +73,7 @@ const RevenueReport = () => {
         );
         message.error(
           productError.response?.data?.message ||
-            "Lỗi khi tải dữ liệu doanh thu sản phẩm. Vui lòng thử lại."
+          "Lỗi khi tải dữ liệu doanh thu sản phẩm. Vui lòng thử lại."
         );
         setProductRevenueData([]);
       }
@@ -270,7 +270,7 @@ const RevenueReport = () => {
       console.error("Lỗi khi tải dữ liệu doanh thu:", error);
       message.error(
         error.response?.data?.message ||
-          "Lỗi khi tải dữ liệu doanh thu. Vui lòng thử lại."
+        "Lỗi khi tải dữ liệu doanh thu. Vui lòng thử lại."
       );
       setRevenueData(null);
       setDetailedData([]);
@@ -348,7 +348,7 @@ const RevenueReport = () => {
       // Thêm dòng tổng tiền
       const accountName = selectedAccountId
         ? salesAccounts.find((acc) => acc.id === selectedAccountId)?.fullName ||
-          ""
+        ""
         : "Tất cả nhân viên";
 
       const totalRow = worksheet.addRow([
@@ -571,8 +571,8 @@ const RevenueReport = () => {
               periodType === "monthly"
                 ? "Biểu đồ doanh thu và số đơn hàng theo ngày trong tháng"
                 : periodType === "yearly"
-                ? "Biểu đồ doanh thu và số đơn hàng theo tháng trong năm"
-                : "Biểu đồ doanh thu và số đơn hàng theo ngày",
+                  ? "Biểu đồ doanh thu và số đơn hàng theo tháng trong năm"
+                  : "Biểu đồ doanh thu và số đơn hàng theo ngày",
             align: "center",
             style: {
               fontSize: "16px",
@@ -727,112 +727,187 @@ const RevenueReport = () => {
 
           <div className="card">
             <div className="card-body">
-              <div className="row">
-                <div className="col-lg-12">
-                  <div className="form-group">
-                    <label>Chọn loại báo cáo</label>
-                    <select
-                      className="form-select"
-                      value={periodType}
-                      onChange={(e) => {
-                        setPeriodType(e.target.value);
+              {/* Header Section */}
+              <div className="mb-4">
+                <div className="d-flex align-items-center gap-2 mb-2">
+                  <i className="fas fa-filter text-secondary" style={{ fontSize: '20px' }}></i>
+                  <h5 className="mb-0 fw-bold">Bộ lọc báo cáo</h5>
+                </div>
+                <p className="text-muted mb-0" style={{ fontSize: '14px' }}>
+                  Chọn khoảng thời gian để xem báo cáo
+                </p>
+              </div>
+
+              {/* Report Type Filter Label */}
+              <div className="mb-3">
+                <div className="d-flex align-items-center gap-2">
+                  <i className="fas fa-chart-line text-muted" style={{ fontSize: '14px' }}></i>
+                  <label className="mb-0 fw-semibold" style={{ fontSize: '14px' }}>Loại báo cáo</label>
+                </div>
+              </div>
+
+              {/* Tabs for Report Type */}
+              <div className="mb-4">
+                <div className="btn-group w-100" role="group" style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    className="btn"
+                    style={{
+                      flex: 1,
+                      borderRadius: '8px',
+                      padding: '10px',
+                      fontSize: '14px',
+                      fontWeight: periodType === 'daily' ? '600' : '500',
+                      backgroundColor: periodType === 'daily' ? '#6c757d' : '#fff',
+                      border: '1px solid #6c757d',
+                      color: periodType === 'daily' ? '#fff' : '#6c757d',
+                      transition: 'all 0.3s ease',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => {
+                      setPeriodType('daily');
+                      setRevenueData(null);
+                      setDetailedData([]);
+                      setProductRevenueData([]);
+                    }}
+                  >
+                    <i className="fas fa-calendar-day me-2"></i>
+                    Theo ngày
+                  </button>
+                  <button
+                    type="button"
+                    className="btn"
+                    style={{
+                      flex: 1,
+                      borderRadius: '8px',
+                      padding: '10px',
+                      fontSize: '14px',
+                      fontWeight: periodType === 'monthly' ? '600' : '500',
+                      backgroundColor: periodType === 'monthly' ? '#6c757d' : '#fff',
+                      border: '1px solid #6c757d',
+                      color: periodType === 'monthly' ? '#fff' : '#6c757d',
+                      transition: 'all 0.3s ease',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => {
+                      setPeriodType('monthly');
+                      setRevenueData(null);
+                      setDetailedData([]);
+                      setProductRevenueData([]);
+                    }}
+                  >
+                    <i className="fas fa-calendar-alt me-2"></i>
+                    Theo tháng
+                  </button>
+                  <button
+                    type="button"
+                    className="btn"
+                    style={{
+                      flex: 1,
+                      borderRadius: '8px',
+                      padding: '10px',
+                      fontSize: '14px',
+                      fontWeight: periodType === 'yearly' ? '600' : '500',
+                      backgroundColor: periodType === 'yearly' ? '#6c757d' : '#fff',
+                      border: '1px solid #6c757d',
+                      color: periodType === 'yearly' ? '#fff' : '#6c757d',
+                      transition: 'all 0.3s ease',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => {
+                      setPeriodType('yearly');
+                      setRevenueData(null);
+                      setDetailedData([]);
+                      setProductRevenueData([]);
+                    }}
+                  >
+                    <i className="fas fa-chart-bar me-2"></i>
+                    Theo năm
+                  </button>
+                  <button
+                    type="button"
+                    className="btn"
+                    style={{
+                      flex: 1,
+                      borderRadius: '8px',
+                      padding: '10px',
+                      fontSize: '14px',
+                      fontWeight: periodType === 'custom' ? '600' : '500',
+                      backgroundColor: periodType === 'custom' ? '#6c757d' : '#fff',
+                      border: '1px solid #6c757d',
+                      color: periodType === 'custom' ? '#fff' : '#6c757d',
+                      transition: 'all 0.3s ease',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => {
+                      setPeriodType('custom');
+                      setRevenueData(null);
+                      setDetailedData([]);
+                      setProductRevenueData([]);
+                    }}
+                  >
+                    <i className="fas fa-calendar-week me-2"></i>
+                    Tùy chỉnh
+                  </button>
+                </div>
+              </div>
+
+              {/* Date Selection Section */}
+              <div className="mb-3">
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <i className="fas fa-calendar text-muted" style={{ fontSize: '14px' }}></i>
+                  <label className="mb-0 fw-semibold" style={{ fontSize: '14px' }}>Chọn ngày</label>
+                </div>
+
+                {periodType === "daily" && (
+                  <div>
+                    <CommonDatePicker
+                      value={selectedDate}
+                      onChange={(date) => {
+                        setSelectedDate(date);
                         setRevenueData(null);
                         setDetailedData([]);
                         setProductRevenueData([]);
                       }}
-                    >
-                      <option value="daily">Theo ngày</option>
-                      <option value="monthly">Theo tháng</option>
-                      <option value="yearly">Theo năm</option>
-                      <option value="custom">Tùy chỉnh</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="row mt-3">
-                {periodType === "daily" && (
-                  <div className="col-lg-6">
-                    <div className="form-group">
-                      <label>Chọn ngày</label>
-                      <CommonDatePicker
-                        value={selectedDate}
-                        onChange={(date) => {
-                          setSelectedDate(date);
-                          setRevenueData(null);
-                          setDetailedData([]);
-                          setProductRevenueData([]);
-                        }}
-                        dateFormat="dd/mm/yyyy"
-                      />
-                    </div>
+                      dateFormat="dd/mm/yyyy"
+                    />
                   </div>
                 )}
 
                 {periodType === "monthly" && (
-                  <>
+                  <div className="row g-3">
                     <div className="col-lg-6">
-                      <div className="form-group">
-                        <label>Chọn tháng</label>
-                        <select
-                          className="form-select"
-                          value={selectedMonth}
-                          onChange={(e) => {
-                            setSelectedMonth(parseInt(e.target.value));
-                            setRevenueData(null);
-                            setDetailedData([]);
-                            setProductRevenueData([]);
-                          }}
-                        >
-                          {Array.from({ length: 12 }, (_, i) => i + 1).map(
-                            (month) => (
-                              <option key={month} value={month}>
-                                Tháng {month}
-                              </option>
-                            )
-                          )}
-                        </select>
-                      </div>
-                    </div>
-                    <div className="col-lg-6">
-                      <div className="form-group">
-                        <label>Chọn năm</label>
-                        <select
-                          className="form-select"
-                          value={selectedYear}
-                          onChange={(e) => {
-                            setSelectedYear(parseInt(e.target.value));
-                            setRevenueData(null);
-                            setDetailedData([]);
-                            setProductRevenueData([]);
-                          }}
-                        >
-                          {Array.from(
-                            { length: 10 },
-                            (_, i) => new Date().getFullYear() - 5 + i
-                          ).map((year) => (
-                            <option key={year} value={year}>
-                              {year}
+                      <select
+                        className="form-select"
+                        value={selectedMonth}
+                        onChange={(e) => {
+                          setSelectedMonth(parseInt(e.target.value));
+                          setRevenueData(null);
+                          setDetailedData([]);
+                          setProductRevenueData([]);
+                        }}
+                        style={{ borderRadius: '8px', padding: '10px' }}
+                      >
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map(
+                          (month) => (
+                            <option key={month} value={month}>
+                              Tháng {month}
                             </option>
-                          ))}
-                        </select>
-                      </div>
+                          )
+                        )}
+                      </select>
                     </div>
-                  </>
-                )}
-
-                {periodType === "yearly" && (
-                  <div className="col-lg-6">
-                    <div className="form-group">
-                      <label>Chọn năm</label>
+                    <div className="col-lg-6">
                       <select
                         className="form-select"
                         value={selectedYear}
                         onChange={(e) => {
                           setSelectedYear(parseInt(e.target.value));
                           setRevenueData(null);
+                          setDetailedData([]);
                           setProductRevenueData([]);
                         }}
+                        style={{ borderRadius: '8px', padding: '10px' }}
                       >
                         {Array.from(
                           { length: 10 },
@@ -847,35 +922,69 @@ const RevenueReport = () => {
                   </div>
                 )}
 
-                {periodType === "custom" && (
-                  <div className="col-lg-12">
-                    <div className="form-group">
-                      <label>Chọn khoảng thời gian</label>
-                      <RangePicker
-                        value={dateRange}
-                        onChange={(dates) => {
-                          setDateRange(dates);
-                          setRevenueData(null);
-                          setDetailedData([]);
-                          setProductRevenueData([]);
-                        }}
-                        format="DD/MM/YYYY"
-                        style={{ width: "100%" }}
-                        placeholder={["Từ ngày", "Đến ngày"]}
-                      />
-                    </div>
+                {periodType === "yearly" && (
+                  <div>
+                    <select
+                      className="form-select"
+                      value={selectedYear}
+                      onChange={(e) => {
+                        setSelectedYear(parseInt(e.target.value));
+                        setRevenueData(null);
+                        setProductRevenueData([]);
+                      }}
+                      style={{ borderRadius: '8px', padding: '10px' }}
+                    >
+                      {Array.from(
+                        { length: 10 },
+                        (_, i) => new Date().getFullYear() - 5 + i
+                      ).map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 )}
 
-                <div className="col-lg-12 mt-3">
-                  <button
-                    className="btn btn-primary"
-                    onClick={fetchRevenueData}
-                    disabled={loading}
-                  >
-                    {loading ? "Đang tải..." : "Tải dữ liệu"}
-                  </button>
-                </div>
+                {periodType === "custom" && (
+                  <div>
+                    <RangePicker
+                      value={dateRange}
+                      onChange={(dates) => {
+                        setDateRange(dates);
+                        setRevenueData(null);
+                        setDetailedData([]);
+                        setProductRevenueData([]);
+                      }}
+                      format="DD/MM/YYYY"
+                      style={{ width: "100%", borderRadius: '8px', padding: '10px' }}
+                      placeholder={["Từ ngày", "Đến ngày"]}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Submit Button */}
+              <div className="mt-4">
+                <button
+                  className="btn w-100"
+                  onClick={fetchRevenueData}
+                  disabled={loading}
+                  style={{
+                    borderRadius: '8px',
+                    padding: '12px',
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    backgroundColor: '#6c757d',
+                    border: '1px solid #6c757d',
+                    color: '#fff',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <i className="fas fa-chart-line me-2"></i>
+                  {loading ? "Đang tải..." : "Xem báo cáo"}
+                </button>
               </div>
             </div>
           </div>
@@ -1000,9 +1109,9 @@ const RevenueReport = () => {
                                 <h3 className="text-white mb-0">
                                   {revenueData.orderCount > 0
                                     ? formatCurrency(
-                                        revenueData.totalRevenue /
-                                          revenueData.orderCount
-                                      )
+                                      revenueData.totalRevenue /
+                                      revenueData.orderCount
+                                    )
                                     : "0 đ"}
                                 </h3>
                               </div>
@@ -1069,8 +1178,8 @@ const RevenueReport = () => {
                                           {periodType === "monthly"
                                             ? "Doanh thu từng ngày trong tháng (cột)"
                                             : periodType === "yearly"
-                                            ? "Doanh thu từng tháng trong năm (cột)"
-                                            : "Doanh thu từng ngày trong khoảng thời gian (cột)"}
+                                              ? "Doanh thu từng tháng trong năm (cột)"
+                                              : "Doanh thu từng ngày trong khoảng thời gian (cột)"}
                                         </span>
                                       </div>
                                     </div>
@@ -1090,8 +1199,8 @@ const RevenueReport = () => {
                                           {periodType === "monthly"
                                             ? "Số đơn hàng từng ngày trong tháng (đường)"
                                             : periodType === "yearly"
-                                            ? "Số đơn hàng từng tháng trong năm (đường)"
-                                            : "Số đơn hàng từng ngày trong khoảng thời gian (đường)"}
+                                              ? "Số đơn hàng từng tháng trong năm (đường)"
+                                              : "Số đơn hàng từng ngày trong khoảng thời gian (đường)"}
                                         </span>
                                       </div>
                                     </div>
@@ -1188,8 +1297,8 @@ const RevenueReport = () => {
                           </div>
                           <div className="card-body">
                             {productRevenueData &&
-                            Array.isArray(productRevenueData) &&
-                            productRevenueData.length > 0 ? (
+                              Array.isArray(productRevenueData) &&
+                              productRevenueData.length > 0 ? (
                               <PrimeDataTable
                                 column={[
                                   {
@@ -1227,7 +1336,7 @@ const RevenueReport = () => {
                                       const sellingPrice =
                                         rowData.totalSold > 0
                                           ? rowData.totalRevenue /
-                                            rowData.totalSold
+                                          rowData.totalSold
                                           : 0;
                                       return formatCurrency(sellingPrice);
                                     },
