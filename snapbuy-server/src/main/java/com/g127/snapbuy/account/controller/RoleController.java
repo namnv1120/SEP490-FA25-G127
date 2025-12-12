@@ -43,7 +43,7 @@ public class RoleController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<RoleResponse> createRole(@Valid @RequestBody RoleCreateRequest req) {
         ApiResponse<RoleResponse> response = new ApiResponse<>();
         response.setResult(roleService.createRole(req));
@@ -52,7 +52,7 @@ public class RoleController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<List<RoleResponse>> list(@RequestParam(name = "active", required = false) String active) {
         Optional<Boolean> filter;
         if (active == null) {
@@ -70,7 +70,7 @@ public class RoleController {
     }
 
     @GetMapping("/{roleId}")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<RoleResponse> get(@PathVariable UUID roleId) {
         ApiResponse<RoleResponse> response = new ApiResponse<>();
         response.setResult(roleService.getRoleById(roleId));
@@ -78,7 +78,7 @@ public class RoleController {
     }
 
     @PutMapping("/{roleId}")
-    @PreAuthorize("hasAnyRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<RoleResponse> update(@PathVariable UUID roleId,
                                             @Valid @RequestBody RoleUpdateRequest req) {
         ApiResponse<RoleResponse> response = new ApiResponse<>();
@@ -88,7 +88,7 @@ public class RoleController {
     }
 
     @DeleteMapping("/{roleId}")
-    @PreAuthorize("hasAnyRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<Void> delete(@PathVariable UUID roleId) {
         roleService.deleteRole(roleId);
         ApiResponse<Void> response = new ApiResponse<>();
@@ -98,7 +98,7 @@ public class RoleController {
     }
 
     @GetMapping("/{roleId}/permissions")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<List<PermissionResponse>> listPermissions(@PathVariable UUID roleId) {
         ApiResponse<List<PermissionResponse>> response = new ApiResponse<>();
         response.setResult(roleService.listPermissions(roleId));
@@ -106,7 +106,7 @@ public class RoleController {
     }
 
     @PostMapping("/{roleId}/permissions/{permissionId}")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<Void> addPermission(@PathVariable UUID roleId,
                                            @PathVariable UUID permissionId) {
         roleService.addPermission(roleId, permissionId);
@@ -117,7 +117,7 @@ public class RoleController {
     }
 
     @DeleteMapping("/{roleId}/permissions/{permissionId}")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<Void> removePermission(@PathVariable UUID roleId,
                                               @PathVariable UUID permissionId) {
         roleService.removePermission(roleId, permissionId);
@@ -128,7 +128,7 @@ public class RoleController {
     }
 
     @PutMapping("/{roleId}/permissions")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<RoleResponse> setPermissions(@PathVariable UUID roleId,
                                                     @Valid @RequestBody RolePermissionUpdateRequest req) {
         ApiResponse<RoleResponse> response = new ApiResponse<>();
@@ -138,7 +138,7 @@ public class RoleController {
     }
 
     @PatchMapping("/{roleId}/toggle-status")
-    @PreAuthorize("hasRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<RoleResponse> toggleRoleStatus(@PathVariable UUID roleId) {
         ApiResponse<RoleResponse> response = new ApiResponse<>();
         response.setResult(roleService.toggleRoleStatus(roleId));
@@ -147,7 +147,7 @@ public class RoleController {
     }
 
     @GetMapping("/search-paged")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<PageResponse<RoleResponse>> searchRolesPaged(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Boolean active,

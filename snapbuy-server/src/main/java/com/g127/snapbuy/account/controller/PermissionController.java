@@ -22,7 +22,7 @@ public class PermissionController {
     private final PermissionService permissionService;
 
     @PostMapping
-    @PreAuthorize("hasRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<PermissionResponse> create(@Valid @RequestBody PermissionCreateRequest req) {
         ApiResponse<PermissionResponse> response = new ApiResponse<>();
         response.setResult(permissionService.createPermission(req));
@@ -31,7 +31,7 @@ public class PermissionController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<List<PermissionResponse>> list(@RequestParam(name = "active", required = false) String active) {
         Optional<Boolean> filter;
         if (active == null) filter = Optional.empty();
@@ -44,7 +44,7 @@ public class PermissionController {
     }
 
     @GetMapping("/{permissionId}")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<PermissionResponse> get(@PathVariable UUID permissionId) {
         ApiResponse<PermissionResponse> response = new ApiResponse<>();
         response.setResult(permissionService.getPermissionById(permissionId));
@@ -52,7 +52,7 @@ public class PermissionController {
     }
 
     @PutMapping("/{permissionId}")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<PermissionResponse> update(@PathVariable UUID permissionId,
                                                   @Valid @RequestBody PermissionUpdateRequest req) {
         ApiResponse<PermissionResponse> response = new ApiResponse<>();
@@ -62,7 +62,7 @@ public class PermissionController {
     }
 
     @DeleteMapping("/{permissionId}")
-    @PreAuthorize("hasRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<Void> delete(@PathVariable UUID permissionId) {
         permissionService.deletePermission(permissionId);
         ApiResponse<Void> response = new ApiResponse<>();

@@ -11,10 +11,10 @@ import com.g127.snapbuy.exception.ErrorCode;
 import com.g127.snapbuy.mapper.ProductMapper;
 import com.g127.snapbuy.repository.*;
 import com.g127.snapbuy.product.service.ProductService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -666,18 +666,24 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public PageResponse<ProductResponse> searchProductsPaged(String keyword, Boolean active, UUID categoryId, UUID subCategoryId, Pageable pageable) {
-        Page<Product> productPage = productRepository.searchByKeyword(
-            keyword == null || keyword.isBlank() ? null : keyword.trim(),
-            active,
-            categoryId,
-            subCategoryId,
-            PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize()
-            )
-        );
-        
-        return buildProductPageResponse(productPage);
+        try {
+            Page<Product> productPage = productRepository.searchByKeyword(
+                keyword == null || keyword.isBlank() ? null : keyword.trim(),
+                active,
+                categoryId,
+                subCategoryId,
+                PageRequest.of(
+                    pageable.getPageNumber(),
+                    pageable.getPageSize()
+                )
+            );
+            
+            return buildProductPageResponse(productPage);
+        } catch (Exception e) {
+            log.error("Error searching products: keyword={}, active={}, categoryId={}, subCategoryId={}", 
+                keyword, active, categoryId, subCategoryId, e);
+            throw e;
+        }
     }
 
     private PageResponse<ProductResponse> buildProductPageResponse(Page<Product> productPage) {

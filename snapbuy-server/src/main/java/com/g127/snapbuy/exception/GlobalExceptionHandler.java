@@ -117,6 +117,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         String message = ex.getMessage();
         ErrorCode errorCode = ErrorCode.UNCATEGORIZED_ERROR;
+        String customMessage = null;
 
         // Kiểm tra nếu là lỗi duplicate barcode
         if (message != null && message.contains("UX_products_barcode")) {
@@ -126,11 +127,22 @@ public class GlobalExceptionHandler {
         else if (message != null && (message.contains("UX_products_product_code") || message.contains("product_code"))) {
             errorCode = ErrorCode.CODE_EXISTED;
         }
-        // Kiểm tra các constraint khác nếu cần
+        // Kiểm tra nếu là lỗi duplicate phone
+        else if (message != null && message.contains("UX_accounts_phone")) {
+            customMessage = "Số điện thoại đã được sử dụng. Vui lòng sử dụng số khác.";
+        }
+        // Kiểm tra nếu là lỗi duplicate username
+        else if (message != null && message.contains("UX_accounts_username")) {
+            customMessage = "Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác.";
+        }
+        // Kiểm tra nếu là lỗi duplicate email
+        else if (message != null && message.contains("UX_accounts_email")) {
+            customMessage = "Email đã được đăng ký. Vui lòng sử dụng email khác.";
+        }
 
         ApiResponse<?> response = ApiResponse.builder()
-                .code(errorCode.getCode())
-                .message(errorCode.getMessage())
+                .code(customMessage != null ? 4002 : errorCode.getCode())
+                .message(customMessage != null ? customMessage : errorCode.getMessage())
                 .build();
         return ResponseEntity.badRequest().body(response);
     }

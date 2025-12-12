@@ -37,7 +37,9 @@ public class MoMoCallbackController {
     private String momoTarget;
 
     @PostMapping("/notify")
-    public ResponseEntity<Map<String, Object>> handleNotify(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<Map<String, Object>> handleNotify(
+            @RequestParam(required = false) String tenantId,
+            @RequestBody Map<String, Object> payload) {
         try {
             String partnerCode = (String) payload.get("partnerCode");
             String orderId = (String) payload.get("orderId"); // This is momoOrderId
@@ -79,10 +81,24 @@ public class MoMoCallbackController {
 
             String orderNumber = orderId.substring(0, orderId.lastIndexOf("-"));
 
-            List<Order> allOrders = orderRepository.findAll();
-            Order order = allOrders.stream()
-                    .filter(o -> orderNumber.equals(o.getOrderNumber()))
-                    .findFirst()
+            // Extract tenantId from extraData
+            String extractedTenantId = tenantId;
+            if (extractedTenantId == null && extraData != null && !extraData.isEmpty()) {
+                try {
+                    String decoded = new String(java.util.Base64.getDecoder().decode(extraData));
+                    if (decoded.startsWith("tenantId=")) {
+                        extractedTenantId = decoded.substring(9);
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to decode extraData", e);
+                }
+            }
+
+            if (extractedTenantId != null) {
+                com.g127.snapbuy.tenant.context.TenantContext.setCurrentTenant(extractedTenantId);
+            }
+
+            Order order = orderRepository.findByOrderNumber(orderNumber)
                     .orElseThrow(() -> new RuntimeException("Order not found: " + orderNumber));
 
             Payment payment = paymentRepository.findByOrder(order);
@@ -133,6 +149,7 @@ public class MoMoCallbackController {
         String resultCode = params.get("resultCode");
         String orderId = params.get("orderId");
         String message = params.get("message");
+        String tenantId = params.get("tenantId");
 
         String html = """
             <!DOCTYPE html>
@@ -147,8 +164,9 @@ public class MoMoCallbackController {
                     const resultCode = '%s';
                     const orderId = '%s';
                     const message = '%s';
+                    const tenantId = '%s';
                     
-                    console.log('🎯 MoMo Return - ResultCode:', resultCode, 'OrderId:', orderId);
+                    console.log('🎯 MoMo Return - ResultCode:', resultCode, 'OrderId:', orderId, 'TenantId:', tenantId);
                     
                     // Xác định backend URL
                     const backendUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -156,7 +174,8 @@ public class MoMoCallbackController {
                         : window.location.origin;
                     
                     // Gọi API để cập nhật trạng thái
-                    fetch(backendUrl + '/api/payments/momo/local-notify', {
+                    const apiUrl = backendUrl + '/api/payments/momo/local-notify' + (tenantId ? '?tenantId=' + tenantId : '');
+                    fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -192,7 +211,8 @@ public class MoMoCallbackController {
             """.formatted(
                 resultCode != null ? resultCode : "0",
                 orderId != null ? orderId : "",
-                message != null ? message.replace("'", "\\'") : ""
+                message != null ? message.replace("'", "\\'") : "",
+                tenantId != null ? tenantId : ""
             );
 
         return ResponseEntity.ok()

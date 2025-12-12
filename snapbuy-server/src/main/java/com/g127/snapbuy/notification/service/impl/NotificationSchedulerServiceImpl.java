@@ -70,15 +70,15 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
         this.taskScheduler = scheduler;
     }
 
-    @PostConstruct
-    public void init() {
-        rescheduleAllPromotionNotifications();
-    }
+    // @PostConstruct - Disabled for multi-tenancy: cannot query tenant DB without tenant context
+    // public void init() {
+    //     rescheduleAllPromotionNotifications();
+    // }
 
     /**
-     * Reschedule all promotion notifications on server startup
+     * Reschedule all promotion notifications (call manually when needed per tenant)
      */
-    private void rescheduleAllPromotionNotifications() {
+    public void rescheduleAllPromotionNotifications() {
         List<Promotion> activePromotions = promotionRepository.findAll().stream()
                 .filter(p -> Boolean.TRUE.equals(p.getActive()))
                 .filter(p -> p.getEndDate().isAfter(LocalDateTime.now()))

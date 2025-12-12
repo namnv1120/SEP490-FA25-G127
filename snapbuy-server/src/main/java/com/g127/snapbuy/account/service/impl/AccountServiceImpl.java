@@ -42,17 +42,11 @@ public class AccountServiceImpl implements AccountService {
     @Value("${upload.dir}")
     private String uploadDir;
 
-    private static final Set<String> FORBIDDEN_STAFF_ROLES = Set.of("Quản trị viên", "Chủ cửa hàng");
+    private static final Set<String> FORBIDDEN_STAFF_ROLES = Set.of("Chủ cửa hàng");
 
     private String getCurrentUsername() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth == null ? null : auth.getName();
-    }
-
-    private boolean isAdmin() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) return false;
-        return auth.getAuthorities().stream().anyMatch(a -> "ROLE_Quản trị viên".equalsIgnoreCase(a.getAuthority()));
     }
 
     private void ensureActive(Role r) {
@@ -61,21 +55,7 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
-    @Override
-    @PreAuthorize("hasRole('Quản trị viên')")
-    public AccountResponse createAccount(AccountCreateRequest req) {
-        if (req.getRoles() != null && !req.getRoles().isEmpty()) {
-            String roleName = req.getRoles().get(0);
-            return createWithSingleRole(req, roleName);
-        }
-        return createWithSingleRole(req, "Chủ cửa hàng");
-    }
-
-    @Override
-    @PreAuthorize("hasRole('Quản trị viên')")
-    public AccountResponse createShopOwner(AccountCreateRequest req) {
-        return createWithSingleRole(req, "Chủ cửa hàng");
-    }
+    // Admin methods removed - now managed in Master DB
 
     @Override
     @PreAuthorize("hasRole('Chủ cửa hàng')")
@@ -153,13 +133,13 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    @PreAuthorize("hasRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public List<AccountResponse> getAccounts() {
         return accountRepository.findAll().stream().map(accountMapper::toResponse).toList();
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
+    @PreAuthorize("hasAnyRole('Chủ cửa hàng','Nhân viên bán hàng')")
     public AccountResponse getAccount(UUID id) {
         Account acc = accountRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
@@ -299,7 +279,7 @@ public class AccountServiceImpl implements AccountService {
                 .anyMatch(r -> FORBIDDEN_STAFF_ROLES.stream()
                         .anyMatch(f -> f.equalsIgnoreCase(r.getRoleName())));
         if (forbidden) {
-            throw new IllegalArgumentException("Không thể truy cập tài khoản Quản trị viên hoặc Chủ cửa hàng");
+            throw new IllegalArgumentException("Không thể truy cập tài khoản Chủ cửa hàng");
         }
 
         return accountMapper.toResponse(staff);
@@ -307,7 +287,7 @@ public class AccountServiceImpl implements AccountService {
 
 
     @Override
-    @PreAuthorize("hasRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public AccountResponse adminUpdateAccount(UUID accountId, AccountUpdateRequest req) {
         Account acc = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
@@ -369,11 +349,11 @@ public class AccountServiceImpl implements AccountService {
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
 
         String currentUser = getCurrentUsername();
-        if (!Objects.equals(acc.getUsername(), currentUser) && !isAdmin())
+        if (!Objects.equals(acc.getUsername(), currentUser))
             throw new IllegalStateException("Bạn chỉ có thể cập nhật tài khoản của chính mình");
 
-        if (req.getRoles() != null && !req.getRoles().isEmpty() && !isAdmin()) {
-            throw new IllegalStateException("Chỉ quản trị viên mới được cập nhật vai trò");
+        if (req.getRoles() != null && !req.getRoles().isEmpty()) {
+            throw new IllegalStateException("Không được cập nhật vai trò");
         }
 
         if (req.getFullName() != null) acc.setFullName(req.getFullName());
@@ -426,25 +406,13 @@ public class AccountServiceImpl implements AccountService {
             acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         }
 
-        if (req.getRoles() != null && !req.getRoles().isEmpty() && isAdmin()) {
-            if (req.getRoles().size() > 1) {
-                throw new IllegalArgumentException("Chỉ được chọn 1 vai trò cho tài khoản");
-            }
-
-            String roleName = req.getRoles().get(0);
-            Role role = roleRepository.findByRoleNameIgnoreCase(roleName)
-                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò: " + roleName));
-            ensureActive(role);
-            acc.getRoles().clear();
-            acc.getRoles().add(role);
-            acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
-        }
+        // Role updates removed - owner manages this through separate endpoint
 
         return accountMapper.toResponse(accountRepository.save(acc));
     }
 
     @Override
-    @PreAuthorize("hasRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public void deleteAccount(UUID accountId) {
         Account acc = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
@@ -454,7 +422,7 @@ public class AccountServiceImpl implements AccountService {
             throw new IllegalStateException("Bạn không thể xóa tài khoản của chính mình");
 
         boolean hasProtectedRole = acc.getRoles().stream()
-                .anyMatch(r -> "Quản trị viên".equalsIgnoreCase(r.getRoleName()));
+                .anyMatch(r -> "Chủ cửa hàng".equalsIgnoreCase(r.getRoleName()));
         if (hasProtectedRole) throw new IllegalStateException("Không thể xóa tài khoản có vai trò được bảo vệ");
 
         accountRepository.delete(acc);
@@ -487,7 +455,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    @PreAuthorize("hasRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public List<AccountResponse> searchAccounts(String keyword, Boolean active, String roleName) {
         List<Account> accounts = accountRepository.searchAccounts(
                 keyword == null || keyword.isBlank() ? null : keyword.trim(),
@@ -498,7 +466,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    @PreAuthorize("hasRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public PageResponse<AccountResponse> searchAccountsPaged(String keyword, Boolean active, String roleName, Pageable pageable) {
         var page = accountRepository.searchAccountsPage(
                 keyword == null || keyword.isBlank() ? null : keyword.trim(),

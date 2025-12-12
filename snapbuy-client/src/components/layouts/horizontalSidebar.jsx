@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import usePermission from "../../hooks/usePermission";
-import { SidebarDataAdmin } from "../../core/json/sidebarDataAdmin";
 import { SidebarDataOwner } from "../../core/json/sidebarDataOwner";
 import { SidebarDataWarehouse } from "../../core/json/sidebarDataWarehouse";
 import { SidebarDataSales } from "../../core/json/sidebarDataSales";
@@ -65,9 +64,6 @@ const HorizontalSidebar = () => {
   const { userRole } = usePermission();
   let sidebarData;
   switch (userRole) {
-    case "Quản trị viên":
-      sidebarData = SidebarDataAdmin;
-      break;
     case "Chủ cửa hàng":
       sidebarData = SidebarDataOwner;
       break;
@@ -78,7 +74,7 @@ const HorizontalSidebar = () => {
       sidebarData = SidebarDataSales;
       break;
     default:
-      sidebarData = [];
+      sidebarData = SidebarDataOwner; // Default to owner sidebar
   }
 
   return (

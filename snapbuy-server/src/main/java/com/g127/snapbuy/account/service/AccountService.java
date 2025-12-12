@@ -9,8 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface AccountService {
-    AccountResponse createAccount(AccountCreateRequest req);
-    AccountResponse createShopOwner(AccountCreateRequest req);
+    // Admin methods removed - managed in Master DB
     AccountResponse createStaff(AccountCreateRequest req);
 
     AccountResponse getMyInfo();

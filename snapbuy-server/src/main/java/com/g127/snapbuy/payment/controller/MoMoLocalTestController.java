@@ -27,7 +27,9 @@ public class MoMoLocalTestController {
     private String momoTarget;
 
     @PostMapping("/local-notify")
-    public ResponseEntity<Map<String, Object>> handleLocalNotify(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<Map<String, Object>> handleLocalNotify(
+            @RequestParam(required = false) String tenantId,
+            @RequestBody Map<String, Object> payload) {
 
         try {
             String momoOrderId = (String) payload.get("orderId");
@@ -47,10 +49,16 @@ public class MoMoLocalTestController {
 
             String orderNumber = momoOrderId.substring(0, momoOrderId.lastIndexOf("-"));
 
-            List<Order> allOrders = orderRepository.findAll();
-            Order order = allOrders.stream()
-                    .filter(o -> orderNumber.equals(o.getOrderNumber()))
-                    .findFirst()
+            String extractedTenantId = tenantId;
+            if (extractedTenantId == null) {
+                extractedTenantId = com.g127.snapbuy.tenant.context.TenantContext.getCurrentTenant();
+            }
+
+            if (extractedTenantId != null) {
+                com.g127.snapbuy.tenant.context.TenantContext.setCurrentTenant(extractedTenantId);
+            }
+
+            Order order = orderRepository.findByOrderNumber(orderNumber)
                     .orElse(null);
 
             if (order == null) {
@@ -79,7 +87,7 @@ public class MoMoLocalTestController {
 
             // Kiểm tra nếu đơn đã bị hủy, từ chối thanh toán
             if ("Đã hủy".equals(order.getOrderStatus())) {
-                log.warn("❌ Rejected MoMo payment for cancelled order: {}", order.getOrderNumber());
+                log.warn("Rejected MoMo payment for cancelled order: {}", order.getOrderNumber());
                 return ResponseEntity.ok(Map.of(
                         "success", false,
                         "message", "Cannot process payment: Order has been cancelled",

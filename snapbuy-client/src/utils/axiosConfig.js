@@ -2,6 +2,35 @@ import axios from 'axios';
 
 let isSessionExpiredShown = false;
 
+// Set baseURL cho development - Vite proxy sẽ forward /api sang localhost:8080
+// Không set trong production để dùng relative URL
+if (import.meta.env.DEV) {
+  axios.defaults.baseURL = '';
+}
+
+// Axios Request Interceptor để thêm tenant ID
+axios.interceptors.request.use(
+  (config) => {
+    // Thêm Authorization header nếu có token
+    const token = localStorage.getItem('authToken');
+    const tokenType = localStorage.getItem('authTokenType');
+    if (token) {
+      config.headers.Authorization = `${tokenType || 'Bearer'} ${token}`;
+    }
+
+    // Thêm X-Tenant-ID header nếu có (quan trọng cho multi-tenancy)
+    const tenantId = localStorage.getItem('tenantId');
+    if (tenantId) {
+      config.headers['X-Tenant-ID'] = tenantId;
+    }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // Hàm hiển thị modal session expired với countdown
 const showSessionExpiredModal = () => {
   let countdown = 5;
@@ -122,6 +151,8 @@ axios.interceptors.response.use(
         localStorage.removeItem('fullName');
         localStorage.removeItem('accountId');
         localStorage.removeItem('username');
+        localStorage.removeItem('tenantId');
+        localStorage.removeItem('tenantCode');
 
         // Hiển thị modal với countdown
         showSessionExpiredModal();

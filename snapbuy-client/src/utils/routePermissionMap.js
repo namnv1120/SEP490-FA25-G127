@@ -1,10 +1,9 @@
 export const routeRoleMap = {
-  "/admin-dashboard": ["Quản trị viên"],
-  "/shopowner-dashboard": ["Quản trị viên", "Chủ cửa hàng"],
-  "/warehouses-dashboard": ["Quản trị viên", "Chủ cửa hàng"],
-  "/sales-dashboard": ["Quản trị viên", "Chủ cửa hàng"],
-  "/warehouse-dashboard": ["Quản trị viên", "Chủ cửa hàng", "Nhân viên kho"],
-  "/sale-dashboard": ["Quản trị viên", "Chủ cửa hàng", "Nhân viên bán hàng"],
+  "/shopowner-dashboard": ["Chủ cửa hàng"],
+  "/warehouses-dashboard": ["Chủ cửa hàng"],
+  "/sales-dashboard": ["Chủ cửa hàng"],
+  "/warehouse-dashboard": ["Chủ cửa hàng", "Nhân viên kho"],
+  "/sale-dashboard": ["Chủ cửa hàng", "Nhân viên bán hàng"],
 
   "/products": null,
   "/products/add": null,
@@ -18,36 +17,35 @@ export const routeRoleMap = {
   "/categories": null,
   "/sub-categories": null,
 
-  "/purchase-orders": ["Quản trị viên", "Chủ cửa hàng", "Nhân viên kho"],
-  "/purchase-orders/add": ["Quản trị viên", "Chủ cửa hàng", "Nhân viên kho"],
+  "/purchase-orders": ["Chủ cửa hàng", "Nhân viên kho"],
+  "/purchase-orders/add": ["Chủ cửa hàng", "Nhân viên kho"],
   "/purchase-orders/edit/:id": [
-    "Quản trị viên",
     "Chủ cửa hàng",
     "Nhân viên kho",
   ],
 
-  "/order-history": ["Quản trị viên", "Chủ cửa hàng", "Nhân viên bán hàng"],
+  "/order-history": ["Chủ cửa hàng", "Nhân viên bán hàng"],
 
   "/transaction-history": null,
 
-  "/pos": ["Quản trị viên", "Chủ cửa hàng", "Nhân viên bán hàng"],
-  "/pos-shift": ["Quản trị viên", "Chủ cửa hàng", "Nhân viên bán hàng"],
-  "/shift-history": ["Quản trị viên", "Chủ cửa hàng", "Nhân viên bán hàng"],
+  "/pos": ["Chủ cửa hàng", "Nhân viên bán hàng"],
+  "/pos-shift": ["Chủ cửa hàng", "Nhân viên bán hàng"],
+  "/shift-history": ["Chủ cửa hàng", "Nhân viên bán hàng"],
 
-  "/accounts": ["Quản trị viên"],
+  "/accounts": ["Chủ cửa hàng"],
 
-  "/roles-permissions": ["Quản trị viên", "Chủ cửa hàng"],
+  "/roles-permissions": ["Chủ cửa hàng"],
 
-  "/customers": ["Quản trị viên", "Chủ cửa hàng", "Nhân viên bán hàng"],
+  "/customers": ["Chủ cửa hàng", "Nhân viên bán hàng"],
 
-  "/suppliers": ["Quản trị viên", "Chủ cửa hàng", "Nhân viên kho"],
+  "/suppliers": ["Chủ cửa hàng", "Nhân viên kho"],
 
-  "/staff-accounts": ["Quản trị viên", "Chủ cửa hàng"],
-  "/staff-shifts": ["Quản trị viên", "Chủ cửa hàng"],
+  "/staff-accounts": ["Chủ cửa hàng"],
+  "/staff-shifts": ["Chủ cửa hàng"],
 
-  "/revenue-report": ["Quản trị viên", "Chủ cửa hàng"],
-  "/product-report": ["Quản trị viên", "Chủ cửa hàng"],
-  "/customer-report": ["Quản trị viên", "Chủ cửa hàng"],
+  "/revenue-report": ["Chủ cửa hàng"],
+  "/product-report": ["Chủ cửa hàng"],
+  "/customer-report": ["Chủ cửa hàng"],
   "/supplier-report": ["Quản trị viên", "Chủ cửa hàng"],
 
   "/settings/profile": null,

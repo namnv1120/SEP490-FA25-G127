@@ -1,6 +1,7 @@
 package com.g127.snapbuy.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.g127.snapbuy.admin.service.AdminUserDetailsService;
 import com.g127.snapbuy.auth.service.TokenBlacklistService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -8,6 +9,7 @@ import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.*;
@@ -18,20 +20,24 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+    private final AdminUserDetailsService adminUserDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
     private final com.g127.snapbuy.repository.AccountRepository accountRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public JwtAuthenticationFilter(JwtUtil jwtUtil,
                                    UserDetailsService userDetailsService,
+                                   AdminUserDetailsService adminUserDetailsService,
                                    TokenBlacklistService tokenBlacklistService,
                                    com.g127.snapbuy.repository.AccountRepository accountRepository) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
+        this.adminUserDetailsService = adminUserDetailsService;
         this.tokenBlacklistService = tokenBlacklistService;
         this.accountRepository = accountRepository;
     }
@@ -53,7 +59,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String path = request.getServletPath();
-        if (path.startsWith("/api/auth")) {
+        // Skip JWT filter for auth endpoints (both tenant and admin)
+        if (path.startsWith("/api/auth") || path.startsWith("/api/admin/auth")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -84,29 +91,80 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String username = jwtUtil.extractUsername(jwt);
-        Integer ver = jwtUtil.extractVersion(jwt);
-        if (username != null && ver != null) {
-            var accOpt = accountRepository.findByUsername(username);
-            if (accOpt.isPresent()) {
-                Integer currentVer = accOpt.get().getTokenVersion();
-                if (currentVer != null && !currentVer.equals(ver)) {
-                    sendErrorResponse(response, "TOKEN_REVOKED", "Phiên đăng nhập đã bị thu hồi. Vui lòng đăng nhập lại");
-                    return;
+        String tokenType = jwtUtil.extractType(jwt);
+        
+        // Handle admin token (no tenant context)
+        if ("admin".equals(tokenType)) {
+            try {
+                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UserDetails userDetails = adminUserDetailsService.loadUserByUsername(username);
+                    if (jwtUtil.validateToken(jwt, userDetails)) {
+                        var authToken = new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    } else {
+                        sendErrorResponse(response, "TOKEN_EXPIRED", "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại");
+                        return;
+                    }
                 }
+            } catch (Exception e) {
+                log.error("Admin authentication error: ", e);
+                sendErrorResponse(response, "AUTHENTICATION_ERROR", "Lỗi xác thực. Vui lòng đăng nhập lại");
+                return;
             }
-        }
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-            if (jwtUtil.validateToken(jwt, userDetails)) {
-                var authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            } else {
-                sendErrorResponse(response, "TOKEN_EXPIRED", "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại");
+        } else {
+            // Handle regular tenant token
+            Integer ver = jwtUtil.extractVersion(jwt);
+            String tenantId = jwtUtil.extractTenantId(jwt);
+            
+            if (tenantId != null) {
+                com.g127.snapbuy.tenant.context.TenantContext.setCurrentTenant(tenantId);
+            }
+            
+            try {
+                // Now check token version (after tenant context is set)
+                if (username != null && ver != null) {
+                    var accOpt = accountRepository.findByUsername(username);
+                    if (accOpt.isPresent()) {
+                        Integer currentVer = accOpt.get().getTokenVersion();
+                        if (currentVer != null && !currentVer.equals(ver)) {
+                            sendErrorResponse(response, "TOKEN_REVOKED", "Phiên đăng nhập đã bị thu hồi. Vui lòng đăng nhập lại");
+                            return;
+                        }
+                    }
+                }
+                
+                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+                    if (jwtUtil.validateToken(jwt, userDetails)) {
+                        var authToken = new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    } else {
+                        sendErrorResponse(response, "TOKEN_EXPIRED", "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại");
+                        return;
+                    }
+                }
+            } catch (IllegalStateException e) {
+                // Tenant datasource not found
+                com.g127.snapbuy.tenant.context.TenantContext.clear();
+                if (e.getMessage() != null && e.getMessage().contains("Không tìm thấy cơ sở dữ liệu")) {
+                    sendErrorResponse(response, "TENANT_NOT_FOUND", e.getMessage());
+                } else {
+                    sendErrorResponse(response, "AUTHENTICATION_ERROR", "Lỗi xác thực. Vui lòng đăng nhập lại");
+                }
+                return;
+            } catch (Exception e) {
+                // Clear tenant context on other errors
+                com.g127.snapbuy.tenant.context.TenantContext.clear();
+                log.error("Authentication error: ", e);
+                sendErrorResponse(response, "AUTHENTICATION_ERROR", "Lỗi xác thực. Vui lòng đăng nhập lại");
                 return;
             }
         }
+        
         filterChain.doFilter(request, response);
     }
 }

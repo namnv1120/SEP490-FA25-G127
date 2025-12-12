@@ -530,8 +530,19 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
 
+        // If already completed, return current state instead of throwing error
         if ("Hoàn tất".equalsIgnoreCase(order.getOrderStatus())) {
-            throw new IllegalArgumentException("Đơn hàng đã hoàn tất, không thể thực hiện thao tác này.");
+            log.info("Order {} already completed, returning current state", order.getOrderNumber());
+            List<OrderDetail> details = orderDetailRepository.findByOrder(order);
+            Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
+            OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
+            BigDecimal subtotal = details.stream()
+                    .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            resp.setSubtotal(subtotal);
+            resp.setPointsRedeemed(order.getPointsRedeemed());
+            resp.setPointsEarned(order.getPointsEarned());
+            return resp;
         }
 
         if ("Đã hủy".equalsIgnoreCase(order.getOrderStatus())) {

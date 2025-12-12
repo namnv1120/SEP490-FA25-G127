@@ -93,6 +93,26 @@ public class JwtUtil {
             return null;
         }
     }
+    
+    public String extractTenantId(String token) {
+        try {
+            Claims c = extractAllClaims(token);
+            Object tenantId = c.get("tenantId");
+            return tenantId != null ? tenantId.toString() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    
+    public String extractType(String token) {
+        try {
+            Claims c = extractAllClaims(token);
+            Object type = c.get("type");
+            return type != null ? type.toString() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);

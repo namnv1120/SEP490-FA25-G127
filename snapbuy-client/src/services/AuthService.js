@@ -5,15 +5,22 @@ import { API_ENDPOINTS } from "./apiConfig";
 const REST_API_BASE_URL = API_ENDPOINTS.AUTH;
 
 // 🔐 API đăng nhập
-export const login = async (username, password) => {
+export const login = async (username, password, tenantCode = null) => {
   if (!username || !password)
     throw new Error("Username and password are required.");
 
   try {
-    const response = await axios.post(`${REST_API_BASE_URL}/login`, {
+    const requestBody = {
       username,
       password,
-    });
+    };
+
+    // Only include tenantCode if provided (for localhost)
+    if (tenantCode) {
+      requestBody.tenantCode = tenantCode;
+    }
+
+    const response = await axios.post(`${REST_API_BASE_URL}/login`, requestBody);
 
     const { token, tokenType, accountId, roleName, fullName } =
       response.data.result || {};
@@ -48,9 +55,9 @@ export const login = async (username, password) => {
       throw new Error("Login failed: No token received.");
     }
   } catch (error) {
-    throw new Error(
-      error.response ? error.response.data.message : error.message
-    );
+    const errorMessage = error.response?.data?.message || error.message || "Đăng nhập thất bại. Vui lòng thử lại.";
+    console.error("Login error:", errorMessage);
+    throw new Error(errorMessage);
   }
 };
 

@@ -6,7 +6,6 @@ import { allRoutes } from "../../routes/AllRoutes";
 import { getMyInfo } from "../../services/AccountService";
 import { getImageUrl } from "../../utils/imageUtils";
 import usePermission from "../../hooks/usePermission";
-import { SidebarDataAdmin } from "../../core/json/sidebarDataAdmin";
 import { SidebarDataOwner } from "../../core/json/sidebarDataOwner";
 import { SidebarDataWarehouse } from "../../core/json/sidebarDataWarehouse";
 import { SidebarDataSales } from "../../core/json/sidebarDataSales";
@@ -43,6 +42,13 @@ const Header = () => {
   const handleLogout = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("authTokenType");
+    localStorage.removeItem("role");
+    localStorage.removeItem("roleName");
+    localStorage.removeItem("fullName");
+    localStorage.removeItem("accountId");
+    localStorage.removeItem("username");
+    localStorage.removeItem("tenantId");
+    localStorage.removeItem("tenantCode");
     navigate(route.login);
   };
 
@@ -107,8 +113,6 @@ const Header = () => {
   const { userRole } = usePermission();
   const sidebarData = useMemo(() => {
     switch (userRole) {
-      case "Quản trị viên":
-        return SidebarDataAdmin;
       case "Chủ cửa hàng":
         return SidebarDataOwner;
       case "Nhân viên kho":
@@ -116,7 +120,7 @@ const Header = () => {
       case "Nhân viên bán hàng":
         return SidebarDataSales;
       default:
-        return [];
+        return SidebarDataOwner; // Default to owner
     }
   }, [userRole]);
 
@@ -327,8 +331,6 @@ const Header = () => {
                 ? route.saledashboard
                 : userRole === "Chủ cửa hàng"
                 ? route.shopownerdashboard
-                : userRole === "Quản trị viên"
-                ? route.admindashboard
                 : userRole === "Nhân viên kho"
                 ? route.warehousedashboard
                 : route.shopownerdashboard
@@ -343,8 +345,6 @@ const Header = () => {
                 ? route.saledashboard
                 : userRole === "Chủ cửa hàng"
                 ? route.shopownerdashboard
-                : userRole === "Quản trị viên"
-                ? route.admindashboard
                 : userRole === "Nhân viên kho"
                 ? route.warehousedashboard
                 : route.shopownerdashboard
@@ -359,8 +359,6 @@ const Header = () => {
                 ? route.saledashboard
                 : userRole === "Chủ cửa hàng"
                 ? route.shopownerdashboard
-                : userRole === "Quản trị viên"
-                ? route.admindashboard
                 : userRole === "Nhân viên kho"
                 ? route.warehousedashboard
                 : route.shopownerdashboard

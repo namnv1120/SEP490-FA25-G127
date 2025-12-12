@@ -12,18 +12,60 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.NoSuchElementException;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
+    private final com.g127.snapbuy.tenant.service.TenantService tenantService;
 
     @PostMapping("/login")
-    public ApiResponse<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest req) {
-        ApiResponse<AuthenticationResponse> response = new ApiResponse<>();
-        response.setResult(authenticationService.authenticate(req));
-        return response;
+    public ApiResponse<AuthenticationResponse> authenticate(
+            @RequestBody @Valid AuthenticationRequest req,
+            jakarta.servlet.http.HttpServletRequest request) {
+        
+        // Auto-detect tenant from subdomain (e.g., shop1.snapbuy.com)
+        String tenantCode = com.g127.snapbuy.tenant.util.TenantResolver.resolveFromSubdomain(request);
+        
+        // Fallback to tenantCode in request body (for localhost testing)
+        if (tenantCode == null || tenantCode.isEmpty()) {
+            tenantCode = req.getTenantCode();
+        }
+        
+        if (tenantCode == null || tenantCode.isEmpty()) {
+            ApiResponse<AuthenticationResponse> response = new ApiResponse<>();
+            response.setCode(4000);
+            response.setMessage("Không thể xác định cửa hàng. Vui lòng nhập mã cửa hàng để đăng nhập.");
+            return response;
+        }
+        
+        // Set tenant context before authentication
+        try {
+            var tenant = tenantService.getTenantByCode(tenantCode);
+            
+            if (!tenant.getIsActive()) {
+                ApiResponse<AuthenticationResponse> response = new ApiResponse<>();
+                response.setCode(4003);
+                response.setMessage("Cửa hàng '" + tenantCode + "' đã bị tạm khóa. Vui lòng liên hệ quản trị viên.");
+                return response;
+            }
+            
+            com.g127.snapbuy.tenant.context.TenantContext.setCurrentTenant(tenant.getTenantId().toString());
+            
+            ApiResponse<AuthenticationResponse> response = new ApiResponse<>();
+            response.setResult(authenticationService.authenticate(req));
+            return response;
+        } catch (NoSuchElementException e) {
+            ApiResponse<AuthenticationResponse> response = new ApiResponse<>();
+            response.setCode(4004);
+            response.setMessage("Cửa hàng với mã '" + tenantCode + "' không tồn tại. Vui lòng kiểm tra lại mã cửa hàng.");
+            return response;
+        } finally {
+            com.g127.snapbuy.tenant.context.TenantContext.clear();
+        }
     }
 
     @PostMapping("/introspect")

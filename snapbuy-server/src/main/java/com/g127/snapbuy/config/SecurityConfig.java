@@ -32,12 +32,13 @@ public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+    private final com.g127.snapbuy.admin.service.AdminUserDetailsService adminUserDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
     private final com.g127.snapbuy.repository.AccountRepository accountRepository;
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtUtil, userDetailsService, tokenBlacklistService, accountRepository);
+        return new JwtAuthenticationFilter(jwtUtil, userDetailsService, adminUserDetailsService, tokenBlacklistService, accountRepository);
     }
 
     @Bean
@@ -53,7 +54,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
+                        .requestMatchers("/api/test/**").permitAll() // Test endpoints
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/admin/auth/**").permitAll() // Admin authentication endpoints
                         .requestMatchers("/api/auth/forgot-password/**").permitAll()
                         .requestMatchers("/api/payments/momo/notify").permitAll()
                         .requestMatchers("/api/payments/momo/local-notify").permitAll()

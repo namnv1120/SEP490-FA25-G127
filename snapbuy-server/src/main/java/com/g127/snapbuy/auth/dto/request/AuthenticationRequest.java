@@ -5,6 +5,9 @@ import lombok.Data;
 
 @Data
 public class AuthenticationRequest {
+    @NotBlank(message = "Vui lòng nhập mã cửa hàng.")
+    private String tenantCode;
+    
     @NotBlank(message = "Vui lòng nhập tên đăng nhập.")
     @Size(min = 3, max = 50, message = "Tên đăng nhập phải từ 3 đến 50 ký tự.")
     @Pattern(

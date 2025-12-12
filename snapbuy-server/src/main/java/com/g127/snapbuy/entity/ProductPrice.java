@@ -22,7 +22,7 @@ public class ProductPrice {
     @Column(name = "price_id", columnDefinition = "uniqueidentifier")
     private UUID priceId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 

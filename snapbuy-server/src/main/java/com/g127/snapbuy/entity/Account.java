@@ -48,7 +48,7 @@ public class Account {
     @Column(name = "token_version")
     private Integer tokenVersion = 0;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "account_roles",
             joinColumns = @JoinColumn(name = "account_id"),

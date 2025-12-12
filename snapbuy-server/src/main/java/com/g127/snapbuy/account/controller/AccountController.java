@@ -44,17 +44,10 @@ public class AccountController {
         };
     }
 
-    @PostMapping
-    @PreAuthorize("hasRole('Quản trị viên')")
-    public ApiResponse<AccountResponse> createAccount(@Valid @RequestBody AccountCreateRequest req) {
-        ApiResponse<AccountResponse> response = new ApiResponse<>();
-        response.setResult(accountService.createAccount(req));
-        response.setMessage("Tạo tài khoản thành công.");
-        return response;
-    }
+    // Admin methods removed - managed in Master DB
 
     @GetMapping
-    @PreAuthorize("hasRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<List<AccountResponse>> getAccounts() {
         ApiResponse<List<AccountResponse>> response = new ApiResponse<>();
         response.setResult(accountService.getAccounts());
@@ -63,7 +56,7 @@ public class AccountController {
     }
 
     @GetMapping("/{accountId}")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
+    @PreAuthorize("hasAnyRole('Chủ cửa hàng','Nhân viên bán hàng')")
     public ApiResponse<AccountResponse> getAccount(@PathVariable UUID accountId) {
         ApiResponse<AccountResponse> response = new ApiResponse<>();
         response.setResult(accountService.getAccount(accountId));
@@ -98,7 +91,7 @@ public class AccountController {
     }
 
     @DeleteMapping("/{accountId}")
-    @PreAuthorize("hasRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<Void> deleteAccount(@PathVariable UUID accountId) {
         accountService.deleteAccount(accountId);
         ApiResponse<Void> response = new ApiResponse<>();
@@ -108,7 +101,7 @@ public class AccountController {
     }
 
     @PostMapping("/{accountId}/assign-role/{roleId}")
-    @PreAuthorize("hasRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<AccountResponse> assignRole(@PathVariable UUID accountId, @PathVariable UUID roleId) {
         ApiResponse<AccountResponse> response = new ApiResponse<>();
         response.setResult(accountService.assignRole(accountId, roleId));
@@ -134,14 +127,7 @@ public class AccountController {
         return response;
     }
 
-    @PostMapping("/shop-owners")
-    @PreAuthorize("hasRole('Quản trị viên')")
-    public ApiResponse<AccountResponse> createShopOwner(@Valid @RequestBody AccountCreateRequest req) {
-        ApiResponse<AccountResponse> response = new ApiResponse<>();
-        response.setResult(accountService.createShopOwner(req));
-        response.setMessage("Tạo chủ cửa hàng thành công.");
-        return response;
-    }
+    // createShopOwner removed - managed in Master DB
 
     @PostMapping("/staff")
     @PreAuthorize("hasRole('Chủ cửa hàng')")
@@ -183,17 +169,17 @@ public class AccountController {
     }
 
     @PutMapping("/admin/{accountId}")
-    @PreAuthorize("hasRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<AccountResponse> adminUpdateAccount(@PathVariable UUID accountId,
                                                            @Valid @RequestBody AccountUpdateRequest req) {
         ApiResponse<AccountResponse> response = new ApiResponse<>();
         response.setResult(accountService.adminUpdateAccount(accountId, req));
-        response.setMessage("Quản trị viên cập nhật tài khoản thành công.");
+        response.setMessage("Cập nhật tài khoản thành công.");
         return response;
     }
 
     @DeleteMapping("/{accountId}/roles/{roleId}")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<Void> unassignRole(@PathVariable UUID accountId, @PathVariable UUID roleId) {
         accountService.unassignRole(accountId, roleId);
         ApiResponse<Void> response = new ApiResponse<>();
@@ -203,7 +189,7 @@ public class AccountController {
     }
 
     @PatchMapping("/{accountId}/toggle-status")
-    @PreAuthorize("hasRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<AccountResponse> toggleAccountStatus(@PathVariable UUID accountId) {
         ApiResponse<AccountResponse> response = new ApiResponse<>();
         response.setResult(accountService.toggleAccountStatus(accountId));
@@ -230,7 +216,7 @@ public class AccountController {
     }
 
     @GetMapping("/by-role/{roleName}")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<List<AccountResponse>> getAccountsByRoleName(@PathVariable String roleName) {
         ApiResponse<List<AccountResponse>> response = new ApiResponse<>();
         response.setResult(accountService.getAccountsByRoleName(roleName));
@@ -239,7 +225,7 @@ public class AccountController {
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<List<AccountResponse>> searchAccounts(@RequestParam(required = false) String keyword,
                                                              @RequestParam(required = false) Boolean active,
                                                              @RequestParam(required = false) String role) {
@@ -250,7 +236,7 @@ public class AccountController {
     }
 
     @GetMapping("/search-paged")
-    @PreAuthorize("hasRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Chủ cửa hàng')")
     public ApiResponse<PageResponse<AccountResponse>> searchAccountsPaged(@RequestParam(required = false) String keyword,
                                                                           @RequestParam(required = false) Boolean active,
                                                                           @RequestParam(required = false) String role,
