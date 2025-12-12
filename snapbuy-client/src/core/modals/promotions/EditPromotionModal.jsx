@@ -74,10 +74,11 @@ const EditPromotionModal = ({ isOpen, onClose, onSuccess, promotionId }) => {
 
     let finalValue = type === "checkbox" ? checked : value;
 
-    // Tên khuyến mãi: chỉ cho phép chữ, số, -, %, khoảng trắng, và xóa khoảng trắng đầu
+    // Tên khuyến mãi: chỉ cho phép chữ, số, khoảng trắng, %, -, $
     if (name === "promotionName" && type !== "checkbox") {
       finalValue = value.replace(/^[\s]+/, ""); // Xóa khoảng trắng đầu
-      finalValue = finalValue.replace(/[^a-zA-Z0-9\-% ]/g, ""); // Chỉ cho phép chữ, số, -, %, space
+      // Chỉ cho phép: chữ cái (bao gồm tiếng Việt), số, khoảng trắng, %, -, $
+      finalValue = finalValue.replace(/[^a-zA-Z0-9àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ\s%\-$]/g, "");
     }
 
     // Giá trị giảm giá: chỉ cho phép số

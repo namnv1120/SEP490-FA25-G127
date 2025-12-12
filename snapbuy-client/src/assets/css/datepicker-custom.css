@@ -17,7 +17,7 @@
 
 /* Input text - giống form-control */
 .ant-picker input,
-.ant-picker-input > input {
+.ant-picker-input>input {
   font-family: 'Nunito', sans-serif !important;
   font-size: 0.875rem !important;
   font-weight: 400 !important;
@@ -27,7 +27,7 @@
 
 /* Placeholder - giống form-control */
 .ant-picker input::placeholder,
-.ant-picker-input > input::placeholder {
+.ant-picker-input>input::placeholder {
   font-family: 'Nunito', sans-serif !important;
   font-size: 0.8rem !important;
   font-weight: 500 !important;
@@ -37,7 +37,7 @@
 }
 
 .ant-picker input::-webkit-input-placeholder,
-.ant-picker-input > input::-webkit-input-placeholder,
+.ant-picker-input>input::-webkit-input-placeholder,
 .ant-picker .ant-picker-input input::-webkit-input-placeholder {
   font-family: 'Nunito', sans-serif !important;
   font-size: 0.8rem !important;
@@ -48,7 +48,7 @@
 }
 
 .ant-picker input::-moz-placeholder,
-.ant-picker-input > input::-moz-placeholder {
+.ant-picker-input>input::-moz-placeholder {
   font-family: 'Nunito', sans-serif !important;
   font-size: 0.8rem !important;
   font-weight: 500 !important;
@@ -57,7 +57,7 @@
 }
 
 .ant-picker input:-moz-placeholder,
-.ant-picker-input > input:-moz-placeholder {
+.ant-picker-input>input:-moz-placeholder {
   font-family: 'Nunito', sans-serif !important;
   font-size: 0.8rem !important;
   font-weight: 500 !important;
@@ -67,8 +67,8 @@
 
 .ant-picker input:-ms-input-placeholder,
 .ant-picker input::-ms-input-placeholder,
-.ant-picker-input > input:-ms-input-placeholder,
-.ant-picker-input > input::-ms-input-placeholder {
+.ant-picker-input>input:-ms-input-placeholder,
+.ant-picker-input>input::-ms-input-placeholder {
   font-family: 'Nunito', sans-serif !important;
   font-size: 0.8rem !important;
   font-weight: 500 !important;
@@ -109,7 +109,7 @@
 }
 
 /* Time panel */
-.ant-picker-time-panel-column > li {
+.ant-picker-time-panel-column>li {
   font-family: inherit !important;
 }
 
@@ -124,7 +124,6 @@
 }
 
 .ant-picker-now-btn,
-.ant-picker-ok > button {
+.ant-picker-ok>button {
   font-family: inherit !important;
 }
-

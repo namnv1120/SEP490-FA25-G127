@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { Modal, Button, Row, Col, Tag, Typography, Input } from "antd";
 import CashDenominationInput from "../cash-denomination/CashDenominationInput";
 
@@ -20,10 +20,18 @@ const CloseShiftModal = forwardRef(({
   formatCurrency
 }, ref) => {
   const cashDenominationRef = useRef(null);
+  const [noteError, setNoteError] = useState('');
 
   // Expose validate function to parent
   useImperativeHandle(ref, () => ({
     validate: () => {
+      // Validate closing note
+      if (!closingNote || closingNote.trim() === '') {
+        setNoteError('Vui lòng nhập ghi chú trước khi đóng ca');
+        return false;
+      }
+
+      // Validate cash denominations
       if (cashDenominationRef.current) {
         return cashDenominationRef.current.validate();
       }
@@ -100,14 +108,26 @@ const CloseShiftModal = forwardRef(({
       {/* Note */}
       <div style={{ marginTop: 16 }}>
         <Text strong style={{ fontSize: 14, marginBottom: 8, display: 'block' }}>
-          Ghi chú
+          Ghi chú <span style={{ color: 'red' }}>*</span>
         </Text>
         <TextArea
           rows={2}
           value={closingNote}
-          onChange={(e) => setClosingNote(e.target.value)}
-          placeholder="Nhập ghi chú (nếu có)..."
+          onChange={(e) => {
+            setClosingNote(e.target.value);
+            // Clear error when user starts typing
+            if (noteError) {
+              setNoteError('');
+            }
+          }}
+          placeholder="Nhập ghi chú đóng ca (bắt buộc)..."
+          status={noteError ? 'error' : ''}
         />
+        {noteError && (
+          <Text type="danger" style={{ fontSize: 12, marginTop: 4, display: 'block' }}>
+            {noteError}
+          </Text>
+        )}
       </div>
     </Modal>
   );

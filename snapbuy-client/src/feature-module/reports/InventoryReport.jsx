@@ -168,37 +168,70 @@ const InventoryReport = () => {
                     {/* Form Chọn Ngày */}
                     <div className="card mb-4">
                         <div className="card-body">
-                            <div className="row">
-                                <div className="col-md-6">
-                                    <label className="form-label">Chọn ngày</label>
-                                    <DatePicker
-                                        value={selectedDate}
-                                        onChange={setSelectedDate}
-                                        format="DD/MM/YYYY"
-                                        placeholder="Chọn ngày"
-                                        style={{ width: '100%' }}
-                                        size="large"
-                                        disabledDate={(current) => {
-                                            return current && current > dayjs().endOf('day');
-                                        }}
-                                    />
+                            {/* Header Section */}
+                            <div className="mb-4">
+                                <div className="d-flex align-items-center gap-2 mb-2">
+                                    <i className="fas fa-filter text-secondary" style={{ fontSize: '20px' }}></i>
+                                    <h5 className="mb-0 fw-bold">Bộ lọc báo cáo</h5>
                                 </div>
-                                <div className="col-md-3 d-flex align-items-end">
-                                    <button
-                                        className="btn btn-primary btn-lg w-100"
-                                        onClick={handleLoadData}
-                                        disabled={!selectedDate || loading}
-                                    >
-                                        {loading ? (
-                                            <>
-                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                Đang tải...
-                                            </>
-                                        ) : (
-                                            "Tải dữ liệu"
-                                        )}
-                                    </button>
+                                <p className="text-muted mb-0" style={{ fontSize: '14px' }}>
+                                    Chọn ngày để xem báo cáo tồn kho
+                                </p>
+                            </div>
+
+                            {/* Date Selection Section */}
+                            <div className="mb-3">
+                                <div className="d-flex align-items-center gap-2 mb-3">
+                                    <i className="fas fa-calendar text-muted" style={{ fontSize: '14px' }}></i>
+                                    <label className="mb-0 fw-semibold" style={{ fontSize: '14px' }}>Chọn ngày</label>
                                 </div>
+                                <DatePicker
+                                    value={selectedDate}
+                                    onChange={setSelectedDate}
+                                    format="DD/MM/YYYY"
+                                    placeholder="Chọn ngày"
+                                    style={{
+                                        width: '100%',
+                                        borderRadius: '8px',
+                                        padding: '10px'
+                                    }}
+                                    disabledDate={(current) => {
+                                        return current && current > dayjs().endOf('day');
+                                    }}
+                                />
+                            </div>
+
+                            {/* Submit Button */}
+                            <div className="mt-4">
+                                <button
+                                    className="btn w-100"
+                                    onClick={handleLoadData}
+                                    disabled={!selectedDate || loading}
+                                    style={{
+                                        borderRadius: '8px',
+                                        padding: '12px',
+                                        fontSize: '15px',
+                                        fontWeight: '600',
+                                        backgroundColor: '#6c757d',
+                                        border: '1px solid #6c757d',
+                                        color: '#fff',
+                                        transition: 'all 0.3s ease',
+                                        cursor: 'pointer',
+                                        opacity: (!selectedDate || loading) ? 0.6 : 1
+                                    }}
+                                >
+                                    {loading ? (
+                                        <>
+                                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                            Đang tải...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fas fa-chart-line me-2"></i>
+                                            Xem báo cáo
+                                        </>
+                                    )}
+                                </button>
                             </div>
                         </div>
                     </div>
