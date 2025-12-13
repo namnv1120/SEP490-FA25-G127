@@ -162,6 +162,27 @@ const SmartDateTimePicker = ({
       locale={locale}
       style={{ width: "100%" }}
       showNow={false}
+      renderExtraFooter={() => (
+        <div style={{ textAlign: 'center', padding: '8px 0' }}>
+          <button
+            type="button"
+            className="btn btn-sm btn-primary"
+            onClick={() => {
+              const now = dayjs();
+              onChange?.(now);
+              pickerRef.current?.blur();
+            }}
+            style={{
+              padding: '4px 16px',
+              fontSize: '13px',
+              borderRadius: '4px'
+            }}
+          >
+            <i className="ti ti-clock me-1"></i>
+            Bây giờ
+          </button>
+        </div>
+      )}
       {...props}
     />
   );
