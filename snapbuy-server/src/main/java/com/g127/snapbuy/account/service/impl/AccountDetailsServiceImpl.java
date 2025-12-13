@@ -1,7 +1,7 @@
 package com.g127.snapbuy.account.service.impl;
 
-import com.g127.snapbuy.entity.Account;
-import com.g127.snapbuy.repository.AccountRepository;
+import com.g127.snapbuy.account.entity.Account;
+import com.g127.snapbuy.account.repository.AccountRepository;
 import com.g127.snapbuy.account.service.AccountDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;

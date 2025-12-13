@@ -3,7 +3,7 @@ package com.g127.snapbuy.account.service;
 import com.g127.snapbuy.account.dto.request.RoleCreateRequest;
 import com.g127.snapbuy.account.dto.request.RolePermissionUpdateRequest;
 import com.g127.snapbuy.account.dto.request.RoleUpdateRequest;
-import com.g127.snapbuy.response.PageResponse;
+import com.g127.snapbuy.common.response.PageResponse;
 import com.g127.snapbuy.account.dto.response.PermissionResponse;
 import com.g127.snapbuy.account.dto.response.RoleResponse;
 import org.springframework.data.domain.Pageable;

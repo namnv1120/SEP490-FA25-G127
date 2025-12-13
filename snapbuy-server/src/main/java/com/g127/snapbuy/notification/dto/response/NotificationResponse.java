@@ -1,6 +1,6 @@
 package com.g127.snapbuy.notification.dto.response;
 
-import com.g127.snapbuy.entity.Notification.NotificationType;
+import com.g127.snapbuy.notification.entity.Notification.NotificationType;
 import lombok.*;
 
 import java.time.LocalDateTime;

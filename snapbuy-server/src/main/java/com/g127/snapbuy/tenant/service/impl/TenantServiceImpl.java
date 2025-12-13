@@ -240,12 +240,69 @@ public class TenantServiceImpl implements TenantService {
     @Override
     @Transactional("masterTransactionManager")
     public void deleteTenant(UUID tenantId) {
-        if (!tenantRepository.existsById(tenantId)) {
-            throw new NoSuchElementException("Không tìm thấy cửa hàng");
-        }
+        Tenant tenant = tenantRepository.findById(tenantId)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy cửa hàng"));
         
-        tenantRepository.deleteById(tenantId);
-        log.info("Tenant deleted: {}", tenantId);
+        String dbName = tenant.getDbName();
+        String tenantIdStr = tenantId.toString();
+        
+        try {
+            // Step 1: Remove datasource from routing pool
+            if (tenantRoutingDataSource != null) {
+                tenantRoutingDataSource.removeTenantDataSource(tenantIdStr);
+                log.info("Removed datasource for tenant: {}", tenantIdStr);
+            }
+            
+            // Step 2: Drop the tenant database
+            dropTenantDatabase(tenant);
+            log.info("Dropped database: {}", dbName);
+            
+            // Step 3: Delete tenant record from master DB (cascade will delete owner)
+            tenantRepository.deleteById(tenantId);
+            log.info("Tenant deleted from master DB: {}", tenantId);
+            
+        } catch (Exception e) {
+            log.error("Error deleting tenant {}: {}", tenantId, e.getMessage(), e);
+            throw new RuntimeException("Không thể xóa cửa hàng: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Drop tenant database
+     */
+    private void dropTenantDatabase(Tenant tenant) throws Exception {
+        String masterUrl = String.format(
+                "jdbc:sqlserver://%s:%d;databaseName=master;encrypt=false;trustServerCertificate=true",
+                tenant.getDbHost(), tenant.getDbPort()
+        );
+
+        try (java.sql.Connection conn = java.sql.DriverManager.getConnection(
+                masterUrl, tenant.getDbUsername(), tenant.getDbPassword());
+             java.sql.Statement stmt = conn.createStatement()) {
+
+            // Terminate all connections to the database before dropping
+            String killConnectionsQuery = String.format(
+                    "ALTER DATABASE [%s] SET SINGLE_USER WITH ROLLBACK IMMEDIATE",
+                    tenant.getDbName()
+            );
+            
+            try {
+                stmt.executeUpdate(killConnectionsQuery);
+                log.debug("Terminated all connections to database: {}", tenant.getDbName());
+            } catch (Exception e) {
+                log.warn("Could not set database to single user mode: {}", e.getMessage());
+                // Continue anyway - database might not exist
+            }
+            
+            // Drop the database
+            String dropQuery = String.format("DROP DATABASE IF EXISTS [%s]", tenant.getDbName());
+            stmt.executeUpdate(dropQuery);
+            log.debug("Database '{}' dropped successfully", tenant.getDbName());
+            
+        } catch (Exception e) {
+            String errorMsg = e.getMessage();
+            throw new RuntimeException("Lỗi khi xóa cơ sở dữ liệu: " + errorMsg, e);
+        }
     }
 
     @Override

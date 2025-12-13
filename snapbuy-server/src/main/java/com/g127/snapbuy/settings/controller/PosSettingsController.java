@@ -1,6 +1,6 @@
 package com.g127.snapbuy.settings.controller;
 
-import com.g127.snapbuy.response.ApiResponse;
+import com.g127.snapbuy.common.response.ApiResponse;
 import com.g127.snapbuy.settings.dto.request.PosSettingsUpdateRequest;
 import com.g127.snapbuy.settings.dto.response.PosSettingsResponse;
 import com.g127.snapbuy.settings.service.PosSettingsService;

@@ -17,7 +17,6 @@ import java.util.Map;
 @Configuration
 @EnableJpaRepositories(
     basePackages = {
-        "com.g127.snapbuy.repository",
         "com.g127.snapbuy.account.repository",
         "com.g127.snapbuy.category.repository",
         "com.g127.snapbuy.customer.repository",
@@ -25,6 +24,7 @@ import java.util.Map;
         "com.g127.snapbuy.location.repository",
         "com.g127.snapbuy.notification.repository",
         "com.g127.snapbuy.order.repository",
+        "com.g127.snapbuy.payment.repository",
         "com.g127.snapbuy.product.repository",
         "com.g127.snapbuy.promotion.repository",
         "com.g127.snapbuy.revenue.repository",
@@ -61,7 +61,6 @@ public class TenantDataSourceConfig {
         return builder
                 .dataSource(dataSource)
                 .packages(
-                    "com.g127.snapbuy.entity",
                     "com.g127.snapbuy.account.entity",
                     "com.g127.snapbuy.category.entity",
                     "com.g127.snapbuy.customer.entity",
@@ -69,6 +68,7 @@ public class TenantDataSourceConfig {
                     "com.g127.snapbuy.location.entity",
                     "com.g127.snapbuy.notification.entity",
                     "com.g127.snapbuy.order.entity",
+                    "com.g127.snapbuy.payment.entity",
                     "com.g127.snapbuy.product.entity",
                     "com.g127.snapbuy.promotion.entity",
                     "com.g127.snapbuy.revenue.entity",

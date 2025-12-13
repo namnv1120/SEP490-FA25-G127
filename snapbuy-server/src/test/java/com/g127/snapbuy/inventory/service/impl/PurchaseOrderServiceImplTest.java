@@ -2,8 +2,8 @@ package com.g127.snapbuy.inventory.service.impl;
 
 import com.g127.snapbuy.inventory.dto.response.PurchaseOrderResponse;
 import com.g127.snapbuy.entity.*;
-import com.g127.snapbuy.exception.AppException;
-import com.g127.snapbuy.exception.ErrorCode;
+import com.g127.snapbuy.common.exception.AppException;
+import com.g127.snapbuy.common.exception.ErrorCode;
 import com.g127.snapbuy.mapper.PurchaseOrderMapper;
 import com.g127.snapbuy.repository.*;
 import org.junit.jupiter.api.BeforeEach;

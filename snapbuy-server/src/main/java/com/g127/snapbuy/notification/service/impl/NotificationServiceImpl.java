@@ -1,13 +1,13 @@
 package com.g127.snapbuy.notification.service.impl;
 
 import com.g127.snapbuy.notification.dto.response.NotificationResponse;
-import com.g127.snapbuy.response.PageResponse;
-import com.g127.snapbuy.entity.Account;
-import com.g127.snapbuy.entity.Notification;
-import com.g127.snapbuy.entity.Notification.NotificationType;
-import com.g127.snapbuy.mapper.NotificationMapper;
-import com.g127.snapbuy.repository.AccountRepository;
-import com.g127.snapbuy.repository.NotificationRepository;
+import com.g127.snapbuy.common.response.PageResponse;
+import com.g127.snapbuy.account.entity.Account;
+import com.g127.snapbuy.notification.entity.Notification;
+import com.g127.snapbuy.notification.entity.Notification.NotificationType;
+import com.g127.snapbuy.notification.mapper.NotificationMapper;
+import com.g127.snapbuy.account.repository.AccountRepository;
+import com.g127.snapbuy.notification.repository.NotificationRepository;
 import com.g127.snapbuy.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

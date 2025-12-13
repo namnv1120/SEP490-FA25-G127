@@ -37,7 +37,7 @@ public class DemoDataService {
             log.info("Inserting demo data for tenant: {}", tenantId);
 
             // Read SQL file from classpath
-            ClassPathResource resource = new ClassPathResource("demo-data/demo_data.sql");
+            ClassPathResource resource = new ClassPathResource("db/demo-data/demo_data.sql");
             String sqlScript;
             
             try (BufferedReader reader = new BufferedReader(

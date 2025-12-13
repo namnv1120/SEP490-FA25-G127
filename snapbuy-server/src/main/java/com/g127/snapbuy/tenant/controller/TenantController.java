@@ -1,6 +1,6 @@
 package com.g127.snapbuy.tenant.controller;
 
-import com.g127.snapbuy.response.ApiResponse;
+import com.g127.snapbuy.common.response.ApiResponse;
 import com.g127.snapbuy.tenant.dto.request.TenantCreateRequest;
 import com.g127.snapbuy.tenant.dto.response.TenantResponse;
 import com.g127.snapbuy.tenant.service.DemoDataService;

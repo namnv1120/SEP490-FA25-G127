@@ -1,6 +1,6 @@
 package com.g127.snapbuy.order.controller;
 
-import com.g127.snapbuy.response.ApiResponse;
+import com.g127.snapbuy.common.response.ApiResponse;
 import com.g127.snapbuy.order.dto.request.OrderCreateRequest;
 import com.g127.snapbuy.order.dto.response.OrderResponse;
 import com.g127.snapbuy.order.service.OrderService;

@@ -1,6 +1,6 @@
 package com.g127.snapbuy.promotion.dto.request;
 
-import com.g127.snapbuy.entity.Promotion;
+import com.g127.snapbuy.promotion.entity.Promotion;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Size;
 import lombok.*;

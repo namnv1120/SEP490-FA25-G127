@@ -2,10 +2,10 @@ package com.g127.snapbuy.account.controller;
 
 import com.g127.snapbuy.auth.dto.request.EmailVerificationRequest;
 import com.g127.snapbuy.auth.dto.request.VerifyEmailOtpRequest;
-import com.g127.snapbuy.response.ApiResponse;
+import com.g127.snapbuy.common.response.ApiResponse;
 import com.g127.snapbuy.account.dto.request.*;
 import com.g127.snapbuy.account.dto.response.AccountResponse;
-import com.g127.snapbuy.response.PageResponse;
+import com.g127.snapbuy.common.response.PageResponse;
 import com.g127.snapbuy.account.service.AccountService;
 import com.g127.snapbuy.auth.service.EmailVerificationService;
 import jakarta.validation.Valid;

@@ -1,10 +1,10 @@
 package com.g127.snapbuy.product.controller;
 
-import com.g127.snapbuy.response.ApiResponse;
+import com.g127.snapbuy.common.response.ApiResponse;
 import com.g127.snapbuy.product.dto.request.ProductCreateRequest;
 import com.g127.snapbuy.product.dto.request.ProductImportRequest;
 import com.g127.snapbuy.product.dto.request.ProductUpdateRequest;
-import com.g127.snapbuy.response.PageResponse;
+import com.g127.snapbuy.common.response.PageResponse;
 import com.g127.snapbuy.product.dto.response.ProductResponse;
 import com.g127.snapbuy.product.service.BarcodeService;
 import com.g127.snapbuy.product.service.ProductService;

@@ -278,10 +278,14 @@ CREATE UNIQUE INDEX UX_accounts_email ON accounts (email) WHERE email IS NOT NUL
 CREATE UNIQUE INDEX UX_accounts_phone ON accounts (phone) WHERE phone IS NOT NULL;
 CREATE INDEX ix_inventory_transaction_product_id ON inventory_transaction (product_id);
 CREATE UNIQUE INDEX UX_products_barcode ON products (barcode) WHERE barcode IS NOT NULL;
-CREATE INDEX IX_products_barcode_search ON products (barcode);
 CREATE UNIQUE INDEX UX_customers_phone ON customers (phone) WHERE phone IS NOT NULL;
 CREATE UNIQUE INDEX UX_suppliers_phone ON suppliers (phone) WHERE phone IS NOT NULL;
 CREATE UNIQUE INDEX UX_suppliers_email ON suppliers (email) WHERE email IS NOT NULL;
+CREATE INDEX ix_inventory_transaction_date ON inventory_transaction (transaction_date DESC);
+CREATE INDEX ix_product_price_product_valid ON product_price (product_id, valid_from DESC);
+CREATE INDEX ix_promotions_active_dates ON promotions (active, start_date, end_date);
+CREATE INDEX ix_purchase_order_status ON purchase_order (status, order_date DESC);
+CREATE INDEX ix_orders_account_date ON orders (account_id, order_date DESC);
 
 -- Notifications Table
 CREATE TABLE notifications

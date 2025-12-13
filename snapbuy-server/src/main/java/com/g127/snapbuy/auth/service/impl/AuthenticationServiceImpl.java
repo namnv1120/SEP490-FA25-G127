@@ -1,6 +1,7 @@
 package com.g127.snapbuy.auth.service.impl;
 
-import com.g127.snapbuy.config.JwtUtil;
+import com.g127.snapbuy.account.repository.AccountRepository;
+import com.g127.snapbuy.common.config.JwtUtil;
 import com.g127.snapbuy.auth.dto.request.AuthenticationRequest;
 import com.g127.snapbuy.auth.dto.request.IntrospectRequest;
 import com.g127.snapbuy.auth.dto.request.LogoutRequest;
@@ -24,7 +25,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
-    private final com.g127.snapbuy.repository.AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest req) {

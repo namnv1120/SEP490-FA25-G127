@@ -1,6 +1,6 @@
 package com.g127.snapbuy.auth.service.impl;
 
-import com.g127.snapbuy.config.OtpStore;
+import com.g127.snapbuy.common.config.OtpStore;
 import com.g127.snapbuy.auth.dto.request.VerifyEmailOtpRequest;
 import com.g127.snapbuy.entity.Account;
 import com.g127.snapbuy.repository.AccountRepository;

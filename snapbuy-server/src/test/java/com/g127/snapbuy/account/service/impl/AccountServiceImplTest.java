@@ -2,10 +2,10 @@ package com.g127.snapbuy.account.service.impl;
 
 import com.g127.snapbuy.account.dto.request.*;
 import com.g127.snapbuy.account.dto.response.AccountResponse;
-import com.g127.snapbuy.response.PageResponse;
+import com.g127.snapbuy.common.response.PageResponse;
 import com.g127.snapbuy.entity.Account;
 import com.g127.snapbuy.entity.Role;
-import com.g127.snapbuy.exception.AppException;
+import com.g127.snapbuy.common.exception.AppException;
 import com.g127.snapbuy.mapper.AccountMapper;
 import com.g127.snapbuy.repository.AccountRepository;
 import com.g127.snapbuy.repository.RoleRepository;

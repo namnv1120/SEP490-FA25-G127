@@ -1,6 +1,6 @@
 package com.g127.snapbuy.order.dto.response;
 
-import com.g127.snapbuy.entity.Promotion;
+import com.g127.snapbuy.promotion.entity.Promotion;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

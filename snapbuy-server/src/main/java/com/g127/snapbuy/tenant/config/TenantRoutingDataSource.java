@@ -40,6 +40,13 @@ public class TenantRoutingDataSource extends AbstractRoutingDataSource {
     }
     
     public void removeTenantDataSource(String tenantId) {
+        Object dataSource = this.targetDataSources.get(tenantId);
+        
+        // Close the datasource if it's a HikariDataSource
+        if (dataSource instanceof com.zaxxer.hikari.HikariDataSource) {
+            ((com.zaxxer.hikari.HikariDataSource) dataSource).close();
+        }
+        
         this.targetDataSources.remove(tenantId);
         super.setTargetDataSources(this.targetDataSources);
         super.afterPropertiesSet();

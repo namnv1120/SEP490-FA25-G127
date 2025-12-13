@@ -4,7 +4,7 @@ import com.g127.snapbuy.auth.dto.request.AuthenticationRequest;
 import com.g127.snapbuy.auth.dto.request.IntrospectRequest;
 import com.g127.snapbuy.auth.dto.request.LogoutRequest;
 import com.g127.snapbuy.auth.dto.request.RefreshRequest;
-import com.g127.snapbuy.response.ApiResponse;
+import com.g127.snapbuy.common.response.ApiResponse;
 import com.g127.snapbuy.auth.dto.response.AuthenticationResponse;
 import com.g127.snapbuy.auth.dto.response.IntrospectResponse;
 import com.g127.snapbuy.auth.service.AuthenticationService;

@@ -1,6 +1,6 @@
 package com.g127.snapbuy.notification.controller;
 
-import com.g127.snapbuy.response.ApiResponse;
+import com.g127.snapbuy.common.response.ApiResponse;
 import com.g127.snapbuy.notification.dto.request.NotificationSettingsUpdateRequest;
 import com.g127.snapbuy.notification.dto.response.NotificationSettingsResponse;
 import com.g127.snapbuy.notification.service.NotificationSettingsService;

@@ -1,8 +1,8 @@
 package com.g127.snapbuy.payment.service.impl;
 
 import com.g127.snapbuy.payment.dto.response.MomoPaymentResponse;
-import com.g127.snapbuy.entity.Order;
-import com.g127.snapbuy.repository.OrderRepository;
+import com.g127.snapbuy.order.entity.Order;
+import com.g127.snapbuy.order.repository.OrderRepository;
 import com.g127.snapbuy.payment.service.MoMoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

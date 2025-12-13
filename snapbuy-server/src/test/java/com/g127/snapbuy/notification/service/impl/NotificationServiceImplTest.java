@@ -7,7 +7,7 @@ import com.g127.snapbuy.mapper.NotificationMapper;
 import com.g127.snapbuy.notification.dto.response.NotificationResponse;
 import com.g127.snapbuy.repository.AccountRepository;
 import com.g127.snapbuy.repository.NotificationRepository;
-import com.g127.snapbuy.response.PageResponse;
+import com.g127.snapbuy.common.response.PageResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -3,13 +3,22 @@ package com.g127.snapbuy.product.service.impl;
 import com.g127.snapbuy.product.dto.request.ProductCreateRequest;
 import com.g127.snapbuy.product.dto.request.ProductImportRequest;
 import com.g127.snapbuy.product.dto.request.ProductUpdateRequest;
-import com.g127.snapbuy.response.PageResponse;
+import com.g127.snapbuy.common.response.PageResponse;
+import com.g127.snapbuy.common.utils.VietnameseUtils;
 import com.g127.snapbuy.product.dto.response.ProductResponse;
-import com.g127.snapbuy.entity.*;
-import com.g127.snapbuy.exception.AppException;
-import com.g127.snapbuy.exception.ErrorCode;
-import com.g127.snapbuy.mapper.ProductMapper;
-import com.g127.snapbuy.repository.*;
+import com.g127.snapbuy.product.entity.Product;
+import com.g127.snapbuy.product.entity.ProductPrice;
+import com.g127.snapbuy.product.entity.Category;
+import com.g127.snapbuy.inventory.entity.Inventory;
+import com.g127.snapbuy.supplier.entity.Supplier;
+import com.g127.snapbuy.common.exception.AppException;
+import com.g127.snapbuy.common.exception.ErrorCode;
+import com.g127.snapbuy.product.mapper.ProductMapper;
+import com.g127.snapbuy.product.repository.ProductRepository;
+import com.g127.snapbuy.product.repository.ProductPriceRepository;
+import com.g127.snapbuy.product.repository.CategoryRepository;
+import com.g127.snapbuy.inventory.repository.InventoryRepository;
+import com.g127.snapbuy.supplier.repository.SupplierRepository;
 import com.g127.snapbuy.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -278,22 +287,51 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public List<ProductResponse> getAllProducts() {
-        return productRepository.findAllActiveWithActiveCategory()
-                .stream()
+        List<Product> products = productRepository.findAllActiveWithActiveCategory();
+        
+        if (products.isEmpty()) {
+            return List.of();
+        }
+        
+        // Batch fetch all product IDs
+        List<UUID> productIds = products.stream()
+                .map(Product::getProductId)
+                .toList();
+        
+        // Batch fetch only relevant prices using IN clause (1 query, only needed data)
+        Map<UUID, ProductPrice> latestPrices = productPriceRepository.findByProductIdIn(productIds).stream()
+                .collect(Collectors.groupingBy(
+                        p -> p.getProduct().getProductId(),
+                        Collectors.collectingAndThen(
+                                Collectors.maxBy((a, b) -> a.getValidFrom().compareTo(b.getValidFrom())),
+                                opt -> opt.orElse(null)
+                        )
+                ));
+        
+        // Batch fetch only relevant inventories using IN clause (1 query, only needed data)
+        Map<UUID, Inventory> inventoriesMap = inventoryRepository.findByProductIdIn(productIds).stream()
+                .collect(Collectors.toMap(
+                        inv -> inv.getProduct().getProductId(),
+                        inv -> inv,
+                        (existing, replacement) -> existing
+                ));
+        
+        // Map to responses using pre-fetched data
+        return products.stream()
                 .map(product -> {
                     ProductResponse response = productMapper.toResponse(product);
-
-                    productPriceRepository.findTopByProduct_ProductIdOrderByValidFromDesc(product.getProductId())
-                            .ifPresent(latestPrice -> {
-                                response.setUnitPrice(latestPrice.getUnitPrice());
-                                response.setCostPrice(latestPrice.getCostPrice());
-                            });
-
-                    inventoryRepository.findByProduct_ProductId(product.getProductId())
-                            .ifPresent(inventory ->
-                                    response.setQuantityInStock(inventory.getQuantityInStock())
-                            );
-
+                    
+                    ProductPrice latestPrice = latestPrices.get(product.getProductId());
+                    if (latestPrice != null) {
+                        response.setUnitPrice(latestPrice.getUnitPrice());
+                        response.setCostPrice(latestPrice.getCostPrice());
+                    }
+                    
+                    Inventory inventory = inventoriesMap.get(product.getProductId());
+                    if (inventory != null) {
+                        response.setQuantityInStock(inventory.getQuantityInStock());
+                    }
+                    
                     return response;
                 })
                 .toList();
@@ -590,7 +628,7 @@ public class ProductServiceImpl implements ProductService {
                 price.setValidFrom(LocalDateTime.now());
                 productPriceRepository.save(price);
 
-                com.g127.snapbuy.entity.Inventory inventory = new com.g127.snapbuy.entity.Inventory();
+                Inventory inventory = new Inventory();
                 inventory.setProduct(savedProduct);
                 inventory.setQuantityInStock(0);
                 inventory.setMinimumStock(0);
@@ -653,30 +691,39 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public PageResponse<ProductResponse> searchByKeyword(String keyword, Pageable pageable) {
-        // Trim keyword to handle leading/trailing whitespace
-        String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
-        Page<Product> productPage = productRepository.searchByKeyword(trimmedKeyword, null, null, null,
-            PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize()
-            ));
-        
-        return buildProductPageResponse(productPage);
+        return searchProductsPaged(keyword, null, null, null, pageable);
     }
 
     @Override
     public PageResponse<ProductResponse> searchProductsPaged(String keyword, Boolean active, UUID categoryId, UUID subCategoryId, Pageable pageable) {
         try {
-            Page<Product> productPage = productRepository.searchByKeyword(
-                keyword == null || keyword.isBlank() ? null : keyword.trim(),
-                active,
-                categoryId,
-                subCategoryId,
-                PageRequest.of(
-                    pageable.getPageNumber(),
-                    pageable.getPageSize()
-                )
-            );
+            // Fetch all products matching filters (except keyword) from DB
+            List<Product> allProducts = productRepository.findProductsForSearch(active, categoryId, subCategoryId);
+            
+            // Filter by keyword in Java using VietnameseUtils
+            String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+            List<Product> filteredProducts = allProducts;
+            
+            if (trimmedKeyword != null) {
+                filteredProducts = allProducts.stream()
+                    .filter(p -> VietnameseUtils.matchesAny(trimmedKeyword, 
+                        p.getProductCode(), 
+                        p.getProductName()))
+                    .toList();
+            }
+            
+            // Manual pagination
+            int pageNumber = pageable.getPageNumber();
+            int pageSize = pageable.getPageSize();
+            int totalElements = filteredProducts.size();
+            int fromIndex = pageNumber * pageSize;
+            int toIndex = Math.min(fromIndex + pageSize, totalElements);
+            
+            List<Product> pagedProducts = (fromIndex < totalElements) 
+                ? filteredProducts.subList(fromIndex, toIndex) 
+                : List.of();
+            
+            Page<Product> productPage = new PageImpl<>(pagedProducts, pageable, totalElements);
             
             return buildProductPageResponse(productPage);
         } catch (Exception e) {

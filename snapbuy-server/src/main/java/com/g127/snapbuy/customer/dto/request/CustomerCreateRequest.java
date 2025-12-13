@@ -1,6 +1,6 @@
 package com.g127.snapbuy.customer.dto.request;
 
-import com.g127.snapbuy.entity.Customer;
+import com.g127.snapbuy.customer.entity.Customer;
 import jakarta.validation.constraints.*;
 import lombok.*;
 

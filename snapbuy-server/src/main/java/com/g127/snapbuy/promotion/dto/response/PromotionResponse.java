@@ -1,6 +1,6 @@
 package com.g127.snapbuy.promotion.dto.response;
 
-import com.g127.snapbuy.entity.Promotion;
+import com.g127.snapbuy.promotion.entity.Promotion;
 import lombok.*;
 
 import java.math.BigDecimal;

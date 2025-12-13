@@ -3,12 +3,13 @@ package com.g127.snapbuy.customer.service.impl;
 import com.g127.snapbuy.customer.dto.request.CustomerCreateRequest;
 import com.g127.snapbuy.customer.dto.request.CustomerUpdateRequest;
 import com.g127.snapbuy.customer.dto.response.CustomerResponse;
-import com.g127.snapbuy.entity.Customer;
-import com.g127.snapbuy.exception.AppException;
-import com.g127.snapbuy.exception.ErrorCode;
-import com.g127.snapbuy.mapper.CustomerMapper;
-import com.g127.snapbuy.repository.CustomerRepository;
+import com.g127.snapbuy.customer.entity.Customer;
+import com.g127.snapbuy.common.exception.AppException;
+import com.g127.snapbuy.common.exception.ErrorCode;
+import com.g127.snapbuy.customer.mapper.CustomerMapper;
+import com.g127.snapbuy.customer.repository.CustomerRepository;
 import com.g127.snapbuy.customer.service.CustomerService;
+import com.g127.snapbuy.common.utils.VietnameseUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -105,10 +106,19 @@ public class CustomerServiceImpl implements CustomerService {
                 .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
         customerRepository.delete(customer);
     }
-
     @Override
     public List<CustomerResponse> searchCustomer(String keyword) {
-        var customers = customerRepository.searchByKeyword(keyword);
+        // Fetch all active customers
+        var customers = customerRepository.findByActiveTrue();
+        
+        // Filter by keyword in Java using VietnameseUtils
+        String trimmedKeyword = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
+        if (trimmedKeyword != null) {
+            customers = customers.stream()
+                .filter(c -> VietnameseUtils.matchesAny(trimmedKeyword, c.getFullName(), c.getPhone()))
+                .toList();
+        }
+        
         return customers.stream()
                 .map(customerMapper::toResponse)
                 .collect(Collectors.toList());

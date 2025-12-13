@@ -1,6 +1,6 @@
 package com.g127.snapbuy.order.controller;
 
-import com.g127.snapbuy.response.ApiResponse;
+import com.g127.snapbuy.common.response.ApiResponse;
 import com.g127.snapbuy.order.dto.request.PosShiftOpenRequest;
 import com.g127.snapbuy.order.dto.request.PosShiftOpenForEmployeeRequest;
 import com.g127.snapbuy.order.dto.request.PosShiftCloseRequest;

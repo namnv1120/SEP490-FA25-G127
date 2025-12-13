@@ -1,6 +1,6 @@
 package com.g127.snapbuy.account.controller;
 
-import com.g127.snapbuy.response.ApiResponse;
+import com.g127.snapbuy.common.response.ApiResponse;
 import com.g127.snapbuy.account.dto.request.PermissionCreateRequest;
 import com.g127.snapbuy.account.dto.request.PermissionUpdateRequest;
 import com.g127.snapbuy.account.dto.response.PermissionResponse;

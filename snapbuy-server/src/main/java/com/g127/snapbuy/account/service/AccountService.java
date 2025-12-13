@@ -2,7 +2,7 @@ package com.g127.snapbuy.account.service;
 
 import com.g127.snapbuy.account.dto.request.*;
 import com.g127.snapbuy.account.dto.response.AccountResponse;
-import com.g127.snapbuy.response.PageResponse;
+import com.g127.snapbuy.common.response.PageResponse;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;

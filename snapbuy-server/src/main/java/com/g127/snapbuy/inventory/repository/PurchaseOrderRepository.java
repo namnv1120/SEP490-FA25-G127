@@ -1,0 +1,18 @@
+package com.g127.snapbuy.inventory.repository;
+
+import com.g127.snapbuy.inventory.entity.PurchaseOrder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, UUID> {
+    long countByOrderDateBetween(LocalDateTime start, LocalDateTime end);
+    Page<PurchaseOrder> findByStatusContainingIgnoreCase(String status, Pageable pageable);
+    Page<PurchaseOrder> findBySupplierId(UUID supplierId, Pageable pageable);
+    Page<PurchaseOrder> findByOrderDateBetween(LocalDateTime from, LocalDateTime to, Pageable pageable);
+}

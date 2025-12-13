@@ -2,14 +2,14 @@ package com.g127.snapbuy.account.service.impl;
 
 import com.g127.snapbuy.account.dto.request.*;
 import com.g127.snapbuy.account.dto.response.AccountResponse;
-import com.g127.snapbuy.response.PageResponse;
-import com.g127.snapbuy.entity.Account;
-import com.g127.snapbuy.entity.Role;
-import com.g127.snapbuy.exception.AppException;
-import com.g127.snapbuy.exception.ErrorCode;
-import com.g127.snapbuy.mapper.AccountMapper;
-import com.g127.snapbuy.repository.AccountRepository;
-import com.g127.snapbuy.repository.RoleRepository;
+import com.g127.snapbuy.common.response.PageResponse;
+import com.g127.snapbuy.account.entity.Account;
+import com.g127.snapbuy.account.entity.Role;
+import com.g127.snapbuy.common.exception.AppException;
+import com.g127.snapbuy.common.exception.ErrorCode;
+import com.g127.snapbuy.account.mapper.AccountMapper;
+import com.g127.snapbuy.account.repository.AccountRepository;
+import com.g127.snapbuy.account.repository.RoleRepository;
 import com.g127.snapbuy.account.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.g127.snapbuy.common.utils.VietnameseUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -457,33 +458,64 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @PreAuthorize("hasRole('Chủ cửa hàng')")
     public List<AccountResponse> searchAccounts(String keyword, Boolean active, String roleName) {
-        List<Account> accounts = accountRepository.searchAccounts(
-                keyword == null || keyword.isBlank() ? null : keyword.trim(),
+        // Fetch from DB without keyword filter
+        List<Account> accounts = accountRepository.findAccountsForSearch(
                 active,
                 roleName == null || roleName.isBlank() ? null : roleName.trim()
         );
+        
+        // Filter by keyword in Java using VietnameseUtils
+        String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+        if (trimmedKeyword != null) {
+            accounts = accounts.stream()
+                .filter(a -> VietnameseUtils.matchesAny(trimmedKeyword, 
+                    a.getFullName(), a.getUsername(), a.getEmail(), a.getPhone()))
+                .toList();
+        }
+        
         return accounts.stream().map(accountMapper::toResponse).toList();
     }
 
     @Override
     @PreAuthorize("hasRole('Chủ cửa hàng')")
     public PageResponse<AccountResponse> searchAccountsPaged(String keyword, Boolean active, String roleName, Pageable pageable) {
-        var page = accountRepository.searchAccountsPage(
-                keyword == null || keyword.isBlank() ? null : keyword.trim(),
+        // Fetch from DB without keyword filter
+        List<Account> accounts = accountRepository.findAccountsForSearch(
                 active,
-                roleName == null || roleName.isBlank() ? null : roleName.trim(),
-                pageable
+                roleName == null || roleName.isBlank() ? null : roleName.trim()
         );
-        var content = page.getContent().stream().map(accountMapper::toResponse).toList();
+        
+        // Filter by keyword in Java using VietnameseUtils
+        String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+        if (trimmedKeyword != null) {
+            accounts = accounts.stream()
+                .filter(a -> VietnameseUtils.matchesAny(trimmedKeyword, 
+                    a.getFullName(), a.getUsername(), a.getEmail(), a.getPhone()))
+                .toList();
+        }
+        
+        // Manual pagination
+        int pageNumber = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        int totalElements = accounts.size();
+        int totalPages = (int) Math.ceil((double) totalElements / pageSize);
+        int fromIndex = pageNumber * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, totalElements);
+        
+        List<Account> pagedAccounts = (fromIndex < totalElements) 
+            ? accounts.subList(fromIndex, toIndex) 
+            : List.of();
+        
+        var content = pagedAccounts.stream().map(accountMapper::toResponse).toList();
         return PageResponse.<AccountResponse>builder()
                 .content(content)
-                .totalElements(page.getTotalElements())
-                .totalPages(page.getTotalPages())
-                .size(page.getSize())
-                .number(page.getNumber())
-                .first(page.isFirst())
-                .last(page.isLast())
-                .empty(page.isEmpty())
+                .totalElements(totalElements)
+                .totalPages(totalPages)
+                .size(pageSize)
+                .number(pageNumber)
+                .first(pageNumber == 0)
+                .last(pageNumber >= totalPages - 1)
+                .empty(content.isEmpty())
                 .build();
     }
 
@@ -498,22 +530,41 @@ public class AccountServiceImpl implements AccountService {
         } else {
             roleFilterList = allowedRoles;
         }
-        var page = accountRepository.searchStaffAccountsPage(
-                keyword == null || keyword.isBlank() ? null : keyword.trim(),
-                active,
-                roleFilterList,
-                pageable
-        );
-        var content = page.getContent().stream().map(accountMapper::toResponse).toList();
+        
+        // Fetch from DB without keyword filter
+        List<Account> accounts = accountRepository.findStaffAccountsForSearch(active, roleFilterList);
+        
+        // Filter by keyword in Java using VietnameseUtils
+        String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+        if (trimmedKeyword != null) {
+            accounts = accounts.stream()
+                .filter(a -> VietnameseUtils.matchesAny(trimmedKeyword, 
+                    a.getFullName(), a.getUsername(), a.getEmail(), a.getPhone()))
+                .toList();
+        }
+        
+        // Manual pagination
+        int pageNumber = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        int totalElements = accounts.size();
+        int totalPages = (int) Math.ceil((double) totalElements / pageSize);
+        int fromIndex = pageNumber * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, totalElements);
+        
+        List<Account> pagedAccounts = (fromIndex < totalElements) 
+            ? accounts.subList(fromIndex, toIndex) 
+            : List.of();
+        
+        var content = pagedAccounts.stream().map(accountMapper::toResponse).toList();
         return PageResponse.<AccountResponse>builder()
                 .content(content)
-                .totalElements(page.getTotalElements())
-                .totalPages(page.getTotalPages())
-                .size(page.getSize())
-                .number(page.getNumber())
-                .first(page.isFirst())
-                .last(page.isLast())
-                .empty(page.isEmpty())
+                .totalElements(totalElements)
+                .totalPages(totalPages)
+                .size(pageSize)
+                .number(pageNumber)
+                .first(pageNumber == 0)
+                .last(pageNumber >= totalPages - 1)
+                .empty(content.isEmpty())
                 .build();
     }
 }

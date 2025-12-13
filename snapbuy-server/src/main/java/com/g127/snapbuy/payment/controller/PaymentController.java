@@ -1,6 +1,6 @@
 package com.g127.snapbuy.payment.controller;
 
-import com.g127.snapbuy.response.ApiResponse;
+import com.g127.snapbuy.common.response.ApiResponse;
 import com.g127.snapbuy.payment.dto.request.PaymentRequest;
 import com.g127.snapbuy.payment.dto.response.PaymentResponse;
 import com.g127.snapbuy.payment.service.PaymentService;

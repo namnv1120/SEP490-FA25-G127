@@ -1,11 +1,11 @@
 package com.g127.snapbuy.auth.service.impl;
 
 import com.g127.snapbuy.auth.dto.request.VerifyEmailOtpRequest;
-import com.g127.snapbuy.entity.Account;
-import com.g127.snapbuy.repository.AccountRepository;
+import com.g127.snapbuy.account.entity.Account;
+import com.g127.snapbuy.account.repository.AccountRepository;
 import com.g127.snapbuy.auth.service.EmailVerificationService;
 import com.g127.snapbuy.auth.service.MailService;
-import com.g127.snapbuy.config.OtpStore;
+import com.g127.snapbuy.common.config.OtpStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

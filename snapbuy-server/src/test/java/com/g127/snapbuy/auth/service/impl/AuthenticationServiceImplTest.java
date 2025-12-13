@@ -1,6 +1,6 @@
 package com.g127.snapbuy.auth.service.impl;
 
-import com.g127.snapbuy.config.JwtUtil;
+import com.g127.snapbuy.common.config.JwtUtil;
 import com.g127.snapbuy.auth.dto.request.AuthenticationRequest;
 import com.g127.snapbuy.auth.dto.request.IntrospectRequest;
 import com.g127.snapbuy.auth.dto.request.LogoutRequest;

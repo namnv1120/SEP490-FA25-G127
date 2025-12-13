@@ -3,12 +3,13 @@ package com.g127.snapbuy.product.service.impl;
 import com.g127.snapbuy.product.dto.request.CategoryCreateRequest;
 import com.g127.snapbuy.product.dto.request.CategoryUpdateRequest;
 import com.g127.snapbuy.product.dto.response.CategoryResponse;
-import com.g127.snapbuy.response.PageResponse;
-import com.g127.snapbuy.entity.Category;
-import com.g127.snapbuy.exception.AppException;
-import com.g127.snapbuy.exception.ErrorCode;
-import com.g127.snapbuy.mapper.CategoryMapper;
-import com.g127.snapbuy.repository.CategoryRepository;
+import com.g127.snapbuy.common.response.PageResponse;
+import com.g127.snapbuy.common.utils.VietnameseUtils;
+import com.g127.snapbuy.product.entity.Category;
+import com.g127.snapbuy.common.exception.AppException;
+import com.g127.snapbuy.common.exception.ErrorCode;
+import com.g127.snapbuy.product.mapper.CategoryMapper;
+import com.g127.snapbuy.product.repository.CategoryRepository;
 import com.g127.snapbuy.product.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -174,45 +175,100 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public PageResponse<CategoryResponse> searchParentCategoriesByKeyword(String keyword, Pageable pageable) {
-        // Trim keyword to handle leading/trailing whitespace
-        String trimmedKeyword = (keyword != null) ? keyword.trim() : null;
-        Page<Category> categoryPage = categoryRepository.searchParentCategoriesByKeyword(trimmedKeyword, pageable);
+        // Fetch all parent categories from DB
+        List<Category> allCategories = categoryRepository.findAllParentCategories();
         
-        List<CategoryResponse> responseList = categoryPage.getContent().stream()
+        // Filter by keyword in Java using VietnameseUtils
+        String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+        List<Category> filteredCategories = allCategories;
+        
+        if (trimmedKeyword != null) {
+            filteredCategories = allCategories.stream()
+                .filter(c -> VietnameseUtils.containsIgnoreDiacritics(c.getCategoryName(), trimmedKeyword))
+                .toList();
+        }
+        
+        // Manual pagination
+        int pageNumber = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        int totalElements = filteredCategories.size();
+        int totalPages = (int) Math.ceil((double) totalElements / pageSize);
+        int fromIndex = pageNumber * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, totalElements);
+        
+        List<Category> pagedCategories = (fromIndex < totalElements) 
+            ? filteredCategories.subList(fromIndex, toIndex) 
+            : List.of();
+        
+        List<CategoryResponse> responseList = pagedCategories.stream()
                 .map(categoryMapper::toResponse)
                 .collect(Collectors.toList());
         
         return PageResponse.<CategoryResponse>builder()
                 .content(responseList)
-                .totalElements(categoryPage.getTotalElements())
-                .totalPages(categoryPage.getTotalPages())
-                .size(categoryPage.getSize())
-                .number(categoryPage.getNumber())
-                .first(categoryPage.isFirst())
-                .last(categoryPage.isLast())
-                .empty(categoryPage.isEmpty())
+                .totalElements(totalElements)
+                .totalPages(totalPages)
+                .size(pageSize)
+                .number(pageNumber)
+                .first(pageNumber == 0)
+                .last(pageNumber >= totalPages - 1)
+                .empty(responseList.isEmpty())
                 .build();
     }
 
     @Override
     public PageResponse<CategoryResponse> searchSubCategoriesByKeyword(String keyword, Pageable pageable) {
-        // Trim keyword to handle leading/trailing whitespace
-        String trimmedKeyword = (keyword != null) ? keyword.trim() : null;
-        Page<Category> categoryPage = categoryRepository.searchSubCategoriesByKeyword(trimmedKeyword, pageable);
+        // Fetch all sub categories from DB
+        List<Category> allCategories = categoryRepository.findAllSubCategories();
         
-        List<CategoryResponse> responseList = categoryPage.getContent().stream()
+        // Filter by keyword in Java using VietnameseUtils (search in both category name and parent name)
+        String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+        List<Category> filteredCategories = allCategories;
+        
+        if (trimmedKeyword != null) {
+            filteredCategories = allCategories.stream()
+                .filter(c -> {
+                    // Search in category name
+                    if (VietnameseUtils.containsIgnoreDiacritics(c.getCategoryName(), trimmedKeyword)) {
+                        return true;
+                    }
+                    // Also search in parent category name
+                    if (c.getParentCategoryId() != null) {
+                        Category parent = categoryRepository.findById(c.getParentCategoryId()).orElse(null);
+                        if (parent != null && VietnameseUtils.containsIgnoreDiacritics(parent.getCategoryName(), trimmedKeyword)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                })
+                .toList();
+        }
+        
+        // Manual pagination
+        int pageNumber = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        int totalElements = filteredCategories.size();
+        int totalPages = (int) Math.ceil((double) totalElements / pageSize);
+        int fromIndex = pageNumber * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, totalElements);
+        
+        List<Category> pagedCategories = (fromIndex < totalElements) 
+            ? filteredCategories.subList(fromIndex, toIndex) 
+            : List.of();
+        
+        List<CategoryResponse> responseList = pagedCategories.stream()
                 .map(categoryMapper::toResponse)
                 .collect(Collectors.toList());
         
         return PageResponse.<CategoryResponse>builder()
                 .content(responseList)
-                .totalElements(categoryPage.getTotalElements())
-                .totalPages(categoryPage.getTotalPages())
-                .size(categoryPage.getSize())
-                .number(categoryPage.getNumber())
-                .first(categoryPage.isFirst())
-                .last(categoryPage.isLast())
-                .empty(categoryPage.isEmpty())
+                .totalElements(totalElements)
+                .totalPages(totalPages)
+                .size(pageSize)
+                .number(pageNumber)
+                .first(pageNumber == 0)
+                .last(pageNumber >= totalPages - 1)
+                .empty(responseList.isEmpty())
                 .build();
     }
     
