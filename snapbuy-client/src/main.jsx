@@ -2,9 +2,12 @@ import { Suspense, useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import store from "./core/redux/store.js";
-import AppRouter from "./AppRouter.jsx";
+import AdminAppRouter from "./AdminAppRouter.jsx";
+import TenantAppRouter from "./TenantAppRouter.jsx";
 import SplashScreen from "./components/splash-screen/SplashScreen.jsx";
+import AdminSplashScreen from "./components/splash-screen/AdminSplashScreen.jsx";
 import PageLoader from "./components/loading/PageLoader.jsx";
+import { getTenantInfo } from "./utils/tenantUtils.js";
 import "./utils/axiosConfig.js"; // Import axios interceptor config
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
@@ -24,6 +27,7 @@ import "antd/dist/reset.css";
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
+  const tenantInfo = getTenantInfo();
 
   const handleSplashComplete = () => {
     setShowSplash(false);
@@ -38,8 +42,15 @@ const App = () => {
   }, []);
 
   if (showSplash) {
-    return <SplashScreen onComplete={handleSplashComplete} />;
+    // Admin portal dùng AdminSplashScreen (màu tối), Tenant app dùng SplashScreen (màu cũ)
+    const SplashComponent = tenantInfo.isAdmin
+      ? AdminSplashScreen
+      : SplashScreen;
+    return <SplashComponent onComplete={handleSplashComplete} />;
   }
+
+  // Chọn router phù hợp dựa trên domain
+  const AppRouter = tenantInfo.isAdmin ? AdminAppRouter : TenantAppRouter;
 
   return (
     <Provider store={store}>

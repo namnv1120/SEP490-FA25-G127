@@ -16,8 +16,8 @@ public class ProductUpdateRequest {
     @Pattern(regexp = "^[\\p{L}\\d ]+$", message = "Tên sản phẩm chỉ cho phép chữ, số và khoảng trắng")
     private String productName;
 
-    @Size(max = 50, message = "Mã sản phẩm không được vượt quá 50 ký tự.")
-    @Pattern(regexp = "^[A-Za-z0-9_-]*$", message = "Mã sản phẩm chỉ cho phép chữ, số, gạch dưới hoặc gạch ngang.")
+    @Size(min = 3, max = 10, message = "Mã sản phẩm phải từ 3 đến 10 ký tự.")
+    @Pattern(regexp = "^[A-Za-z0-9_.\\-]*$", message = "Mã sản phẩm chỉ cho phép chữ, số, gạch dưới, gạch ngang hoặc dấu chấm.")
     private String productCode;
 
     @Size(max = 100, message = "Barcode không được vượt quá 100 ký tự.")

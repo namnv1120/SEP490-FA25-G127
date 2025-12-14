@@ -11,7 +11,7 @@ public class ProductImportRequest {
 
     @NotBlank(message = "Mã sản phẩm không được để trống")
     @Length(min = 3, max = 10, message = "Mã sản phẩm phải từ 3 đến 10 ký tự")
-    @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Mã sản phẩm chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang")
+    @Pattern(regexp = "^[a-zA-Z0-9_.\\-]+$", message = "Mã sản phẩm chỉ được chứa chữ, số, gạch dưới, gạch ngang hoặc dấu chấm")
     private String productCode;
 
     @NotBlank(message = "Tên sản phẩm không được để trống")
@@ -27,7 +27,7 @@ public class ProductImportRequest {
 
     @NotBlank(message = "Mã nhà cung cấp không được để trống")
     @Length(min = 3, max = 10, message = "Mã nhà cung cấp phải từ 3 đến 10 ký tự")
-    @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Mã nhà cung cấp chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang")
+    @Pattern(regexp = "^[a-zA-Z0-9_.\\-]+$", message = "Mã nhà cung cấp chỉ được chứa chữ, số, gạch dưới, gạch ngang hoặc dấu chấm")
     private String supplierCode;
 
     @NotBlank(message = "Tên nhà cung cấp không được để trống")

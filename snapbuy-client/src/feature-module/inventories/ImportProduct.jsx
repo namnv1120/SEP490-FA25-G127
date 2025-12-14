@@ -78,19 +78,22 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
     const errors = new Array(data.length).fill(null);
 
     const codeCount = {};
-    const nameCount = {};
     // Map để kiểm tra supplier code trùng với tên khác nhau
     const supplierCodeToNameMap = new Map();
 
     data.forEach((row) => {
-      const code = (row.productCode || "").trim().toLowerCase();
-      const name = (row.productName || "").trim().toLowerCase();
+      const code = String(row.productCode || "")
+        .trim()
+        .toLowerCase();
       if (code) codeCount[code] = (codeCount[code] || 0) + 1;
-      if (name) nameCount[name] = (nameCount[name] || 0) + 1;
 
       // Track supplier code và name mapping
-      const supplierCode = (row.supplierCode || "").trim().toLowerCase();
-      const supplierName = (row.supplierName || "").trim().toLowerCase();
+      const supplierCode = String(row.supplierCode || "")
+        .trim()
+        .toLowerCase();
+      const supplierName = String(row.supplierName || "")
+        .trim()
+        .toLowerCase();
       if (supplierCode && supplierName) {
         if (!supplierCodeToNameMap.has(supplierCode)) {
           supplierCodeToNameMap.set(supplierCode, new Set());
@@ -101,43 +104,48 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
 
     data.forEach((row, index) => {
       const rowErrors = [];
-      const rowNum = index + 1;
+      // Sử dụng số dòng thực tế từ Excel nếu có, nếu không thì dùng index + 2 (vì header ở dòng 1)
+      const rowNum = row._excelRowNumber || index + 2;
 
       // Kiểm tra dòng trống (từ Excel)
       if (row._excelRowNumber) {
-        rowErrors.push(`Dòng ${row._excelRowNumber} trong Excel bị trống. Vui lòng xóa dòng trống trong file Excel trước khi import!`);
+        rowErrors.push(
+          `Dòng ${row._excelRowNumber} trong Excel bị trống. Vui lòng xóa dòng trống trong file Excel trước khi import!`
+        );
         errors[index] = `Dòng ${rowNum}: ${rowErrors.join("; ")}`;
         return; // Bỏ qua các validation khác cho dòng trống
       }
 
       // Validate Product Code
-      const productCode = (row.productCode || "").trim();
+      const productCode = String(row.productCode || "").trim();
       if (!productCode) {
         rowErrors.push("Mã sản phẩm không được để trống");
       } else {
         if (productCode.length < 3 || productCode.length > 10) {
           rowErrors.push("Mã sản phẩm phải từ 3 đến 10 ký tự");
         }
-        if (!/^[a-zA-Z0-9_-]+$/.test(productCode)) {
+        if (!/^[a-zA-Z0-9_.\-]+$/.test(productCode)) {
           rowErrors.push(
-            "Mã sản phẩm chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang"
+            "Mã sản phẩm chỉ được chứa chữ, số, gạch dưới, gạch ngang hoặc dấu chấm"
           );
         }
 
         const normalizedCode = productCode.toLowerCase();
         const existingProductByCode = productCodeMap.get(normalizedCode);
-        const normalizedName = (row.productName || "").trim().toLowerCase();
+        const normalizedName = String(row.productName || "")
+          .trim()
+          .toLowerCase();
 
         if (existingProductByCode) {
           if (
             normalizedName &&
             existingProductByCode.productName &&
             existingProductByCode.productName.trim().toLowerCase() !==
-            normalizedName
+              normalizedName
           ) {
             rowErrors.push(
               `Mã sản phẩm '${productCode}' đã tồn tại và thuộc về sản phẩm '${existingProductByCode.productName}'. ` +
-              `Tên bạn nhập '${row.productName || ""}' không khớp`
+                `Tên bạn nhập '${row.productName || ""}' không khớp`
             );
           } else {
             rowErrors.push(
@@ -150,68 +158,38 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
         }
       }
 
-      const productName = (row.productName || "").trim();
+      const productName = String(row.productName || "").trim();
       if (!productName) {
         rowErrors.push("Tên sản phẩm không được để trống");
       } else if (productName.length < 3 || productName.length > 100) {
         rowErrors.push("Tên sản phẩm phải từ 3 đến 100 ký tự");
-      } else {
-        const normalizedName = productName.toLowerCase();
-        const existingProductByName = productNameMap.get(normalizedName);
-        const normalizedCode = (row.productCode || "").trim().toLowerCase();
-        const existingProductByCode = normalizedCode
-          ? productCodeMap.get(normalizedCode)
-          : null;
-        const isSameProduct =
-          existingProductByCode &&
-          existingProductByName &&
-          existingProductByCode.productId === existingProductByName.productId;
-
-        if (existingProductByName) {
-          if (
-            normalizedCode &&
-            existingProductByName.productCode &&
-            existingProductByName.productCode.trim().toLowerCase() !==
-            normalizedCode
-          ) {
-            rowErrors.push(
-              `Tên sản phẩm '${productName}' đã tồn tại với mã '${existingProductByName.productCode}', ` +
-              `nhưng bạn nhập mã '${row.productCode || ""}'`
-            );
-          } else if (!isSameProduct) {
-            rowErrors.push(
-              `Tên sản phẩm '${productName}' đã tồn tại trong hệ thống`
-            );
-          }
-        }
-        if (nameCount[normalizedName] > 1) {
-          rowErrors.push(`Tên sản phẩm '${productName}' bị trùng trong file`);
-        }
       }
 
       // Validate Category Name
-      const categoryName = (row.categoryName || "").trim();
+      const categoryName = String(row.categoryName || "").trim();
       if (!categoryName) {
         rowErrors.push("Tên danh mục không được để trống");
       }
 
       // Validate Supplier Code
-      const supplierCode = (row.supplierCode || "").trim();
+      const supplierCode = String(row.supplierCode || "").trim();
       if (!supplierCode) {
         rowErrors.push("Mã nhà cung cấp không được để trống");
       } else {
         if (supplierCode.length < 3 || supplierCode.length > 10) {
           rowErrors.push("Mã nhà cung cấp phải từ 3 đến 10 ký tự");
         }
-        if (!/^[a-zA-Z0-9_-]+$/.test(supplierCode)) {
+        if (!/^[a-zA-Z0-9_.\-]+$/.test(supplierCode)) {
           rowErrors.push(
-            "Mã nhà cung cấp chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang"
+            "Mã nhà cung cấp chỉ được chứa chữ, số, gạch dưới, gạch ngang hoặc dấu chấm"
           );
         }
 
         // Kiểm tra trùng mã nhà cung cấp với tên khác nhau trong file
         const normalizedSupplierCode = supplierCode.toLowerCase();
-        const supplierNamesForCode = supplierCodeToNameMap.get(normalizedSupplierCode);
+        const supplierNamesForCode = supplierCodeToNameMap.get(
+          normalizedSupplierCode
+        );
         if (supplierNamesForCode && supplierNamesForCode.size > 1) {
           rowErrors.push(
             `Mã nhà cung cấp '${supplierCode}' được sử dụng với nhiều tên khác nhau trong file.`
@@ -220,7 +198,7 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       }
 
       // Validate Supplier Name
-      const supplierName = (row.supplierName || "").trim();
+      const supplierName = String(row.supplierName || "").trim();
       if (!supplierName) {
         rowErrors.push("Tên nhà cung cấp không được để trống");
       } else if (supplierName.length < 3 || supplierName.length > 100) {
@@ -228,19 +206,19 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       }
 
       // Validate Unit
-      const unit = (row.unit || "").trim();
+      const unit = String(row.unit || "").trim();
       if (unit && unit.length > 10) {
         rowErrors.push("Đơn vị không được quá 10 ký tự");
       }
 
       // Validate Dimensions
-      const dimensions = (row.dimensions || "").trim();
+      const dimensions = String(row.dimensions || "").trim();
       if (dimensions && dimensions.length > 30) {
         rowErrors.push("Kích thước không được quá 30 ký tự");
       }
 
       // Validate Barcode
-      const barcode = (row.barcode || "").trim();
+      const barcode = String(row.barcode || "").trim();
       if (barcode) {
         if (barcode.length > 50) {
           rowErrors.push("Barcode không được quá 50 ký tự");
@@ -298,7 +276,7 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
 
           if (hasChildren) {
             // Category có con, bắt buộc phải nhập subCategoryName
-            const subCategoryName = (row.subCategoryName || "").trim();
+            const subCategoryName = String(row.subCategoryName || "").trim();
             if (!subCategoryName) {
               rowErrors.push(
                 `Danh mục '${categoryName}' đã có danh mục con. Bắt buộc phải nhập danh mục con`
@@ -309,7 +287,7 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
                 (c) =>
                   c.categoryName &&
                   c.categoryName.trim().toLowerCase() ===
-                  subCategoryName.toLowerCase()
+                    subCategoryName.toLowerCase()
               );
               if (subCategory) {
                 if (subCategory.parentCategoryId !== category.categoryId) {
@@ -343,7 +321,7 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       title: "Tên sản phẩm",
       dataIndex: "productName",
       key: "productName",
-      width: 200,
+      width: 300,
     },
     {
       title: "Mô tả",

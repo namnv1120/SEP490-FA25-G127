@@ -372,8 +372,8 @@ public class ProductServiceImpl implements ProductService {
                     errors.add(error);
                     continue;
                 }
-                if (!productCode.matches("^[a-zA-Z0-9_-]+$")) {
-                    String error = String.format("Row %d: Mã sản phẩm chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang", rowNumber);
+                if (!productCode.matches("^[a-zA-Z0-9_.\\-]+$")) {
+                    String error = String.format("Row %d: Mã sản phẩm chỉ được chứa chữ, số, gạch dưới, gạch ngang hoặc dấu chấm", rowNumber);
                     errors.add(error);
                     continue;
                 }
@@ -416,8 +416,8 @@ public class ProductServiceImpl implements ProductService {
                     errors.add(error);
                     continue;
                 }
-                if (!supplierCode.matches("^[a-zA-Z0-9_-]+$")) {
-                    String error = String.format("Row %d: Mã nhà cung cấp chỉ được chứa chữ, số, gạch dưới hoặc gạch ngang", rowNumber);
+                if (!supplierCode.matches("^[a-zA-Z0-9_.\\-]+$")) {
+                    String error = String.format("Row %d: Mã nhà cung cấp chỉ được chứa chữ, số, gạch dưới, gạch ngang hoặc dấu chấm", rowNumber);
                     errors.add(error);
                     continue;
                 }

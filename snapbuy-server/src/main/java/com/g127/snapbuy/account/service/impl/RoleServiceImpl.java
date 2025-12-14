@@ -1,17 +1,13 @@
 package com.g127.snapbuy.account.service.impl;
 
 import com.g127.snapbuy.account.dto.request.RoleCreateRequest;
-import com.g127.snapbuy.account.dto.request.RolePermissionUpdateRequest;
 import com.g127.snapbuy.account.dto.request.RoleUpdateRequest;
 import com.g127.snapbuy.common.response.PageResponse;
-import com.g127.snapbuy.account.dto.response.PermissionResponse;
 import com.g127.snapbuy.account.dto.response.RoleResponse;
-import com.g127.snapbuy.account.entity.Permission;
 import com.g127.snapbuy.account.entity.Role;
 import com.g127.snapbuy.common.exception.AppException;
 import com.g127.snapbuy.common.exception.ErrorCode;
 import com.g127.snapbuy.account.repository.AccountRepository;
-import com.g127.snapbuy.account.repository.PermissionRepository;
 import com.g127.snapbuy.account.repository.RoleRepository;
 import com.g127.snapbuy.account.service.RoleService;
 import jakarta.transaction.Transactional;
@@ -32,7 +28,6 @@ import java.util.*;
 public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
-    private final PermissionRepository permissionRepository;
     private final AccountRepository accountRepository;
 
     private static final String ADMIN = "Quản trị viên";
@@ -69,22 +64,6 @@ public class RoleServiceImpl implements RoleService {
         }
     }
 
-    private void ensureActive(Permission p) {
-        if (Boolean.FALSE.equals(p.getIsActive())) {
-            throw new IllegalStateException("Quyền đang ở trạng thái không hoạt động");
-        }
-    }
-
-    private PermissionResponse toPermissionResponse(Permission p) {
-        return PermissionResponse.builder()
-                .id(p.getPermissionId().toString())
-                .name(p.getPermissionName())
-                .description(p.getDescription())
-                .module(p.getModule())
-                .active(Boolean.TRUE.equals(p.getIsActive()))
-                .build();
-    }
-
     private RoleResponse toResponse(Role r) {
         // Trả về giá trị active thực tế từ entity (có thể là true, false, hoặc null)
         // Frontend sẽ xử lý để hiển thị đúng
@@ -96,8 +75,6 @@ public class RoleServiceImpl implements RoleService {
                 .active(activeValue != null ? activeValue : false) // Nếu null thì mặc định là false
                 .createdDate(r.getCreatedDate() == null ? null :
                         r.getCreatedDate().toInstant().atOffset(ZoneOffset.UTC).toString())
-                .permissions(r.getPermissions() == null ? List.of() :
-                        r.getPermissions().stream().map(this::toPermissionResponse).toList())
                 .build();
     }
 
@@ -117,7 +94,6 @@ public class RoleServiceImpl implements RoleService {
         r.setDescription(req.getDescription());
         r.setActive(req.getActive() == null ? Boolean.TRUE : req.getActive());
         r.setCreatedDate(new Date());
-        r.setPermissions(new HashSet<>());
         return toResponse(roleRepository.save(r));
     }
 
@@ -202,72 +178,6 @@ public class RoleServiceImpl implements RoleService {
             throw new IllegalStateException("Vai trò đang được sử dụng bởi " + inUse + " tài khoản. Hãy gỡ gán trước.");
         }
         roleRepository.deleteById(roleId);
-    }
-
-    @Override
-    public List<PermissionResponse> listPermissions(UUID roleId) {
-        Role r = roleRepository.findById(roleId)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò"));
-        return r.getPermissions().stream().map(this::toPermissionResponse).toList();
-    }
-
-    @Override
-    @Transactional
-    public void addPermission(UUID roleId, UUID permissionId) {
-        Role r = roleRepository.findById(roleId)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò"));
-        ensureNotSystemRole(r,
-                "Không thể chỉnh sửa vai trò 'Chủ hệ thống'",
-                "Chủ cửa hàng không được phép chỉnh sửa vai trò 'Chủ cửa hàng'");
-        ensureActive(r);
-
-        Permission p = permissionRepository.findById(permissionId)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy quyền"));
-        ensureActive(p);
-
-        r.getPermissions().add(p);
-        roleRepository.save(r);
-    }
-
-    @Override
-    @Transactional
-    public void removePermission(UUID roleId, UUID permissionId) {
-        Role r = roleRepository.findById(roleId)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò"));
-        ensureNotSystemRole(r,
-                "Không thể chỉnh sửa vai trò 'Chủ hệ thống'",
-                "Chủ cửa hàng không được phép chỉnh sửa vai trò 'Chủ cửa hàng'");
-        ensureActive(r);
-
-        Permission p = permissionRepository.findById(permissionId)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy quyền"));
-        ensureActive(p);
-
-        r.getPermissions().remove(p);
-        roleRepository.save(r);
-    }
-
-    @Override
-    @Transactional
-    public RoleResponse setPermissions(UUID roleId, RolePermissionUpdateRequest req) {
-        Role r = roleRepository.findById(roleId)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò"));
-        ensureNotSystemRole(r,
-                "Không thể chỉnh sửa vai trò 'Quản trị viên'",
-                "Chủ cửa hàng không được phép chỉnh sửa vai trò 'Chủ cửa hàng'");
-        ensureActive(r);
-
-        Set<Permission> newSet = new HashSet<>();
-        if (req.getPermissionIds() != null) {
-            for (UUID pid : new HashSet<>(req.getPermissionIds())) {
-                Permission p = permissionRepository.findById(pid)
-                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy quyền: " + pid));
-                ensureActive(p);
-                newSet.add(p);
-            }
-        }
-        r.setPermissions(newSet);
-        return toResponse(roleRepository.save(r));
     }
 
     @Override

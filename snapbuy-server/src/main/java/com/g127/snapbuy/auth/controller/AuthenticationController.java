@@ -27,10 +27,15 @@ public class AuthenticationController {
             @RequestBody @Valid AuthenticationRequest req,
             jakarta.servlet.http.HttpServletRequest request) {
         
-        // Auto-detect tenant from subdomain (e.g., shop1.snapbuy.com)
-        String tenantCode = com.g127.snapbuy.tenant.util.TenantResolver.resolveFromSubdomain(request);
+        // Priority 1: Get from X-Tenant-Slug header (frontend sends this from subdomain detection)
+        String tenantCode = request.getHeader("X-Tenant-Slug");
         
-        // Fallback to tenantCode in request body (for localhost testing)
+        // Priority 2: Auto-detect from subdomain (e.g., shop1.snapbuy.com)
+        if (tenantCode == null || tenantCode.isEmpty()) {
+            tenantCode = com.g127.snapbuy.tenant.util.TenantResolver.resolveFromSubdomain(request);
+        }
+        
+        // Priority 3: Fallback to tenantCode in request body (for backward compatibility)
         if (tenantCode == null || tenantCode.isEmpty()) {
             tenantCode = req.getTenantCode();
         }

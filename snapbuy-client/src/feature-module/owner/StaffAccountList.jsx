@@ -13,8 +13,7 @@ import {
   updateStaffRolesByOwner,
   searchStaffAccountsPaged,
 } from "../../services/AccountService";
-
-const allowedRoles = ["Nhân viên bán hàng", "Nhân viên kho"];
+import { getAllRoles } from "../../services/RoleService";
 
 const StaffAccountList = () => {
   const [data, setData] = useState([]);
@@ -28,10 +27,11 @@ const StaffAccountList = () => {
   const [editing, setEditing] = useState(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [availableRoles, setAvailableRoles] = useState([]);
 
   const roleOptions = useMemo(
-    () => allowedRoles.map((r) => ({ label: r, value: r })),
-    []
+    () => availableRoles.map((r) => ({ label: r.roleName, value: r.roleName })),
+    [availableRoles]
   );
   const StatusOptions = useMemo(
     () => [
@@ -74,6 +74,18 @@ const StaffAccountList = () => {
   useEffect(() => {
     fetchStaff();
   }, [fetchStaff]);
+
+  useEffect(() => {
+    const loadRoles = async () => {
+      try {
+        const roles = await getAllRoles();
+        setAvailableRoles(roles);
+      } catch (e) {
+        message.error("Không thể tải danh sách vai trò");
+      }
+    };
+    loadRoles();
+  }, []);
 
   const openAddModal = () => {
     setAdding(true);
@@ -206,8 +218,9 @@ const StaffAccountList = () => {
         return (
           <div className="d-flex align-items-center gap-2">
             <span
-              className={`badge fw-medium fs-10 ${active ? "bg-success" : "bg-danger"
-                }`}
+              className={`badge fw-medium fs-10 ${
+                active ? "bg-success" : "bg-danger"
+              }`}
             >
               {active ? "Hoạt động" : "Không hoạt động"}
             </span>
@@ -391,7 +404,7 @@ const StaffAccountList = () => {
         onSuccess={() => {
           fetchStaff();
         }}
-        allowedRoles={allowedRoles}
+        availableRoles={availableRoles}
         onCreate={(newAccount) => createStaff(newAccount)}
       />
 
@@ -405,7 +418,7 @@ const StaffAccountList = () => {
         onUpdated={() => {
           fetchStaff();
         }}
-        allowedRoles={allowedRoles}
+        availableRoles={availableRoles}
         onUpdate={(id, general) => updateStaffByOwner(id, general)}
         onUpdateRole={(id, roles) => updateStaffRolesByOwner(id, roles)}
       />

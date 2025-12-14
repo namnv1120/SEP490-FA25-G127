@@ -18,7 +18,6 @@ export const API_ENDPOINTS = {
   NOTIFICATIONS: `${API_BASE_URL}/api/notifications`,
   NOTIFICATION_SETTINGS: `${API_BASE_URL}/api/notification-settings`,
   ORDERS: `${API_BASE_URL}/api/orders`,
-  PERMISSIONS: `${API_BASE_URL}/api/permissions`,
   POS_SETTINGS: `${API_BASE_URL}/api/pos-settings`,
   POS_SHIFTS: `${API_BASE_URL}/api/pos-shifts`,
   PRODUCTS: `${API_BASE_URL}/api/products`,

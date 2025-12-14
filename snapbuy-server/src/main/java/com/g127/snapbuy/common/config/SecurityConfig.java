@@ -59,6 +59,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/admin/auth/**").permitAll() // Admin authentication endpoints
                         .requestMatchers("/api/auth/forgot-password/**").permitAll()
+                        .requestMatchers("/api/tenants/validate/**").permitAll() // Tenant validation (public)
+                        .requestMatchers("/api/tenants/*/info").permitAll() // Tenant public info
                         .requestMatchers("/api/payments/momo/notify").permitAll()
                         .requestMatchers("/api/payments/momo/return-notify").permitAll()
                         .requestMatchers("/api/payments/momo/return").permitAll()
@@ -77,17 +79,25 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration c = new CorsConfiguration();
         c.setAllowCredentials(true);
-        // Allow both Vite dev server and Docker Nginx
-        c.setAllowedOrigins(List.of(
-            "http://localhost:5173",  // Vite dev server
-            "http://localhost",       // Docker Nginx (port 80)
-            "http://localhost:80",    // Docker Nginx explicit
-            "http://localhost:3000",  // Docker frontend on port 3000
-            "https://snapbuy.com.vn", // Production
-            "https://www.snapbuy.com.vn" // Production with www
+        // Allow wildcard patterns for local development with subdomains
+        c.setAllowedOriginPatterns(List.of(
+            "http://localhost:*",           // localhost với bất kỳ port nào
+            "http://*.localhost:*",         // Subdomain local (tenant1.localhost:5173)
+            "http://*.snapbuy.local:*",     // Custom local domain
+            "https://snapbuy.com.vn",       // Production admin
+            "https://www.snapbuy.com.vn",   // Production admin với www
+            "https://*.snapbuy.com.vn"      // Production tenant subdomains
         ));
         c.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        c.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With"));
+        c.setAllowedHeaders(List.of(
+            "Authorization", 
+            "Content-Type", 
+            "Accept", 
+            "X-Requested-With",
+            "X-Tenant-ID",       // Tenant ID header
+            "X-Tenant-Slug",     // Tenant slug header (từ subdomain)
+            "X-Is-Admin"         // Admin portal header
+        ));
         c.setExposedHeaders(List.of("Authorization"));
         UrlBasedCorsConfigurationSource s = new UrlBasedCorsConfigurationSource();
         s.registerCorsConfiguration("/**", c);

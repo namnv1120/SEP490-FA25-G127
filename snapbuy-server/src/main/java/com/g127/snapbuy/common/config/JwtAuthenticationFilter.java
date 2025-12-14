@@ -60,8 +60,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String path = request.getServletPath();
-        // Skip JWT filter for auth endpoints (both tenant and admin)
-        if (path.startsWith("/api/auth") || path.startsWith("/api/admin/auth")) {
+        // Skip JWT filter for public endpoints
+        if (path.startsWith("/api/auth") || 
+            path.startsWith("/api/admin/auth") ||
+            path.startsWith("/api/tenants/validate/") ||
+            path.matches("/api/tenants/.*/info")) {
             filterChain.doFilter(request, response);
             return;
         }

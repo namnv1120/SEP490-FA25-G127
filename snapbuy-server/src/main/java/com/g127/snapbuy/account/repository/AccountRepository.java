@@ -24,7 +24,6 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
            select distinct a
            from Account a
            left join fetch a.roles r
-           left join fetch r.permissions p
            where lower(a.username) = lower(:username)
            """)
     Optional<Account> findByUsernameWithRolesAndPermissionsIgnoreCase(@Param("username") String username);

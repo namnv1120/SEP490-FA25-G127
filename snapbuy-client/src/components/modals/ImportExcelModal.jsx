@@ -55,15 +55,21 @@ const ImportExcelModal = ({
       await workbook.xlsx.load(arrayBuffer);
 
       // Tìm sheet "Sản phẩm" hoặc sheet đầu tiên không phải "Hướng dẫn"
-      let worksheet = workbook.worksheets.find(ws =>
-        ws.name === "Sản phẩm" || ws.name === "Giá sản phẩm" || ws.name.toLowerCase().includes("sản phẩm")
+      let worksheet = workbook.worksheets.find(
+        (ws) =>
+          ws.name === "Sản phẩm" ||
+          ws.name === "Giá sản phẩm" ||
+          ws.name.toLowerCase().includes("sản phẩm")
       );
 
       // Nếu không tìm thấy, tìm sheet đầu tiên không phải "Hướng dẫn"
       if (!worksheet) {
-        worksheet = workbook.worksheets.find(ws =>
-          ws.name !== "Hướng dẫn" && !ws.name.toLowerCase().includes("hướng dẫn")
-        ) || workbook.worksheets[0];
+        worksheet =
+          workbook.worksheets.find(
+            (ws) =>
+              ws.name !== "Hướng dẫn" &&
+              !ws.name.toLowerCase().includes("hướng dẫn")
+          ) || workbook.worksheets[0];
       }
 
       if (!worksheet) {
@@ -95,8 +101,12 @@ const ImportExcelModal = ({
         });
 
         // Bỏ qua nếu row này giống với header row
-        const isHeaderRow = rowValues.length === headers.length &&
-          rowValues.every((val, idx) => val === headers[idx] || (val === "" && headers[idx] === ""));
+        const isHeaderRow =
+          rowValues.length === headers.length &&
+          rowValues.every(
+            (val, idx) =>
+              val === headers[idx] || (val === "" && headers[idx] === "")
+          );
         if (isHeaderRow) {
           continue; // Bỏ qua header row nếu bị lặp lại
         }
@@ -107,7 +117,8 @@ const ImportExcelModal = ({
           const headerName = headers[colNumber - 1];
           if (headerName && headerName !== "") {
             if (headerName === "Barcode") {
-              const preferred = typeof cell.text === "string" ? cell.text : cell.value;
+              const preferred =
+                typeof cell.text === "string" ? cell.text : cell.value;
               const value = normalizeBarcode(preferred);
               rowData[headerName] = value;
               if (value !== "") {
@@ -134,7 +145,7 @@ const ImportExcelModal = ({
         } else {
           // Nếu dòng trống, thêm một dòng rỗng với thông tin dòng Excel
           const emptyRowData = {};
-          headers.forEach(header => {
+          headers.forEach((header) => {
             emptyRowData[header] = "";
           });
           emptyRowData._excelRowNumber = rowNumber; // Lưu số dòng trong Excel
@@ -147,13 +158,17 @@ const ImportExcelModal = ({
         return;
       }
 
+      console.log(`Đã đọc ${jsonData.length} dòng từ Excel`);
       const mapped = jsonData.map((row, i) => mapExcelRow(row, i));
+      console.log(`Đã map thành ${mapped.length} sản phẩm`);
 
-      setFileList([{
-        uid: file.uid,
-        name: file.name,
-        status: 'done',
-      }]);
+      setFileList([
+        {
+          uid: file.uid,
+          name: file.name,
+          status: "done",
+        },
+      ]);
 
       // Validate dữ liệu nếu có hàm validate
       if (validateData) {
@@ -168,7 +183,9 @@ const ImportExcelModal = ({
           setValidationErrors(errorMap);
           const errorCount = Object.keys(errorMap).length;
           if (errorCount > 0) {
-            message.warning(`Đã tải ${mapped.length} dòng dữ liệu. Có ${errorCount} dòng có lỗi.`);
+            message.warning(
+              `Đã tải ${mapped.length} dòng dữ liệu. Có ${errorCount} dòng có lỗi.`
+            );
           } else {
             message.success(`Đã tải ${mapped.length} dòng dữ liệu`);
           }
@@ -182,8 +199,12 @@ const ImportExcelModal = ({
       }
 
       setFileData(mapped);
-    } catch {
-      message.error("Lỗi khi đọc dữ liệu Excel. Vui lòng kiểm tra file!");
+    } catch (error) {
+      console.error("Chi tiết lỗi khi đọc Excel:", error);
+      message.error(
+        "Lỗi khi đọc dữ liệu Excel: " +
+          (error.message || "Vui lòng kiểm tra file!")
+      );
       setFileData([]);
       setFileList([]);
     }
@@ -198,7 +219,9 @@ const ImportExcelModal = ({
     // Kiểm tra lỗi validation trước khi import
     const errorCount = Object.keys(validationErrors).length;
     if (errorCount > 0) {
-      return message.error(`Có ${errorCount} dòng có lỗi. Vui lòng sửa lỗi trước khi nhập dữ liệu.`);
+      return message.error(
+        `Có ${errorCount} dòng có lỗi. Vui lòng sửa lỗi trước khi nhập dữ liệu.`
+      );
     }
 
     setLoading(true);
@@ -207,7 +230,12 @@ const ImportExcelModal = ({
       message.success("Nhập dữ liệu thành công!");
       handleClose();
     } catch (err) {
-      message.error(err.message || "Nhập dữ liệu thất bại!");
+      console.error("Lỗi khi import:", err);
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Nhập dữ liệu thất bại!";
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -234,8 +262,8 @@ const ImportExcelModal = ({
         cell.alignment = { horizontal: "left", vertical: "middle" };
       });
 
-      guideData.forEach(row => {
-        const values = guideHeaders.map(key => row[key] || "");
+      guideData.forEach((row) => {
+        const values = guideHeaders.map((key) => row[key] || "");
         const dataRow = wsGuide.addRow(values);
         dataRow.eachCell((cell) => {
           cell.alignment = { horizontal: "left", vertical: "middle" };
@@ -244,7 +272,7 @@ const ImportExcelModal = ({
 
       wsGuide.columns = guideHeaders.map(() => ({
         width: 25,
-        alignment: { horizontal: "left", vertical: "middle" }
+        alignment: { horizontal: "left", vertical: "middle" },
       }));
       // Set cột thứ 2 (Quy tắc) rộng hơn
       if (guideHeaders.length >= 2) {
@@ -254,9 +282,12 @@ const ImportExcelModal = ({
 
     // Trang 1: Products template
     const headers = Object.keys(templateData[0] || {});
-    const isProductPriceTemplate = headers.includes("Giá bán") && headers.includes("Giá nhập");
+    const isProductPriceTemplate =
+      headers.includes("Giá bán") && headers.includes("Giá nhập");
 
-    const wsProducts = workbook.addWorksheet(isProductPriceTemplate ? "Giá sản phẩm" : "Sản phẩm");
+    const wsProducts = workbook.addWorksheet(
+      isProductPriceTemplate ? "Giá sản phẩm" : "Sản phẩm"
+    );
     const headerRow = wsProducts.addRow(headers);
     headerRow.font = { bold: true };
     headerRow.alignment = { horizontal: "left", vertical: "middle" };
@@ -266,7 +297,7 @@ const ImportExcelModal = ({
 
     // Thêm dữ liệu
     templateData.forEach((row) => {
-      const values = headers.map(key => {
+      const values = headers.map((key) => {
         let value = row[key] || "";
         // Format Barcode thành text nếu có
         if (key === "Barcode" && value !== "") {
@@ -280,7 +311,7 @@ const ImportExcelModal = ({
         // Set format text cho cột Barcode để tránh Excel chuyển số dài thành E+
         const headerName = headers[colNumber - 1];
         if (headerName === "Barcode") {
-          cell.numFmt = '@'; // Text format
+          cell.numFmt = "@"; // Text format
           // Đảm bảo giá trị là string
           if (cell.value !== null && cell.value !== undefined) {
             cell.value = String(cell.value);
@@ -290,10 +321,10 @@ const ImportExcelModal = ({
     });
 
     // Set format text cho toàn bộ cột Barcode (bao gồm cả header và data rows)
-    const barcodeColumnIndex = headers.findIndex(h => h === "Barcode");
+    const barcodeColumnIndex = headers.findIndex((h) => h === "Barcode");
     if (barcodeColumnIndex !== -1) {
       const barcodeColumn = wsProducts.getColumn(barcodeColumnIndex + 1);
-      barcodeColumn.numFmt = '@'; // Text format cho toàn bộ cột
+      barcodeColumn.numFmt = "@"; // Text format cho toàn bộ cột
       // Đảm bảo tất cả cells trong cột Barcode là string
       wsProducts.eachRow((row) => {
         const cell = row.getCell(barcodeColumnIndex + 1);
@@ -323,7 +354,7 @@ const ImportExcelModal = ({
           "Tên nhà cung cấp": 40,
           "Đơn vị": 10,
           "Kích thước": 15,
-          "Barcode": 20,
+          Barcode: 20,
         };
         const columnConfig = {
           width: widths[header] || 20,
@@ -331,7 +362,7 @@ const ImportExcelModal = ({
         };
         // Set format text cho cột Barcode
         if (header === "Barcode") {
-          columnConfig.numFmt = '@'; // Text format
+          columnConfig.numFmt = "@"; // Text format
         }
         return columnConfig;
       });
@@ -348,7 +379,7 @@ const ImportExcelModal = ({
         cell.alignment = { horizontal: "left", vertical: "middle" };
       });
 
-      categoriesData.forEach(cat => {
+      categoriesData.forEach((cat) => {
         const row = wsCategories.addRow([
           cat.categoryName || "",
           cat.description || "",
@@ -369,7 +400,15 @@ const ImportExcelModal = ({
     // Trang 3: Suppliers (nếu có)
     if (suppliersData && suppliersData.length > 0) {
       const wsSuppliers = workbook.addWorksheet("Nhà cung cấp");
-      const supplierHeaders = ["Mã nhà cung cấp", "Tên nhà cung cấp", "Số điện thoại", "Email", "Địa chỉ", "Thành phố", "Phường/Xã"];
+      const supplierHeaders = [
+        "Mã nhà cung cấp",
+        "Tên nhà cung cấp",
+        "Số điện thoại",
+        "Email",
+        "Địa chỉ",
+        "Thành phố",
+        "Phường/Xã",
+      ];
       const supplierHeaderRow = wsSuppliers.addRow(supplierHeaders);
       supplierHeaderRow.font = { bold: true };
       supplierHeaderRow.alignment = { horizontal: "left", vertical: "middle" };
@@ -377,7 +416,7 @@ const ImportExcelModal = ({
         cell.alignment = { horizontal: "left", vertical: "middle" };
       });
 
-      suppliersData.forEach(sup => {
+      suppliersData.forEach((sup) => {
         const row = wsSuppliers.addRow([
           sup.supplierCode || "",
           sup.supplierName || "",
@@ -406,34 +445,145 @@ const ImportExcelModal = ({
     // Hàm loại bỏ dấu tiếng Việt
     const removeVietnameseAccents = (str) => {
       const accents = {
-        'à': 'a', 'á': 'a', 'ạ': 'a', 'ả': 'a', 'ã': 'a',
-        'â': 'a', 'ầ': 'a', 'ấ': 'a', 'ậ': 'a', 'ẩ': 'a', 'ẫ': 'a',
-        'ă': 'a', 'ằ': 'a', 'ắ': 'a', 'ặ': 'a', 'ẳ': 'a', 'ẵ': 'a',
-        'è': 'e', 'é': 'e', 'ẹ': 'e', 'ẻ': 'e', 'ẽ': 'e',
-        'ê': 'e', 'ề': 'e', 'ế': 'e', 'ệ': 'e', 'ể': 'e', 'ễ': 'e',
-        'ì': 'i', 'í': 'i', 'ị': 'i', 'ỉ': 'i', 'ĩ': 'i',
-        'ò': 'o', 'ó': 'o', 'ọ': 'o', 'ỏ': 'o', 'õ': 'o',
-        'ô': 'o', 'ồ': 'o', 'ố': 'o', 'ộ': 'o', 'ổ': 'o', 'ỗ': 'o',
-        'ơ': 'o', 'ờ': 'o', 'ớ': 'o', 'ợ': 'o', 'ở': 'o', 'ỡ': 'o',
-        'ù': 'u', 'ú': 'u', 'ụ': 'u', 'ủ': 'u', 'ũ': 'u',
-        'ư': 'u', 'ừ': 'u', 'ứ': 'u', 'ự': 'u', 'ử': 'u', 'ữ': 'u',
-        'ỳ': 'y', 'ý': 'y', 'ỵ': 'y', 'ỷ': 'y', 'ỹ': 'y',
-        'đ': 'd',
-        'À': 'A', 'Á': 'A', 'Ạ': 'A', 'Ả': 'A', 'Ã': 'A',
-        'Â': 'A', 'Ầ': 'A', 'Ấ': 'A', 'Ậ': 'A', 'Ẩ': 'A', 'Ẫ': 'A',
-        'Ă': 'A', 'Ằ': 'A', 'Ắ': 'A', 'Ặ': 'A', 'Ẳ': 'A', 'Ẵ': 'A',
-        'È': 'E', 'É': 'E', 'Ẹ': 'E', 'Ẻ': 'E', 'Ẽ': 'E',
-        'Ê': 'E', 'Ề': 'E', 'Ế': 'E', 'Ệ': 'E', 'Ể': 'E', 'Ễ': 'E',
-        'Ì': 'I', 'Í': 'I', 'Ị': 'I', 'Ỉ': 'I', 'Ĩ': 'I',
-        'Ò': 'O', 'Ó': 'O', 'Ọ': 'O', 'Ỏ': 'O', 'Õ': 'O',
-        'Ô': 'O', 'Ồ': 'O', 'Ố': 'O', 'Ộ': 'O', 'Ổ': 'O', 'Ỗ': 'O',
-        'Ơ': 'O', 'Ờ': 'O', 'Ớ': 'O', 'Ợ': 'O', 'Ở': 'O', 'Ỡ': 'O',
-        'Ù': 'U', 'Ú': 'U', 'Ụ': 'U', 'Ủ': 'U', 'Ũ': 'U',
-        'Ư': 'U', 'Ừ': 'U', 'Ứ': 'U', 'Ự': 'U', 'Ử': 'U', 'Ữ': 'U',
-        'Ỳ': 'Y', 'Ý': 'Y', 'Ỵ': 'Y', 'Ỷ': 'Y', 'Ỹ': 'Y',
-        'Đ': 'D'
+        à: "a",
+        á: "a",
+        ạ: "a",
+        ả: "a",
+        ã: "a",
+        â: "a",
+        ầ: "a",
+        ấ: "a",
+        ậ: "a",
+        ẩ: "a",
+        ẫ: "a",
+        ă: "a",
+        ằ: "a",
+        ắ: "a",
+        ặ: "a",
+        ẳ: "a",
+        ẵ: "a",
+        è: "e",
+        é: "e",
+        ẹ: "e",
+        ẻ: "e",
+        ẽ: "e",
+        ê: "e",
+        ề: "e",
+        ế: "e",
+        ệ: "e",
+        ể: "e",
+        ễ: "e",
+        ì: "i",
+        í: "i",
+        ị: "i",
+        ỉ: "i",
+        ĩ: "i",
+        ò: "o",
+        ó: "o",
+        ọ: "o",
+        ỏ: "o",
+        õ: "o",
+        ô: "o",
+        ồ: "o",
+        ố: "o",
+        ộ: "o",
+        ổ: "o",
+        ỗ: "o",
+        ơ: "o",
+        ờ: "o",
+        ớ: "o",
+        ợ: "o",
+        ở: "o",
+        ỡ: "o",
+        ù: "u",
+        ú: "u",
+        ụ: "u",
+        ủ: "u",
+        ũ: "u",
+        ư: "u",
+        ừ: "u",
+        ứ: "u",
+        ự: "u",
+        ử: "u",
+        ữ: "u",
+        ỳ: "y",
+        ý: "y",
+        ỵ: "y",
+        ỷ: "y",
+        ỹ: "y",
+        đ: "d",
+        À: "A",
+        Á: "A",
+        Ạ: "A",
+        Ả: "A",
+        Ã: "A",
+        Â: "A",
+        Ầ: "A",
+        Ấ: "A",
+        Ậ: "A",
+        Ẩ: "A",
+        Ẫ: "A",
+        Ă: "A",
+        Ằ: "A",
+        Ắ: "A",
+        Ặ: "A",
+        Ẳ: "A",
+        Ẵ: "A",
+        È: "E",
+        É: "E",
+        Ẹ: "E",
+        Ẻ: "E",
+        Ẽ: "E",
+        Ê: "E",
+        Ề: "E",
+        Ế: "E",
+        Ệ: "E",
+        Ể: "E",
+        Ễ: "E",
+        Ì: "I",
+        Í: "I",
+        Ị: "I",
+        Ỉ: "I",
+        Ĩ: "I",
+        Ò: "O",
+        Ó: "O",
+        Ọ: "O",
+        Ỏ: "O",
+        Õ: "O",
+        Ô: "O",
+        Ồ: "O",
+        Ố: "O",
+        Ộ: "O",
+        Ổ: "O",
+        Ỗ: "O",
+        Ơ: "O",
+        Ờ: "O",
+        Ớ: "O",
+        Ợ: "O",
+        Ở: "O",
+        Ỡ: "O",
+        Ù: "U",
+        Ú: "U",
+        Ụ: "U",
+        Ủ: "U",
+        Ũ: "U",
+        Ư: "U",
+        Ừ: "U",
+        Ứ: "U",
+        Ự: "U",
+        Ử: "U",
+        Ữ: "U",
+        Ỳ: "Y",
+        Ý: "Y",
+        Ỵ: "Y",
+        Ỷ: "Y",
+        Ỹ: "Y",
+        Đ: "D",
       };
-      return str.split('').map(char => accents[char] || char).join('');
+      return str
+        .split("")
+        .map((char) => accents[char] || char)
+        .join("");
     };
 
     // Format tên file: chữ đầu viết hoa, còn lại viết thường, không dấu
@@ -441,10 +591,13 @@ const ImportExcelModal = ({
       // Loại bỏ dấu
       const noAccent = removeVietnameseAccents(str);
       // Thay khoảng trắng bằng underscore
-      const withUnderscore = noAccent.replace(/\s+/g, '_');
+      const withUnderscore = noAccent.replace(/\s+/g, "_");
       // Chữ đầu viết hoa, còn lại viết thường
-      if (withUnderscore.length === 0) return 'template';
-      return withUnderscore.charAt(0).toUpperCase() + withUnderscore.slice(1).toLowerCase();
+      if (withUnderscore.length === 0) return "template";
+      return (
+        withUnderscore.charAt(0).toUpperCase() +
+        withUnderscore.slice(1).toLowerCase()
+      );
     };
 
     // Xuất file
@@ -505,7 +658,7 @@ const ImportExcelModal = ({
           <p style={{ marginBottom: 10, fontWeight: 500 }}>
             Tìm thấy {fileData.length} dòng dữ liệu
             {Object.keys(validationErrors).length > 0 && (
-              <span style={{ color: '#ff4d4f', marginLeft: 10 }}>
+              <span style={{ color: "#ff4d4f", marginLeft: 10 }}>
                 (Có {Object.keys(validationErrors).length} dòng có lỗi)
               </span>
             )}
@@ -523,14 +676,14 @@ const ImportExcelModal = ({
           <Table
             columns={[
               {
-                title: 'STT',
-                key: 'stt',
+                title: "STT",
+                key: "stt",
                 width: 60,
-                fixed: 'left',
-                align: 'center',
+                fixed: "left",
+                align: "center",
                 render: (text, record, index) => index + 2,
               },
-              ...columns
+              ...columns,
             ]}
             dataSource={fileData.map((row, index) => ({
               ...row,
@@ -538,13 +691,13 @@ const ImportExcelModal = ({
             }))}
             pagination={{
               pageSize: 10,
-              showTotal: (total) => `Tổng ${total} dòng`
+              showTotal: (total) => `Tổng ${total} dòng`,
             }}
             size="small"
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: "max-content" }}
             bordered
             rowClassName={(record) => {
-              return record.error ? 'error-row' : '';
+              return record.error ? "error-row" : "";
             }}
           />
         </div>

@@ -59,9 +59,13 @@ const ImportProductPrice = ({ visible, onClose, onImportSuccess }) => {
         const rowNum = index + 1;
 
         // Validate Product Code
-        const productCode = (row.productCode || "").trim();
+        const productCode = String(row.productCode || "").trim();
         if (!productCode) {
           rowErrors.push("Mã sản phẩm không được để trống");
+        } else if (!/^[a-zA-Z0-9_.\-]+$/.test(productCode)) {
+          rowErrors.push(
+            "Mã sản phẩm chỉ được chứa chữ, số, gạch dưới, gạch ngang hoặc dấu chấm"
+          );
         } else {
           // Kiểm tra sản phẩm có tồn tại không
           const productExists = productsData.some(
@@ -151,7 +155,7 @@ const ImportProductPrice = ({ visible, onClose, onImportSuccess }) => {
       (p) =>
         p.productCode &&
         p.productCode.trim().toLowerCase() ===
-        (row["Mã sản phẩm"] || "").trim().toLowerCase()
+          (row["Mã sản phẩm"] || "").trim().toLowerCase()
     );
 
     return {

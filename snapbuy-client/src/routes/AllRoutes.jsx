@@ -28,7 +28,6 @@ export const allRoutes = {
   returnorders: "/return-orders",
 
   accounts: "/accounts",
-  rolespermission: "/roles-permissions",
   customers: "/customers",
   suppliers: "/suppliers",
 

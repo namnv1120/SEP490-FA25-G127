@@ -13,6 +13,9 @@ import com.g127.snapbuy.product.repository.ProductRepository;
 import com.g127.snapbuy.promotion.repository.PromotionRepository;
 import com.g127.snapbuy.notification.service.NotificationSchedulerService;
 import com.g127.snapbuy.promotion.service.PromotionService;
+import com.g127.snapbuy.tenant.context.TenantContext;
+import com.g127.snapbuy.tenant.entity.Tenant;
+import com.g127.snapbuy.tenant.repository.TenantRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -34,6 +37,7 @@ public class PromotionServiceImpl implements PromotionService {
     private final ProductRepository productRepository;
     private final PromotionMapper promotionMapper;
     private final NotificationSchedulerService notificationSchedulerService;
+    private final TenantRepository tenantRepository;
 
     @Override
     @Transactional
@@ -166,7 +170,31 @@ public class PromotionServiceImpl implements PromotionService {
 
     @Scheduled(cron = "0 0 * * * *")
     public void scheduledDeactivateExpired() {
-        deactivateExpired();
+        log.info("Starting scheduled deactivation of expired promotions for all tenants");
+        
+        // Lấy danh sách tất cả các tenant active
+        List<Tenant> tenants = tenantRepository.findAll().stream()
+                .filter(Tenant::getIsActive)
+                .toList();
+        
+        for (Tenant tenant : tenants) {
+            try {
+                // Set tenant context cho mỗi tenant
+                TenantContext.setCurrentTenant(tenant.getTenantCode());
+                log.info("Processing expired promotions for tenant: {}", tenant.getTenantCode());
+                
+                // Thực hiện deactivate expired promotions
+                deactivateExpired();
+                
+            } catch (Exception e) {
+                log.error("Error processing expired promotions for tenant: {}", tenant.getTenantCode(), e);
+            } finally {
+                // Clear tenant context sau khi xử lý xong
+                TenantContext.clear();
+            }
+        }
+        
+        log.info("Completed scheduled deactivation of expired promotions for all tenants");
     }
 
     @Override

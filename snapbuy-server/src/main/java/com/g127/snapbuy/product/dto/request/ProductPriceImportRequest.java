@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 public class ProductPriceImportRequest {
 
     @NotBlank(message = "Mã sản phẩm không được để trống")
+    @Pattern(regexp = "^[a-zA-Z0-9_.\\-]+$", message = "Mã sản phẩm chỉ được chứa chữ, số, gạch dưới, gạch ngang hoặc dấu chấm")
     private String productCode;
 
     @NotNull(message = "Giá bán không được để trống")

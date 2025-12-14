@@ -46,6 +46,16 @@ CREATE TABLE tenant_owners (
     CONSTRAINT FK_tenant_owner_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(tenant_id) ON DELETE CASCADE
 );
 
+CREATE TABLE master_roles (
+    role_id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    role_name NVARCHAR(50) NOT NULL UNIQUE,
+    description NVARCHAR(MAX),
+    active BIT DEFAULT 1,
+    created_date DATETIME DEFAULT GETDATE(),
+    is_system_role BIT DEFAULT 0, -- Admin và Chủ cửa hàng là system roles
+    display_order INT DEFAULT 0
+);
+
 CREATE INDEX IDX_tenants_code ON tenants(tenant_code);
 CREATE INDEX IDX_tenants_active ON tenants(is_active);
 CREATE INDEX IDX_tenant_owners_tenant ON tenant_owners(tenant_id);

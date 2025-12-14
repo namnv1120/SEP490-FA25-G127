@@ -1,5 +1,6 @@
 package com.g127.snapbuy.tenant.service.impl;
 
+import com.g127.snapbuy.admin.service.MasterRoleService;
 import com.g127.snapbuy.tenant.config.TenantFlywayRunner;
 import com.g127.snapbuy.tenant.config.TenantRoutingDataSource;
 import com.g127.snapbuy.tenant.dto.request.TenantCreateRequest;
@@ -35,6 +36,7 @@ public class TenantServiceImpl implements TenantService {
     private final PasswordEncoder passwordEncoder;
     private final DataSource tenantDataSource;
     private final TenantFlywayRunner flywayRunner;
+    private final MasterRoleService masterRoleService;
     
     private TenantRoutingDataSource tenantRoutingDataSource;
     
@@ -43,11 +45,13 @@ public class TenantServiceImpl implements TenantService {
             TenantOwnerRepository tenantOwnerRepository,
             PasswordEncoder passwordEncoder,
             @Qualifier("tenantDataSource") DataSource tenantDataSource,
-            TenantFlywayRunner flywayRunner) {
+            TenantFlywayRunner flywayRunner,
+            MasterRoleService masterRoleService) {
         this.tenantRepository = tenantRepository;
         this.tenantOwnerRepository = tenantOwnerRepository;
         this.passwordEncoder = passwordEncoder;
         this.tenantDataSource = tenantDataSource;
+        this.masterRoleService = masterRoleService;
         this.flywayRunner = flywayRunner;
     }
 
@@ -156,6 +160,10 @@ public class TenantServiceImpl implements TenantService {
             // Run Flyway migrations for tenant database
             flywayRunner.runMigrations(tenant.getTenantId().toString());
             log.debug("Tenant database setup completed with migrations");
+            
+            // Sync master roles to tenant database
+            masterRoleService.syncRolesToTenant(tenant.getTenantId().toString());
+            log.debug("Master roles synced to tenant database");
         } catch (IllegalArgumentException e) {
             // Re-throw validation errors (database already exists, etc.)
             log.error("Validation error during tenant setup: {}", e.getMessage());

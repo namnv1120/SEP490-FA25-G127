@@ -1,13 +1,14 @@
-import { memo, lazy } from "react";
+import { memo, lazy, useEffect } from "react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import FeatureModule from "./feature-module/feature-module";
 import { authRoutes, posPage, unAuthRoutes } from "./routes/path";
 import { base_path } from "./environment";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import NavigationGuard from "./components/common/NavigationGuard";
-import AdminRouter from "./admin/AdminRouter";
+import TenantValidator from "./components/tenant/TenantValidator";
+import { getTenantInfo, saveTenantContext } from "./utils/tenantUtils";
 
-// Khai báo component ở đây để path.jsx chỉ là cấu hình dữ liệu
+// Import các components (giống AppRouter cũ)
 const Pos = lazy(() => import("./feature-module/pos/Pos"));
 const Login = lazy(() => import("./feature-module/pages/authentication/Login"));
 const ForgotPassword = lazy(() =>
@@ -171,7 +172,17 @@ const componentsMap = {
   Notifications,
 };
 
-const AppRouter = () => {
+/**
+ * Router cho Tenant App (cửa hàng)
+ * Không bao gồm admin routes
+ */
+const TenantAppRouter = () => {
+  useEffect(() => {
+    // Lưu tenant context khi app khởi tạo
+    const tenantInfo = saveTenantContext();
+    console.log("🏪 Tenant App - Tenant Info:", tenantInfo);
+  }, []);
+
   const RouterContent = memo(() => {
     const renderRoutes = (routeList) =>
       routeList?.map((item) => {
@@ -189,32 +200,28 @@ const AppRouter = () => {
       });
 
     return (
-      <>
-        <Routes>
-          {/* Admin Portal Routes - Separate from main app */}
-          <Route path="/admin/*" element={<AdminRouter />} />
-
-          {/* Main Application Routes */}
-          <Route path="/" element={<FeatureModule />}>
-            <Route index element={<Navigate to="/login" replace />} />
-            {renderRoutes(unAuthRoutes)}
-            {renderRoutes(authRoutes)}
-            {renderRoutes(posPage)}
-            <Route path="404" element={<NotFound />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-      </>
+      <Routes>
+        <Route path="/" element={<FeatureModule />}>
+          <Route index element={<Navigate to="/login" replace />} />
+          {renderRoutes(unAuthRoutes)}
+          {renderRoutes(authRoutes)}
+          {renderRoutes(posPage)}
+          <Route path="404" element={<NotFound />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
     );
   });
 
   return (
     <BrowserRouter basename={base_path}>
-      <NavigationGuard>
-        <RouterContent />
-      </NavigationGuard>
+      <TenantValidator>
+        <NavigationGuard>
+          <RouterContent />
+        </NavigationGuard>
+      </TenantValidator>
     </BrowserRouter>
   );
 };
 
-export default AppRouter;
+export default TenantAppRouter;

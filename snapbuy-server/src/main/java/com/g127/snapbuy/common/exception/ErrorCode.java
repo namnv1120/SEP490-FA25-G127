@@ -31,7 +31,12 @@ public enum ErrorCode {
     TOKEN_INVALID(3002, "Token không hợp lệ"),
     TOKEN_REVOKED(3003, "Token đã bị thu hồi"),
     ACCOUNT_LOCKED(3004, "Tài khoản đã bị khóa"),
-    FILE_UPLOAD_FAILED(3005, "Tải ảnh thất bại");
+    FILE_UPLOAD_FAILED(3005, "Tải ảnh thất bại"),
+
+    ROLE_EXISTED(4001, "Role đã tồn tại"),
+    ROLE_NOT_EXISTED(4002, "Role không tồn tại"),
+    CANNOT_MODIFY_SYSTEM_ROLE(4003, "Không thể sửa role hệ thống"),
+    CANNOT_DELETE_SYSTEM_ROLE(4004, "Không thể xóa role hệ thống");
 
     private final int code;
     private final String message;

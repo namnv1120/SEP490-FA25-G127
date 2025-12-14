@@ -1,10 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Modal, message, Spin } from "antd";
 import { Dropdown } from "primereact/dropdown";
 import { createAccount } from "../../../services/AccountService";
-import { getAllRoles } from "../../../services/RoleService";
 
-const AddAccount = ({ isOpen, onClose, onSuccess, allowedRoles, onCreate }) => {
+const AddAccount = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  availableRoles,
+  onCreate,
+}) => {
   const [loading, setLoading] = useState(false);
   const [roles, setRoles] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
@@ -21,33 +26,16 @@ const AddAccount = ({ isOpen, onClose, onSuccess, allowedRoles, onCreate }) => {
   const [errors, setErrors] = useState({});
   const [selectedRole, setSelectedRole] = useState(null);
 
-  const loadRoles = useCallback(async () => {
-    try {
-      const rolesData = await getAllRoles();
-      let filtered = rolesData.filter(
-        (role) => role.active === true || role.active === 1
-      );
-      if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
-        filtered = filtered.filter((role) =>
-          allowedRoles.includes(role.roleName)
-        );
-      }
-      const roleOptions = filtered.map((role) => ({
+  // Load roles khi modal mở
+  useEffect(() => {
+    if (isOpen && availableRoles) {
+      const roleOptions = availableRoles.map((role) => ({
         value: role.roleName,
         label: role.roleName,
       }));
       setRoles(roleOptions);
-    } catch (error) {
-      console.error("Lỗi khi tải danh sách vai trò:", error);
     }
-  }, [allowedRoles]);
-
-  // Load roles khi modal mở
-  useEffect(() => {
-    if (isOpen) {
-      loadRoles();
-    }
-  }, [isOpen, loadRoles]);
+  }, [isOpen, availableRoles]);
 
   // Reset form khi modal đóng
   useEffect(() => {

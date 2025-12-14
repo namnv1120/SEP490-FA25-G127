@@ -1,5 +1,3 @@
-import React from 'react';
-
 const AdminLoading = ({ message = 'Đang tải...' }) => {
     return (
         <div

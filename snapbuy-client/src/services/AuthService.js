@@ -1,6 +1,7 @@
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { API_ENDPOINTS } from "./apiConfig";
+import { getTenantContext } from "../utils/tenantUtils";
 
 const REST_API_BASE_URL = API_ENDPOINTS.AUTH;
 
@@ -15,9 +16,26 @@ export const login = async (username, password, tenantCode = null) => {
       password,
     };
 
-    // Only include tenantCode if provided (for localhost)
-    if (tenantCode) {
-      requestBody.tenantCode = tenantCode;
+    // Kiểm tra xem có phải admin domain không
+    const tenantInfo = getTenantContext();
+
+    // Chỉ thêm tenantCode nếu KHÔNG PHẢI admin domain
+    if (!tenantInfo.isAdmin) {
+      // Tự động lấy tenantCode từ subdomain nếu không được truyền vào
+      if (!tenantCode) {
+        if (tenantInfo.tenantSlug) {
+          tenantCode = tenantInfo.tenantSlug;
+        }
+        // Nếu có trong localStorage (sau khi validate)
+        if (!tenantCode) {
+          tenantCode = localStorage.getItem("tenantCode");
+        }
+      }
+
+      // Include tenantCode if available
+      if (tenantCode) {
+        requestBody.tenantCode = tenantCode;
+      }
     }
 
     const response = await axios.post(`${REST_API_BASE_URL}/login`, requestBody);

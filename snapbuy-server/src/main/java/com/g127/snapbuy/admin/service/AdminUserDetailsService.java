@@ -30,7 +30,8 @@ public class AdminUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("Admin account is disabled");
         }
         
-        GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_ADMIN");
+        // Admin có authority "Quản trị viên" để nhất quán với các role khác
+        GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_Quản trị viên");
         
         return User.builder()
                 .username(admin.getUsername())

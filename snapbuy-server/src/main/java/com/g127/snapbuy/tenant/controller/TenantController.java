@@ -14,15 +14,58 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/admin/tenants")
+@RequestMapping("/api/tenants")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class TenantController {
 
     private final TenantService tenantService;
     private final DemoDataService demoDataService;
+    
+    // ========== PUBLIC ENDPOINTS (không cần auth) ==========
+    
+    /**
+     * Validate tenant từ subdomain (frontend check khi load trang)
+     * Public endpoint - không cần authentication
+     */
+    @GetMapping("/validate/{tenantSlug}")
+    public ApiResponse<TenantResponse> validateTenant(@PathVariable String tenantSlug) {
+        try {
+            TenantResponse tenant = tenantService.getTenantByCode(tenantSlug);
+            
+            if (!tenant.getIsActive()) {
+                ApiResponse<TenantResponse> response = new ApiResponse<>();
+                response.setCode(4003);
+                response.setMessage("Cửa hàng đã bị vô hiệu hóa");
+                return response;
+            }
+            
+            ApiResponse<TenantResponse> response = new ApiResponse<>();
+            response.setResult(tenant);
+            response.setMessage("Cửa hàng hợp lệ");
+            return response;
+        } catch (Exception e) {
+            ApiResponse<TenantResponse> response = new ApiResponse<>();
+            response.setCode(4004);
+            response.setMessage("Cửa hàng không tồn tại");
+            return response;
+        }
+    }
+    
+    /**
+     * Lấy thông tin cơ bản tenant (logo, tên, ...) - public
+     */
+    @GetMapping("/{tenantSlug}/info")
+    public ApiResponse<TenantResponse> getTenantPublicInfo(@PathVariable String tenantSlug) {
+        ApiResponse<TenantResponse> response = new ApiResponse<>();
+        response.setResult(tenantService.getTenantByCode(tenantSlug));
+        response.setMessage("Lấy thông tin cửa hàng thành công");
+        return response;
+    }
+    
+    // ========== ADMIN ENDPOINTS (cần ADMIN role) ==========
 
-    @PostMapping
+    @PostMapping("/admin")
+    @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<TenantResponse> createTenant(@Valid @RequestBody TenantCreateRequest request) {
         try {
             ApiResponse<TenantResponse> response = new ApiResponse<>();
@@ -42,7 +85,8 @@ public class TenantController {
         }
     }
 
-    @GetMapping
+    @GetMapping("/admin/all")
+    @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<List<TenantResponse>> getAllTenants() {
         ApiResponse<List<TenantResponse>> response = new ApiResponse<>();
         response.setResult(tenantService.getAllTenants());
@@ -50,7 +94,8 @@ public class TenantController {
         return response;
     }
 
-    @GetMapping("/{tenantId}")
+    @GetMapping("/admin/{tenantId}")
+    @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<TenantResponse> getTenant(@PathVariable UUID tenantId) {
         ApiResponse<TenantResponse> response = new ApiResponse<>();
         response.setResult(tenantService.getTenant(tenantId));
@@ -58,7 +103,8 @@ public class TenantController {
         return response;
     }
 
-    @GetMapping("/code/{tenantCode}")
+    @GetMapping("/admin/code/{tenantCode}")
+    @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<TenantResponse> getTenantByCode(@PathVariable String tenantCode) {
         ApiResponse<TenantResponse> response = new ApiResponse<>();
         response.setResult(tenantService.getTenantByCode(tenantCode));
@@ -66,7 +112,8 @@ public class TenantController {
         return response;
     }
 
-    @PatchMapping("/{tenantId}/status")
+    @PatchMapping("/admin/{tenantId}/status")
+    @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<TenantResponse> updateTenantStatus(
             @PathVariable UUID tenantId,
             @RequestParam Boolean isActive) {
@@ -76,7 +123,8 @@ public class TenantController {
         return response;
     }
 
-    @DeleteMapping("/{tenantId}")
+    @DeleteMapping("/admin/{tenantId}")
+    @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<Void> deleteTenant(@PathVariable UUID tenantId) {
         tenantService.deleteTenant(tenantId);
         ApiResponse<Void> response = new ApiResponse<>();
@@ -84,7 +132,8 @@ public class TenantController {
         return response;
     }
 
-    @PostMapping("/{tenantId}/demo-data")
+    @PostMapping("/admin/{tenantId}/demo-data")
+    @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<Void> insertDemoData(@PathVariable UUID tenantId) {
         String tenantIdStr = tenantId.toString();
         
@@ -104,7 +153,8 @@ public class TenantController {
         return response;
     }
 
-    @GetMapping("/{tenantId}/demo-data/check")
+    @GetMapping("/admin/{tenantId}/demo-data/check")
+    @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<Boolean> checkDemoData(@PathVariable UUID tenantId) {
         String tenantIdStr = tenantId.toString();
         boolean hasDemoData = demoDataService.hasDemoData(tenantIdStr);

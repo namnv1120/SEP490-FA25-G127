@@ -32,25 +32,6 @@ CREATE TABLE account_roles
     FOREIGN KEY (role_id) REFERENCES roles (role_id)
 );
 
-CREATE TABLE [permissions]
-(
-    permission_id     UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    [permission_name] NVARCHAR(50) NOT NULL,
-    [description]     NVARCHAR(200),
-    module            NVARCHAR(50),
-    active            BIT                          DEFAULT 1
-);
-
-CREATE TABLE role_permission
-(
-    role_id       UNIQUEIDENTIFIER,
-    permission_id UNIQUEIDENTIFIER,
-
-    PRIMARY KEY (role_id, permission_id),
-    FOREIGN KEY (role_id) REFERENCES roles (role_id),
-    FOREIGN KEY (permission_id) REFERENCES [permissions] (permission_id)
-);
-
 CREATE TABLE customers
 (
     customer_id   UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
@@ -326,3 +307,10 @@ CREATE INDEX ix_notifications_created_at ON notifications (created_at DESC);
 CREATE INDEX ix_notifications_is_read ON notifications (is_read);
 CREATE INDEX ix_notifications_type ON notifications ([type]);
 CREATE INDEX ix_notifications_shop_read_created ON notifications (shop_id, is_read, created_at DESC);
+
+INSERT INTO customers (customer_id, customer_code, full_name, phone, active)
+VALUES ('00000000-0000-0000-0000-000000000001',
+        'DEFAULT',
+        N'Khách lẻ',
+        N'Khách lẻ',
+        1);

@@ -101,12 +101,17 @@ export const deleteProduct = async (id) => {
 };
 
 export const importProducts = async (products) => {
-  const response = await axios.post(
-    `${REST_API_BASE_URL}/import`,
-    products,
-    getAuthHeaders()
-  );
-  return response.data?.result || response.data;
+  try {
+    const response = await axios.post(
+      `${REST_API_BASE_URL}/import`,
+      products,
+      getAuthHeaders()
+    );
+    return response.data?.result || response.data;
+  } catch (error) {
+    console.error("Error importing products:", error.response?.data || error);
+    throw error;
+  }
 };
 
 export const getProductsBySupplierId = async (supplierId) => {
