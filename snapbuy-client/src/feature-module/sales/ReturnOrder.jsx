@@ -101,21 +101,11 @@ const ReturnOrder = () => {
 
       // Chuẩn hóa dữ liệu
       const normalizedData = returnedOrders.map((item, index) => {
-        // Debug log để kiểm tra updatedDate
-        if (index === 0) {
-          console.log("🔍 Sample order data:", {
-            orderNumber: item.orderNumber,
-            orderDate: item.orderDate,
-            updatedDate: item.updatedDate,
-            orderStatus: item.orderStatus
-          });
-        }
-
         const paymentMethod =
           item.payment?.paymentMethod ||
           item.paymentMethod ||
           (item.paymentStatus === "PAID" ||
-            item.paymentStatus === "PAYMENT_COMPLETED"
+          item.paymentStatus === "PAYMENT_COMPLETED"
             ? "Tiền mặt"
             : "-");
         return {
@@ -183,8 +173,8 @@ const ReturnOrder = () => {
       console.error("=== Lỗi khi gọi API ===", err);
       setError(
         err.response?.data?.message ||
-        err.message ||
-        "Không thể tải dữ liệu đơn hàng."
+          err.message ||
+          "Không thể tải dữ liệu đơn hàng."
       );
       setFilteredData([]);
     } finally {
@@ -320,7 +310,9 @@ const ReturnOrder = () => {
             <strong>{order.orderNumber}</strong>?
           </p>
           <p className="text-muted mb-0">
-            <small>Phiếu sẽ được chuyển về trạng thái "Hoàn tất" ban đầu.</small>
+            <small>
+              Phiếu sẽ được chuyển về trạng thái "Hoàn tất" ban đầu.
+            </small>
           </p>
         </div>
       ),
@@ -475,12 +467,12 @@ const ReturnOrder = () => {
         // (thời gian đánh dấu chờ hoàn hoặc thời gian hoàn đơn thực sự)
         return data.updatedDate
           ? new Date(data.updatedDate).toLocaleString("vi-VN", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
           : "-";
       },
     },

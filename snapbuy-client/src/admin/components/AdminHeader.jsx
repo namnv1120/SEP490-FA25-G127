@@ -8,12 +8,14 @@ import {
   FaSignOutAlt,
   FaUser,
 } from "react-icons/fa";
+import { Modal } from "antd";
 import { adminLogout } from "../../services/AdminAuthService";
 
 const AdminHeader = ({ title = "Bảng Điều Khiển" }) => {
   const navigate = useNavigate();
   const [adminUser, setAdminUser] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showDevModal, setShowDevModal] = useState(false);
 
   useEffect(() => {
     // Load admin user from localStorage
@@ -24,6 +26,11 @@ const AdminHeader = ({ title = "Bảng Điều Khiển" }) => {
   const handleLogout = () => {
     adminLogout();
     navigate("/login");
+  };
+
+  const handleSettingsClick = () => {
+    setShowUserMenu(false);
+    setShowDevModal(true);
   };
 
   return (
@@ -42,12 +49,6 @@ const AdminHeader = ({ title = "Bảng Điều Khiển" }) => {
             placeholder="Tìm kiếm cửa hàng, tài khoản, vai trò..."
           />
         </div>
-
-        {/* <div className="admin-header-actions">
-          <button className="admin-header-btn" title="Cài Đặt">
-            <FaCog />
-          </button>
-        </div> */}
 
         {/* User Menu */}
         <div
@@ -83,27 +84,6 @@ const AdminHeader = ({ title = "Bảng Điều Khiển" }) => {
                 zIndex: 1000,
               }}
             >
-              {/* <div
-                style={{
-                  padding: "0.75rem 1rem",
-                  borderBottom: "1px solid var(--admin-border-color)",
-                  cursor: "pointer",
-                  transition: "var(--admin-transition-fast)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                }}
-                onClick={() => navigate("/admin/profile")}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = "var(--admin-bg-hover)")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "transparent")
-                }
-              >
-                <FaUser />
-                <span>Hồ Sơ</span>
-              </div> */}
               <div
                 style={{
                   padding: "0.75rem 1rem",
@@ -114,7 +94,7 @@ const AdminHeader = ({ title = "Bảng Điều Khiển" }) => {
                   alignItems: "center",
                   gap: "0.5rem",
                 }}
-                onClick={() => navigate("/admin/settings")}
+                onClick={handleSettingsClick}
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.background = "var(--admin-bg-hover)")
                 }
@@ -150,6 +130,63 @@ const AdminHeader = ({ title = "Bảng Điều Khiển" }) => {
           )}
         </div>
       </div>
+
+      <Modal
+        title={
+          <span style={{ color: "var(--admin-text-primary)" }}>
+            🚧 Tính Năng Đang Phát Triển
+          </span>
+        }
+        open={showDevModal}
+        onOk={() => setShowDevModal(false)}
+        onCancel={() => setShowDevModal(false)}
+        closable={false}
+        footer={[
+          <button
+            key="ok"
+            className="admin-btn admin-btn-primary"
+            onClick={() => setShowDevModal(false)}
+          >
+            Đã Hiểu
+          </button>,
+        ]}
+        centered
+        styles={{
+          mask: { backgroundColor: "rgba(0, 0, 0, 0.45)" },
+          content: {
+            backgroundColor: "var(--admin-bg-card)",
+            color: "var(--admin-text-primary)",
+          },
+          header: {
+            backgroundColor: "var(--admin-bg-card)",
+            borderBottom: "1px solid var(--admin-border-color)",
+          },
+          body: {
+            color: "var(--admin-text-primary)",
+          },
+        }}
+      >
+        <div style={{ padding: "1rem 0" }}>
+          <p
+            style={{
+              fontSize: "1rem",
+              marginBottom: "0.5rem",
+              color: "var(--admin-text-primary)",
+            }}
+          >
+            Tính năng này hiện đang trong quá trình phát triển.
+          </p>
+          <p
+            style={{
+              color: "var(--admin-text-muted)",
+              marginBottom: 0,
+            }}
+          >
+            Vui lòng quay lại sau hoặc liên hệ với đội ngũ phát triển để biết
+            thêm thông tin.
+          </p>
+        </div>
+      </Modal>
     </header>
   );
 };

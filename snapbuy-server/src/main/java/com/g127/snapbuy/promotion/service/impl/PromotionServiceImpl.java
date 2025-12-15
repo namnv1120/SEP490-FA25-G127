@@ -179,9 +179,10 @@ public class PromotionServiceImpl implements PromotionService {
         
         for (Tenant tenant : tenants) {
             try {
-                // Set tenant context cho mỗi tenant
-                TenantContext.setCurrentTenant(tenant.getTenantCode());
-                log.info("Processing expired promotions for tenant: {}", tenant.getTenantCode());
+                // Set tenant context cho mỗi tenant (sử dụng tenantId UUID thay vì tenantCode)
+                TenantContext.setCurrentTenant(tenant.getTenantId().toString());
+                log.info("Processing expired promotions for tenant: {} (ID: {})", 
+                        tenant.getTenantCode(), tenant.getTenantId());
                 
                 // Thực hiện deactivate expired promotions
                 deactivateExpired();

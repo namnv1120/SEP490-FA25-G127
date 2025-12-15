@@ -1,6 +1,7 @@
 package com.g127.snapbuy.admin.service.impl;
 
 import com.g127.snapbuy.account.entity.Role;
+import com.g127.snapbuy.account.repository.AccountRepository;
 import com.g127.snapbuy.account.repository.RoleRepository;
 import com.g127.snapbuy.admin.dto.request.MasterRoleRequest;
 import com.g127.snapbuy.admin.dto.response.MasterRoleResponse;
@@ -10,6 +11,9 @@ import com.g127.snapbuy.admin.service.MasterRoleService;
 import com.g127.snapbuy.common.exception.AppException;
 import com.g127.snapbuy.common.exception.ErrorCode;
 import com.g127.snapbuy.tenant.context.TenantContext;
+import com.g127.snapbuy.tenant.entity.Tenant;
+import com.g127.snapbuy.tenant.repository.TenantOwnerRepository;
+import com.g127.snapbuy.tenant.repository.TenantRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,6 +31,9 @@ public class MasterRoleServiceImpl implements MasterRoleService {
 
     private final MasterRoleRepository masterRoleRepository;
     private final RoleRepository roleRepository; // Tenant DB repository
+    private final TenantRepository tenantRepository;
+    private final AccountRepository accountRepository;
+    private final com.g127.snapbuy.tenant.repository.TenantOwnerRepository tenantOwnerRepository;
 
     @Override
     public List<MasterRoleResponse> getAllRoles() {
@@ -140,7 +147,6 @@ public class MasterRoleServiceImpl implements MasterRoleService {
                     tenantRole.setCreatedDate(new Date());
                     
                     roleRepository.save(tenantRole);
-                    log.info("Synced role '{}' to tenant {}", masterRole.getRoleName(), tenantId);
                 }
             }
             
@@ -150,6 +156,8 @@ public class MasterRoleServiceImpl implements MasterRoleService {
     }
 
     private MasterRoleResponse toResponse(MasterRole role) {
+        int userCount = countUsersWithRole(role.getRoleName());
+        
         return MasterRoleResponse.builder()
                 .roleId(role.getRoleId())
                 .roleName(role.getRoleName())
@@ -158,7 +166,55 @@ public class MasterRoleServiceImpl implements MasterRoleService {
                 .createdDate(role.getCreatedDate())
                 .isSystemRole(role.getIsSystemRole())
                 .displayOrder(role.getDisplayOrder())
-                .userCount(0) // TODO: Count users across all tenants
+                .userCount(userCount)
                 .build();
+    }
+
+    /**
+     * Đếm tổng số users có role này từ tất cả tenants
+     */
+    private int countUsersWithRole(String roleName) {
+        try {
+            // Nếu là role "Quản trị viên", đếm từ TenantOwner trong master DB
+            if ("Quản trị viên".equalsIgnoreCase(roleName)) {
+                TenantContext.setCurrentTenant(null);
+                long count = tenantOwnerRepository.count();
+                return (int) count;
+            }
+            
+            // Lưu tenant context hiện tại
+            String currentTenant = TenantContext.getCurrentTenant();
+            
+            // Switch về master DB để lấy danh sách tenants
+            TenantContext.setCurrentTenant(null);
+            List<Tenant> tenants = tenantRepository.findAll();
+            
+            int totalCount = 0;
+            
+            // Đếm users trong từng tenant (chỉ tenants đang active)
+            for (Tenant tenant : tenants) {
+                // Skip nếu tenant không active
+                if (Boolean.FALSE.equals(tenant.getIsActive())) {
+                    continue;
+                }
+                
+                try {
+                    TenantContext.setCurrentTenant(tenant.getTenantId().toString());
+                    long count = accountRepository.countByRoles_RoleName(roleName);
+                    totalCount += count;
+                } catch (Exception e) {
+                    log.warn("Error counting users for role {} in tenant {}: {}", 
+                            roleName, tenant.getTenantCode(), e.getMessage());
+                }
+            }
+            
+            // Restore tenant context
+            TenantContext.setCurrentTenant(currentTenant);
+            
+            return totalCount;
+        } catch (Exception e) {
+            log.error("Error counting users for role {}: {}", roleName, e.getMessage());
+            return 0;
+        }
     }
 }

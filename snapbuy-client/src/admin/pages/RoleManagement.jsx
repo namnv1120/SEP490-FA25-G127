@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   FaPlus,
   FaSearch,
   FaEdit,
   FaTrash,
   FaUserShield,
-  FaShieldAlt,
+  FaCheckCircle,
+  FaUsers,
 } from "react-icons/fa";
 import { message, Modal } from "antd";
 import {
@@ -14,6 +15,7 @@ import {
   createRole,
   updateRole,
 } from "../../services/RoleService";
+import DeleteConfirmModal from "../components/modals/DeleteConfirmModal";
 import "../styles/admin.css";
 
 const RoleManagement = () => {
@@ -21,6 +23,8 @@ const RoleManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingRole, setDeletingRole] = useState(null);
   const [editingRole, setEditingRole] = useState(null);
   const [formData, setFormData] = useState({
     roleName: "",
@@ -37,8 +41,6 @@ const RoleManagement = () => {
 
       // Check authentication
       const token = localStorage.getItem("authToken");
-      console.log("🔑 Auth Token:", token ? "Có token" : "Không có token");
-      console.log("🔑 Token Type:", localStorage.getItem("authTokenType"));
 
       if (!token) {
         message.error("Vui lòng đăng nhập để truy cập");
@@ -46,25 +48,18 @@ const RoleManagement = () => {
       }
 
       const data = await getAllRoles();
-      console.log("✅ Raw API data:", data);
 
       // Map API data to component format
-      const mappedRoles = data.map((role) => {
-        return {
-          id: role.roleId || role.id,
-          name: role.roleName || role.name,
-          description: role.description || "",
-          userCount: role.userCount || 0,
-          color: getRoleColor(role.roleName || role.name),
-          createdAt:
-            role.createdDate || role.createdAt || new Date().toISOString(),
-        };
-      });
-      console.log("✅ Mapped roles:", mappedRoles);
+      const mappedRoles = data.map((role) => ({
+        id: role.roleId || role.id,
+        name: role.roleName || role.name,
+        description: role.description || "",
+        userCount: role.userCount || 0,
+        color: getRoleColor(role.roleName || role.name),
+        createdAt:
+          role.createdDate || role.createdAt || new Date().toISOString(),
+      }));
       setRoles(mappedRoles);
-      if (mappedRoles.length > 0) {
-        message.success(`Đã tải ${mappedRoles.length} vai trò`);
-      }
     } catch (error) {
       console.error("❌ Lỗi khi tải vai trò:", error);
       if (
@@ -100,27 +95,25 @@ const RoleManagement = () => {
       (role.description || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  console.log("Roles:", roles);
-  console.log("Filtered roles:", filteredRoles);
-
   const handleDelete = (role) => {
-    Modal.confirm({
-      title: "Xác nhận xóa",
-      content: `Bạn có chắc muốn xóa vai trò "${role.name}"?`,
-      okText: "Xóa",
-      okType: "danger",
-      cancelText: "Hủy",
-      onOk: async () => {
-        try {
-          await deleteRole(role.id);
-          message.success("Xóa vai trò thành công");
-          fetchRoles();
-        } catch (error) {
-          console.error("Lỗi khi xóa vai trò:", error);
-          message.error(error.message || "Không thể xóa vai trò");
-        }
-      },
-    });
+    setDeletingRole(role);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      setLoading(true);
+      await deleteRole(deletingRole.id);
+      message.success("Xóa vai trò thành công");
+      fetchRoles();
+      setShowDeleteModal(false);
+      setDeletingRole(null);
+    } catch (error) {
+      console.error("Lỗi khi xóa vai trò:", error);
+      message.error(error.message || "Không thể xóa vai trò");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleOpenModal = (role = null) => {
@@ -205,59 +198,6 @@ const RoleManagement = () => {
           </div>
         </div>
       )}
-      {/* Page Header */}
-      <div className="admin-flex-between admin-mb-3">
-        <div>
-          <h1
-            style={{
-              fontSize: "1.875rem",
-              fontWeight: "700",
-              color: "var(--admin-text-primary)",
-              margin: 0,
-            }}
-          >
-            Quản Lý Vai Trò
-          </h1>
-          <p
-            style={{
-              color: "var(--admin-text-secondary)",
-              fontSize: "0.875rem",
-              marginTop: "0.5rem",
-            }}
-          >
-            Quản lý vai trò và quyền hạn người dùng trên tất cả cửa hàng
-          </p>
-        </div>
-        <button
-          className="admin-btn admin-btn-primary"
-          onClick={() => handleOpenModal()}
-        >
-          <FaPlus /> Tạo Vai Trò Mới
-        </button>
-      </div>
-
-      {/* Search */}
-      <div className="admin-card admin-mb-3">
-        <div style={{ position: "relative" }}>
-          <FaSearch
-            style={{
-              position: "absolute",
-              left: "1rem",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "var(--admin-text-muted)",
-            }}
-          />
-          <input
-            type="text"
-            className="admin-form-input"
-            placeholder="Tìm kiếm vai trò theo tên hoặc mô tả..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ paddingLeft: "2.5rem" }}
-          />
-        </div>
-      </div>
 
       {/* Stats */}
       <div className="admin-stats-grid admin-mb-3">
@@ -273,14 +213,78 @@ const RoleManagement = () => {
 
         <div className="admin-stats-card">
           <div className="admin-stats-header">
-            <span className="admin-stats-title">Tổng Người Dùng</span>
+            <span className="admin-stats-title">Vai Trò Hoạt Động</span>
             <div className="admin-stats-icon success">
-              <FaShieldAlt />
+              <FaCheckCircle />
             </div>
           </div>
           <div className="admin-stats-value">
-            {roles.reduce((sum, r) => sum + r.userCount, 0).toLocaleString()}
+            {roles.filter((r) => r.userCount > 0).length}
           </div>
+        </div>
+
+        <div className="admin-stats-card">
+          <div className="admin-stats-header">
+            <span className="admin-stats-title">Tổng Người Dùng</span>
+            <div className="admin-stats-icon info">
+              <FaUsers />
+            </div>
+          </div>
+          <div className="admin-stats-value">
+            {roles.reduce((sum, r) => sum + (r.userCount || 0), 0)}
+          </div>
+        </div>
+      </div>
+
+      {/* Search and Add Button */}
+      <div className="admin-card admin-mb-3">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr auto",
+            gap: "1rem",
+            alignItems: "center",
+          }}
+        >
+          <div style={{ position: "relative" }}>
+            <FaSearch
+              style={{
+                position: "absolute",
+                left: "1rem",
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "var(--admin-text-muted)",
+              }}
+            />
+            <input
+              type="text"
+              placeholder="Tìm kiếm vai trò..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "0.75rem 1rem 0.75rem 2.75rem",
+                background: "var(--admin-bg-tertiary)",
+                border: "1px solid var(--admin-border-color)",
+                borderRadius: "var(--admin-radius-md)",
+                color: "var(--admin-text-primary)",
+                fontSize: "0.875rem",
+              }}
+            />
+          </div>
+
+          <button
+            className="admin-btn admin-btn-primary"
+            onClick={() => handleOpenModal()}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+            }}
+          >
+            <FaPlus />
+            Tạo Vai Trò
+          </button>
         </div>
       </div>
 
@@ -554,6 +558,14 @@ const RoleManagement = () => {
           </div>
         </div>
       )}
+
+      <DeleteConfirmModal
+        show={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+        itemName={deletingRole?.name}
+        loading={loading}
+      />
     </div>
   );
 };

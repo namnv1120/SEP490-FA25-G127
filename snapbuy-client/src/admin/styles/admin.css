@@ -74,7 +74,8 @@
   background: var(--admin-bg-primary);
   min-height: 100vh;
   color: var(--admin-text-primary);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
 }
 
 .admin-page {
@@ -98,18 +99,21 @@
 }
 
 .admin-login-container::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -50%;
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(99, 102, 241, 0.1) 0%,
+    transparent 70%
+  );
   animation: pulse 15s ease-in-out infinite;
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     transform: scale(1);
@@ -563,7 +567,7 @@
 }
 
 .admin-stats-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -823,6 +827,26 @@
 
 .admin-btn-icon.view:hover {
   background: var(--admin-accent-primary);
+  color: white;
+}
+
+.admin-btn-icon.success {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--admin-accent-success);
+}
+
+.admin-btn-icon.success:hover {
+  background: var(--admin-accent-success);
+  color: white;
+}
+
+.admin-btn-icon.warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--admin-accent-warning);
+}
+
+.admin-btn-icon.warning:hover {
+  background: var(--admin-accent-warning);
   color: white;
 }
 

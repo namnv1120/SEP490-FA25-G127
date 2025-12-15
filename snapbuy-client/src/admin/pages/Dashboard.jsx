@@ -13,6 +13,7 @@ import { notification } from "antd";
 import Chart from "react-apexcharts";
 import StatsCard from "../components/StatsCard";
 import TenantService from "../../services/TenantService";
+import { searchAdminAccounts } from "../../services/AdminAccountService";
 import "../styles/admin.css";
 
 const Dashboard = () => {
@@ -77,6 +78,16 @@ const Dashboard = () => {
         const totalStores = tenants.length;
         const activeStores = tenants.filter((t) => t.isActive).length;
 
+        // Fetch all accounts for user count
+        const accountsData = await searchAdminAccounts({});
+        const totalUsers = accountsData?.length || 0;
+
+        // Calculate total revenue from all tenants
+        const totalRevenue = tenants.reduce(
+          (sum, t) => sum + (t.revenue || 0),
+          0
+        );
+
         // Calculate growth based on new tenants created each month
         const currentMonthNew = currentMonthTenants.length;
         const lastMonthNew = lastMonthTenants.length;
@@ -96,18 +107,58 @@ const Dashboard = () => {
           lastMonthTenants.filter((t) => t.isActive).length
         );
 
+        // Calculate user growth (current month vs last month)
+        const currentMonthUsers =
+          accountsData?.filter((acc) => {
+            if (!acc.createdAt) return false;
+            const createdDate = new Date(acc.createdAt);
+            return (
+              createdDate.getMonth() === currentMonth &&
+              createdDate.getFullYear() === currentYear
+            );
+          }).length || 0;
+
+        const lastMonthUsers =
+          accountsData?.filter((acc) => {
+            if (!acc.createdAt) return false;
+            const createdDate = new Date(acc.createdAt);
+            return (
+              createdDate.getMonth() === lastMonth &&
+              createdDate.getFullYear() === lastMonthYear
+            );
+          }).length || 0;
+
+        const totalUsersChange = calculateChange(
+          currentMonthUsers,
+          lastMonthUsers
+        );
+
+        // Calculate revenue growth
+        const currentMonthRevenue = currentMonthTenants.reduce(
+          (sum, t) => sum + (t.revenue || 0),
+          0
+        );
+        const lastMonthRevenue = lastMonthTenants.reduce(
+          (sum, t) => sum + (t.revenue || 0),
+          0
+        );
+        const totalRevenueChange = calculateChange(
+          currentMonthRevenue,
+          lastMonthRevenue
+        );
+
         setStats({
           totalStores,
           activeStores,
-          totalUsers: 0, // TODO: Get from user API
-          totalRevenue: 0, // TODO: Get from revenue API
+          totalUsers,
+          totalRevenue,
         });
 
         setStatsChanges({
           totalStoresChange,
           activeStoresChange,
-          totalUsersChange: 0, // TODO: Calculate from user API
-          totalRevenueChange: 0, // TODO: Calculate from revenue API
+          totalUsersChange,
+          totalRevenueChange,
         });
 
         // Sort by created date and get recent stores
@@ -168,28 +219,6 @@ const Dashboard = () => {
     };
   }, [allTenants]);
 
-  const handleDeleteTenant = async (tenantId) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa cửa hàng này?")) {
-      return;
-    }
-
-    try {
-      await TenantService.deleteTenant(tenantId);
-      notification.success({
-        message: "Xóa thành công",
-        description: "Cửa hàng đã được xóa",
-        duration: 2,
-      });
-      fetchDashboardData(); // Reload data
-    } catch (error) {
-      notification.error({
-        message: "Lỗi xóa cửa hàng",
-        description: error.response?.data?.message || "Không thể xóa cửa hàng",
-        duration: 3,
-      });
-    }
-  };
-
   return (
     <div className="admin-page admin-fade-in">
       {/* Stats Grid */}
@@ -232,7 +261,7 @@ const Dashboard = () => {
         />
         <StatsCard
           title="Tổng Doanh Thu"
-          value={`$${(stats.totalRevenue / 1000).toFixed(0)}K`}
+          value={`${stats.totalRevenue.toLocaleString("vi-VN")} ₫`}
           change={`${
             statsChanges.totalRevenueChange > 0 ? "+" : ""
           }${statsChanges.totalRevenueChange.toFixed(1)}%`}
@@ -248,11 +277,6 @@ const Dashboard = () => {
       <div className="admin-card">
         <div className="admin-card-header">
           <h2 className="admin-card-title">Cửa Hàng Gần Đây</h2>
-          <div className="admin-card-actions">
-            <button className="admin-btn admin-btn-secondary">
-              <FaPlus /> Thêm Cửa Hàng Mới
-            </button>
-          </div>
         </div>
 
         <div className="admin-table-container">

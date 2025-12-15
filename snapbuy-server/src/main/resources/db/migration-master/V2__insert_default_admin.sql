@@ -18,6 +18,4 @@ VALUES
     (N'Quản trị viên', N'Quản trị viên hệ thống - Toàn quyền quản lý tất cả cửa hàng', 1, 1, 1),
     (N'Chủ cửa hàng', N'Chủ cửa hàng - Quản lý toàn bộ hoạt động kinh doanh của cửa hàng', 1, 1, 2),
     (N'Nhân viên kho', N'Nhân viên kho - Quản lý biên lai và các vấn đề liên quan đến hàng tồn kho', 1, 0, 3),
-    (N'Nhân viên bán hàng', N'Nhân viên bán hàng - Xử lý đơn hàng và quản lý khách hàng', 1, 0, 4),
-    (N'Kế toán', N'Kế toán - Quản lý tài chính và báo cáo', 1, 0, 5),
-    (N'Quản lý kho', N'Quản lý kho - Giám sát và điều phối hoạt động kho', 1, 0, 6);
+    (N'Nhân viên bán hàng', N'Nhân viên bán hàng - Xử lý đơn hàng và quản lý khách hàng', 1, 0, 4);

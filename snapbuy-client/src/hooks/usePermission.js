@@ -34,7 +34,10 @@ const usePermission = () => {
         }
       } catch (error) {
         console.error("Lỗi khi lấy thông tin user:", error);
+        // Nếu API lỗi (token hết hạn/không hợp lệ), xóa token
+        localStorage.removeItem("authToken");
         setUserRole(null);
+        setUserInfo(null);
       } finally {
         setLoading(false);
       }

@@ -68,4 +68,15 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
            """)
     List<Account> findStaffAccountsForSearch(@Param("active") Boolean active,
                                              @Param("roleNames") java.util.List<String> roleNames);
+
+    /**
+     * Đếm số lượng accounts có role name cụ thể
+     */
+    @Query("""
+           select count(distinct a)
+           from Account a
+           join a.roles r
+           where r.roleName = :roleName
+           """)
+    long countByRoles_RoleName(@Param("roleName") String roleName);
 }

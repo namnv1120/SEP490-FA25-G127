@@ -6,7 +6,7 @@ import { base_path } from "./environment";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import NavigationGuard from "./components/common/NavigationGuard";
 import TenantValidator from "./components/tenant/TenantValidator";
-import { getTenantInfo, saveTenantContext } from "./utils/tenantUtils";
+import { saveTenantContext } from "./utils/tenantUtils";
 
 // Import các components (giống AppRouter cũ)
 const Pos = lazy(() => import("./feature-module/pos/Pos"));
@@ -21,9 +21,6 @@ const ResetPassword = lazy(() =>
   import("./feature-module/pages/authentication/ResetPassword")
 );
 const Suppliers = lazy(() => import("./feature-module/people/SupplierList"));
-const AdminDashboard = lazy(() =>
-  import("./feature-module/dashboard/AdminDashboard")
-);
 const ShopOwnerDashboard = lazy(() =>
   import("./feature-module/dashboard/ShopOwnerDashboard")
 );
@@ -65,8 +62,6 @@ const CategoryList = lazy(() =>
 const SubCategoryList = lazy(() =>
   import("./feature-module/inventories/SubCategoryList")
 );
-const AccountList = lazy(() => import("./feature-module/accounts/AccountList"));
-const RoleList = lazy(() => import("./feature-module/accounts/RoleList"));
 const Profile = lazy(() => import("./feature-module/settings/Profile"));
 const EmailSettings = lazy(() =>
   import("./feature-module/settings/EmailSettings")
@@ -133,7 +128,6 @@ const componentsMap = {
   VerifyOtp,
   ResetPassword,
   Suppliers,
-  AdminDashboard,
   ShopOwnerDashboard,
   SalesOwnerDashboard,
   WarehousesOwnerDashboard,
@@ -146,8 +140,6 @@ const componentsMap = {
   InventoryList,
   CategoryList,
   SubCategoryList,
-  AccountList,
-  RoleList,
   Profile,
   EmailSettings,
   PasswordSettings,
@@ -179,8 +171,7 @@ const componentsMap = {
 const TenantAppRouter = () => {
   useEffect(() => {
     // Lưu tenant context khi app khởi tạo
-    const tenantInfo = saveTenantContext();
-    console.log("🏪 Tenant App - Tenant Info:", tenantInfo);
+    saveTenantContext();
   }, []);
 
   const RouterContent = memo(() => {

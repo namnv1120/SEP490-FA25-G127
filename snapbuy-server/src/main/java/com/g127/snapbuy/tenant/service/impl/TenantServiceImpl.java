@@ -3,6 +3,7 @@ package com.g127.snapbuy.tenant.service.impl;
 import com.g127.snapbuy.admin.service.MasterRoleService;
 import com.g127.snapbuy.tenant.config.TenantFlywayRunner;
 import com.g127.snapbuy.tenant.config.TenantRoutingDataSource;
+import com.g127.snapbuy.tenant.context.TenantContext;
 import com.g127.snapbuy.tenant.dto.request.TenantCreateRequest;
 import com.g127.snapbuy.tenant.dto.response.TenantResponse;
 import com.g127.snapbuy.tenant.entity.Tenant;
@@ -21,6 +22,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -284,9 +290,9 @@ public class TenantServiceImpl implements TenantService {
                 tenant.getDbHost(), tenant.getDbPort()
         );
 
-        try (java.sql.Connection conn = java.sql.DriverManager.getConnection(
+        try (Connection conn = DriverManager.getConnection(
                 masterUrl, tenant.getDbUsername(), tenant.getDbPassword());
-             java.sql.Statement stmt = conn.createStatement()) {
+             Statement stmt = conn.createStatement()) {
 
             // Terminate all connections to the database before dropping
             String killConnectionsQuery = String.format(
@@ -335,16 +341,16 @@ public class TenantServiceImpl implements TenantService {
                 tenant.getDbHost(), tenant.getDbPort()
         );
 
-        try (java.sql.Connection conn = java.sql.DriverManager.getConnection(
+        try (Connection conn = DriverManager.getConnection(
                 masterUrl, tenant.getDbUsername(), tenant.getDbPassword());
-             java.sql.Statement stmt = conn.createStatement()) {
+             Statement stmt = conn.createStatement()) {
 
             // Check if database exists
             String checkQuery = String.format(
                     "SELECT database_id FROM sys.databases WHERE name = '%s'",
                     tenant.getDbName()
             );
-            java.sql.ResultSet rs = stmt.executeQuery(checkQuery);
+            ResultSet rs = stmt.executeQuery(checkQuery);
 
             if (rs.next()) {
                 log.debug("Database '{}' already exists", tenant.getDbName());
@@ -381,24 +387,24 @@ public class TenantServiceImpl implements TenantService {
      * Insert owner account into Tenant database
      */
     private void insertOwnerIntoTenantDB(Tenant tenant, TenantCreateRequest request) throws Exception {
-        String previousTenant = com.g127.snapbuy.tenant.context.TenantContext.getCurrentTenant();
+        String previousTenant = TenantContext.getCurrentTenant();
         
         try {
             // Set tenant context
-            com.g127.snapbuy.tenant.context.TenantContext.setCurrentTenant(tenant.getTenantId().toString());
+            TenantContext.setCurrentTenant(tenant.getTenantId().toString());
             
             // Get tenant datasource
             javax.sql.DataSource dataSource = tenantRoutingDataSource.getCurrentDataSource();
             
-            try (java.sql.Connection connection = dataSource.getConnection();
-                 java.sql.Statement statement = connection.createStatement()) {
+            try (Connection connection = dataSource.getConnection();
+                 Statement statement = connection.createStatement()) {
                 
                 // Hash password
                 String hashedPassword = passwordEncoder.encode(request.getOwnerPassword());
                 
                 // Get "Chủ cửa hàng" role ID
                 String getRoleIdQuery = "SELECT role_id FROM roles WHERE role_name = N'Chủ cửa hàng'";
-                java.sql.ResultSet rs = statement.executeQuery(getRoleIdQuery);
+                ResultSet rs = statement.executeQuery(getRoleIdQuery);
                 
                 if (!rs.next()) {
                     throw new RuntimeException("Không tìm thấy role 'Chủ cửa hàng' trong tenant database");
@@ -420,7 +426,7 @@ public class TenantServiceImpl implements TenantService {
                 try {
                     statement.executeUpdate(insertAccountSql);
                     log.debug("Owner account inserted into tenant DB");
-                } catch (java.sql.SQLException e) {
+                } catch (SQLException e) {
                     if (e.getMessage().contains("UX_accounts_phone")) {
                         throw new IllegalArgumentException("Số điện thoại '" + request.getOwnerPhone() + "' đã được sử dụng trong hệ thống. Vui lòng sử dụng số khác.");
                     } else if (e.getMessage().contains("UX_accounts_username")) {
@@ -455,14 +461,19 @@ public class TenantServiceImpl implements TenantService {
         } finally {
             // Restore previous tenant context
             if (previousTenant != null) {
-                com.g127.snapbuy.tenant.context.TenantContext.setCurrentTenant(previousTenant);
+                TenantContext.setCurrentTenant(previousTenant);
             } else {
-                com.g127.snapbuy.tenant.context.TenantContext.clear();
+                TenantContext.clear();
             }
         }
     }
 
     private TenantResponse toResponse(Tenant tenant, TenantOwner owner) {
+        // Calculate statistics from tenant database
+        int userCount = countUsersInTenant(tenant.getTenantId().toString());
+        int productCount = countProductsInTenant(tenant.getTenantId().toString());
+        long revenue = calculateRevenueInTenant(tenant.getTenantId().toString());
+        
         return TenantResponse.builder()
                 .tenantId(tenant.getTenantId().toString())
                 .tenantName(tenant.getTenantName())
@@ -470,12 +481,118 @@ public class TenantServiceImpl implements TenantService {
                 .dbName(tenant.getDbName())
                 .isActive(tenant.getIsActive())
                 .createdAt(tenant.getCreatedAt())
+                .createdDate(tenant.getCreatedAt())
                 .subscriptionStart(tenant.getSubscriptionStart())
                 .subscriptionEnd(tenant.getSubscriptionEnd())
                 .maxUsers(tenant.getMaxUsers())
                 .maxProducts(tenant.getMaxProducts())
                 .ownerName(owner != null ? owner.getFullName() : null)
                 .ownerEmail(owner != null ? owner.getEmail() : null)
+                .ownerPhone(owner != null ? owner.getPhone() : null)
+                .storeName(tenant.getTenantName())
+                .userCount(userCount)
+                .productCount(productCount)
+                .revenue(revenue)
                 .build();
+    }
+    
+    /**
+     * Count number of users in tenant database
+     */
+    private int countUsersInTenant(String tenantId) {
+        String previousTenant = TenantContext.getCurrentTenant();
+        try {
+            TenantContext.setCurrentTenant(tenantId);
+            
+            javax.sql.DataSource dataSource = tenantRoutingDataSource.getCurrentDataSource();
+            try (Connection conn = dataSource.getConnection();
+                 Statement stmt = conn.createStatement()) {
+                
+                String query = "SELECT COUNT(*) as count FROM accounts WHERE active = 1";
+                ResultSet rs = stmt.executeQuery(query);
+                
+                if (rs.next()) {
+                    int count = rs.getInt("count");
+                    return count;
+                }
+                return 0;
+            }
+        } catch (Exception e) {
+            log.error("Error counting users for tenant {}: {}", tenantId, e.getMessage(), e);
+            return 0;
+        } finally {
+            if (previousTenant != null) {
+                com.g127.snapbuy.tenant.context.TenantContext.setCurrentTenant(previousTenant);
+            } else {
+                com.g127.snapbuy.tenant.context.TenantContext.clear();
+            }
+        }
+    }
+    
+    /**
+     * Count number of products in tenant database
+     */
+    private int countProductsInTenant(String tenantId) {
+        String previousTenant = TenantContext.getCurrentTenant();
+        try {
+            TenantContext.setCurrentTenant(tenantId);
+            
+            javax.sql.DataSource dataSource = tenantRoutingDataSource.getCurrentDataSource();
+            try (Connection conn = dataSource.getConnection();
+                 Statement stmt = conn.createStatement()) {
+                
+                String query = "SELECT COUNT(*) as count FROM products";
+                ResultSet rs = stmt.executeQuery(query);
+                
+                if (rs.next()) {
+                    int count = rs.getInt("count");
+                    return count;
+                }
+                return 0;
+            }
+        } catch (Exception e) {
+            log.error("Error counting products for tenant {}: {}", tenantId, e.getMessage(), e);
+            return 0;
+        } finally {
+            if (previousTenant != null) {
+                com.g127.snapbuy.tenant.context.TenantContext.setCurrentTenant(previousTenant);
+            } else {
+                com.g127.snapbuy.tenant.context.TenantContext.clear();
+            }
+        }
+    }
+    
+    /**
+     * Calculate total revenue in tenant database
+     */
+    private long calculateRevenueInTenant(String tenantId) {
+        String previousTenant = TenantContext.getCurrentTenant();
+        try {
+            TenantContext.setCurrentTenant(tenantId);
+            
+            javax.sql.DataSource dataSource = tenantRoutingDataSource.getCurrentDataSource();
+            try (Connection conn = dataSource.getConnection();
+                 Statement stmt = conn.createStatement()) {
+                
+                // Calculate total from all orders (use order_status column)
+                String query = "SELECT ISNULL(SUM(total_amount), 0) as total FROM orders";
+                ResultSet rs = stmt.executeQuery(query);
+                
+                if (rs.next()) {
+                    long revenue = rs.getLong("total");
+                    return revenue;
+                }
+                return 0L;
+            }
+        } catch (Exception e) {
+            log.error("Error calculating revenue for tenant {}: {}", tenantId, e.getMessage(), e);
+            return 0L;
+        } finally {
+            if (previousTenant != null) {
+                TenantContext.setCurrentTenant(previousTenant);
+            } else {
+                TenantContext.clear();
+            }
+        }
     }
 }
