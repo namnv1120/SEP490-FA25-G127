@@ -119,7 +119,7 @@ public class PromotionServiceImpl implements PromotionService {
     @Override
     @Transactional(readOnly = true)
     public List<PromotionResponse> getAll() {
-        return promotionRepository.findAll().stream()
+        return promotionRepository.findAllWithProducts().stream()
                 .map(promotionMapper::toResponse)
                 .toList();
     }

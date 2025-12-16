@@ -29,6 +29,12 @@ public interface PromotionRepository extends JpaRepository<Promotion, UUID> {
         where p.active = true and p.endDate < :now
     """)
     List<Promotion> findExpiredActive(@Param("now") LocalDateTime now);
+
+    @Query("""
+        select distinct p from Promotion p
+        left join fetch p.products
+    """)
+    List<Promotion> findAllWithProducts();
 }
 
 

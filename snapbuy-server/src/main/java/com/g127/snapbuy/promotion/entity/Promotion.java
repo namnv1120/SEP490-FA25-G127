@@ -51,7 +51,7 @@ public class Promotion {
     @Column(name = "created_date")
     private LocalDateTime createdDate = LocalDateTime.now();
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "promotion_product",
             joinColumns = @JoinColumn(name = "promotion_id"),

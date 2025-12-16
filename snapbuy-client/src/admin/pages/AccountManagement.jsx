@@ -48,6 +48,7 @@ const AccountManagement = () => {
       const mappedAccounts = (data || []).map((account) => ({
         id: account.accountId,
         tenantId: account.tenantId,
+        username: account.username || "N/A",
         name: account.fullName || "N/A",
         email: account.email || "N/A",
         phone: account.phone || "N/A",
@@ -115,8 +116,7 @@ const AccountManagement = () => {
       setLoading(true);
       await toggleAccountStatus(togglingAccount.tenantId, togglingAccount.id);
       message.success(
-        `Đã ${
-          togglingAccount.isActive ? "vô hiệu hóa" : "kích hoạt"
+        `Đã ${togglingAccount.isActive ? "vô hiệu hóa" : "kích hoạt"
         } tài khoản thành công`
       );
       fetchAccounts();
@@ -380,11 +380,10 @@ const AccountManagement = () => {
                         <td>
                           {ownerAccount && (
                             <span
-                              className={`admin-badge ${
-                                ownerAccount.status === "Hoạt Động"
+                              className={`admin-badge ${ownerAccount.status === "Hoạt Động"
                                   ? "success"
                                   : "danger"
-                              }`}
+                                }`}
                             >
                               {ownerAccount.status}
                             </span>
@@ -394,9 +393,8 @@ const AccountManagement = () => {
                           {ownerAccount && (
                             <div className="admin-action-btns">
                               <button
-                                className={`admin-btn-icon ${
-                                  ownerAccount.isActive ? "warning" : "success"
-                                }`}
+                                className={`admin-btn-icon ${ownerAccount.isActive ? "warning" : "success"
+                                  }`}
                                 title={
                                   ownerAccount.isActive
                                     ? "Vô hiệu hóa"
@@ -474,11 +472,10 @@ const AccountManagement = () => {
                             <td>{account.store}</td>
                             <td>
                               <span
-                                className={`admin-badge ${
-                                  account.status === "Hoạt Động"
+                                className={`admin-badge ${account.status === "Hoạt Động"
                                     ? "success"
                                     : "danger"
-                                }`}
+                                  }`}
                               >
                                 {account.status}
                               </span>
@@ -486,9 +483,8 @@ const AccountManagement = () => {
                             <td>
                               <div className="admin-action-btns">
                                 <button
-                                  className={`admin-btn-icon ${
-                                    account.isActive ? "warning" : "success"
-                                  }`}
+                                  className={`admin-btn-icon ${account.isActive ? "warning" : "success"
+                                    }`}
                                   title={
                                     account.isActive
                                       ? "Vô hiệu hóa"

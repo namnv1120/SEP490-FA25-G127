@@ -227,34 +227,6 @@ const StoreManagement = () => {
 
   return (
     <div className="admin-page admin-fade-in">
-      {loading && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0,0,0,0.1)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
-        >
-          <div
-            style={{
-              background: "white",
-              padding: "2rem",
-              borderRadius: "0.5rem",
-              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-            }}
-          >
-            Đang tải...
-          </div>
-        </div>
-      )}
-
       {/* Stats Summary */}
       <div className="admin-stats-grid admin-mb-3">
         <div className="admin-stats-card">
@@ -411,13 +383,12 @@ const StoreManagement = () => {
                   </td>
                   <td>
                     <span
-                      className={`admin-badge ${
-                        store.status === "Hoạt Động"
-                          ? "success"
-                          : store.status === "Chờ Duyệt"
+                      className={`admin-badge ${store.status === "Hoạt Động"
+                        ? "success"
+                        : store.status === "Chờ Duyệt"
                           ? "warning"
                           : "danger"
-                      }`}
+                        }`}
                     >
                       {store.status}
                     </span>
@@ -428,9 +399,8 @@ const StoreManagement = () => {
                   <td>
                     <div className="admin-action-btns">
                       <button
-                        className={`admin-btn-icon ${
-                          store.isActive ? "warning" : "success"
-                        }`}
+                        className={`admin-btn-icon ${store.isActive ? "warning" : "success"
+                          }`}
                         title={store.isActive ? "Vô hiệu hóa" : "Kích hoạt"}
                         onClick={() => handleToggleStatus(store)}
                       >

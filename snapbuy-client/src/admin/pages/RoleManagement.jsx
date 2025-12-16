@@ -171,33 +171,6 @@ const RoleManagement = () => {
 
   return (
     <div className="admin-page admin-fade-in">
-      {loading && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0,0,0,0.1)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
-        >
-          <div
-            style={{
-              background: "white",
-              padding: "2rem",
-              borderRadius: "0.5rem",
-              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-            }}
-          >
-            Đang tải...
-          </div>
-        </div>
-      )}
 
       {/* Stats */}
       <div className="admin-stats-grid admin-mb-3">
@@ -314,19 +287,18 @@ const RoleManagement = () => {
                     width: "48px",
                     height: "48px",
                     borderRadius: "var(--admin-radius-md)",
-                    background: `rgba(${
-                      role.color === "danger"
-                        ? "239, 68, 68"
-                        : role.color === "primary"
+                    background: `rgba(${role.color === "danger"
+                      ? "239, 68, 68"
+                      : role.color === "primary"
                         ? "99, 102, 241"
                         : role.color === "success"
-                        ? "16, 185, 129"
-                        : role.color === "info"
-                        ? "59, 130, 246"
-                        : role.color === "warning"
-                        ? "245, 158, 11"
-                        : "156, 163, 175"
-                    }, 0.1)`,
+                          ? "16, 185, 129"
+                          : role.color === "info"
+                            ? "59, 130, 246"
+                            : role.color === "warning"
+                              ? "245, 158, 11"
+                              : "156, 163, 175"
+                      }, 0.1)`,
                     color: `var(--admin-accent-${role.color})`,
                     display: "flex",
                     alignItems: "center",
@@ -550,8 +522,8 @@ const RoleManagement = () => {
                   {loading
                     ? "Đang lưu..."
                     : editingRole
-                    ? "Cập Nhật"
-                    : "Tạo Mới"}
+                      ? "Cập Nhật"
+                      : "Tạo Mới"}
                 </button>
               </div>
             </form>

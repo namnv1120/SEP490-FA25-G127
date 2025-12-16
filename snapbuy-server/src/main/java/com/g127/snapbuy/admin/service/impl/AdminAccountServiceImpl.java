@@ -168,7 +168,7 @@ public class AdminAccountServiceImpl implements AdminAccountService {
         List<AdminAccountResponse> accounts = new ArrayList<>();
         
         StringBuilder sql = new StringBuilder(
-            "SELECT a.account_id, a.full_name, a.email, a.phone, a.active, a.created_date, a.updated_date, " +
+            "SELECT a.account_id, a.username, a.full_name, a.email, a.phone, a.active, a.created_date, a.updated_date, " +
             "r.role_name " +
             "FROM accounts a " +
             "LEFT JOIN account_roles ar ON a.account_id = ar.account_id " +
@@ -207,6 +207,7 @@ public class AdminAccountServiceImpl implements AdminAccountService {
                 while (rs.next()) {
                     AdminAccountResponse account = AdminAccountResponse.builder()
                             .accountId(UUID.fromString(rs.getString("account_id")))
+                            .username(rs.getString("username"))
                             .fullName(rs.getString("full_name"))
                             .email(rs.getString("email"))
                             .phone(rs.getString("phone"))

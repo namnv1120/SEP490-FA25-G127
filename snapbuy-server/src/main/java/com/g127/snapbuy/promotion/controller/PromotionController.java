@@ -45,9 +45,16 @@ public class PromotionController {
     @GetMapping
     @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
     public ApiResponse<List<PromotionResponse>> getAll() {
-        ApiResponse<List<PromotionResponse>> response = new ApiResponse<>();
-        response.setResult(promotionService.getAll());
-        return response;
+        try {
+            ApiResponse<List<PromotionResponse>> response = new ApiResponse<>();
+            response.setResult(promotionService.getAll());
+            return response;
+        } catch (Exception e) {
+            // Log lỗi chi tiết để debug
+            System.err.println("Error in PromotionController.getAll(): " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @GetMapping("/{id}")

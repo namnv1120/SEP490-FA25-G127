@@ -14,6 +14,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class AdminAccountResponse {
     private UUID accountId;
+    private String username;
     private String fullName;
     private String email;
     private String phone;

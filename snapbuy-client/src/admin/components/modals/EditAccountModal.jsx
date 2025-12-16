@@ -189,6 +189,47 @@ const EditAccountModal = ({
           <div
             style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
           >
+            {/* Username (Read-only) */}
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "0.5rem",
+                  fontWeight: "600",
+                  color: "var(--admin-text-primary)",
+                  fontSize: "0.875rem",
+                }}
+              >
+                Tên Đăng Nhập
+              </label>
+              <input
+                type="text"
+                value={accountData?.username || ""}
+                readOnly
+                disabled
+                style={{
+                  width: "100%",
+                  padding: "0.75rem",
+                  background: "var(--admin-bg-secondary)",
+                  border: "1px solid var(--admin-border-color)",
+                  borderRadius: "var(--admin-radius-md)",
+                  color: "var(--admin-text-muted)",
+                  fontSize: "0.875rem",
+                  cursor: "not-allowed",
+                }}
+              />
+              <p
+                style={{
+                  color: "var(--admin-text-muted)",
+                  fontSize: "0.75rem",
+                  marginTop: "0.25rem",
+                  marginBottom: 0,
+                }}
+              >
+                Tên đăng nhập không thể thay đổi
+              </p>
+            </div>
+
             {/* Full Name */}
             <div>
               <label
@@ -213,11 +254,10 @@ const EditAccountModal = ({
                   width: "100%",
                   padding: "0.75rem",
                   background: "var(--admin-bg-tertiary)",
-                  border: `1px solid ${
-                    errors.fullName
+                  border: `1px solid ${errors.fullName
                       ? "var(--admin-accent-danger)"
                       : "var(--admin-border-color)"
-                  }`,
+                    }`,
                   borderRadius: "var(--admin-radius-md)",
                   color: "var(--admin-text-primary)",
                   fontSize: "0.875rem",
@@ -261,11 +301,10 @@ const EditAccountModal = ({
                   width: "100%",
                   padding: "0.75rem",
                   background: "var(--admin-bg-tertiary)",
-                  border: `1px solid ${
-                    errors.email
+                  border: `1px solid ${errors.email
                       ? "var(--admin-accent-danger)"
                       : "var(--admin-border-color)"
-                  }`,
+                    }`,
                   borderRadius: "var(--admin-radius-md)",
                   color: "var(--admin-text-primary)",
                   fontSize: "0.875rem",
@@ -309,11 +348,10 @@ const EditAccountModal = ({
                   width: "100%",
                   padding: "0.75rem",
                   background: "var(--admin-bg-tertiary)",
-                  border: `1px solid ${
-                    errors.phone
+                  border: `1px solid ${errors.phone
                       ? "var(--admin-accent-danger)"
                       : "var(--admin-border-color)"
-                  }`,
+                    }`,
                   borderRadius: "var(--admin-radius-md)",
                   color: "var(--admin-text-primary)",
                   fontSize: "0.875rem",

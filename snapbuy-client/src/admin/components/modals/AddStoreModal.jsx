@@ -245,11 +245,10 @@ const AddStoreModal = ({ show, onClose, onSubmit, loading }) => {
                   width: "100%",
                   padding: "0.75rem",
                   background: "var(--admin-bg-tertiary)",
-                  border: `1px solid ${
-                    errors.tenantCode
+                  border: `1px solid ${errors.tenantCode
                       ? "var(--admin-accent-danger)"
                       : "var(--admin-border-color)"
-                  }`,
+                    }`,
                   borderRadius: "var(--admin-radius-md)",
                   color: "var(--admin-text-primary)",
                   fontSize: "0.875rem",
@@ -303,11 +302,10 @@ const AddStoreModal = ({ show, onClose, onSubmit, loading }) => {
                   width: "100%",
                   padding: "0.75rem",
                   background: "var(--admin-bg-tertiary)",
-                  border: `1px solid ${
-                    errors.tenantName
+                  border: `1px solid ${errors.tenantName
                       ? "var(--admin-accent-danger)"
                       : "var(--admin-border-color)"
-                  }`,
+                    }`,
                   borderRadius: "var(--admin-radius-md)",
                   color: "var(--admin-text-primary)",
                   fontSize: "0.875rem",
@@ -327,53 +325,7 @@ const AddStoreModal = ({ show, onClose, onSubmit, loading }) => {
               )}
             </div>
 
-            {/* Owner Username */}
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "0.5rem",
-                  fontWeight: "600",
-                  color: "var(--admin-text-primary)",
-                  fontSize: "0.875rem",
-                }}
-              >
-                Tên Đăng Nhập <span style={{ color: "red" }}>*</span>
-              </label>
-              <input
-                type="text"
-                name="ownerUsername"
-                value={formData.ownerUsername}
-                onChange={handleChange}
-                placeholder="Nhập tên đăng nhập"
-                disabled={loading}
-                style={{
-                  width: "100%",
-                  padding: "0.75rem",
-                  background: "var(--admin-bg-tertiary)",
-                  border: `1px solid ${
-                    errors.ownerUsername
-                      ? "var(--admin-accent-danger)"
-                      : "var(--admin-border-color)"
-                  }`,
-                  borderRadius: "var(--admin-radius-md)",
-                  color: "var(--admin-text-primary)",
-                  fontSize: "0.875rem",
-                }}
-              />
-              {errors.ownerUsername && (
-                <p
-                  style={{
-                    color: "var(--admin-accent-danger)",
-                    fontSize: "0.75rem",
-                    marginTop: "0.25rem",
-                    marginBottom: 0,
-                  }}
-                >
-                  {errors.ownerUsername}
-                </p>
-              )}
-            </div>
+
 
             {/* Owner Full Name */}
             <div>
@@ -399,11 +351,10 @@ const AddStoreModal = ({ show, onClose, onSubmit, loading }) => {
                   width: "100%",
                   padding: "0.75rem",
                   background: "var(--admin-bg-tertiary)",
-                  border: `1px solid ${
-                    errors.ownerFullName
+                  border: `1px solid ${errors.ownerFullName
                       ? "var(--admin-accent-danger)"
                       : "var(--admin-border-color)"
-                  }`,
+                    }`,
                   borderRadius: "var(--admin-radius-md)",
                   color: "var(--admin-text-primary)",
                   fontSize: "0.875rem",
@@ -447,11 +398,10 @@ const AddStoreModal = ({ show, onClose, onSubmit, loading }) => {
                   width: "100%",
                   padding: "0.75rem",
                   background: "var(--admin-bg-tertiary)",
-                  border: `1px solid ${
-                    errors.ownerEmail
+                  border: `1px solid ${errors.ownerEmail
                       ? "var(--admin-accent-danger)"
                       : "var(--admin-border-color)"
-                  }`,
+                    }`,
                   borderRadius: "var(--admin-radius-md)",
                   color: "var(--admin-text-primary)",
                   fontSize: "0.875rem",
@@ -495,11 +445,10 @@ const AddStoreModal = ({ show, onClose, onSubmit, loading }) => {
                   width: "100%",
                   padding: "0.75rem",
                   background: "var(--admin-bg-tertiary)",
-                  border: `1px solid ${
-                    errors.ownerPhone
+                  border: `1px solid ${errors.ownerPhone
                       ? "var(--admin-accent-danger)"
                       : "var(--admin-border-color)"
-                  }`,
+                    }`,
                   borderRadius: "var(--admin-radius-md)",
                   color: "var(--admin-text-primary)",
                   fontSize: "0.875rem",
@@ -515,6 +464,53 @@ const AddStoreModal = ({ show, onClose, onSubmit, loading }) => {
                   }}
                 >
                   {errors.ownerPhone}
+                </p>
+              )}
+            </div>
+
+            {/* Owner Username */}
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "0.5rem",
+                  fontWeight: "600",
+                  color: "var(--admin-text-primary)",
+                  fontSize: "0.875rem",
+                }}
+              >
+                Tên Đăng Nhập <span style={{ color: "red" }}>*</span>
+              </label>
+              <input
+                type="text"
+                name="ownerUsername"
+                value={formData.ownerUsername}
+                onChange={handleChange}
+                placeholder="Nhập tên đăng nhập"
+                disabled={loading}
+                style={{
+                  width: "100%",
+                  padding: "0.75rem",
+                  background: "var(--admin-bg-tertiary)",
+                  border: `1px solid ${errors.ownerUsername
+                      ? "var(--admin-accent-danger)"
+                      : "var(--admin-border-color)"
+                    }`,
+                  borderRadius: "var(--admin-radius-md)",
+                  color: "var(--admin-text-primary)",
+                  fontSize: "0.875rem",
+                }}
+              />
+              {errors.ownerUsername && (
+                <p
+                  style={{
+                    color: "var(--admin-accent-danger)",
+                    fontSize: "0.75rem",
+                    marginTop: "0.25rem",
+                    marginBottom: 0,
+                  }}
+                >
+                  {errors.ownerUsername}
                 </p>
               )}
             </div>
@@ -543,11 +539,10 @@ const AddStoreModal = ({ show, onClose, onSubmit, loading }) => {
                   width: "100%",
                   padding: "0.75rem",
                   background: "var(--admin-bg-tertiary)",
-                  border: `1px solid ${
-                    errors.ownerPassword
+                  border: `1px solid ${errors.ownerPassword
                       ? "var(--admin-accent-danger)"
                       : "var(--admin-border-color)"
-                  }`,
+                    }`,
                   borderRadius: "var(--admin-radius-md)",
                   color: "var(--admin-text-primary)",
                   fontSize: "0.875rem",

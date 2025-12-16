@@ -174,10 +174,22 @@ const TenantAppRouter = () => {
     saveTenantContext();
   }, []);
 
+  // Filter ra các admin routes (không dùng trong tenant app)
+  const adminComponentKeys = ['AdminDashboard', 'AccountList'];
+  const filterAdminRoutes = (routes) =>
+    routes?.filter(route => !adminComponentKeys.includes(route.componentKey));
+
   const RouterContent = memo(() => {
     const renderRoutes = (routeList) =>
       routeList?.map((item) => {
         const Comp = componentsMap[item?.componentKey];
+
+        // Nếu component không tồn tại, bỏ qua route này
+        if (!Comp) {
+          console.warn(`Component not found for key: ${item?.componentKey}`);
+          return null;
+        }
+
         const el = item?.protected ? (
           <ProtectedRoute>
             <Comp />
@@ -195,7 +207,7 @@ const TenantAppRouter = () => {
         <Route path="/" element={<FeatureModule />}>
           <Route index element={<Navigate to="/login" replace />} />
           {renderRoutes(unAuthRoutes)}
-          {renderRoutes(authRoutes)}
+          {renderRoutes(filterAdminRoutes(authRoutes))}
           {renderRoutes(posPage)}
           <Route path="404" element={<NotFound />} />
           <Route path="*" element={<NotFound />} />

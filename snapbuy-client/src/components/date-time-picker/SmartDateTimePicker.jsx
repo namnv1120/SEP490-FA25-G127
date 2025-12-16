@@ -98,7 +98,10 @@ const SmartDateTimePicker = ({
   const handleBlur = useCallback(
     (e) => {
       const input = e.target;
-      const value = input.value.trim();
+      const value = (input?.value || "").trim();
+
+      // Nếu không có giá trị, bỏ qua
+      if (!value) return;
 
       // Parse DD/MM/YYYY hoặc DD/MM/YYYY HH:mm
       const dateTimeRegex =
