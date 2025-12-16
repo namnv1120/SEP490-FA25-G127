@@ -4,11 +4,11 @@ import com.g127.snapbuy.product.dto.request.CategoryCreateRequest;
 import com.g127.snapbuy.product.dto.request.CategoryUpdateRequest;
 import com.g127.snapbuy.product.dto.response.CategoryResponse;
 import com.g127.snapbuy.common.response.PageResponse;
-import com.g127.snapbuy.entity.Category;
+import com.g127.snapbuy.product.entity.Category;
 import com.g127.snapbuy.common.exception.AppException;
 import com.g127.snapbuy.common.exception.ErrorCode;
-import com.g127.snapbuy.mapper.CategoryMapper;
-import com.g127.snapbuy.repository.CategoryRepository;
+import com.g127.snapbuy.product.mapper.CategoryMapper;
+import com.g127.snapbuy.product.repository.CategoryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -408,99 +408,4 @@ class CategoryServiceImplTest {
         verify(categoryRepository, atLeastOnce()).save(any(Category.class));
     }
 
-    @Test
-    void searchParentCategoriesByKeyword_Success() {
-        // Given
-        String keyword = "test";
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Category> categoryPage = new PageImpl<>(Arrays.asList(testCategory), pageable, 1);
-        
-        when(categoryRepository.searchParentCategoriesByKeyword(anyString(), any(Pageable.class)))
-            .thenReturn(categoryPage);
-        when(categoryMapper.toResponse(any(Category.class))).thenReturn(categoryResponse);
-
-        // When
-        PageResponse<CategoryResponse> result = categoryService.searchParentCategoriesByKeyword(keyword, pageable);
-
-        // Then
-        assertNotNull(result);
-        assertEquals(1, result.getContent().size());
-        assertEquals(1, result.getTotalElements());
-    }
-
-    @Test
-    void searchParentCategoriesByKeyword_WithWhitespace_TrimsKeyword() {
-        // Given
-        String keyword = "  test  ";
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Category> categoryPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
-        
-        when(categoryRepository.searchParentCategoriesByKeyword(eq("test"), any(Pageable.class)))
-            .thenReturn(categoryPage);
-
-        // When
-        PageResponse<CategoryResponse> result = categoryService.searchParentCategoriesByKeyword(keyword, pageable);
-
-        // Then
-        assertNotNull(result);
-        verify(categoryRepository).searchParentCategoriesByKeyword(eq("test"), any(Pageable.class));
-    }
-
-    @Test
-    void searchParentCategoriesByKeyword_NullKeyword_Success() {
-        // Given
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Category> categoryPage = new PageImpl<>(Arrays.asList(testCategory), pageable, 1);
-        
-        when(categoryRepository.searchParentCategoriesByKeyword(isNull(), any(Pageable.class)))
-            .thenReturn(categoryPage);
-        when(categoryMapper.toResponse(any(Category.class))).thenReturn(categoryResponse);
-
-        // When
-        PageResponse<CategoryResponse> result = categoryService.searchParentCategoriesByKeyword(null, pageable);
-
-        // Then
-        assertNotNull(result);
-        assertEquals(1, result.getContent().size());
-    }
-
-    @Test
-    void searchSubCategoriesByKeyword_Success() {
-        // Given
-        String keyword = "test";
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Category> categoryPage = new PageImpl<>(Arrays.asList(testCategory), pageable, 1);
-        
-        when(categoryRepository.searchSubCategoriesByKeyword(anyString(), any(Pageable.class)))
-            .thenReturn(categoryPage);
-        when(categoryMapper.toResponse(any(Category.class))).thenReturn(categoryResponse);
-
-        // When
-        PageResponse<CategoryResponse> result = categoryService.searchSubCategoriesByKeyword(keyword, pageable);
-
-        // Then
-        assertNotNull(result);
-        assertEquals(1, result.getContent().size());
-        assertEquals(1, result.getTotalElements());
-    }
-
-    @Test
-    void searchSubCategoriesByKeyword_EmptyResult_ReturnsEmptyPage() {
-        // Given
-        String keyword = "nonexistent";
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Category> categoryPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
-        
-        when(categoryRepository.searchSubCategoriesByKeyword(anyString(), any(Pageable.class)))
-            .thenReturn(categoryPage);
-
-        // When
-        PageResponse<CategoryResponse> result = categoryService.searchSubCategoriesByKeyword(keyword, pageable);
-
-        // Then
-        assertNotNull(result);
-        assertTrue(result.getContent().isEmpty());
-        assertEquals(0, result.getTotalElements());
-        assertTrue(result.isEmpty());
-    }
 }

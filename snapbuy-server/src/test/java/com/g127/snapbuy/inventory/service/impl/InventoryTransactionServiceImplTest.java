@@ -2,11 +2,11 @@ package com.g127.snapbuy.inventory.service.impl;
 
 import com.g127.snapbuy.inventory.dto.response.InventoryTransactionResponse;
 import com.g127.snapbuy.common.response.PageResponse;
-import com.g127.snapbuy.entity.InventoryTransaction;
-import com.g127.snapbuy.entity.Product;
-import com.g127.snapbuy.entity.Account;
-import com.g127.snapbuy.mapper.InventoryTransactionMapper;
-import com.g127.snapbuy.repository.InventoryTransactionRepository;
+import com.g127.snapbuy.inventory.entity.InventoryTransaction;
+import com.g127.snapbuy.product.entity.Product;
+import com.g127.snapbuy.account.entity.Account;
+import com.g127.snapbuy.inventory.mapper.InventoryTransactionMapper;
+import com.g127.snapbuy.inventory.repository.InventoryTransactionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -146,10 +146,9 @@ class InventoryTransactionServiceImplTest {
     void list_WithProductNameFilter_Success() {
         // Given
         List<InventoryTransaction> transactions = Arrays.asList(testTransaction);
-        Page<InventoryTransaction> page = new PageImpl<>(transactions, PageRequest.of(0, 10), 1);
         
-        when(transactionRepository.findAll(any(Specification.class), any(PageRequest.class)))
-                .thenReturn(page);
+        when(transactionRepository.findAll(any(Specification.class), any(Sort.class)))
+                .thenReturn(transactions);
         when(mapper.toResponse(any(InventoryTransaction.class))).thenReturn(transactionResponse);
 
         // When
@@ -161,6 +160,7 @@ class InventoryTransactionServiceImplTest {
         // Then
         assertNotNull(result);
         assertEquals(1, result.getContent().size());
+        verify(transactionRepository).findAll(any(Specification.class), any(Sort.class));
     }
 
     @Test
@@ -262,10 +262,9 @@ class InventoryTransactionServiceImplTest {
         testTransaction.setReferenceId(referenceId);
         
         List<InventoryTransaction> transactions = Arrays.asList(testTransaction);
-        Page<InventoryTransaction> page = new PageImpl<>(transactions, PageRequest.of(0, 10), 1);
         
-        when(transactionRepository.findAll(any(Specification.class), any(PageRequest.class)))
-                .thenReturn(page);
+        when(transactionRepository.findAll(any(Specification.class), any(Sort.class)))
+                .thenReturn(transactions);
         when(mapper.toResponse(any(InventoryTransaction.class))).thenReturn(transactionResponse);
 
         // When
@@ -277,6 +276,7 @@ class InventoryTransactionServiceImplTest {
         // Then
         assertNotNull(result);
         assertEquals(1, result.getContent().size());
+        verify(transactionRepository).findAll(any(Specification.class), any(Sort.class));
     }
 
     @Test

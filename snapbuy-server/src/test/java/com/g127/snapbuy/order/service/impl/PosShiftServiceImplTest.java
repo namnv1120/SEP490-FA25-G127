@@ -1,13 +1,13 @@
 package com.g127.snapbuy.order.service.impl;
 
-import com.g127.snapbuy.entity.Account;
-import com.g127.snapbuy.entity.PosShift;
-import com.g127.snapbuy.entity.ShiftCashDenomination;
+import com.g127.snapbuy.account.entity.Account;
+import com.g127.snapbuy.shift.entity.PosShift;
+import com.g127.snapbuy.shift.entity.ShiftCashDenomination;
 import com.g127.snapbuy.order.dto.request.CashDenominationRequest;
 import com.g127.snapbuy.order.dto.response.PosShiftResponse;
-import com.g127.snapbuy.repository.AccountRepository;
-import com.g127.snapbuy.repository.PosShiftRepository;
-import com.g127.snapbuy.repository.ShiftCashDenominationRepository;
+import com.g127.snapbuy.account.repository.AccountRepository;
+import com.g127.snapbuy.shift.repository.PosShiftRepository;
+import com.g127.snapbuy.shift.repository.ShiftCashDenominationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

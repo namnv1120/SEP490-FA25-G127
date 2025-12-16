@@ -1,8 +1,8 @@
 package com.g127.snapbuy.payment.service.impl;
 
 import com.g127.snapbuy.payment.dto.response.MomoPaymentResponse;
-import com.g127.snapbuy.entity.Order;
-import com.g127.snapbuy.repository.OrderRepository;
+import com.g127.snapbuy.order.entity.Order;
+import com.g127.snapbuy.order.repository.OrderRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
