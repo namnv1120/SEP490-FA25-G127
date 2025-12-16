@@ -85,7 +85,7 @@ public class TenantController {
         try {
             // Inject tenant database configuration from environment variables
             // This allows using 'db' in Docker and 'localhost' in local development
-            if (request.getDbHost() == null || request.getDbHost().equals("localhost")) {
+            if (request.getDbHost() == null || request.getDbHost().isEmpty() || request.getDbHost().equals("localhost")) {
                 request.setDbHost(tenantDbHost);
             }
             if (request.getDbPort() == null) {
