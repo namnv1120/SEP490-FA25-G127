@@ -1,8 +1,11 @@
 import axios from 'axios';
 
 // API v2: Đơn vị hành chính sau sáp nhập tháng 7/2025 (34 tỉnh/thành)
-// Sử dụng proxy để bypass CORS
-const LOCATION_API_BASE_URL = '/provinces-api/api/v2';
+// Dev: dùng proxy để bypass CORS
+// Production: gọi trực tiếp API (CORS đã được enable từ server)
+const LOCATION_API_BASE_URL = import.meta.env.DEV
+    ? '/provinces-api/api/v2'  // Dev mode: dùng Vite proxy
+    : 'https://provinces.open-api.vn/api/v2';  // Production: gọi trực tiếp
 
 /**
  * Lấy danh sách tất cả tỉnh/thành phố (34 tỉnh sau sáp nhập 7/2025)
