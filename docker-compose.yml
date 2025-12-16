@@ -76,7 +76,7 @@ services:
       - TENANT_DB_HOST=${TENANT_DB_HOST:-db}
       - TENANT_DB_PORT=${TENANT_DB_PORT:-1433}
       - TENANT_DB_USERNAME=${TENANT_DB_USERNAME:-sa}
-      - TENANT_DB_PASSWORD=${TENANT_DB_PASSWORD:-Snapbuy25}
+      - TENANT_DB_PASSWORD=${MASTER_DB_PASSWORD:-Snapbuy25}
       # Mail Configuration
       - MAIL_HOST=${MAIL_HOST:-smtp.gmail.com}
       - MAIL_PORT=${MAIL_PORT:-587}

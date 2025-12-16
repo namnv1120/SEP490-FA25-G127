@@ -23,10 +23,8 @@ public class TenantCreateRequest {
     @NotNull(message = "Port cơ sở dữ liệu không được để trống")
     private Integer dbPort = 1433;
     
-    @NotBlank(message = "Username cơ sở dữ liệu không được để trống")
     private String dbUsername;
     
-    @NotBlank(message = "Password cơ sở dữ liệu không được để trống")
     private String dbPassword;
     
     // Owner info
