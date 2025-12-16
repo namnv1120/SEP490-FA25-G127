@@ -52,6 +52,16 @@ const Suppliers = () => {
       setLoading(true);
       setError(null);
       const data = await getAllSuppliers();
+
+      // Đảm bảo data là array trước khi map
+      if (!Array.isArray(data)) {
+        console.error("API response is not an array:", data);
+        setListData([]);
+        setTotalRecords(0);
+        message.warning("Dữ liệu trả về không đúng định dạng");
+        return;
+      }
+
       const mappedData = data.map((supplier) => ({
         ...supplier,
         status:
@@ -62,9 +72,12 @@ const Suppliers = () => {
       }));
       setListData(mappedData);
       setTotalRecords(mappedData.length);
-    } catch {
+    } catch (error) {
+      console.error("Error fetching suppliers:", error);
       setError("Lỗi khi tải danh sách nhà cung cấp. Vui lòng thử lại.");
       message.error("Lỗi khi tải danh sách nhà cung cấp. Vui lòng thử lại.");
+      setListData([]);
+      setTotalRecords(0);
     } finally {
       setLoading(false);
     }
@@ -246,9 +259,8 @@ const Suppliers = () => {
       body: (data) => (
         <div className="d-flex align-items-center gap-2">
           <span
-            className={`badge fw-medium fs-10 ${
-              data.status === "Hoạt động" ? "bg-success" : "bg-danger"
-            }`}
+            className={`badge fw-medium fs-10 ${data.status === "Hoạt động" ? "bg-success" : "bg-danger"
+              }`}
           >
             {data.status}
           </span>
