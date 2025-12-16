@@ -12,6 +12,7 @@ import {
   FaFileAlt,
 } from "react-icons/fa";
 import { Modal } from "antd";
+import logoImg from "../../assets/img/logo.png";
 
 const AdminSidebar = () => {
   const [showDevModal, setShowDevModal] = useState(false);
@@ -105,7 +106,7 @@ const AdminSidebar = () => {
           style={{ background: "transparent" }}
         >
           <img
-            src="/src/assets/img/logo.png"
+            src={logoImg}
             alt="SnapBuy"
             style={{
               width: "65px",

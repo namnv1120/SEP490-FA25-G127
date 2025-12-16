@@ -4,6 +4,7 @@ import { FaUser, FaLock, FaSignInAlt } from "react-icons/fa";
 import { notification } from "antd";
 import AdminLoading from "../components/AdminLoading";
 import { adminLogin } from "../../services/AdminAuthService";
+import logoImg from "../../assets/img/logo.png";
 import "../styles/admin.css";
 
 const AdminLogin = () => {
@@ -79,7 +80,7 @@ const AdminLogin = () => {
               }}
             >
               <img
-                src="/src/assets/img/logo.png"
+                src={logoImg}
                 alt="SnapBuy"
                 style={{
                   width: "100%",
