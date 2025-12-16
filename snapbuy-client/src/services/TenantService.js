@@ -122,6 +122,25 @@ class TenantService {
   }
 
   /**
+   * Cập nhật thông tin tenant (Admin only)
+   */
+  static async updateTenant(tenantId, tenantData) {
+    try {
+      const response = await axios.put(
+        `/api/tenants/admin/${tenantId}`,
+        tenantData,
+        {
+          headers: this.getAuthHeader(),
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("TenantService.updateTenant error:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Xóa tenant (Admin only)
    */
   static async deleteTenant(tenantId) {

@@ -2,6 +2,7 @@ package com.g127.snapbuy.tenant.controller;
 
 import com.g127.snapbuy.common.response.ApiResponse;
 import com.g127.snapbuy.tenant.dto.request.TenantCreateRequest;
+import com.g127.snapbuy.tenant.dto.request.TenantUpdateRequest;
 import com.g127.snapbuy.tenant.dto.response.TenantResponse;
 import com.g127.snapbuy.tenant.service.DemoDataService;
 import com.g127.snapbuy.tenant.service.TenantService;
@@ -11,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @RestController
@@ -122,6 +124,30 @@ public class TenantController {
         response.setMessage("Cập nhật trạng thái cửa hàng thành công");
         return response;
     }
+
+    @PutMapping("/admin/{tenantId}")
+    @PreAuthorize("hasRole('Quản trị viên')")
+    public ApiResponse<TenantResponse> updateTenant(
+            @PathVariable UUID tenantId,
+            @Valid @RequestBody TenantUpdateRequest request) {
+        try {
+            ApiResponse<TenantResponse> response = new ApiResponse<>();
+            response.setResult(tenantService.updateTenant(tenantId, request));
+            response.setMessage("Cập nhật thông tin cửa hàng thành công");
+            return response;
+        } catch (NoSuchElementException e) {
+            ApiResponse<TenantResponse> response = new ApiResponse<>();
+            response.setCode(4004);
+            response.setMessage(e.getMessage());
+            return response;
+        } catch (Exception e) {
+            ApiResponse<TenantResponse> response = new ApiResponse<>();
+            response.setCode(5000);
+            response.setMessage("Lỗi khi cập nhật cửa hàng: " + e.getMessage());
+            return response;
+        }
+    }
+
 
     @DeleteMapping("/admin/{tenantId}")
     @PreAuthorize("hasRole('Quản trị viên')")

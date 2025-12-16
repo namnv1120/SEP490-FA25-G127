@@ -71,3 +71,18 @@ export const toggleAccountStatus = async (tenantId, accountId) => {
     );
   }
 };
+
+export const updateAdminAccount = async (tenantId, accountId, accountData) => {
+  try {
+    const response = await axios.put(
+      `${REST_API_BASE_URL}/${tenantId}/${accountId}`,
+      accountData,
+      { headers: getAuthHeader() }
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      error.response?.data?.message || "Failed to update account!"
+    );
+  }
+};

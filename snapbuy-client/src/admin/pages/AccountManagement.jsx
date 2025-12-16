@@ -16,9 +16,11 @@ import {
   searchAdminAccounts,
   deleteAdminAccount,
   toggleAccountStatus,
+  updateAdminAccount,
 } from "../../services/AdminAccountService";
 import ToggleStatusModal from "../components/modals/ToggleStatusModal";
 import DeleteConfirmModal from "../components/modals/DeleteConfirmModal";
+import EditAccountModal from "../components/modals/EditAccountModal";
 import "../styles/admin.css";
 
 const AccountManagement = () => {
@@ -27,8 +29,10 @@ const AccountManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showToggleModal, setShowToggleModal] = useState(false);
+  const [editingAccount, setEditingAccount] = useState(null);
   const [deletingAccount, setDeletingAccount] = useState(null);
   const [togglingAccount, setTogglingAccount] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -144,6 +148,33 @@ const AccountManagement = () => {
     } catch (error) {
       console.error("Error deleting account:", error);
       message.error("Không thể xóa tài khoản");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (account) => {
+    setEditingAccount(account);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateAccount = async (formData) => {
+    if (!editingAccount) return;
+
+    try {
+      setLoading(true);
+      await updateAdminAccount(
+        editingAccount.tenantId,
+        editingAccount.id,
+        formData
+      );
+      message.success("Cập nhật tài khoản thành công");
+      fetchAccounts();
+      setShowEditModal(false);
+      setEditingAccount(null);
+    } catch (error) {
+      console.error("Error updating account:", error);
+      message.error("Không thể cập nhật tài khoản");
     } finally {
       setLoading(false);
     }
@@ -385,7 +416,10 @@ const AccountManagement = () => {
                               <button
                                 className="admin-btn-icon edit"
                                 title="Sửa Tài Khoản"
-                                onClick={(e) => e.stopPropagation()}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEdit(ownerAccount);
+                                }}
                               >
                                 <FaEdit />
                               </button>
@@ -471,6 +505,7 @@ const AccountManagement = () => {
                                 <button
                                   className="admin-btn-icon edit"
                                   title="Sửa Tài Khoản"
+                                  onClick={() => handleEdit(account)}
                                 >
                                   <FaEdit />
                                 </button>
@@ -508,6 +543,17 @@ const AccountManagement = () => {
           </div>
         )}
       </div>
+
+      <EditAccountModal
+        show={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingAccount(null);
+        }}
+        onSubmit={handleUpdateAccount}
+        accountData={editingAccount}
+        loading={loading}
+      />
 
       <ToggleStatusModal
         show={showToggleModal}

@@ -1,5 +1,6 @@
 package com.g127.snapbuy.admin.service;
 
+import com.g127.snapbuy.admin.dto.request.AdminAccountUpdateRequest;
 import com.g127.snapbuy.admin.dto.response.AdminAccountResponse;
 
 import java.util.List;
@@ -16,6 +17,11 @@ public interface AdminAccountService {
      * Search accounts across all tenants
      */
     List<AdminAccountResponse> searchAccountsFromAllTenants(String keyword, Boolean active, String role);
+    
+    /**
+     * Update account information
+     */
+    void updateAccount(String tenantId, UUID accountId, AdminAccountUpdateRequest request);
     
     /**
      * Delete account from specific tenant

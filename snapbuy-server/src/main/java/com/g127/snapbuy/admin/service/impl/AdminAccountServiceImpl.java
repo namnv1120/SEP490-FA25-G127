@@ -8,6 +8,7 @@ import com.g127.snapbuy.tenant.repository.TenantRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
@@ -26,12 +27,15 @@ public class AdminAccountServiceImpl implements AdminAccountService {
 
     private final TenantRepository tenantRepository;
     private final DataSource tenantDataSource;
+    private final PasswordEncoder passwordEncoder;
 
     public AdminAccountServiceImpl(
             TenantRepository tenantRepository,
-            @Qualifier("tenantDataSource") DataSource tenantDataSource) {
+            @Qualifier("tenantDataSource") DataSource tenantDataSource,
+            PasswordEncoder passwordEncoder) {
         this.tenantRepository = tenantRepository;
         this.tenantDataSource = tenantDataSource;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -85,6 +89,54 @@ public class AdminAccountServiceImpl implements AdminAccountService {
             TenantContext.clear();
         }
     }
+
+    @Override
+    public void updateAccount(String tenantId, UUID accountId, com.g127.snapbuy.admin.dto.request.AdminAccountUpdateRequest request) {
+        try {
+            TenantContext.setCurrentTenant(tenantId);
+            
+            // Build SQL dynamically based on whether password is being updated
+            StringBuilder sql = new StringBuilder("UPDATE accounts SET full_name = ?, email = ?, phone = ?");
+            boolean updatePassword = request.getNewPassword() != null && !request.getNewPassword().trim().isEmpty();
+            
+            if (updatePassword) {
+                sql.append(", password_hash = ?");
+            }
+            
+            sql.append(" WHERE account_id = ?");
+            
+            try (Connection conn = tenantDataSource.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+                
+                int paramIndex = 1;
+                stmt.setString(paramIndex++, request.getFullName());
+                stmt.setString(paramIndex++, request.getEmail());
+                stmt.setString(paramIndex++, request.getPhone());
+                
+                if (updatePassword) {
+                    String hashedPassword = passwordEncoder.encode(request.getNewPassword());
+                    stmt.setString(paramIndex++, hashedPassword);
+                }
+                
+                stmt.setObject(paramIndex, accountId);
+                
+                int rowsAffected = stmt.executeUpdate();
+                
+                if (rowsAffected == 0) {
+                    throw new RuntimeException("Account not found");
+                }
+                
+                log.info("Updated account {} in tenant {}{}", accountId, tenantId, 
+                        updatePassword ? " (including password)" : "");
+            }
+        } catch (SQLException e) {
+            log.error("Error updating account: {}", e.getMessage());
+            throw new RuntimeException("Failed to update account", e);
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
 
     @Override
     public void toggleAccountStatus(String tenantId, UUID accountId) {

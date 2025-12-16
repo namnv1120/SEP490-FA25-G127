@@ -11,6 +11,8 @@ import { message, Modal } from "antd";
 import TenantService from "../../services/TenantService";
 import DeleteConfirmModal from "../components/modals/DeleteConfirmModal";
 import ToggleStatusModal from "../components/modals/ToggleStatusModal";
+import AddStoreModal from "../components/modals/AddStoreModal";
+import EditStoreModal from "../components/modals/EditStoreModal";
 import "../styles/admin.css";
 
 const StoreManagement = () => {
@@ -18,9 +20,11 @@ const StoreManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showToggleModal, setShowToggleModal] = useState(false);
   const [deletingStore, setDeletingStore] = useState(null);
+  const [editingStore, setEditingStore] = useState(null);
   const [togglingStore, setTogglingStore] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -120,10 +124,41 @@ const StoreManagement = () => {
   };
 
   const handleEdit = (store) => {
-    // TODO: Implement edit functionality
-    message.info(
-      `Chức năng cập nhật cửa hàng "${store.name}" đang được phát triển`
-    );
+    setEditingStore(store);
+    setShowEditModal(true);
+  };
+
+  const handleAddStore = async (formData) => {
+    try {
+      setLoading(true);
+      await TenantService.createTenant(formData);
+      message.success("Tạo cửa hàng thành công");
+      fetchStores();
+      setShowAddModal(false);
+    } catch (error) {
+      console.error("Error creating store:", error);
+      message.error(error.response?.data?.message || "Không thể tạo cửa hàng");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateStore = async (formData) => {
+    try {
+      setLoading(true);
+      await TenantService.updateTenant(editingStore.id, formData);
+      message.success("Cập nhật cửa hàng thành công");
+      fetchStores();
+      setShowEditModal(false);
+      setEditingStore(null);
+    } catch (error) {
+      console.error("Error updating store:", error);
+      message.error(
+        error.response?.data?.message || "Không thể cập nhật cửa hàng"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -325,7 +360,7 @@ const StoreManagement = () => {
                   </td>
                   <td>{store.users}</td>
                   <td>{store.products}</td>
-                  <td>{store.revenue.toLocaleString('vi-VN')} ₫</td>
+                  <td>{store.revenue.toLocaleString("vi-VN")} ₫</td>
                   <td>
                     <div className="admin-action-btns">
                       <button
@@ -375,50 +410,25 @@ const StoreManagement = () => {
         )}
       </div>
 
-      {/* Add Store Modal Placeholder */}
-      {showAddModal && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0, 0, 0, 0.7)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
-          onClick={() => setShowAddModal(false)}
-        >
-          <div
-            className="admin-card"
-            style={{ maxWidth: "600px", width: "90%" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="admin-card-header">
-              <h2 className="admin-card-title">Thêm Cửa Hàng Mới</h2>
-            </div>
-            <div
-              style={{
-                padding: "1rem",
-                textAlign: "center",
-                color: "var(--admin-text-muted)",
-              }}
-            >
-              <p>Form sẽ được triển khai tại đây</p>
-              <button
-                className="admin-btn admin-btn-secondary"
-                onClick={() => setShowAddModal(false)}
-                style={{ marginTop: "1rem" }}
-              >
-                Đóng
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Add Store Modal */}
+      <AddStoreModal
+        show={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleAddStore}
+        loading={loading}
+      />
+
+      {/* Edit Store Modal */}
+      <EditStoreModal
+        show={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingStore(null);
+        }}
+        onSubmit={handleUpdateStore}
+        storeData={editingStore}
+        loading={loading}
+      />
 
       <DeleteConfirmModal
         show={showDeleteModal}
@@ -441,4 +451,3 @@ const StoreManagement = () => {
 };
 
 export default StoreManagement;
-

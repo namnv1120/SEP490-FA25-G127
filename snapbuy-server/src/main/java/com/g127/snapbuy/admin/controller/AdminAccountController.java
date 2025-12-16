@@ -1,8 +1,10 @@
 package com.g127.snapbuy.admin.controller;
 
+import com.g127.snapbuy.admin.dto.request.AdminAccountUpdateRequest;
 import com.g127.snapbuy.admin.dto.response.AdminAccountResponse;
 import com.g127.snapbuy.admin.service.AdminAccountService;
 import com.g127.snapbuy.common.response.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -40,6 +42,20 @@ public class AdminAccountController {
         ApiResponse<List<AdminAccountResponse>> response = new ApiResponse<>();
         response.setResult(adminAccountService.searchAccountsFromAllTenants(keyword, active, role));
         response.setMessage("Tìm kiếm tài khoản thành công.");
+        return response;
+    }
+
+    /**
+     * Update account information
+     */
+    @PutMapping("/{tenantId}/{accountId}")
+    public ApiResponse<Void> updateAccount(
+            @PathVariable String tenantId,
+            @PathVariable UUID accountId,
+            @Valid @RequestBody AdminAccountUpdateRequest request) {
+        adminAccountService.updateAccount(tenantId, accountId, request);
+        ApiResponse<Void> response = new ApiResponse<>();
+        response.setMessage("Cập nhật tài khoản thành công.");
         return response;
     }
 

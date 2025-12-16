@@ -5,6 +5,7 @@ import com.g127.snapbuy.tenant.config.TenantFlywayRunner;
 import com.g127.snapbuy.tenant.config.TenantRoutingDataSource;
 import com.g127.snapbuy.tenant.context.TenantContext;
 import com.g127.snapbuy.tenant.dto.request.TenantCreateRequest;
+import com.g127.snapbuy.tenant.dto.request.TenantUpdateRequest;
 import com.g127.snapbuy.tenant.dto.response.TenantResponse;
 import com.g127.snapbuy.tenant.entity.Tenant;
 import com.g127.snapbuy.tenant.entity.TenantOwner;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -250,6 +252,56 @@ public class TenantServiceImpl implements TenantService {
         
         return toResponse(tenant, owner);
     }
+
+    @Override
+    @Transactional("masterTransactionManager")
+    public TenantResponse updateTenant(UUID tenantId, TenantUpdateRequest request) {
+        // Get tenant from master database
+        Tenant tenant = tenantRepository.findById(tenantId)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy cửa hàng"));
+        
+        // Update tenant name
+        tenant.setTenantName(request.getTenantName());
+        tenant = tenantRepository.save(tenant);
+        
+        // Get and update owner in master database
+        TenantOwner owner = tenantOwnerRepository.findByTenantId(tenantId).stream()
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy thông tin chủ cửa hàng"));
+        
+        owner.setFullName(request.getOwnerFullName());
+        owner.setEmail(request.getOwnerEmail());
+        owner.setPhone(request.getOwnerPhone());
+        tenantOwnerRepository.save(owner);
+        
+        // Update owner info in tenant database
+        try {
+            String tenantIdStr = tenant.getTenantId().toString();
+            TenantContext.setCurrentTenant(tenantIdStr);
+            
+            DataSource tenantDataSource = tenantRoutingDataSource.getResolvedDataSources().get(tenantIdStr);
+            if (tenantDataSource != null) {
+                try (Connection conn = tenantDataSource.getConnection();
+                     PreparedStatement stmt = conn.prepareStatement(
+                             "UPDATE accounts SET full_name = ?, email = ?, phone = ? WHERE username = ?")) {
+                    
+                    stmt.setString(1, request.getOwnerFullName());
+                    stmt.setString(2, request.getOwnerEmail());
+                    stmt.setString(3, request.getOwnerPhone());
+                    stmt.setString(4, owner.getUsername());
+                    stmt.executeUpdate();
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Failed to update owner in tenant database: {}", e.getMessage());
+            // Continue even if tenant DB update fails
+        } finally {
+            TenantContext.clear();
+        }
+        
+        return toResponse(tenant, owner);
+    }
+
 
     @Override
     @Transactional("masterTransactionManager")

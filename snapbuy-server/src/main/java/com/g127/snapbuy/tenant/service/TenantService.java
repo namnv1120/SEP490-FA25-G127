@@ -1,6 +1,7 @@
 package com.g127.snapbuy.tenant.service;
 
 import com.g127.snapbuy.tenant.dto.request.TenantCreateRequest;
+import com.g127.snapbuy.tenant.dto.request.TenantUpdateRequest;
 import com.g127.snapbuy.tenant.dto.response.TenantResponse;
 
 import java.util.List;
@@ -10,6 +11,7 @@ public interface TenantService {
     TenantResponse createTenant(TenantCreateRequest request);
     TenantResponse getTenant(UUID tenantId);
     List<TenantResponse> getAllTenants();
+    TenantResponse updateTenant(UUID tenantId, TenantUpdateRequest request);
     TenantResponse updateTenantStatus(UUID tenantId, Boolean isActive);
     void deleteTenant(UUID tenantId);
     TenantResponse getTenantByCode(String tenantCode);

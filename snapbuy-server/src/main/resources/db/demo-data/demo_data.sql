@@ -6,11 +6,11 @@
 -- Demo Staff Accounts (warehouse and sales only, NO owner/shopowner)
 INSERT INTO accounts (full_name, username, password_hash, email, phone, avatar_url, active)
 VALUES (N'Nhân viên kho Demo', N'warehouse',
-        N'$2a$10$.KiG7oyd3/JtvMSfV0tdBefCs2eLKBx2LlO6uwPO82fM6nhlGYeIq',
+        N'$2a$10$//dKqAKS8bT057cKwbYsJOi/MJS7muXkG4qUxpK0SjBPWKjlmy9Vy',
         N'warehouse@demo.com', N'0901000003', NULL, 1),
 
        (N'Nhân viên bán hàng Demo', N'sales',
-        N'$2a$10$.KiG7oyd3/JtvMSfV0tdBefCs2eLKBx2LlO6uwPO82fM6nhlGYeIq',
+        N'$2a$10$//dKqAKS8bT057cKwbYsJOi/MJS7muXkG4qUxpK0SjBPWKjlmy9Vy',
         N'sales@demo.com', N'0901000004', NULL, 1);
 
 
