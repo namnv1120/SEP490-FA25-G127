@@ -25,4 +25,24 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Tránh minify biến thành $ để tránh conflict
+        manualChunks: undefined,
+      },
+    },
+    // Giảm mức độ minification để tránh conflict
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        // Không rename biến thành single character như $
+        keep_fnames: true,
+      },
+      mangle: {
+        // Giữ nguyên tên function
+        keep_fnames: true,
+      },
+    },
+  },
 });
