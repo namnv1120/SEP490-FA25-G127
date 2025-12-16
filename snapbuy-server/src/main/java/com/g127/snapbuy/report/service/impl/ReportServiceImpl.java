@@ -1,7 +1,7 @@
 package com.g127.snapbuy.report.service.impl;
 
 import com.g127.snapbuy.report.dto.response.ProductRevenueReportResponse;
-import com.g127.snapbuy.repository.OrderDetailRepository;
+import com.g127.snapbuy.order.repository.OrderDetailRepository;
 import com.g127.snapbuy.report.service.ReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

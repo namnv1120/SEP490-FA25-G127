@@ -5,9 +5,9 @@ import { authRoutes, posPage, unAuthRoutes } from "../../routes/path";
 
 // Map tên route sang tên tiếng Việt hiển thị
 const routeNameMap = {
-  dashboard: "Trang chủ",
+  dashboard: "",
   "admin-dashboard": "Trang chủ quản trị",
-  "shopowner-dashboard": "Trang chủ chủ cửa hàng",
+  "shopowner-dashboard": "Trang chủ",
   "sales-dashboard-owner": "Trang chủ bán hàng",
   "warehouses-dashboard": "Trang chủ kho",
   "warehouse-dashboard": "Trang chủ kho",
@@ -62,19 +62,22 @@ const PageTitle = () => {
       return matchPath({ path: route.path, end: true }, location.pathname);
     });
 
-    let pageName = "Trang chủ"; // Default
-
     if (currentRoute) {
       // Lấy tên từ route name
       const routeName = currentRoute.name || "";
-      pageName = routeNameMap[routeName] || formatRouteName(routeName);
+      const pageName = routeNameMap[routeName] || formatRouteName(routeName);
+      document.title = `SnapBuy - ${pageName}`;
     } else {
       // Nếu không tìm thấy route, format từ path
-      const pathName = location.pathname.split("/").pop() || "dashboard";
-      pageName = formatRouteName(pathName);
+      const pathName = location.pathname.split("/").pop();
+      if (pathName && pathName !== "") {
+        const pageName = formatRouteName(pathName);
+        document.title = `SnapBuy - ${pageName}`;
+      } else {
+        // Nếu không có path, chỉ hiện SnapBuy
+        document.title = "SnapBuy";
+      }
     }
-
-    document.title = `SnapBuy - ${pageName}`;
   }, [location.pathname]);
 
   return null; // Component này không render gì

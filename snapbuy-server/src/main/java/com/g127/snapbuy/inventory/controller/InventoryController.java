@@ -1,6 +1,6 @@
 package com.g127.snapbuy.inventory.controller;
 
-import com.g127.snapbuy.response.ApiResponse;
+import com.g127.snapbuy.common.response.ApiResponse;
 import com.g127.snapbuy.inventory.dto.request.InventoryCreateRequest;
 import com.g127.snapbuy.inventory.dto.request.InventoryUpdateRequest;
 import com.g127.snapbuy.inventory.dto.response.InventoryResponse;

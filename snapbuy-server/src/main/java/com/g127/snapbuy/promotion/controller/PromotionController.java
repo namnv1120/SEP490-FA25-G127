@@ -1,7 +1,7 @@
 package com.g127.snapbuy.promotion.controller;
 
 import com.g127.snapbuy.order.dto.response.DiscountInfoResponse;
-import com.g127.snapbuy.response.ApiResponse;
+import com.g127.snapbuy.common.response.ApiResponse;
 import com.g127.snapbuy.promotion.dto.request.PromotionCreateRequest;
 import com.g127.snapbuy.promotion.dto.request.PromotionUpdateRequest;
 import com.g127.snapbuy.promotion.dto.response.PromotionResponse;

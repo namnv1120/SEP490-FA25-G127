@@ -3,7 +3,7 @@ package com.g127.snapbuy.product.service;
 import com.g127.snapbuy.product.dto.request.ProductCreateRequest;
 import com.g127.snapbuy.product.dto.request.ProductImportRequest;
 import com.g127.snapbuy.product.dto.request.ProductUpdateRequest;
-import com.g127.snapbuy.response.PageResponse;
+import com.g127.snapbuy.common.response.PageResponse;
 import com.g127.snapbuy.product.dto.response.ProductResponse;
 import org.springframework.data.domain.Pageable;
 

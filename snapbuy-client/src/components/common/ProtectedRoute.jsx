@@ -10,7 +10,7 @@ const PREVIOUS_LOCATION_KEY = "previous_authorized_location";
 const ProtectedRoute = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { hasAnyRole, loading } = usePermission();
+  const { hasAnyRole, loading, userRole } = usePermission();
   const [showModal, setShowModal] = useState(false);
   const previousLocationRef = useRef(null);
   const hasCheckedRef = useRef(false);
@@ -24,6 +24,15 @@ const ProtectedRoute = ({ children }) => {
   useEffect(() => {
     if (loading) return;
 
+    // Kiểm tra token - nếu không có token thì redirect về login
+    const token = localStorage.getItem("authToken");
+    if (!token || !userRole) {
+      if (location.pathname !== "/login") {
+        navigate("/login", { replace: true });
+      }
+      return;
+    }
+
     const allowedRoles = getAllowedRolesForRoute(location.pathname);
 
     if (allowedRoles === null) {
@@ -36,7 +45,6 @@ const ProtectedRoute = ({ children }) => {
 
     if (allowedRoles && allowedRoles.length > 0) {
       if (!hasAnyRole(allowedRoles)) {
-
         if (!hasCheckedRef.current) {
           hasCheckedRef.current = true;
 
@@ -44,7 +52,6 @@ const ProtectedRoute = ({ children }) => {
             sessionStorage.getItem("navigation_blocked_by_guard") === "true";
 
           if (wasBlockedByGuard) {
-
             sessionStorage.removeItem("navigation_blocked_by_guard");
             const previousPath =
               previousLocationRef.current ||
@@ -66,10 +73,16 @@ const ProtectedRoute = ({ children }) => {
         }
       }
     }
-  }, [location.pathname, loading, hasAnyRole, navigate]);
+  }, [location.pathname, loading, hasAnyRole, navigate, userRole]);
 
   if (loading) {
     return <PageLoader />;
+  }
+
+  // Kiểm tra authentication trước khi render
+  const token = localStorage.getItem("authToken");
+  if (!token || !userRole) {
+    return null; // Đang redirect về login
   }
 
   const allowedRoles = getAllowedRolesForRoute(location.pathname);

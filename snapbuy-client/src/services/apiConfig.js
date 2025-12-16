@@ -4,7 +4,8 @@
  */
 
 // Base URL cho API - Rỗng = relative URL (hoạt động cả local Docker và production)
-export const API_BASE_URL = "";
+// In development, Vite proxy will redirect /api to localhost:8080
+export const API_BASE_URL = import.meta.env.PROD ? "" : "";
 
 // Các endpoint API
 export const API_ENDPOINTS = {
@@ -17,7 +18,6 @@ export const API_ENDPOINTS = {
   NOTIFICATIONS: `${API_BASE_URL}/api/notifications`,
   NOTIFICATION_SETTINGS: `${API_BASE_URL}/api/notification-settings`,
   ORDERS: `${API_BASE_URL}/api/orders`,
-  PERMISSIONS: `${API_BASE_URL}/api/permissions`,
   POS_SETTINGS: `${API_BASE_URL}/api/pos-settings`,
   POS_SHIFTS: `${API_BASE_URL}/api/pos-shifts`,
   PRODUCTS: `${API_BASE_URL}/api/products`,

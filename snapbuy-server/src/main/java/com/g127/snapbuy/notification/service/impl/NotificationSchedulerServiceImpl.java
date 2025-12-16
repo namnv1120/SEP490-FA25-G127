@@ -1,13 +1,13 @@
 package com.g127.snapbuy.notification.service.impl;
 
-import com.g127.snapbuy.entity.Account;
-import com.g127.snapbuy.entity.Inventory;
-import com.g127.snapbuy.entity.Notification.NotificationType;
-import com.g127.snapbuy.entity.Promotion;
-import com.g127.snapbuy.repository.AccountRepository;
-import com.g127.snapbuy.repository.InventoryRepository;
-import com.g127.snapbuy.repository.NotificationRepository;
-import com.g127.snapbuy.repository.PromotionRepository;
+import com.g127.snapbuy.account.entity.Account;
+import com.g127.snapbuy.inventory.entity.Inventory;
+import com.g127.snapbuy.notification.entity.Notification.NotificationType;
+import com.g127.snapbuy.promotion.entity.Promotion;
+import com.g127.snapbuy.account.repository.AccountRepository;
+import com.g127.snapbuy.inventory.repository.InventoryRepository;
+import com.g127.snapbuy.notification.repository.NotificationRepository;
+import com.g127.snapbuy.promotion.repository.PromotionRepository;
 import com.g127.snapbuy.notification.service.NotificationService;
 import com.g127.snapbuy.notification.service.NotificationSchedulerService;
 import com.g127.snapbuy.notification.service.NotificationSettingsService;
@@ -70,15 +70,15 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
         this.taskScheduler = scheduler;
     }
 
-    @PostConstruct
-    public void init() {
-        rescheduleAllPromotionNotifications();
-    }
+    // @PostConstruct - Disabled for multi-tenancy: cannot query tenant DB without tenant context
+    // public void init() {
+    //     rescheduleAllPromotionNotifications();
+    // }
 
     /**
-     * Reschedule all promotion notifications on server startup
+     * Reschedule all promotion notifications (call manually when needed per tenant)
      */
-    private void rescheduleAllPromotionNotifications() {
+    public void rescheduleAllPromotionNotifications() {
         List<Promotion> activePromotions = promotionRepository.findAll().stream()
                 .filter(p -> Boolean.TRUE.equals(p.getActive()))
                 .filter(p -> p.getEndDate().isAfter(LocalDateTime.now()))

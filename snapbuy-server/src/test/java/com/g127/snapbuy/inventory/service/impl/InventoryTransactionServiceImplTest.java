@@ -1,7 +1,7 @@
 package com.g127.snapbuy.inventory.service.impl;
 
 import com.g127.snapbuy.inventory.dto.response.InventoryTransactionResponse;
-import com.g127.snapbuy.response.PageResponse;
+import com.g127.snapbuy.common.response.PageResponse;
 import com.g127.snapbuy.entity.InventoryTransaction;
 import com.g127.snapbuy.entity.Product;
 import com.g127.snapbuy.entity.Account;

@@ -1,8 +1,8 @@
 package com.g127.snapbuy.inventory.controller;
 
-import com.g127.snapbuy.response.ApiResponse;
+import com.g127.snapbuy.common.response.ApiResponse;
 import com.g127.snapbuy.inventory.dto.response.InventoryTransactionResponse;
-import com.g127.snapbuy.response.PageResponse;
+import com.g127.snapbuy.common.response.PageResponse;
 import com.g127.snapbuy.inventory.service.InventoryTransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

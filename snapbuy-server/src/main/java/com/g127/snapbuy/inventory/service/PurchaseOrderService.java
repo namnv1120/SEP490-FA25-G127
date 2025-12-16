@@ -5,7 +5,7 @@ import com.g127.snapbuy.inventory.dto.request.PurchaseOrderCreateRequest;
 import com.g127.snapbuy.inventory.dto.request.PurchaseOrderEmailRequest;
 import com.g127.snapbuy.inventory.dto.request.PurchaseOrderReceiveRequest;
 import com.g127.snapbuy.inventory.dto.request.PurchaseOrderUpdateRequest;
-import com.g127.snapbuy.response.PageResponse;
+import com.g127.snapbuy.common.response.PageResponse;
 import com.g127.snapbuy.inventory.dto.response.PurchaseOrderResponse;
 import org.springframework.data.domain.Pageable;
 

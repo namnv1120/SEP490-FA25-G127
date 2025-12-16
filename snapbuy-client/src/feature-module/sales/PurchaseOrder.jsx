@@ -198,7 +198,16 @@ const PurchaseOrder = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, rows, searchQuery, sortField, sortOrder, statusFilter, orderDateRange, receivedDateRange]);
+  }, [
+    currentPage,
+    rows,
+    searchQuery,
+    sortField,
+    sortOrder,
+    statusFilter,
+    orderDateRange,
+    receivedDateRange,
+  ]);
 
   useEffect(() => {
     fetchPurchaseOrders();
@@ -208,23 +217,28 @@ const PurchaseOrder = () => {
   useEffect(() => {
     const handleNotificationClick = (event) => {
       // Reload purchase orders data when notification is clicked
-      console.log('Purchase order notification clicked, reloading data...', event.detail);
       fetchPurchaseOrders();
     };
 
     // Listen for custom event
-    window.addEventListener('purchaseOrderNotificationClicked', handleNotificationClick);
-    
+    window.addEventListener(
+      "purchaseOrderNotificationClicked",
+      handleNotificationClick
+    );
+
     // Also listen for focus event (when user comes back to tab)
     const handleFocus = () => {
       // Reload when tab becomes active (user might have clicked notification in another tab)
       fetchPurchaseOrders();
     };
-    window.addEventListener('focus', handleFocus);
+    window.addEventListener("focus", handleFocus);
 
     return () => {
-      window.removeEventListener('purchaseOrderNotificationClicked', handleNotificationClick);
-      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener(
+        "purchaseOrderNotificationClicked",
+        handleNotificationClick
+      );
+      window.removeEventListener("focus", handleFocus);
     };
   }, [fetchPurchaseOrders]);
 
@@ -272,14 +286,17 @@ const PurchaseOrder = () => {
         try {
           const userInfo = await getMyInfo();
           currentAccountId = (userInfo.result || userInfo)?.id;
-          console.log("Current accountId from API:", currentAccountId);
 
           if (!currentAccountId) {
-            message.error("Không tìm thấy thông tin tài khoản. Vui lòng đăng nhập lại!");
+            message.error(
+              "Không tìm thấy thông tin tài khoản. Vui lòng đăng nhập lại!"
+            );
             return;
           }
         } catch (error) {
-          message.error("Không thể lấy thông tin tài khoản. Vui lòng đăng nhập lại!");
+          message.error(
+            "Không thể lấy thông tin tài khoản. Vui lòng đăng nhập lại!"
+          );
           return;
         }
       }
@@ -348,12 +365,12 @@ const PurchaseOrder = () => {
           action === "approve"
             ? "duyệt"
             : action === "cancel"
-              ? "huỷ"
-              : action === "receive"
-                ? "xác nhận nhận hàng"
-                : action === "revert"
-                  ? "huỷ xác nhận"
-                  : "xử lý";
+            ? "huỷ"
+            : action === "receive"
+            ? "xác nhận nhận hàng"
+            : action === "revert"
+            ? "huỷ xác nhận"
+            : "xử lý";
 
         message.warning({
           content: (
@@ -384,7 +401,7 @@ const PurchaseOrder = () => {
           if (action === "approve") {
             await approvePurchaseOrder(id, {
               ownerAccountId: currentAccountId,
-              notes: "Duyệt hàng loạt"
+              notes: "Duyệt hàng loạt",
             });
           } else if (action === "cancel") {
             await cancelPurchaseOrder(id);
@@ -399,7 +416,8 @@ const PurchaseOrder = () => {
             if (!allHaveReceivedQty) {
               const order = listData.find((o) => o.purchaseOrderId === id);
               errorMessages.push(
-                `${order?.purchaseOrderNumber || id
+                `${
+                  order?.purchaseOrderNumber || id
                 }: Chưa cập nhật số lượng thực nhận`
               );
               errorCount++;
@@ -408,7 +426,8 @@ const PurchaseOrder = () => {
 
             const items = orderDetail.details.map((detail) => ({
               purchaseOrderDetailId: detail.purchaseOrderDetailId || detail.id,
-              receivedQuantity: detail.receiveQuantity ?? detail.receivedQuantity ?? 0,
+              receivedQuantity:
+                detail.receiveQuantity ?? detail.receivedQuantity ?? 0,
             }));
 
             await confirmPurchaseOrder(id, {
@@ -660,12 +679,13 @@ tr:hover { background-color: #f5f5f5; }
           html += `
 <tr>
 <td>${idx + 1}</td>
-<td>${escapeHtml(detail.productName || "")}${detail.productCode
+<td>${escapeHtml(detail.productName || "")}${
+            detail.productCode
               ? `<br><small style='color: #7f8c8d;'>Mã: ${escapeHtml(
-                detail.productCode
-              )}</small>`
+                  detail.productCode
+                )}</small>`
               : ""
-            }</td>
+          }</td>
 <td class='text-center'>${detail.quantity || 0}</td>
 <td class='text-right'>${formatCurrency(detail.unitPrice || 0)}</td>
 <td class='text-right'>${formatCurrency(itemTotal)}</td>
@@ -802,7 +822,9 @@ tr:hover { background-color: #f5f5f5; }
             const order = listData.find((o) => o.purchaseOrderId === orderId);
             const orderNumber = order?.purchaseOrderNumber || orderId;
             const errorMsg =
-              err.response?.data?.message || err.message || "Lỗi không xác định";
+              err.response?.data?.message ||
+              err.message ||
+              "Lỗi không xác định";
 
             // Kiểm tra xem có phải lỗi đơn đã được gửi không
             if (
@@ -820,7 +842,9 @@ tr:hover { background-color: #f5f5f5; }
         // Hiển thị kết quả tổng hợp
         if (successOrders.length > 0) {
           message.success(
-            `Đã gửi email thành công cho ${successOrders.length} đơn hàng${successOrders.length <= 3 ? `: ${successOrders.join(", ")}` : ""}`
+            `Đã gửi email thành công cho ${successOrders.length} đơn hàng${
+              successOrders.length <= 3 ? `: ${successOrders.join(", ")}` : ""
+            }`
           );
         }
 
@@ -828,7 +852,10 @@ tr:hover { background-color: #f5f5f5; }
           message.info({
             content: (
               <div>
-                <p>Có {alreadySentOrders.length} đơn hàng đã được gửi email trước đó:</p>
+                <p>
+                  Có {alreadySentOrders.length} đơn hàng đã được gửi email trước
+                  đó:
+                </p>
                 <ul style={{ marginTop: 8, paddingLeft: 20 }}>
                   {alreadySentOrders.slice(0, 5).map((item, idx) => (
                     <li key={idx}>{item}</li>

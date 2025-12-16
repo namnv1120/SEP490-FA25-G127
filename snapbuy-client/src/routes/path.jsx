@@ -96,13 +96,6 @@ export const authRoutes = [
   },
   {
     id: 5,
-    path: routes.rolespermission,
-    name: "rolespermission",
-    componentKey: "RoleList",
-    protected: true,
-  },
-  {
-    id: 6,
     path: routes.products,
     name: "products",
     componentKey: "ProductList",

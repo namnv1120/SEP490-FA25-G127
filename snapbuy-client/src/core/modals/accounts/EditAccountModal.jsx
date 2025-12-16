@@ -5,7 +5,6 @@ import {
   getAccountById,
   updateAccount,
 } from "../../../services/AccountService";
-import { getAllRoles } from "../../../services/RoleService";
 
 const EditAccount = ({
   isOpen,
@@ -13,7 +12,7 @@ const EditAccount = ({
   onSuccess,
   onUpdated,
   onClose,
-  allowedRoles,
+  availableRoles,
   onUpdate,
   onUpdateRole,
 }) => {
@@ -33,27 +32,6 @@ const EditAccount = ({
   });
 
   const [errors, setErrors] = useState({});
-
-  const loadRoles = useCallback(async () => {
-    try {
-      const rolesData = await getAllRoles();
-      let filtered = rolesData.filter(
-        (role) => role.active === true || role.active === 1
-      );
-      if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
-        filtered = filtered.filter((role) =>
-          allowedRoles.includes(role.roleName)
-        );
-      }
-      const roleOptions = filtered.map((role) => ({
-        value: role.roleName,
-        label: role.roleName,
-      }));
-      setRoles(roleOptions);
-    } catch (error) {
-      console.error("Lỗi khi tải danh sách vai trò:", error);
-    }
-  }, [allowedRoles]);
 
   const loadAccountData = useCallback(async () => {
     try {
@@ -87,12 +65,16 @@ const EditAccount = ({
     }
   }, [accountId, onClose]);
 
-  // Load roles và account data khi modal mở
+  // Load roles khi modal mở
   useEffect(() => {
-    if (isOpen) {
-      loadRoles();
+    if (isOpen && availableRoles) {
+      const roleOptions = availableRoles.map((role) => ({
+        value: role.roleName,
+        label: role.roleName,
+      }));
+      setRoles(roleOptions);
     }
-  }, [isOpen, loadRoles]);
+  }, [isOpen, availableRoles]);
 
   // Load account data khi modal mở
   useEffect(() => {
@@ -369,16 +351,18 @@ const EditAccount = ({
               <input
                 type={showPassword ? "text" : "password"}
                 name="password"
-                className={`form-control ${errors.password ? "is-invalid" : ""
-                  }`}
+                className={`form-control ${
+                  errors.password ? "is-invalid" : ""
+                }`}
                 value={formData.password}
                 onChange={handleInputChange}
                 placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)"
                 disabled={loading}
               />
               <span
-                className={`ti toggle-password position-absolute end-0 top-50 translate-middle-y me-2 ${showPassword ? "ti-eye" : "ti-eye-off"
-                  }`}
+                className={`ti toggle-password position-absolute end-0 top-50 translate-middle-y me-2 ${
+                  showPassword ? "ti-eye" : "ti-eye-off"
+                }`}
                 onClick={() => setShowPassword(!showPassword)}
                 style={{ cursor: "pointer" }}
               />
@@ -396,16 +380,18 @@ const EditAccount = ({
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   name="confirmPassword"
-                  className={`form-control ${errors.confirmPassword ? "is-invalid" : ""
-                    }`}
+                  className={`form-control ${
+                    errors.confirmPassword ? "is-invalid" : ""
+                  }`}
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
                   placeholder="Nhập lại mật khẩu mới"
                   disabled={loading}
                 />
                 <span
-                  className={`ti toggle-password position-absolute end-0 top-50 translate-middle-y me-2 ${showConfirmPassword ? "ti-eye" : "ti-eye-off"
-                    }`}
+                  className={`ti toggle-password position-absolute end-0 top-50 translate-middle-y me-2 ${
+                    showConfirmPassword ? "ti-eye" : "ti-eye-off"
+                  }`}
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   style={{ cursor: "pointer" }}
                 />

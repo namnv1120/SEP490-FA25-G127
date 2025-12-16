@@ -1,19 +1,44 @@
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { API_ENDPOINTS } from "./apiConfig";
+import { getTenantContext } from "../utils/tenantUtils";
 
 const REST_API_BASE_URL = API_ENDPOINTS.AUTH;
 
 // 🔐 API đăng nhập
-export const login = async (username, password) => {
+export const login = async (username, password, tenantCode = null) => {
   if (!username || !password)
     throw new Error("Username and password are required.");
 
   try {
-    const response = await axios.post(`${REST_API_BASE_URL}/login`, {
+    const requestBody = {
       username,
       password,
-    });
+    };
+
+    // Kiểm tra xem có phải admin domain không
+    const tenantInfo = getTenantContext();
+
+    // Chỉ thêm tenantCode nếu KHÔNG PHẢI admin domain
+    if (!tenantInfo.isAdmin) {
+      // Tự động lấy tenantCode từ subdomain nếu không được truyền vào
+      if (!tenantCode) {
+        if (tenantInfo.tenantSlug) {
+          tenantCode = tenantInfo.tenantSlug;
+        }
+        // Nếu có trong localStorage (sau khi validate)
+        if (!tenantCode) {
+          tenantCode = localStorage.getItem("tenantCode");
+        }
+      }
+
+      // Include tenantCode if available
+      if (tenantCode) {
+        requestBody.tenantCode = tenantCode;
+      }
+    }
+
+    const response = await axios.post(`${REST_API_BASE_URL}/login`, requestBody);
 
     const { token, tokenType, accountId, roleName, fullName } =
       response.data.result || {};
@@ -48,9 +73,9 @@ export const login = async (username, password) => {
       throw new Error("Login failed: No token received.");
     }
   } catch (error) {
-    throw new Error(
-      error.response ? error.response.data.message : error.message
-    );
+    const errorMessage = error.response?.data?.message || error.message || "Đăng nhập thất bại. Vui lòng thử lại.";
+    console.error("Login error:", errorMessage);
+    throw new Error(errorMessage);
   }
 };
 

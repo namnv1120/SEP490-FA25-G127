@@ -71,18 +71,9 @@ const SubCategoryList = () => {
         "DESC"
       );
 
-      // Use parentCategories state if available, otherwise fetch
-      let parents = parentCategories;
-      if (parents.length === 0) {
-        const allCategories = await getAllCategories();
-        parents = allCategories.filter(
-          (cat) => !cat.parentCategoryId || cat.parentCategoryId === null
-        );
-        setParentCategories(parents);
-      }
-
+      // Map with current parentCategories (don't fetch inside this function)
       const mapped = (result.content || []).map((cat) => {
-        const parent = parents.find(
+        const parent = parentCategories.find(
           (p) => p.categoryId === cat.parentCategoryId
         );
 
@@ -378,7 +369,10 @@ const SubCategoryList = () => {
               <div className="table-responsive category-table">
                 {loading ? (
                   <div className="d-flex justify-content-center p-5">
-                    <span className="spinner-border text-primary" role="status" />
+                    <span
+                      className="spinner-border text-primary"
+                      role="status"
+                    />
                   </div>
                 ) : (
                   <PrimeDataTable

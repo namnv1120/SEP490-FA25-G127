@@ -1,18 +1,14 @@
 package com.g127.snapbuy.account.service.impl;
 
 import com.g127.snapbuy.account.dto.request.RoleCreateRequest;
-import com.g127.snapbuy.account.dto.request.RolePermissionUpdateRequest;
 import com.g127.snapbuy.account.dto.request.RoleUpdateRequest;
-import com.g127.snapbuy.response.PageResponse;
-import com.g127.snapbuy.account.dto.response.PermissionResponse;
+import com.g127.snapbuy.common.response.PageResponse;
 import com.g127.snapbuy.account.dto.response.RoleResponse;
-import com.g127.snapbuy.entity.Permission;
-import com.g127.snapbuy.entity.Role;
-import com.g127.snapbuy.exception.AppException;
-import com.g127.snapbuy.exception.ErrorCode;
-import com.g127.snapbuy.repository.AccountRepository;
-import com.g127.snapbuy.repository.PermissionRepository;
-import com.g127.snapbuy.repository.RoleRepository;
+import com.g127.snapbuy.account.entity.Role;
+import com.g127.snapbuy.common.exception.AppException;
+import com.g127.snapbuy.common.exception.ErrorCode;
+import com.g127.snapbuy.account.repository.AccountRepository;
+import com.g127.snapbuy.account.repository.RoleRepository;
 import com.g127.snapbuy.account.service.RoleService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import com.g127.snapbuy.common.utils.VietnameseUtils;
 
 import java.time.ZoneOffset;
 import java.util.*;
@@ -31,7 +28,6 @@ import java.util.*;
 public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
-    private final PermissionRepository permissionRepository;
     private final AccountRepository accountRepository;
 
     private static final String ADMIN = "Quản trị viên";
@@ -68,22 +64,6 @@ public class RoleServiceImpl implements RoleService {
         }
     }
 
-    private void ensureActive(Permission p) {
-        if (Boolean.FALSE.equals(p.getIsActive())) {
-            throw new IllegalStateException("Quyền đang ở trạng thái không hoạt động");
-        }
-    }
-
-    private PermissionResponse toPermissionResponse(Permission p) {
-        return PermissionResponse.builder()
-                .id(p.getPermissionId().toString())
-                .name(p.getPermissionName())
-                .description(p.getDescription())
-                .module(p.getModule())
-                .active(Boolean.TRUE.equals(p.getIsActive()))
-                .build();
-    }
-
     private RoleResponse toResponse(Role r) {
         // Trả về giá trị active thực tế từ entity (có thể là true, false, hoặc null)
         // Frontend sẽ xử lý để hiển thị đúng
@@ -95,8 +75,6 @@ public class RoleServiceImpl implements RoleService {
                 .active(activeValue != null ? activeValue : false) // Nếu null thì mặc định là false
                 .createdDate(r.getCreatedDate() == null ? null :
                         r.getCreatedDate().toInstant().atOffset(ZoneOffset.UTC).toString())
-                .permissions(r.getPermissions() == null ? List.of() :
-                        r.getPermissions().stream().map(this::toPermissionResponse).toList())
                 .build();
     }
 
@@ -116,7 +94,6 @@ public class RoleServiceImpl implements RoleService {
         r.setDescription(req.getDescription());
         r.setActive(req.getActive() == null ? Boolean.TRUE : req.getActive());
         r.setCreatedDate(new Date());
-        r.setPermissions(new HashSet<>());
         return toResponse(roleRepository.save(r));
     }
 
@@ -204,72 +181,6 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public List<PermissionResponse> listPermissions(UUID roleId) {
-        Role r = roleRepository.findById(roleId)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò"));
-        return r.getPermissions().stream().map(this::toPermissionResponse).toList();
-    }
-
-    @Override
-    @Transactional
-    public void addPermission(UUID roleId, UUID permissionId) {
-        Role r = roleRepository.findById(roleId)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò"));
-        ensureNotSystemRole(r,
-                "Không thể chỉnh sửa vai trò 'Chủ hệ thống'",
-                "Chủ cửa hàng không được phép chỉnh sửa vai trò 'Chủ cửa hàng'");
-        ensureActive(r);
-
-        Permission p = permissionRepository.findById(permissionId)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy quyền"));
-        ensureActive(p);
-
-        r.getPermissions().add(p);
-        roleRepository.save(r);
-    }
-
-    @Override
-    @Transactional
-    public void removePermission(UUID roleId, UUID permissionId) {
-        Role r = roleRepository.findById(roleId)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò"));
-        ensureNotSystemRole(r,
-                "Không thể chỉnh sửa vai trò 'Chủ hệ thống'",
-                "Chủ cửa hàng không được phép chỉnh sửa vai trò 'Chủ cửa hàng'");
-        ensureActive(r);
-
-        Permission p = permissionRepository.findById(permissionId)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy quyền"));
-        ensureActive(p);
-
-        r.getPermissions().remove(p);
-        roleRepository.save(r);
-    }
-
-    @Override
-    @Transactional
-    public RoleResponse setPermissions(UUID roleId, RolePermissionUpdateRequest req) {
-        Role r = roleRepository.findById(roleId)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy vai trò"));
-        ensureNotSystemRole(r,
-                "Không thể chỉnh sửa vai trò 'Quản trị viên'",
-                "Chủ cửa hàng không được phép chỉnh sửa vai trò 'Chủ cửa hàng'");
-        ensureActive(r);
-
-        Set<Permission> newSet = new HashSet<>();
-        if (req.getPermissionIds() != null) {
-            for (UUID pid : new HashSet<>(req.getPermissionIds())) {
-                Permission p = permissionRepository.findById(pid)
-                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy quyền: " + pid));
-                ensureActive(p);
-                newSet.add(p);
-            }
-        }
-        r.setPermissions(newSet);
-        return toResponse(roleRepository.save(r));
-    }
-
-    @Override
     @Transactional
     public RoleResponse toggleRoleStatus(UUID roleId) {
         Role role = roleRepository.findById(roleId)
@@ -291,21 +202,39 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public PageResponse<RoleResponse> searchRolesPaged(String keyword, Boolean active, Pageable pageable) {
-        var page = roleRepository.searchRolesPage(
-                keyword == null || keyword.isBlank() ? null : keyword.trim(),
-                active,
-                pageable
-        );
-        var content = page.getContent().stream().map(this::toResponse).toList();
+        // Fetch from DB without keyword filter
+        List<Role> roles = roleRepository.findRolesForSearch(active);
+        
+        // Filter by keyword in Java using VietnameseUtils
+        String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+        if (trimmedKeyword != null) {
+            roles = roles.stream()
+                .filter(r -> VietnameseUtils.matchesAny(trimmedKeyword, r.getRoleName(), r.getDescription()))
+                .toList();
+        }
+        
+        // Manual pagination
+        int pageNumber = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        int totalElements = roles.size();
+        int totalPages = (int) Math.ceil((double) totalElements / pageSize);
+        int fromIndex = pageNumber * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, totalElements);
+        
+        List<Role> pagedRoles = (fromIndex < totalElements) 
+            ? roles.subList(fromIndex, toIndex) 
+            : List.of();
+        
+        var content = pagedRoles.stream().map(this::toResponse).toList();
         return PageResponse.<RoleResponse>builder()
                 .content(content)
-                .totalElements(page.getTotalElements())
-                .totalPages(page.getTotalPages())
-                .size(page.getSize())
-                .number(page.getNumber())
-                .first(page.isFirst())
-                .last(page.isLast())
-                .empty(page.isEmpty())
+                .totalElements(totalElements)
+                .totalPages(totalPages)
+                .size(pageSize)
+                .number(pageNumber)
+                .first(pageNumber == 0)
+                .last(pageNumber >= totalPages - 1)
+                .empty(content.isEmpty())
                 .build();
     }
 }

@@ -1,8 +1,8 @@
 package com.g127.snapbuy.notification.service;
 
 import com.g127.snapbuy.notification.dto.response.NotificationResponse;
-import com.g127.snapbuy.response.PageResponse;
-import com.g127.snapbuy.entity.Notification.NotificationType;
+import com.g127.snapbuy.common.response.PageResponse;
+import com.g127.snapbuy.notification.entity.Notification.NotificationType;
 import org.springframework.data.domain.Pageable;
 
 import java.util.UUID;

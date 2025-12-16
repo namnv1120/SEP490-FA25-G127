@@ -3,11 +3,29 @@ package com.g127.snapbuy.order.service.impl;
 import com.g127.snapbuy.order.dto.request.OrderCreateRequest;
 import com.g127.snapbuy.order.dto.request.OrderDetailRequest;
 import com.g127.snapbuy.order.dto.response.OrderResponse;
-import com.g127.snapbuy.entity.*;
-import com.g127.snapbuy.mapper.AccountMapper;
-import com.g127.snapbuy.mapper.OrderMapper;
+import com.g127.snapbuy.order.entity.Order;
+import com.g127.snapbuy.order.entity.OrderDetail;
+import com.g127.snapbuy.account.entity.Account;
+import com.g127.snapbuy.customer.entity.Customer;
+import com.g127.snapbuy.product.entity.Product;
+import com.g127.snapbuy.product.entity.ProductPrice;
+import com.g127.snapbuy.inventory.entity.Inventory;
+import com.g127.snapbuy.inventory.entity.InventoryTransaction;
+import com.g127.snapbuy.payment.entity.Payment;
+import com.g127.snapbuy.settings.entity.PosSettings;
+import com.g127.snapbuy.account.mapper.AccountMapper;
+import com.g127.snapbuy.order.mapper.OrderMapper;
 import com.g127.snapbuy.order.service.OrderService;
-import com.g127.snapbuy.repository.*;
+import com.g127.snapbuy.order.repository.OrderRepository;
+import com.g127.snapbuy.order.repository.OrderDetailRepository;
+import com.g127.snapbuy.payment.repository.PaymentRepository;
+import com.g127.snapbuy.product.repository.ProductRepository;
+import com.g127.snapbuy.product.repository.ProductPriceRepository;
+import com.g127.snapbuy.inventory.repository.InventoryRepository;
+import com.g127.snapbuy.inventory.repository.InventoryTransactionRepository;
+import com.g127.snapbuy.account.repository.AccountRepository;
+import com.g127.snapbuy.customer.repository.CustomerRepository;
+import com.g127.snapbuy.settings.repository.PosSettingsRepository;
 import com.g127.snapbuy.payment.service.MoMoService;
 import com.g127.snapbuy.notification.service.NotificationSchedulerService;
 import com.g127.snapbuy.promotion.service.PromotionService;
@@ -17,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import com.g127.snapbuy.common.utils.VietnameseUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -285,12 +304,38 @@ public class OrderServiceImpl implements OrderService {
         return resp;
     }
 
-    @Override
-    public List<OrderResponse> getAllOrders() {
-        return orderRepository.findAll().stream()
+    /**
+     * Helper method to batch convert orders to responses
+     * Reduces N+1 queries to 3 queries (orders + details + payments)
+     */
+    private List<OrderResponse> batchConvertToResponses(List<Order> orders) {
+        if (orders.isEmpty()) {
+            return List.of();
+        }
+        
+        // Batch fetch all order IDs
+        List<UUID> orderIds = orders.stream()
+                .map(Order::getOrderId)
+                .toList();
+        
+        // Batch fetch only relevant order details using IN clause (1 query, only needed data)
+        Map<UUID, List<OrderDetail>> detailsMap = orderDetailRepository.findByOrderIdIn(orderIds).stream()
+                .collect(Collectors.groupingBy(d -> d.getOrder().getOrderId()));
+        
+        // Batch fetch only relevant payments using IN clause (1 query, only needed data)
+        Map<UUID, Payment> paymentsMap = paymentRepository.findByOrderIdIn(orderIds).stream()
+                .filter(p -> p.getOrder() != null)
+                .collect(Collectors.toMap(
+                        p -> p.getOrder().getOrderId(),
+                        p -> p,
+                        (existing, replacement) -> existing
+                ));
+        
+        // Map to responses using pre-fetched data
+        return orders.stream()
                 .map(order -> {
-                    List<OrderDetail> details = orderDetailRepository.findByOrder(order);
-                    Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
+                    List<OrderDetail> details = detailsMap.getOrDefault(order.getOrderId(), List.of());
+                    Payment payment = paymentsMap.get(order.getOrderId());
                     OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
                     BigDecimal subtotal = details.stream()
                             .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
@@ -301,12 +346,16 @@ public class OrderServiceImpl implements OrderService {
                     return resp;
                 })
                 .toList();
+    }
+
+    @Override
+    public List<OrderResponse> getAllOrders() {
+        List<Order> orders = orderRepository.findAll();
+        return batchConvertToResponses(orders);
     }
 
     @Override
     public List<OrderResponse> searchOrders(String searchTerm, String orderStatus, LocalDateTime fromDate, LocalDateTime toDate) {
-        // Normalize searchTerm - null hoặc empty string
-        String normalizedSearchTerm = (searchTerm == null || searchTerm.trim().isEmpty()) ? null : searchTerm.trim();
         String normalizedOrderStatus = (orderStatus == null || orderStatus.trim().isEmpty()) ? null : orderStatus.trim();
         
         LocalDateTime normalizedFromDate = null;
@@ -319,33 +368,32 @@ public class OrderServiceImpl implements OrderService {
             normalizedToDate = toDate.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
         }
         
-        List<Order> orders = orderRepository.searchOrders(
-                normalizedSearchTerm,
+        // Fetch from DB without keyword filter
+        List<Order> orders = orderRepository.findOrdersForSearch(
                 normalizedOrderStatus,
                 normalizedFromDate,
                 normalizedToDate
         );
         
-        return orders.stream()
-                .map(order -> {
-                    List<OrderDetail> details = orderDetailRepository.findByOrder(order);
-                    Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
-                    OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
-                    BigDecimal subtotal = details.stream()
-                            .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
-                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-                    resp.setSubtotal(subtotal);
-                    resp.setPointsRedeemed(order.getPointsRedeemed());
-                    resp.setPointsEarned(order.getPointsEarned());
-                    return resp;
+        // Filter by keyword in Java using VietnameseUtils
+        String trimmedKeyword = (searchTerm != null && !searchTerm.trim().isEmpty()) ? searchTerm.trim() : null;
+        if (trimmedKeyword != null) {
+            orders = orders.stream()
+                .filter(o -> {
+                    String orderNumber = o.getOrderNumber();
+                    String customerName = o.getCustomer() != null ? o.getCustomer().getFullName() : null;
+                    String accountName = o.getAccount() != null ? o.getAccount().getFullName() : null;
+                    String accountUsername = o.getAccount() != null ? o.getAccount().getUsername() : null;
+                    return VietnameseUtils.matchesAny(trimmedKeyword, orderNumber, customerName, accountName, accountUsername);
                 })
-                .collect(Collectors.toList());
+                .toList();
+        }
+        
+        return batchConvertToResponses(orders);
     }
 
     @Override
     public List<OrderResponse> searchReturnOrders(String searchTerm, String orderStatus, LocalDateTime fromDate, LocalDateTime toDate) {
-        // Normalize searchTerm - null hoặc empty string
-        String normalizedSearchTerm = (searchTerm == null || searchTerm.trim().isEmpty()) ? null : searchTerm.trim();
         String normalizedOrderStatus = (orderStatus == null || orderStatus.trim().isEmpty()) ? null : orderStatus.trim();
         
         LocalDateTime normalizedFromDate = null;
@@ -358,27 +406,28 @@ public class OrderServiceImpl implements OrderService {
             normalizedToDate = toDate.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
         }
         
-        List<Order> orders = orderRepository.searchReturnOrders(
-                normalizedSearchTerm,
+        // Fetch from DB without keyword filter
+        List<Order> orders = orderRepository.findReturnOrdersForSearch(
                 normalizedOrderStatus,
                 normalizedFromDate,
                 normalizedToDate
         );
         
-        return orders.stream()
-                .map(order -> {
-                    List<OrderDetail> details = orderDetailRepository.findByOrder(order);
-                    Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
-                    OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
-                    BigDecimal subtotal = details.stream()
-                            .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
-                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-                    resp.setSubtotal(subtotal);
-                    resp.setPointsRedeemed(order.getPointsRedeemed());
-                    resp.setPointsEarned(order.getPointsEarned());
-                    return resp;
+        // Filter by keyword in Java using VietnameseUtils
+        String trimmedKeyword = (searchTerm != null && !searchTerm.trim().isEmpty()) ? searchTerm.trim() : null;
+        if (trimmedKeyword != null) {
+            orders = orders.stream()
+                .filter(o -> {
+                    String orderNumber = o.getOrderNumber();
+                    String customerName = o.getCustomer() != null ? o.getCustomer().getFullName() : null;
+                    String accountName = o.getAccount() != null ? o.getAccount().getFullName() : null;
+                    String accountUsername = o.getAccount() != null ? o.getAccount().getUsername() : null;
+                    return VietnameseUtils.matchesAny(trimmedKeyword, orderNumber, customerName, accountName, accountUsername);
                 })
                 .toList();
+        }
+        
+        return batchConvertToResponses(orders);
     }
 
     @Override
@@ -530,8 +579,19 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
 
+        // If already completed, return current state instead of throwing error
         if ("Hoàn tất".equalsIgnoreCase(order.getOrderStatus())) {
-            throw new IllegalArgumentException("Đơn hàng đã hoàn tất, không thể thực hiện thao tác này.");
+            log.info("Order {} already completed, returning current state", order.getOrderNumber());
+            List<OrderDetail> details = orderDetailRepository.findByOrder(order);
+            Payment payment = paymentRepository.findByOrder_OrderId(order.getOrderId()).stream().findFirst().orElse(null);
+            OrderResponse resp = orderMapper.toResponse(order, details, payment, accountMapper);
+            BigDecimal subtotal = details.stream()
+                    .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            resp.setSubtotal(subtotal);
+            resp.setPointsRedeemed(order.getPointsRedeemed());
+            resp.setPointsEarned(order.getPointsEarned());
+            return resp;
         }
 
         if ("Đã hủy".equalsIgnoreCase(order.getOrderStatus())) {

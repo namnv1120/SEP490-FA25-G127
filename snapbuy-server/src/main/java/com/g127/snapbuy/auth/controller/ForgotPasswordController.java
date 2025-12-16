@@ -3,7 +3,7 @@ package com.g127.snapbuy.auth.controller;
 import com.g127.snapbuy.auth.dto.request.ForgotPasswordRequest;
 import com.g127.snapbuy.auth.dto.request.ResetPasswordRequest;
 import com.g127.snapbuy.auth.dto.request.VerifyOtpRequest;
-import com.g127.snapbuy.response.ApiResponse;
+import com.g127.snapbuy.common.response.ApiResponse;
 import com.g127.snapbuy.auth.service.ForgotPasswordService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

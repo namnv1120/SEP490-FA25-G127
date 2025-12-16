@@ -2,15 +2,14 @@ package com.g127.snapbuy.account.service;
 
 import com.g127.snapbuy.account.dto.request.*;
 import com.g127.snapbuy.account.dto.response.AccountResponse;
-import com.g127.snapbuy.response.PageResponse;
+import com.g127.snapbuy.common.response.PageResponse;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface AccountService {
-    AccountResponse createAccount(AccountCreateRequest req);
-    AccountResponse createShopOwner(AccountCreateRequest req);
+    // Admin methods removed - managed in Master DB
     AccountResponse createStaff(AccountCreateRequest req);
 
     AccountResponse getMyInfo();

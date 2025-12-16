@@ -89,18 +89,10 @@ export const revertReturnStatus = async (orderId) => {
 };
 
 export const getMyOrdersByDateTimeRange = async (fromISO, toISO) => {
-  console.log("🔍 API Call - getMyOrdersByDateTimeRange");
-  console.log("  URL:", `${REST_API_BASE_URL}/my/by-range`);
-  console.log("  Params:", { from: fromISO, to: toISO });
-
   const response = await axios.get(`${REST_API_BASE_URL}/my/by-range`, {
     ...getAuthHeaders(),
     params: { from: fromISO, to: toISO },
   });
-
-  console.log("  Response status:", response.status);
-  console.log("  Response data:", response.data);
-  console.log("  Result:", response.data?.result || response.data || []);
 
   return response.data?.result || response.data || [];
 };
@@ -116,15 +108,15 @@ export const getOrdersByAccountAndRange = async (accountId, fromISO, toISO) => {
   return response.data?.result || response.data || [];
 };
 
-// Simulate MoMo IPN callback for local development
+// Simulate MoMo return callback
 export const simulateMoMoCallback = async (momoOrderId, resultCode = 0) => {
   const response = await axios.post(
-    `${API_ENDPOINTS.BASE_URL}/api/payments/momo/local-notify`,
+    `${API_ENDPOINTS.BASE_URL}/api/payments/momo/return-notify`,
     {
       orderId: momoOrderId,
       resultCode: resultCode,
       transId: `LOCAL-${Date.now()}`,
-      message: resultCode === 0 ? "Successful" : "Failed"
+      message: resultCode === 0 ? "Successful" : "Failed",
     }
   );
   return response.data;

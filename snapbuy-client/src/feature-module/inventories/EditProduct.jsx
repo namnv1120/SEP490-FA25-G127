@@ -10,8 +10,11 @@ import { getAllCategories } from "../../services/CategoryService";
 import { getAllSuppliers } from "../../services/SupplierService";
 import { getImageUrl } from "../../utils/imageUtils";
 import { message } from "antd";
-import { generateRandomBarcode, downloadBarcode, displayBarcodePreview } from "../../utils/barcodeUtils";
-
+import {
+  generateRandomBarcode,
+  downloadBarcode,
+  displayBarcodePreview,
+} from "../../utils/barcodeUtils";
 
 const EditProduct = () => {
   const route = allRoutes;
@@ -38,7 +41,9 @@ const EditProduct = () => {
       try {
         const data = await getAllCategories();
         const mainCats = data
-          .filter((c) => !c.parentCategoryId && (c.active === true || c.active === 1))
+          .filter(
+            (c) => !c.parentCategoryId && (c.active === true || c.active === 1)
+          )
           .map((c) => ({
             value: c.categoryId,
             label: c.categoryName,
@@ -76,7 +81,12 @@ const EditProduct = () => {
       try {
         const data = await getAllCategories();
         const subs = data
-          .filter((c) => c.parentCategoryId && c.parentCategoryId === selectedCategory?.value && (c.active === true || c.active === 1))
+          .filter(
+            (c) =>
+              c.parentCategoryId &&
+              c.parentCategoryId === selectedCategory?.value &&
+              (c.active === true || c.active === 1)
+          )
           .map((c) => ({
             value: c.categoryId,
             label: c.categoryName,
@@ -94,7 +104,6 @@ const EditProduct = () => {
       setSubCategories([]);
     }
   }, [selectedCategory]);
-
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -127,7 +136,6 @@ const EditProduct = () => {
         setIsImageVisible(true);
         // Nếu sản phẩm không có ảnh (imageUrl null hoặc rỗng), đánh dấu là đã xóa ảnh
         setIsImageRemoved(!data.imageUrl || !data.imageUrl.trim());
-
       } catch (error) {
         console.error("❌ Lỗi lấy thông tin sản phẩm:", error);
       }
@@ -139,11 +147,11 @@ const EditProduct = () => {
   // Hiển thị barcode preview khi barcode thay đổi
   useEffect(() => {
     if (product?.barcode?.trim()) {
-      displayBarcodePreview(product.barcode, 'barcode-preview-edit');
+      displayBarcodePreview(product.barcode, "barcode-preview-edit");
     } else {
-      const container = document.getElementById('barcode-preview-edit');
+      const container = document.getElementById("barcode-preview-edit");
       if (container) {
-        container.innerHTML = '';
+        container.innerHTML = "";
       }
     }
   }, [product?.barcode]);
@@ -154,10 +162,14 @@ const EditProduct = () => {
 
     if (!product?.productCode?.trim()) {
       newErrors.productCode = "Vui lòng nhập mã sản phẩm.";
-    } else if (product.productCode.length > 50) {
-      newErrors.productCode = "Mã sản phẩm không được vượt quá 50 ký tự.";
-    } else if (!/^[A-Za-z0-9_-]+$/.test(product.productCode)) {
-      newErrors.productCode = "Mã sản phẩm chỉ cho phép chữ, số, gạch dưới hoặc gạch ngang.";
+    } else if (
+      product.productCode.length < 3 ||
+      product.productCode.length > 10
+    ) {
+      newErrors.productCode = "Mã sản phẩm phải từ 3 đến 10 ký tự.";
+    } else if (!/^[A-Za-z0-9_.\-]+$/.test(product.productCode)) {
+      newErrors.productCode =
+        "Mã sản phẩm chỉ cho phép chữ, số, gạch dưới, gạch ngang hoặc dấu chấm.";
     }
 
     if (!product?.productName?.trim()) {
@@ -167,7 +179,8 @@ const EditProduct = () => {
     } else if (product.productName.length > 100) {
       newErrors.productName = "Tên sản phẩm không được vượt quá 100 ký tự.";
     } else if (!/^[\p{L}\d ]+$/u.test(product.productName)) {
-      newErrors.productName = "Tên sản phẩm chỉ cho phép chữ, số và khoảng trắng.";
+      newErrors.productName =
+        "Tên sản phẩm chỉ cho phép chữ, số và khoảng trắng.";
     }
 
     if (!selectedCategory && !selectedSubCategory) {
@@ -311,7 +324,10 @@ const EditProduct = () => {
           <form onSubmit={handleSaveProduct}>
             <div className="card mb-0">
               <div className="card-body add-product pb-0">
-                <div className="accordions-items-seperate" id="accordionSpacingExample">
+                <div
+                  className="accordions-items-seperate"
+                  id="accordionSpacingExample"
+                >
                   {/* Product Information */}
                   <div className="accordion-item border mb-4">
                     <h2 className="accordion-header" id="headingSpacingOne">
@@ -347,10 +363,18 @@ const EditProduct = () => {
                                 type="text"
                                 value={product?.productCode || ""}
                                 onChange={(e) => {
-                                  setProduct({ ...product, productCode: e.target.value });
-                                  setErrors((prev) => ({ ...prev, productCode: "" }));
+                                  setProduct({
+                                    ...product,
+                                    productCode: e.target.value,
+                                  });
+                                  setErrors((prev) => ({
+                                    ...prev,
+                                    productCode: "",
+                                  }));
                                 }}
-                                className={`form-control ${errors.productCode ? "is-invalid" : ""}`}
+                                className={`form-control ${
+                                  errors.productCode ? "is-invalid" : ""
+                                }`}
                               />
                               {errors.productCode && (
                                 <div className="invalid-feedback">
@@ -369,10 +393,18 @@ const EditProduct = () => {
                                 type="text"
                                 value={product?.productName || ""}
                                 onChange={(e) => {
-                                  setProduct({ ...product, productName: e.target.value });
-                                  setErrors((prev) => ({ ...prev, productName: "" }));
+                                  setProduct({
+                                    ...product,
+                                    productName: e.target.value,
+                                  });
+                                  setErrors((prev) => ({
+                                    ...prev,
+                                    productName: "",
+                                  }));
                                 }}
-                                className={`form-control ${errors.productName ? "is-invalid" : ""}`}
+                                className={`form-control ${
+                                  errors.productName ? "is-invalid" : ""
+                                }`}
                               />
                               {errors.productName && (
                                 <div className="invalid-feedback">
@@ -393,8 +425,14 @@ const EditProduct = () => {
                                   type="text"
                                   value={product?.barcode || ""}
                                   onChange={(e) => {
-                                    setProduct({ ...product, barcode: e.target.value });
-                                    setErrors((prev) => ({ ...prev, barcode: "" }));
+                                    setProduct({
+                                      ...product,
+                                      barcode: e.target.value,
+                                    });
+                                    setErrors((prev) => ({
+                                      ...prev,
+                                      barcode: "",
+                                    }));
                                   }}
                                   onKeyDown={(e) => {
                                     // Ngăn chặn Enter key submit form khi quét barcode
@@ -402,19 +440,24 @@ const EditProduct = () => {
                                       e.preventDefault();
                                     }
                                   }}
-                                  className={`form-control ${errors.barcode ? "is-invalid" : ""}`}
+                                  className={`form-control ${
+                                    errors.barcode ? "is-invalid" : ""
+                                  }`}
                                   placeholder="Nhập barcode hoặc tạo tự động"
                                 />
                                 <button
                                   type="button"
                                   className="btn btn-outline-secondary"
                                   onClick={() => {
-                                    const generatedBarcode = generateRandomBarcode(13);
+                                    const generatedBarcode =
+                                      generateRandomBarcode(13);
                                     setProduct({
                                       ...product,
                                       barcode: generatedBarcode,
                                     });
-                                    message.success("Đã tạo barcode ngẫu nhiên");
+                                    message.success(
+                                      "Đã tạo barcode ngẫu nhiên"
+                                    );
                                   }}
                                   title="Tạo barcode ngẫu nhiên"
                                 >
@@ -430,9 +473,14 @@ const EditProduct = () => {
                                           product.barcode,
                                           product.productName || "SanPham"
                                         );
-                                        message.success("Đã tải barcode về máy");
+                                        message.success(
+                                          "Đã tải barcode về máy"
+                                        );
                                       } catch (error) {
-                                        message.error(error.message || "Không thể tải barcode");
+                                        message.error(
+                                          error.message ||
+                                            "Không thể tải barcode"
+                                        );
                                       }
                                     }}
                                     title="Tải barcode về máy"
@@ -447,12 +495,22 @@ const EditProduct = () => {
                                 </div>
                               )}
                               <small className="text-muted">
-                                Mỗi sản phẩm chỉ có thể có 1 barcode duy nhất. Có thể để trống và thêm sau.
+                                Mỗi sản phẩm chỉ có thể có 1 barcode duy nhất.
+                                Có thể để trống và thêm sau.
                               </small>
                               {/* Preview barcode */}
                               {product?.barcode?.trim() && (
                                 <div className="mt-3">
-                                  <div id="barcode-preview-edit" style={{ textAlign: 'center', padding: '10px', border: '1px solid #dee2e6', borderRadius: '4px', backgroundColor: '#f8f9fa' }}></div>
+                                  <div
+                                    id="barcode-preview-edit"
+                                    style={{
+                                      textAlign: "center",
+                                      padding: "10px",
+                                      border: "1px solid #dee2e6",
+                                      borderRadius: "4px",
+                                      backgroundColor: "#f8f9fa",
+                                    }}
+                                  ></div>
                                 </div>
                               )}
                             </div>
@@ -468,13 +526,18 @@ const EditProduct = () => {
                                 </label>
                               </div>
                               <CommonSelect
-                                className={`w-100 ${errors.category ? "is-invalid" : ""}`}
+                                className={`w-100 ${
+                                  errors.category ? "is-invalid" : ""
+                                }`}
                                 options={categories}
                                 value={selectedCategory}
                                 onChange={(selectedOption) => {
                                   setSelectedCategory(selectedOption);
                                   setSelectedSubCategory(null);
-                                  setErrors((prev) => ({ ...prev, category: "" }));
+                                  setErrors((prev) => ({
+                                    ...prev,
+                                    category: "",
+                                  }));
                                 }}
                                 placeholder="Chọn danh mục"
                               />
@@ -512,10 +575,15 @@ const EditProduct = () => {
                                 type="text"
                                 value={product?.unit || ""}
                                 onChange={(e) => {
-                                  setProduct({ ...product, unit: e.target.value });
+                                  setProduct({
+                                    ...product,
+                                    unit: e.target.value,
+                                  });
                                   setErrors((prev) => ({ ...prev, unit: "" }));
                                 }}
-                                className={`form-control ${errors.unit ? "is-invalid" : ""}`}
+                                className={`form-control ${
+                                  errors.unit ? "is-invalid" : ""
+                                }`}
                                 placeholder="Điền đơn vị tính (ví dụ: cái, chiếc...)"
                               />
                               {errors.unit && (
@@ -532,12 +600,17 @@ const EditProduct = () => {
                                 <span className="text-danger ms-1">*</span>
                               </label>
                               <CommonSelect
-                                className={`w-100 ${errors.supplier ? "is-invalid" : ""}`}
+                                className={`w-100 ${
+                                  errors.supplier ? "is-invalid" : ""
+                                }`}
                                 options={suppliers}
                                 value={selectedSupplier}
                                 onChange={(opt) => {
                                   setSelectedSupplier(opt);
-                                  setErrors((prev) => ({ ...prev, supplier: "" }));
+                                  setErrors((prev) => ({
+                                    ...prev,
+                                    supplier: "",
+                                  }));
                                 }}
                                 placeholder="Chọn nhà cung cấp"
                               />
@@ -557,10 +630,18 @@ const EditProduct = () => {
                                 type="text"
                                 value={product?.dimensions || ""}
                                 onChange={(e) => {
-                                  setProduct({ ...product, dimensions: e.target.value });
-                                  setErrors((prev) => ({ ...prev, dimensions: "" }));
+                                  setProduct({
+                                    ...product,
+                                    dimensions: e.target.value,
+                                  });
+                                  setErrors((prev) => ({
+                                    ...prev,
+                                    dimensions: "",
+                                  }));
                                 }}
-                                className={`form-control ${errors.dimensions ? "is-invalid" : ""}`}
+                                className={`form-control ${
+                                  errors.dimensions ? "is-invalid" : ""
+                                }`}
                               />
                               {errors.dimensions && (
                                 <div className="invalid-feedback">
@@ -576,10 +657,18 @@ const EditProduct = () => {
                             <textarea
                               value={product?.description || ""}
                               onChange={(e) => {
-                                setProduct({ ...product, description: e.target.value });
-                                setErrors((prev) => ({ ...prev, description: "" }));
+                                setProduct({
+                                  ...product,
+                                  description: e.target.value,
+                                });
+                                setErrors((prev) => ({
+                                  ...prev,
+                                  description: "",
+                                }));
                               }}
-                              className={`form-control ${errors.description ? "is-invalid" : ""}`}
+                              className={`form-control ${
+                                errors.description ? "is-invalid" : ""
+                              }`}
                               rows={5}
                             />
                             {errors.description && (
@@ -632,7 +721,8 @@ const EditProduct = () => {
                                         setImageFile(file);
                                         setIsImageVisible(true);
                                         setIsImageRemoved(false); // Nếu chọn ảnh mới, không xóa ảnh nữa
-                                        const previewUrl = URL.createObjectURL(file);
+                                        const previewUrl =
+                                          URL.createObjectURL(file);
                                         setImagePreview(previewUrl);
                                       }
                                     }}

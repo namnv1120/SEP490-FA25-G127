@@ -1,9 +1,9 @@
 package com.g127.snapbuy.notification.controller;
 
-import com.g127.snapbuy.response.ApiResponse;
+import com.g127.snapbuy.common.response.ApiResponse;
 import com.g127.snapbuy.notification.dto.response.NotificationResponse;
-import com.g127.snapbuy.response.PageResponse;
-import com.g127.snapbuy.entity.Notification.NotificationType;
+import com.g127.snapbuy.common.response.PageResponse;
+import com.g127.snapbuy.notification.entity.Notification.NotificationType;
 import com.g127.snapbuy.notification.service.NotificationService;
 import com.g127.snapbuy.notification.service.NotificationSchedulerService;
 import lombok.RequiredArgsConstructor;

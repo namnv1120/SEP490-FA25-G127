@@ -1,8 +1,8 @@
 package com.g127.snapbuy.payment.service.impl;
 
 import com.g127.snapbuy.payment.dto.response.MomoPaymentResponse;
-import com.g127.snapbuy.entity.Order;
-import com.g127.snapbuy.repository.OrderRepository;
+import com.g127.snapbuy.order.entity.Order;
+import com.g127.snapbuy.order.repository.OrderRepository;
 import com.g127.snapbuy.payment.service.MoMoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,14 +62,19 @@ public class MoMoServiceImpl implements MoMoService {
             String requestId = UUID.randomUUID().toString();
             String momoOrderId = order.getOrderNumber() + "-" + System.currentTimeMillis();
 
-            String returnUrl = baseUrl + "/api/payments/momo/return";
-            String notifyUrl = baseUrl + "/api/payments/momo/notify";
+            // Get current tenantId from TenantContext
+            String tenantId = com.g127.snapbuy.tenant.context.TenantContext.getCurrentTenant();
+            String extraDataRaw = "tenantId=" + (tenantId != null ? tenantId : "");
+            String extraData = java.util.Base64.getEncoder().encodeToString(extraDataRaw.getBytes());
+
+            String returnUrl = baseUrl + "/api/payments/momo/return?tenantId=" + (tenantId != null ? tenantId : "");
+            String notifyUrl = baseUrl + "/api/payments/momo/notify?tenantId=" + (tenantId != null ? tenantId : "");
 
             String orderInfo = "Thanh toán đơn hàng " + order.getOrderNumber();
 
             String rawHash = "accessKey=" + accessKey
                     + "&amount=" + amountStr
-                    + "&extraData="
+                    + "&extraData=" + extraData
                     + "&ipnUrl=" + notifyUrl
                     + "&orderId=" + momoOrderId
                     + "&orderInfo=" + orderInfo
@@ -89,7 +94,7 @@ public class MoMoServiceImpl implements MoMoService {
             body.put("orderInfo", orderInfo);
             body.put("redirectUrl", returnUrl);
             body.put("ipnUrl", notifyUrl);
-            body.put("extraData", "");
+            body.put("extraData", extraData);
             body.put("requestType", "captureWallet");
             body.put("autoCapture", true);
             body.put("lang", "vi");

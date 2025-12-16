@@ -5,27 +5,41 @@ import com.g127.snapbuy.inventory.dto.request.PurchaseOrderCreateRequest;
 import com.g127.snapbuy.inventory.dto.request.PurchaseOrderEmailRequest;
 import com.g127.snapbuy.inventory.dto.request.PurchaseOrderReceiveRequest;
 import com.g127.snapbuy.inventory.dto.request.PurchaseOrderUpdateRequest;
-import com.g127.snapbuy.response.PageResponse;
+import com.g127.snapbuy.common.response.PageResponse;
 import com.g127.snapbuy.inventory.dto.response.PurchaseOrderResponse;
 import com.g127.snapbuy.inventory.dto.response.PurchaseOrderDetailResponse;
-import com.g127.snapbuy.entity.*;
-import com.g127.snapbuy.entity.Notification.NotificationType;
-import com.g127.snapbuy.exception.AppException;
-import com.g127.snapbuy.exception.ErrorCode;
-import com.g127.snapbuy.mapper.PurchaseOrderMapper;
-import com.g127.snapbuy.repository.*;
+import com.g127.snapbuy.inventory.entity.Inventory;
+import com.g127.snapbuy.inventory.entity.InventoryTransaction;
+import com.g127.snapbuy.inventory.entity.PurchaseOrder;
+import com.g127.snapbuy.inventory.entity.PurchaseOrderDetail;
+import com.g127.snapbuy.product.entity.Product;
+import com.g127.snapbuy.product.entity.ProductPrice;
+import com.g127.snapbuy.account.entity.Account;
+import com.g127.snapbuy.supplier.entity.Supplier;
+import com.g127.snapbuy.notification.entity.Notification.NotificationType;
+import com.g127.snapbuy.common.exception.AppException;
+import com.g127.snapbuy.common.exception.ErrorCode;
+import com.g127.snapbuy.inventory.mapper.PurchaseOrderMapper;
+import com.g127.snapbuy.inventory.repository.PurchaseOrderRepository;
+import com.g127.snapbuy.inventory.repository.PurchaseOrderDetailRepository;
+import com.g127.snapbuy.inventory.repository.InventoryRepository;
+import com.g127.snapbuy.inventory.repository.InventoryTransactionRepository;
+import com.g127.snapbuy.product.repository.ProductRepository;
+import com.g127.snapbuy.product.repository.ProductPriceRepository;
+import com.g127.snapbuy.account.repository.AccountRepository;
+import com.g127.snapbuy.supplier.repository.SupplierRepository;
 import com.g127.snapbuy.notification.service.NotificationService;
 import com.g127.snapbuy.inventory.service.PurchaseOrderService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -40,7 +54,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
-    @PersistenceContext
+    @PersistenceContext(unitName = "tenant")
     private EntityManager entityManager;
 
     private final PurchaseOrderRepository purchaseOrderRepo;
@@ -57,7 +71,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     private final com.g127.snapbuy.notification.service.NotificationSettingsService notificationSettingsService;
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public PurchaseOrderResponse create(PurchaseOrderCreateRequest req, String usernameOrEmail) {
         UUID currentAccountId = resolveAccountId(usernameOrEmail);
 
@@ -153,7 +167,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public PurchaseOrderResponse approve(UUID poId, PurchaseOrderApproveRequest req, String usernameOrEmail) {
         resolveAccountId(usernameOrEmail);
 
@@ -183,7 +197,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public PurchaseOrderResponse receive(UUID poId, PurchaseOrderReceiveRequest req, String usernameOrEmail) {
         UUID receiverId = resolveAccountId(usernameOrEmail);
 
@@ -350,7 +364,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public PurchaseOrderResponse cancel(UUID poId, String usernameOrEmail) {
         UUID cancellerAccountId = resolveAccountId(usernameOrEmail);
 
@@ -378,7 +392,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public List<PurchaseOrderResponse> findAll() {
         List<PurchaseOrder> pos = purchaseOrderRepo.findAll();
         Map<UUID, List<PurchaseOrderDetail>> detailsByPo = detailRepo.findByPurchaseOrderIdIn(
@@ -390,7 +404,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public PageResponse<PurchaseOrderResponse> search(String status, UUID supplierId, LocalDateTime from, LocalDateTime to, Pageable pageable) {
         Page<PurchaseOrder> page;
         if (supplierId != null) {
@@ -439,9 +453,11 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public PageResponse<PurchaseOrderResponse> searchByKeyword(String keyword, String status, LocalDateTime orderDateFrom, LocalDateTime orderDateTo, LocalDateTime receivedDateFrom, LocalDateTime receivedDateTo, Pageable pageable) {
-        String orderByClause = buildOrderByClause(pageable.getSort());
+        try {
+            
+            String orderByClause = buildOrderByClause(pageable.getSort());
         
         boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
         boolean hasStatus = status != null && !status.trim().isEmpty();
@@ -474,15 +490,15 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 ? "" 
                 : "WHERE " + String.join(" AND ", conditions);
         
-        String baseQuery = "SELECT po.* FROM purchase_order po " +
-                "LEFT JOIN suppliers s ON po.supplier_id = s.supplier_id " +
-                "LEFT JOIN accounts a ON po.account_id = a.account_id " +
+        String baseQuery = "SELECT po.* FROM dbo.purchase_order po " +
+                "LEFT JOIN dbo.suppliers s ON po.supplier_id = s.supplier_id " +
+                "LEFT JOIN dbo.accounts a ON po.account_id = a.account_id " +
                 whereClause + " " +
                 "ORDER BY " + orderByClause;
         
-        String countQuery = "SELECT COUNT(po.purchase_order_id) FROM purchase_order po " +
-                "LEFT JOIN suppliers s ON po.supplier_id = s.supplier_id " +
-                "LEFT JOIN accounts a ON po.account_id = a.account_id " +
+        String countQuery = "SELECT COUNT(po.purchase_order_id) FROM dbo.purchase_order po " +
+                "LEFT JOIN dbo.suppliers s ON po.supplier_id = s.supplier_id " +
+                "LEFT JOIN dbo.accounts a ON po.account_id = a.account_id " +
                 whereClause;
         
         Query countQ = entityManager.createNativeQuery(countQuery);
@@ -564,6 +580,10 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 .last(pageable.getPageNumber() >= (totalCount - 1) / pageable.getPageSize())
                 .empty(responseContent.isEmpty())
                 .build();
+        } catch (Exception e) {
+            log.error("Error searching purchase orders: keyword={}, status={}", keyword, status, e);
+            throw e;
+        }
     }
     
     private String mapFieldToColumn(String fieldName) {
@@ -599,7 +619,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public void deletePurchaseOrder(UUID poId) {
         PurchaseOrder purchaseOrder = purchaseOrderRepo.findById(poId)
                 .orElseThrow(() -> new AppException(ErrorCode.PURCHASE_ORDER_NOT_FOUND));
@@ -616,7 +636,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public PurchaseOrderResponse getPurchaseOrderById(UUID poId) {
         PurchaseOrder po = purchaseOrderRepo.findById(poId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu nhập hàng với ID: " + poId));
@@ -643,7 +663,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public PurchaseOrderResponse update(UUID poId, PurchaseOrderUpdateRequest req, String usernameOrEmail) {
         resolveAccountId(usernameOrEmail);
 
@@ -753,7 +773,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public PurchaseOrderResponse confirm(UUID poId, PurchaseOrderReceiveRequest req, String usernameOrEmail) {
         UUID receiverId = resolveAccountId(usernameOrEmail);
 
@@ -904,7 +924,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public PurchaseOrderResponse revert(UUID poId, PurchaseOrderApproveRequest req, String usernameOrEmail) {
         UUID reverterAccountId = resolveAccountId(usernameOrEmail);
 
@@ -1021,7 +1041,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "tenantTransactionManager")
     public void sendPurchaseOrderEmail(PurchaseOrderEmailRequest request) {
         if (request.getPurchaseOrderIds() == null || request.getPurchaseOrderIds().isEmpty()) {
             throw new IllegalArgumentException("Danh sách đơn hàng không được rỗng");

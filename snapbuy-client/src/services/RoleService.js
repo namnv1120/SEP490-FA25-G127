@@ -75,60 +75,6 @@ export const deleteRole = async (roleId) => {
   }
 };
 
-export const listPermissions = async (roleId) => {
-  try {
-    const response = await axios.get(
-      `${REST_API_BASE_URL}/${roleId}/permissions`,
-      {
-        headers: getAuthHeader(),
-      }
-    );
-    return response.data.result || response.data;
-  } catch (error) {
-    throw new Error(
-      error.response?.data?.message || "Lỗi khi lấy danh sách quyền!"
-    );
-  }
-};
-
-export const addPermission = async (roleId, permissionId) => {
-  try {
-    const response = await axios.post(
-      `${REST_API_BASE_URL}/${roleId}/permissions/${permissionId}`,
-      {},
-      { headers: getAuthHeader() }
-    );
-    return response.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.message || "Lỗi khi thêm quyền!");
-  }
-};
-
-export const removePermission = async (roleId, permissionId) => {
-  try {
-    const response = await axios.delete(
-      `${REST_API_BASE_URL}/${roleId}/permissions/${permissionId}`,
-      { headers: getAuthHeader() }
-    );
-    return response.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.message || "Lỗi khi xóa quyền!");
-  }
-};
-
-export const setPermissions = async (roleId, permissionsData) => {
-  try {
-    const response = await axios.put(
-      `${REST_API_BASE_URL}/${roleId}/permissions`,
-      permissionsData,
-      { headers: getAuthHeader() }
-    );
-    return response.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.message || "Lỗi khi cập nhật quyền!");
-  }
-};
-
 // Toggle trạng thái vai trò
 export const toggleRoleStatus = async (roleId) => {
   try {

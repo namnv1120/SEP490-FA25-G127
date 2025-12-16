@@ -5,32 +5,49 @@ import { Link } from "react-router-dom";
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [tenantCode, setTenantCode] = useState("");
   const [error, setError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+
+  // Check if running on localhost
+  const isLocalhost =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setPasswordError("");
+    setError("");
+
+    // Validate password format
     if (/\s/.test(password)) {
       setPasswordError("Mật khẩu không được chứa khoảng trắng");
       return;
     }
+
+    // Validate tenant code on localhost
+    if (isLocalhost && !tenantCode.trim()) {
+      setError("Vui lòng nhập mã cửa hàng để đăng nhập");
+      return;
+    }
+
     try {
-      await login(username, password);
+      await login(username, password, isLocalhost ? tenantCode.trim() : null);
       const role = localStorage.getItem("role");
       if (role === "Nhân viên bán hàng") {
         window.location.href = "/sale-dashboard";
       } else if (role === "Chủ cửa hàng") {
         window.location.href = "/shopowner-dashboard";
-      } else if (role === "Quản trị viên") {
-        window.location.href = "/admin-dashboard";
       } else if (role === "Nhân viên kho") {
         window.location.href = "/warehouse-dashboard";
       } else {
         window.location.href = "/shopowner-dashboard";
       }
     } catch (err) {
-      setError(err.message);
+      console.error("Login failed:", err.message);
+      setError(
+        err.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin."
+      );
     }
   };
 
@@ -62,6 +79,26 @@ const Login = () => {
               )}
 
               <form onSubmit={handleLogin}>
+                {isLocalhost && (
+                  <div className="mb-3">
+                    <label htmlFor="tenantCode" className="form-label">
+                      Mã cửa hàng
+                      <small className="text-muted ms-2">
+                        (chỉ cho localhost)
+                      </small>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control form-control-lg"
+                      id="tenantCode"
+                      placeholder="Nhập mã cửa hàng (vd: abc_shop)"
+                      value={tenantCode}
+                      onChange={(e) => setTenantCode(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
+
                 <div className="mb-3">
                   <label htmlFor="username" className="form-label">
                     Tên đăng nhập
@@ -83,11 +120,16 @@ const Login = () => {
                   </label>
                   <input
                     type="password"
-                    className={`form-control form-control-lg ${passwordError ? "is-invalid" : ""}`}
+                    className={`form-control form-control-lg ${
+                      passwordError ? "is-invalid" : ""
+                    }`}
                     id="password"
                     placeholder="Nhập mật khẩu"
                     value={password}
-                    onChange={(e) => { setPassword(e.target.value); if (passwordError) setPasswordError(""); }}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (passwordError) setPasswordError("");
+                    }}
                     required
                   />
                   {passwordError && (

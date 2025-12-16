@@ -34,7 +34,7 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # Database initialization - creates SnapBuy database
+  # Database initialization - creates only SnapBuyMaster (Master DB for multi-tenant)
   init-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: snapbuy-init-db
@@ -48,9 +48,10 @@ services:
       - |
         echo "Waiting for SQL Server..."
         sleep 5
-        echo "Creating database SnapBuy..."
-        /opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$${DB_PASSWORD}" -C -Q "IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'SnapBuy') CREATE DATABASE SnapBuy"
-        echo "Database initialization completed!"
+        echo "Creating Master database (SnapBuyMaster)..."
+        /opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$${DB_PASSWORD}" -C -Q "IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'SnapBuyMaster') CREATE DATABASE SnapBuyMaster"
+        echo "Master database initialization completed!"
+        echo "Note: Tenant databases will be created automatically when adding new stores"
     environment:
       - ACCEPT_EULA=Y
       - DB_PASSWORD=${DB_PASSWORD:-Snapbuy25}
@@ -65,15 +66,18 @@ services:
     image: namnv11/snapbuy-backend:latest
     container_name: snapbuy-backend
     environment:
-      - DB_HOST=db
-      - DB_PORT=1433
-      - DB_NAME=${DB_NAME:-SnapBuy}
-      - DB_USERNAME=${DB_USERNAME:-sa}
-      - DB_PASSWORD=${DB_PASSWORD:-Snapbuy25}
+      # Master Database (for Multi-Tenant Management)
+      - MASTER_DB_HOST=db
+      - MASTER_DB_PORT=1433
+      - MASTER_DB_NAME=${MASTER_DB_NAME:-SnapBuyMaster}
+      - MASTER_DB_USERNAME=${MASTER_DB_USERNAME:-sa}
+      - MASTER_DB_PASSWORD=${MASTER_DB_PASSWORD:-Snapbuy25}
+      # Mail Configuration
       - MAIL_HOST=${MAIL_HOST:-smtp.gmail.com}
       - MAIL_PORT=${MAIL_PORT:-587}
       - MAIL_USERNAME=${MAIL_USERNAME:-}
       - MAIL_PASSWORD=${MAIL_PASSWORD:-}
+      # Application Configuration
       - UPLOAD_DIR=/app/uploads
       - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS:-2592000000}
       - APP_BASE_URL=${APP_BASE_URL:-http://localhost:8080}

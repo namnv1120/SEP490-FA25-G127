@@ -322,12 +322,9 @@ const Pos = () => {
       if (checkedRef.current) return;
       checkedRef.current = true;
 
-      console.log("🔍 Checking shift for role:", userRole);
-
       if (userRole === "Nhân viên bán hàng") {
         // Ưu tiên localStorage
         const openLocal = await isShiftOpen();
-        console.log("📦 isShiftOpen (localStorage):", openLocal);
 
         if (openLocal) {
           setShiftNotOpenOverlay(false);
@@ -337,21 +334,18 @@ const Pos = () => {
         // Thử gọi API lần nữa
         try {
           const current = await getCurrentShift();
-          console.log("🌐 getCurrentShift (API):", current);
 
           if (current && current.status === "Mở") {
             setShiftNotOpenOverlay(false);
             return;
           }
         } catch (error) {
-          console.log("❌ Error getting shift:", error);
+          // Silent error handling
         }
 
         // Không mở, hiển thị overlay thông báo
-        console.log("⚠️ Shift not open - showing overlay");
         setShiftNotOpenOverlay(true);
       } else {
-        console.log("👤 Not staff role - no shift check needed");
         setShiftNotOpenOverlay(false);
       }
     };
@@ -1659,13 +1653,15 @@ const Pos = () => {
                     <Slider
                       ref={sliderRef}
                       {...settings}
-                      className={`tabs owl-carousel pos-category ${categories.length + 1 < 6 ? "center-mode" : ""
-                        }`}
+                      className={`tabs owl-carousel pos-category ${
+                        categories.length + 1 < 6 ? "center-mode" : ""
+                      }`}
                     >
                       <div
                         onClick={() => setActiveTab("all")}
-                        className={`owl-item ${activeTab === "all" ? "active" : ""
-                          }`}
+                        className={`owl-item ${
+                          activeTab === "all" ? "active" : ""
+                        }`}
                         id="all"
                       >
                         <Link to="#">
@@ -1695,8 +1691,9 @@ const Pos = () => {
                           <div
                             key={category.id}
                             onClick={() => setActiveTab(category.id)}
-                            className={`owl-item ${activeTab === category.id ? "active" : ""
-                              }`}
+                            className={`owl-item ${
+                              activeTab === category.id ? "active" : ""
+                            }`}
                             id={category.id}
                           >
                             <Link to="#">
@@ -2414,7 +2411,7 @@ const Pos = () => {
                             )}
                             {createdOrder &&
                               createdOrder.paymentStatus ===
-                              "Chưa thanh toán" && (
+                                "Chưa thanh toán" && (
                                 <tr>
                                   <td className="fw-bold">Còn nợ:</td>
                                   <td className="text-end fw-bold text-danger">
@@ -2427,7 +2424,7 @@ const Pos = () => {
                               )}
                             {createdOrder &&
                               createdOrder.paymentStatus ===
-                              "Đã thanh toán" && (
+                                "Đã thanh toán" && (
                                 <tr>
                                   <td className="fw-bold">Còn nợ:</td>
                                   <td className="text-end fw-bold text-success">

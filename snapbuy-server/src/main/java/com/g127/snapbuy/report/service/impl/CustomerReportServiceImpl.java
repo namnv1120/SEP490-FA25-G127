@@ -1,7 +1,7 @@
 package com.g127.snapbuy.report.service.impl;
 
 import com.g127.snapbuy.report.dto.response.CustomerReportResponse;
-import com.g127.snapbuy.repository.CustomerRepository;
+import com.g127.snapbuy.customer.repository.CustomerRepository;
 import com.g127.snapbuy.report.service.CustomerReportService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

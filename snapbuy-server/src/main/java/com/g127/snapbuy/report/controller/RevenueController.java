@@ -1,6 +1,6 @@
 package com.g127.snapbuy.report.controller;
 
-import com.g127.snapbuy.response.ApiResponse;
+import com.g127.snapbuy.common.response.ApiResponse;
 import com.g127.snapbuy.report.dto.response.RevenueResponse;
 import com.g127.snapbuy.report.service.RevenueService;
 import lombok.RequiredArgsConstructor;

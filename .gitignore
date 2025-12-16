@@ -36,10 +36,6 @@ Thumbs.db
 uploads/
 !uploads/.gitkeep
 
-# Database backup
-*.bak
-*.sql
-
 # Docker
 .dockerignore
 *.md

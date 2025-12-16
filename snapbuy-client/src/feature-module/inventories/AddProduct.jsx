@@ -8,7 +8,11 @@ import { getAllSuppliers } from "../../services/SupplierService";
 import CommonSelect from "../../components/select/common-select";
 import RefreshIcon from "../../components/tooltip-content/refresh";
 import CollapesIcon from "../../components/tooltip-content/collapes";
-import { generateRandomBarcode, downloadBarcode, displayBarcodePreview } from "../../utils/barcodeUtils";
+import {
+  generateRandomBarcode,
+  downloadBarcode,
+  displayBarcodePreview,
+} from "../../utils/barcodeUtils";
 
 const AddProduct = () => {
   const route = allRoutes;
@@ -26,14 +30,12 @@ const AddProduct = () => {
   });
   const [imageFile, setImageFile] = useState(null);
 
-
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
   const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
-
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,7 +48,9 @@ const AddProduct = () => {
       try {
         const data = await getAllCategories();
         const mainCats = data
-          .filter((c) => !c.parentCategoryId && (c.active === true || c.active === 1))
+          .filter(
+            (c) => !c.parentCategoryId && (c.active === true || c.active === 1)
+          )
           .map((c) => ({
             value: c.categoryId,
             label: c.categoryName,
@@ -64,7 +68,11 @@ const AddProduct = () => {
       try {
         const data = await getAllCategories();
         const subs = data
-          .filter((c) => c.parentCategoryId === selectedCategory?.value && (c.active === true || c.active === 1))
+          .filter(
+            (c) =>
+              c.parentCategoryId === selectedCategory?.value &&
+              (c.active === true || c.active === 1)
+          )
           .map((c) => ({
             value: c.categoryId,
             label: c.categoryName,
@@ -103,15 +111,14 @@ const AddProduct = () => {
   // Hiển thị barcode preview khi barcode thay đổi
   useEffect(() => {
     if (product.barcode?.trim()) {
-      displayBarcodePreview(product.barcode, 'barcode-preview-add');
+      displayBarcodePreview(product.barcode, "barcode-preview-add");
     } else {
-      const container = document.getElementById('barcode-preview-add');
+      const container = document.getElementById("barcode-preview-add");
       if (container) {
-        container.innerHTML = '';
+        container.innerHTML = "";
       }
     }
   }, [product.barcode]);
-
 
   // 🧩 Validate dữ liệu
   const validateForm = () => {
@@ -119,10 +126,14 @@ const AddProduct = () => {
 
     if (!product.productCode.trim()) {
       newErrors.productCode = "Vui lòng nhập mã sản phẩm.";
-    } else if (product.productCode.length < 3) {
-      newErrors.productCode = "Mã sản phẩm phải có ít nhất 3 ký tự.";
-    } else if (product.productCode.length > 50) {
-      newErrors.productCode = "Mã sản phẩm không được vượt quá 50 ký tự.";
+    } else if (
+      product.productCode.length < 3 ||
+      product.productCode.length > 10
+    ) {
+      newErrors.productCode = "Mã sản phẩm phải từ 3 đến 10 ký tự.";
+    } else if (!/^[A-Za-z0-9_.\-]+$/.test(product.productCode)) {
+      newErrors.productCode =
+        "Mã sản phẩm chỉ cho phép chữ, số, gạch dưới, gạch ngang hoặc dấu chấm.";
     }
 
     if (!product.productName.trim()) {
@@ -132,7 +143,8 @@ const AddProduct = () => {
     } else if (product.productName.length > 100) {
       newErrors.productName = "Tên sản phẩm không được vượt quá 100 ký tự.";
     } else if (!/^[\p{L}\d ]+$/u.test(product.productName)) {
-      newErrors.productName = "Tên sản phẩm chỉ cho phép chữ, số và khoảng trắng.";
+      newErrors.productName =
+        "Tên sản phẩm chỉ cho phép chữ, số và khoảng trắng.";
     }
 
     if (!selectedCategory) {
@@ -196,7 +208,6 @@ const AddProduct = () => {
     if (imageFile) {
       formData.append("image", imageFile); // 👈 gửi file ảnh
     }
-
 
     try {
       setIsSubmitting(true);
@@ -282,8 +293,9 @@ const AddProduct = () => {
                           </label>
                           <input
                             type="text"
-                            className={`form-control ${errors.productCode ? "is-invalid" : ""
-                              }`}
+                            className={`form-control ${
+                              errors.productCode ? "is-invalid" : ""
+                            }`}
                             value={product.productCode}
                             onChange={(e) =>
                               setProduct({
@@ -307,8 +319,9 @@ const AddProduct = () => {
                           </label>
                           <input
                             type="text"
-                            className={`form-control ${errors.productName ? "is-invalid" : ""
-                              }`}
+                            className={`form-control ${
+                              errors.productName ? "is-invalid" : ""
+                            }`}
                             value={product.productName}
                             onChange={(e) =>
                               setProduct({
@@ -335,7 +348,9 @@ const AddProduct = () => {
                           <div className="input-group">
                             <input
                               type="text"
-                              className={`form-control ${errors.barcode ? "is-invalid" : ""}`}
+                              className={`form-control ${
+                                errors.barcode ? "is-invalid" : ""
+                              }`}
                               value={product.barcode || ""}
                               onChange={(e) =>
                                 setProduct({
@@ -355,7 +370,8 @@ const AddProduct = () => {
                               type="button"
                               className="btn btn-outline-secondary"
                               onClick={() => {
-                                const generatedBarcode = generateRandomBarcode(13);
+                                const generatedBarcode =
+                                  generateRandomBarcode(13);
                                 setProduct({
                                   ...product,
                                   barcode: generatedBarcode,
@@ -378,7 +394,9 @@ const AddProduct = () => {
                                     );
                                     message.success("Đã tải barcode về máy");
                                   } catch (error) {
-                                    message.error(error.message || "Không thể tải barcode");
+                                    message.error(
+                                      error.message || "Không thể tải barcode"
+                                    );
                                   }
                                 }}
                                 title="Tải barcode về máy"
@@ -393,12 +411,22 @@ const AddProduct = () => {
                             </div>
                           )}
                           <small className="text-muted">
-                            Mỗi sản phẩm chỉ có thể có 1 barcode duy nhất. Có thể để trống và thêm sau.
+                            Mỗi sản phẩm chỉ có thể có 1 barcode duy nhất. Có
+                            thể để trống và thêm sau.
                           </small>
                           {/* Preview barcode */}
                           {product.barcode?.trim() && (
                             <div className="mt-3">
-                              <div id="barcode-preview-add" style={{ textAlign: 'center', padding: '10px', border: '1px solid #dee2e6', borderRadius: '4px', backgroundColor: '#f8f9fa' }}></div>
+                              <div
+                                id="barcode-preview-add"
+                                style={{
+                                  textAlign: "center",
+                                  padding: "10px",
+                                  border: "1px solid #dee2e6",
+                                  borderRadius: "4px",
+                                  backgroundColor: "#f8f9fa",
+                                }}
+                              ></div>
                             </div>
                           )}
                         </div>
@@ -413,8 +441,9 @@ const AddProduct = () => {
                             Danh mục <span className="text-danger">*</span>
                           </label>
                           <CommonSelect
-                            className={`w-100 ${errors.category ? "is-invalid" : ""
-                              }`}
+                            className={`w-100 ${
+                              errors.category ? "is-invalid" : ""
+                            }`}
                             options={categories}
                             value={selectedCategory}
                             onChange={(opt) => {
@@ -437,12 +466,11 @@ const AddProduct = () => {
 
                       <div className="col-sm-6">
                         <div className="mb-3">
-                          <label className="form-label">
-                            Danh mục con
-                          </label>
+                          <label className="form-label">Danh mục con</label>
                           <CommonSelect
-                            className={`w-100 ${errors.subCategory ? "is-invalid" : ""
-                              }`}
+                            className={`w-100 ${
+                              errors.subCategory ? "is-invalid" : ""
+                            }`}
                             options={subCategories}
                             value={selectedSubCategory}
                             onChange={(opt) => {
@@ -467,9 +495,13 @@ const AddProduct = () => {
                     <div className="row">
                       <div className="col-sm-6">
                         <div className="mb-3">
-                          <label className="form-label">Nhà cung cấp <span className="text-danger">*</span></label>
+                          <label className="form-label">
+                            Nhà cung cấp <span className="text-danger">*</span>
+                          </label>
                           <CommonSelect
-                            className={`w-100 ${errors.supplier ? "is-invalid" : ""}`}
+                            className={`w-100 ${
+                              errors.supplier ? "is-invalid" : ""
+                            }`}
                             options={suppliers}
                             value={selectedSupplier}
                             onChange={(opt) => {
@@ -479,21 +511,21 @@ const AddProduct = () => {
                             placeholder="Chọn nhà cung cấp"
                           />
                           {errors.supplier && (
-                            <div className="text-danger small mt-1">{errors.supplier}</div>
+                            <div className="text-danger small mt-1">
+                              {errors.supplier}
+                            </div>
                           )}
-
                         </div>
                       </div>
 
                       <div className="col-sm-6">
                         <div className="mb-3">
-                          <label className="form-label">
-                            Đơn vị
-                          </label>
+                          <label className="form-label">Đơn vị</label>
                           <input
                             type="text"
-                            className={`form-control ${errors.unit ? "is-invalid" : ""
-                              }`}
+                            className={`form-control ${
+                              errors.unit ? "is-invalid" : ""
+                            }`}
                             value={product.unit}
                             onChange={(e) =>
                               setProduct({
@@ -518,8 +550,9 @@ const AddProduct = () => {
                           <label className="form-label">Kích thước</label>
                           <input
                             type="text"
-                            className={`form-control ${errors.dimensions ? "is-invalid" : ""
-                              }`}
+                            className={`form-control ${
+                              errors.dimensions ? "is-invalid" : ""
+                            }`}
                             value={product.dimensions}
                             onChange={(e) =>
                               setProduct({
@@ -542,8 +575,9 @@ const AddProduct = () => {
                       <div className="summer-description-box">
                         <label className="form-label">Mô tả</label>
                         <textarea
-                          className={`form-control ${errors.description ? "is-invalid" : ""
-                            }`}
+                          className={`form-control ${
+                            errors.description ? "is-invalid" : ""
+                          }`}
                           rows={5}
                           value={product.description}
                           onChange={(e) =>
@@ -600,7 +634,10 @@ const AddProduct = () => {
                                   if (file) {
                                     setImageFile(file);
                                     setIsImageVisible(true);
-                                    setProduct({ ...product, imageUrl: URL.createObjectURL(file) });
+                                    setProduct({
+                                      ...product,
+                                      imageUrl: URL.createObjectURL(file),
+                                    });
                                   }
                                 }}
                               />
@@ -661,7 +698,6 @@ const AddProduct = () => {
           </p>
         </div>
       </div>
-
     </>
   );
 };

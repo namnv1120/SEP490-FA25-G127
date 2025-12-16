@@ -129,6 +129,13 @@
             <artifactId>javase</artifactId>
             <version>3.5.3</version>
         </dependency>
+
+        <!-- OSHI for accurate system metrics -->
+        <dependency>
+            <groupId>com.github.oshi</groupId>
+            <artifactId>oshi-core</artifactId>
+            <version>6.4.8</version>
+        </dependency>
     </dependencies>
 
     <build>

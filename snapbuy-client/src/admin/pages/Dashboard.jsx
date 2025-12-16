@@ -1,164 +1,452 @@
-import React, { useState, useEffect } from 'react';
-import { FaStore, FaUsers, FaChartLine, FaDatabase, FaPlus, FaEye, FaEdit, FaTrash } from 'react-icons/fa';
-import StatsCard from '../components/StatsCard';
-import '../styles/admin.css';
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  FaStore,
+  FaUsers,
+  FaChartLine,
+  FaDatabase,
+  FaPlus,
+  FaEye,
+  FaEdit,
+  FaTrash,
+} from "react-icons/fa";
+import { notification } from "antd";
+import Chart from "react-apexcharts";
+import StatsCard from "../components/StatsCard";
+import TenantService from "../../services/TenantService";
+import { searchAdminAccounts } from "../../services/AdminAccountService";
+import "../styles/admin.css";
 
 const Dashboard = () => {
-    const [stats, setStats] = useState({
-        totalStores: 0,
-        activeStores: 0,
-        totalUsers: 0,
-        totalRevenue: 0
-    });
+  const [stats, setStats] = useState({
+    totalStores: 0,
+    activeStores: 0,
+    totalUsers: 0,
+    totalRevenue: 0,
+  });
 
-    const [recentStores, setRecentStores] = useState([]);
+  const [statsChanges, setStatsChanges] = useState({
+    totalStoresChange: 0,
+    activeStoresChange: 0,
+    totalUsersChange: 0,
+    totalRevenueChange: 0,
+  });
 
-    useEffect(() => {
-        // TODO: Fetch from API
-        // Mock data
-        setStats({
-            totalStores: 127,
-            activeStores: 115,
-            totalUsers: 3542,
-            totalRevenue: 1250000
+  const [recentStores, setRecentStores] = useState([]);
+  const [allTenants, setAllTenants] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const response = await TenantService.getAllTenants();
+
+      if (response.result) {
+        const tenants = response.result;
+
+        // Calculate current month stats
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        // Calculate previous month
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const lastMonthYear =
+          currentMonth === 0 ? currentYear - 1 : currentYear;
+
+        // Filter tenants by month
+        const currentMonthTenants = tenants.filter((t) => {
+          const createdDate = new Date(t.createdAt);
+          return (
+            createdDate.getMonth() === currentMonth &&
+            createdDate.getFullYear() === currentYear
+          );
         });
 
-        setRecentStores([
-            { id: 1, name: 'Tech Store VN', domain: 'techstore.snapbuy.vn', status: 'Hoạt Động', users: 45, createdAt: '2024-12-01' },
-            { id: 2, name: 'Fashion Hub', domain: 'fashion.snapbuy.vn', status: 'Hoạt Động', users: 32, createdAt: '2024-12-03' },
-            { id: 3, name: 'Book Corner', domain: 'books.snapbuy.vn', status: 'Chờ Duyệt', users: 12, createdAt: '2024-12-05' },
-            { id: 4, name: 'Home Decor', domain: 'homedecor.snapbuy.vn', status: 'Hoạt Động', users: 28, createdAt: '2024-12-07' },
-            { id: 5, name: 'Sports Gear', domain: 'sports.snapbuy.vn', status: 'Ngừng Hoạt Động', users: 8, createdAt: '2024-12-08' }
-        ]);
-    }, []);
+        const lastMonthTenants = tenants.filter((t) => {
+          const createdDate = new Date(t.createdAt);
+          return (
+            createdDate.getMonth() === lastMonth &&
+            createdDate.getFullYear() === lastMonthYear
+          );
+        });
 
-    return (
-        <div className="admin-page admin-fade-in">
-            {/* Stats Grid */}
-            <div className="admin-stats-grid">
-                <StatsCard
-                    title="Tổng Số Cửa Hàng"
-                    value={stats.totalStores}
-                    change="+12.5%"
-                    changeType="positive"
-                    icon={<FaStore />}
-                    iconColor="primary"
-                    period="so với tháng trước"
-                />
-                <StatsCard
-                    title="Cửa Hàng Hoạt Động"
-                    value={stats.activeStores}
-                    change="+8.2%"
-                    changeType="positive"
-                    icon={<FaDatabase />}
-                    iconColor="success"
-                    period="so với tháng trước"
-                />
-                <StatsCard
-                    title="Tổng Người Dùng"
-                    value={stats.totalUsers.toLocaleString()}
-                    change="+15.3%"
-                    changeType="positive"
-                    icon={<FaUsers />}
-                    iconColor="info"
-                    period="so với tháng trước"
-                />
-                <StatsCard
-                    title="Tổng Doanh Thu"
-                    value={`$${(stats.totalRevenue / 1000).toFixed(0)}K`}
-                    change="+23.1%"
-                    changeType="positive"
-                    icon={<FaChartLine />}
-                    iconColor="warning"
-                    period="so với tháng trước"
-                />
-            </div>
+        // Calculate stats for current state
+        const totalStores = tenants.length;
+        const activeStores = tenants.filter((t) => t.isActive).length;
 
-            {/* Recent Stores Table */}
-            <div className="admin-card">
-                <div className="admin-card-header">
-                    <h2 className="admin-card-title">Cửa Hàng Gần Đây</h2>
-                    <div className="admin-card-actions">
-                        <button className="admin-btn admin-btn-secondary">
-                            <FaPlus /> Thêm Cửa Hàng Mới
-                        </button>
-                    </div>
-                </div>
+        // Fetch all accounts for user count
+        const accountsData = await searchAdminAccounts({});
+        const totalUsers = accountsData?.length || 0;
 
-                <div className="admin-table-container">
-                    <table className="admin-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Tên Cửa Hàng</th>
-                                <th>Tên Miền</th>
-                                <th>Trạng Thái</th>
-                                <th>Người Dùng</th>
-                                <th>Ngày Tạo</th>
-                                <th>Hành Động</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {recentStores.map((store) => (
-                                <tr key={store.id}>
-                                    <td>#{store.id}</td>
-                                    <td>
-                                        <strong>{store.name}</strong>
-                                    </td>
-                                    <td>
-                                        <code style={{ fontSize: '0.75rem', color: 'var(--admin-accent-primary)' }}>
-                                            {store.domain}
-                                        </code>
-                                    </td>
-                                    <td>
-                                        <span
-                                            className={`admin-badge ${store.status === 'Hoạt Động'
-                                                    ? 'success'
-                                                    : store.status === 'Chờ Duyệt'
-                                                        ? 'warning'
-                                                        : 'danger'
-                                                }`}
-                                        >
-                                            {store.status}
-                                        </span>
-                                    </td>
-                                    <td>{store.users}</td>
-                                    <td>{new Date(store.createdAt).toLocaleDateString('vi-VN')}</td>
-                                    <td>
-                                        <div className="admin-action-btns">
-                                            <button className="admin-btn-icon view" title="Xem">
-                                                <FaEye />
-                                            </button>
-                                            <button className="admin-btn-icon edit" title="Sửa">
-                                                <FaEdit />
-                                            </button>
-                                            <button className="admin-btn-icon delete" title="Xóa">
-                                                <FaTrash />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        // Calculate total revenue from all tenants
+        const totalRevenue = tenants.reduce(
+          (sum, t) => sum + (t.revenue || 0),
+          0
+        );
 
-            {/* Activity Chart Placeholder */}
-            <div className="admin-card">
-                <div className="admin-card-header">
-                    <h2 className="admin-card-title">Tổng Quan Hoạt Động Cửa Hàng</h2>
-                </div>
-                <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--admin-text-muted)' }}>
-                    <FaChartLine style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.3 }} />
-                    <p>Biểu đồ sẽ được tích hợp tại đây</p>
-                    <p style={{ fontSize: '0.875rem' }}>
-                        (Sử dụng Chart.js hoặc Recharts để hiển thị)
-                    </p>
-                </div>
-            </div>
+        // Calculate growth based on new tenants created each month
+        const currentMonthNew = currentMonthTenants.length;
+        const lastMonthNew = lastMonthTenants.length;
+
+        // Calculate percentage change
+        const calculateChange = (current, previous) => {
+          if (previous === 0) return current > 0 ? 100 : 0;
+          return ((current - previous) / previous) * 100;
+        };
+
+        const totalStoresChange = calculateChange(
+          currentMonthNew,
+          lastMonthNew
+        );
+        const activeStoresChange = calculateChange(
+          currentMonthTenants.filter((t) => t.isActive).length,
+          lastMonthTenants.filter((t) => t.isActive).length
+        );
+
+        // Calculate user growth (current month vs last month)
+        const currentMonthUsers =
+          accountsData?.filter((acc) => {
+            if (!acc.createdAt) return false;
+            const createdDate = new Date(acc.createdAt);
+            return (
+              createdDate.getMonth() === currentMonth &&
+              createdDate.getFullYear() === currentYear
+            );
+          }).length || 0;
+
+        const lastMonthUsers =
+          accountsData?.filter((acc) => {
+            if (!acc.createdAt) return false;
+            const createdDate = new Date(acc.createdAt);
+            return (
+              createdDate.getMonth() === lastMonth &&
+              createdDate.getFullYear() === lastMonthYear
+            );
+          }).length || 0;
+
+        const totalUsersChange = calculateChange(
+          currentMonthUsers,
+          lastMonthUsers
+        );
+
+        // Calculate revenue growth
+        const currentMonthRevenue = currentMonthTenants.reduce(
+          (sum, t) => sum + (t.revenue || 0),
+          0
+        );
+        const lastMonthRevenue = lastMonthTenants.reduce(
+          (sum, t) => sum + (t.revenue || 0),
+          0
+        );
+        const totalRevenueChange = calculateChange(
+          currentMonthRevenue,
+          lastMonthRevenue
+        );
+
+        setStats({
+          totalStores,
+          activeStores,
+          totalUsers,
+          totalRevenue,
+        });
+
+        setStatsChanges({
+          totalStoresChange,
+          activeStoresChange,
+          totalUsersChange,
+          totalRevenueChange,
+        });
+
+        // Sort by created date and get recent stores
+        const sortedTenants = [...tenants].sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+
+        setAllTenants(tenants);
+        setRecentStores(sortedTenants.slice(0, 5));
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      notification.error({
+        message: "Lỗi tải dữ liệu",
+        description: "Không thể tải dữ liệu dashboard",
+        duration: 3,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Tenant creation trend for last 30 days
+  const tenantTrend = useMemo(() => {
+    const last30Days = [];
+    const today = new Date();
+
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split("T")[0];
+      last30Days.push({ date: dateStr, newTenants: 0, activeTenants: 0 });
+    }
+
+    allTenants.forEach((tenant) => {
+      const createdDate = new Date(tenant.createdAt);
+      const dateStr = createdDate.toISOString().split("T")[0];
+      const dayData = last30Days.find((d) => d.date === dateStr);
+      if (dayData) {
+        dayData.newTenants += 1;
+      }
+    });
+
+    // Calculate cumulative active tenants for each day
+    let cumulative = 0;
+    last30Days.forEach((day) => {
+      cumulative += day.newTenants;
+      day.activeTenants = cumulative;
+    });
+
+    return {
+      categories: last30Days.map((d) => {
+        const [_y, m, day] = d.date.split("-");
+        return `${day}/${m}`;
+      }),
+      newTenantsData: last30Days.map((d) => d.newTenants),
+      activeTenantsData: last30Days.map((d) => d.activeTenants),
+    };
+  }, [allTenants]);
+
+  return (
+    <div className="admin-page admin-fade-in">
+      {/* Stats Grid */}
+      <div className="admin-stats-grid">
+        <StatsCard
+          title="Tổng Số Cửa Hàng"
+          value={stats.totalStores}
+          change={`${
+            statsChanges.totalStoresChange > 0 ? "+" : ""
+          }${statsChanges.totalStoresChange.toFixed(1)}%`}
+          changeType={
+            statsChanges.totalStoresChange >= 0 ? "positive" : "negative"
+          }
+          icon={<FaStore />}
+          iconColor="primary"
+        />
+        <StatsCard
+          title="Cửa Hàng Hoạt Động"
+          value={stats.activeStores}
+          change={`${
+            statsChanges.activeStoresChange > 0 ? "+" : ""
+          }${statsChanges.activeStoresChange.toFixed(1)}%`}
+          changeType={
+            statsChanges.activeStoresChange >= 0 ? "positive" : "negative"
+          }
+          icon={<FaDatabase />}
+          iconColor="success"
+        />
+        <StatsCard
+          title="Tổng Người Dùng"
+          value={stats.totalUsers.toLocaleString()}
+          change={`${
+            statsChanges.totalUsersChange > 0 ? "+" : ""
+          }${statsChanges.totalUsersChange.toFixed(1)}%`}
+          changeType={
+            statsChanges.totalUsersChange >= 0 ? "positive" : "negative"
+          }
+          icon={<FaUsers />}
+          iconColor="info"
+        />
+        <StatsCard
+          title="Tổng Doanh Thu"
+          value={`${stats.totalRevenue.toLocaleString("vi-VN")} ₫`}
+          change={`${
+            statsChanges.totalRevenueChange > 0 ? "+" : ""
+          }${statsChanges.totalRevenueChange.toFixed(1)}%`}
+          changeType={
+            statsChanges.totalRevenueChange >= 0 ? "positive" : "negative"
+          }
+          icon={<FaChartLine />}
+          iconColor="warning"
+        />
+      </div>
+
+      {/* Recent Stores Table */}
+      <div className="admin-card">
+        <div className="admin-card-header">
+          <h2 className="admin-card-title">Cửa Hàng Gần Đây</h2>
         </div>
-    );
+
+        <div className="admin-table-container">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Tên Cửa Hàng</th>
+                <th>Tên Miền</th>
+                <th>Trạng Thái</th>
+                <th>Ngày Tạo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan="5"
+                    style={{ textAlign: "center", padding: "2rem" }}
+                  >
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Đang tải...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : recentStores.length > 0 ? (
+                recentStores.map((store, index) => (
+                  <tr key={store.tenantId || index}>
+                    <td>#{index + 1}</td>
+                    <td>
+                      <strong>{store.tenantName || store.name}</strong>
+                    </td>
+                    <td>
+                      <code
+                        style={{
+                          fontSize: "0.75rem",
+                          color: "var(--admin-accent-primary)",
+                        }}
+                      >
+                        {store.tenantCode}.snapbuy.com.vn
+                      </code>
+                    </td>
+                    <td>
+                      <span
+                        className={`admin-badge ${
+                          store.isActive ? "success" : "danger"
+                        }`}
+                      >
+                        {store.isActive ? "Hoạt Động" : "Ngừng Hoạt Động"}
+                      </span>
+                    </td>
+                    <td>
+                      {new Date(store.createdAt).toLocaleDateString("vi-VN")}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="5"
+                    style={{
+                      textAlign: "center",
+                      padding: "2rem",
+                      color: "var(--admin-text-muted)",
+                    }}
+                  >
+                    Chưa có cửa hàng nào
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Tenant Growth Trend Chart */}
+      <div className="admin-card">
+        <div className="admin-card-header">
+          <h2 className="admin-card-title">
+            <FaChartLine style={{ marginRight: "0.5rem" }} />
+            Xu hướng tăng trưởng cửa hàng (30 ngày gần đây)
+          </h2>
+        </div>
+        <div style={{ padding: "1.5rem" }}>
+          <Chart
+            options={{
+              chart: {
+                type: "line",
+                height: 350,
+                toolbar: { show: false },
+                background: "transparent",
+              },
+              colors: ["#0E9384", "#E04F16"],
+              stroke: {
+                curve: "smooth",
+                width: 3,
+              },
+              xaxis: {
+                categories: tenantTrend.categories,
+                labels: {
+                  style: {
+                    colors: "#9CA3AF",
+                    fontSize: "11px",
+                  },
+                },
+                axisBorder: {
+                  color: "#374151",
+                },
+                axisTicks: {
+                  color: "#374151",
+                },
+              },
+              yaxis: [
+                {
+                  title: {
+                    text: "Cửa hàng mới",
+                    style: { color: "#9CA3AF" },
+                  },
+                  labels: {
+                    style: { colors: "#9CA3AF", fontSize: "12px" },
+                  },
+                },
+                {
+                  opposite: true,
+                  title: {
+                    text: "Tổng cửa hàng",
+                    style: { color: "#9CA3AF" },
+                  },
+                  labels: {
+                    style: { colors: "#9CA3AF", fontSize: "12px" },
+                  },
+                },
+              ],
+              grid: {
+                borderColor: "#374151",
+                strokeDashArray: 5,
+              },
+              dataLabels: { enabled: false },
+              tooltip: {
+                theme: "dark",
+                shared: true,
+                intersect: false,
+              },
+              legend: {
+                position: "top",
+                horizontalAlign: "right",
+                labels: {
+                  colors: "#9CA3AF",
+                },
+              },
+            }}
+            series={[
+              {
+                name: "Cửa hàng mới tạo",
+                data: tenantTrend.newTenantsData,
+                type: "column",
+              },
+              {
+                name: "Tổng cửa hàng",
+                data: tenantTrend.activeTenantsData,
+                type: "line",
+              },
+            ]}
+            type="line"
+            height={350}
+          />
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Dashboard;

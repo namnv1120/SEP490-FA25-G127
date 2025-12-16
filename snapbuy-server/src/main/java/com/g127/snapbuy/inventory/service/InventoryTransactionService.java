@@ -1,7 +1,7 @@
 package com.g127.snapbuy.inventory.service;
 
 import com.g127.snapbuy.inventory.dto.response.InventoryTransactionResponse;
-import com.g127.snapbuy.response.PageResponse;
+import com.g127.snapbuy.common.response.PageResponse;
 import org.springframework.data.domain.Sort;
 import org.springframework.lang.Nullable;
 

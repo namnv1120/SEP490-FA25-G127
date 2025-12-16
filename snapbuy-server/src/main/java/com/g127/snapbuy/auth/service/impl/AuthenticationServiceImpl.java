@@ -1,6 +1,7 @@
 package com.g127.snapbuy.auth.service.impl;
 
-import com.g127.snapbuy.config.JwtUtil;
+import com.g127.snapbuy.account.repository.AccountRepository;
+import com.g127.snapbuy.common.config.JwtUtil;
 import com.g127.snapbuy.auth.dto.request.AuthenticationRequest;
 import com.g127.snapbuy.auth.dto.request.IntrospectRequest;
 import com.g127.snapbuy.auth.dto.request.LogoutRequest;
@@ -24,7 +25,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
-    private final com.g127.snapbuy.repository.AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest req) {
@@ -36,7 +37,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         UserDetails user = userDetailsService.loadUserByUsername(uname);
         Integer ver = accountRepository.findByUsername(uname).map(a -> a.getTokenVersion()).orElse(0);
-        String token = jwtUtil.generateToken(user, java.util.Map.of("ver", ver));
+        
+        // Get current tenant ID from context (set by AuthenticationController)
+        String tenantId = com.g127.snapbuy.tenant.context.TenantContext.getCurrentTenant();
+        
+        // Add both ver and tenantId to token claims
+        java.util.Map<String, Object> claims = new java.util.HashMap<>();
+        claims.put("ver", ver);
+        if (tenantId != null) {
+            claims.put("tenantId", tenantId);
+        }
+        
+        String token = jwtUtil.generateToken(user, claims);
         Date expDate = null;
         try { expDate = jwtUtil.extractExpiration(token); } catch (Exception ignored) {}
         long exp = expDate != null ? expDate.getTime() : 0L;

@@ -1,11 +1,12 @@
 package com.g127.snapbuy.account.controller;
 
-import com.g127.snapbuy.response.ApiResponse;
+import com.g127.snapbuy.admin.dto.request.MasterRoleRequest;
+import com.g127.snapbuy.admin.dto.response.MasterRoleResponse;
+import com.g127.snapbuy.admin.service.MasterRoleService;
+import com.g127.snapbuy.common.response.ApiResponse;
 import com.g127.snapbuy.account.dto.request.RoleCreateRequest;
-import com.g127.snapbuy.account.dto.request.RolePermissionUpdateRequest;
 import com.g127.snapbuy.account.dto.request.RoleUpdateRequest;
-import com.g127.snapbuy.response.PageResponse;
-import com.g127.snapbuy.account.dto.response.PermissionResponse;
+import com.g127.snapbuy.common.response.PageResponse;
 import com.g127.snapbuy.account.dto.response.RoleResponse;
 import com.g127.snapbuy.account.service.RoleService;
 import jakarta.validation.Valid;
@@ -13,11 +14,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/roles")
@@ -25,6 +29,14 @@ import java.util.UUID;
 public class RoleController {
 
     private final RoleService roleService;
+    private final MasterRoleService masterRoleService;
+    
+    private boolean isAdmin() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return false;
+        return auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_Quản trị viên".equalsIgnoreCase(a.getAuthority()));
+    }
 
     /**
      * Map API sort field to the actual database column used in native queries.
@@ -44,96 +56,73 @@ public class RoleController {
 
     @PostMapping
     @PreAuthorize("hasRole('Quản trị viên')")
-    public ApiResponse<RoleResponse> createRole(@Valid @RequestBody RoleCreateRequest req) {
-        ApiResponse<RoleResponse> response = new ApiResponse<>();
-        response.setResult(roleService.createRole(req));
+    public ApiResponse<?> createRole(@Valid @RequestBody MasterRoleRequest req) {
+        // Admin tạo master role
+        MasterRoleResponse masterRole = masterRoleService.createRole(req);
+        ApiResponse<MasterRoleResponse> response = new ApiResponse<>();
+        response.setResult(masterRole);
         response.setMessage("Tạo vai trò thành công");
         return response;
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
-    public ApiResponse<List<RoleResponse>> list(@RequestParam(name = "active", required = false) String active) {
-        Optional<Boolean> filter;
-        if (active == null) {
-            filter = Optional.empty();
-        } else if ("all".equalsIgnoreCase(active)) {
-            filter = Optional.ofNullable(null);
+    @PreAuthorize("hasRole('Quản trị viên') or hasRole('Chủ cửa hàng')")
+    public ApiResponse<?> list() {
+        if (isAdmin()) {
+            // Admin xem tất cả master roles
+            List<MasterRoleResponse> roles = masterRoleService.getAllRoles();
+            ApiResponse<List<MasterRoleResponse>> response = new ApiResponse<>();
+            response.setResult(roles);
+            response.setMessage("Lấy danh sách vai trò thành công");
+            return response;
         } else {
-            boolean activeBool = Boolean.parseBoolean(active);
-            filter = Optional.of(activeBool);
+            // Tenant chỉ xem non-system roles để gán cho nhân viên
+            List<MasterRoleResponse> masterRoles = masterRoleService.getRolesForTenant();
+            // Convert to RoleResponse for compatibility
+            List<RoleResponse> roles = masterRoles.stream()
+                    .map(mr -> RoleResponse.builder()
+                            .id(mr.getRoleId().toString())
+                            .roleName(mr.getRoleName())
+                            .description(mr.getDescription())
+                            .active(mr.getActive())
+                            .createdDate(mr.getCreatedDate().toString())
+                            .build())
+                    .collect(Collectors.toList());
+            
+            ApiResponse<List<RoleResponse>> response = new ApiResponse<>();
+            response.setResult(roles);
+            response.setMessage("Lấy danh sách vai trò thành công");
+            return response;
         }
-        ApiResponse<List<RoleResponse>> response = new ApiResponse<>();
-        List<RoleResponse> roles = roleService.getAllRoles(filter);
-        response.setResult(roles);
-        return response;
     }
 
     @GetMapping("/{roleId}")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
-    public ApiResponse<RoleResponse> get(@PathVariable UUID roleId) {
-        ApiResponse<RoleResponse> response = new ApiResponse<>();
-        response.setResult(roleService.getRoleById(roleId));
+    @PreAuthorize("hasRole('Quản trị viên')")
+    public ApiResponse<MasterRoleResponse> get(@PathVariable UUID roleId) {
+        MasterRoleResponse role = masterRoleService.getRoleById(roleId);
+        ApiResponse<MasterRoleResponse> response = new ApiResponse<>();
+        response.setResult(role);
         return response;
     }
 
     @PutMapping("/{roleId}")
-    @PreAuthorize("hasAnyRole('Quản trị viên')")
-    public ApiResponse<RoleResponse> update(@PathVariable UUID roleId,
-                                            @Valid @RequestBody RoleUpdateRequest req) {
-        ApiResponse<RoleResponse> response = new ApiResponse<>();
-        response.setResult(roleService.updateRole(roleId, req));
+    @PreAuthorize("hasRole('Quản trị viên')")
+    public ApiResponse<MasterRoleResponse> update(@PathVariable UUID roleId,
+                                            @Valid @RequestBody MasterRoleRequest req) {
+        MasterRoleResponse role = masterRoleService.updateRole(roleId, req);
+        ApiResponse<MasterRoleResponse> response = new ApiResponse<>();
+        response.setResult(role);
         response.setMessage("Cập nhật vai trò thành công");
         return response;
     }
 
     @DeleteMapping("/{roleId}")
-    @PreAuthorize("hasAnyRole('Quản trị viên')")
+    @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<Void> delete(@PathVariable UUID roleId) {
-        roleService.deleteRole(roleId);
+        masterRoleService.deleteRole(roleId);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setResult(null);
         response.setMessage("Xóa vai trò thành công");
-        return response;
-    }
-
-    @GetMapping("/{roleId}/permissions")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
-    public ApiResponse<List<PermissionResponse>> listPermissions(@PathVariable UUID roleId) {
-        ApiResponse<List<PermissionResponse>> response = new ApiResponse<>();
-        response.setResult(roleService.listPermissions(roleId));
-        return response;
-    }
-
-    @PostMapping("/{roleId}/permissions/{permissionId}")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
-    public ApiResponse<Void> addPermission(@PathVariable UUID roleId,
-                                           @PathVariable UUID permissionId) {
-        roleService.addPermission(roleId, permissionId);
-        ApiResponse<Void> response = new ApiResponse<>();
-        response.setResult(null);
-        response.setMessage("Thêm quyền vào vai trò thành công");
-        return response;
-    }
-
-    @DeleteMapping("/{roleId}/permissions/{permissionId}")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
-    public ApiResponse<Void> removePermission(@PathVariable UUID roleId,
-                                              @PathVariable UUID permissionId) {
-        roleService.removePermission(roleId, permissionId);
-        ApiResponse<Void> response = new ApiResponse<>();
-        response.setResult(null);
-        response.setMessage("Xóa quyền khỏi vai trò thành công");
-        return response;
-    }
-
-    @PutMapping("/{roleId}/permissions")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
-    public ApiResponse<RoleResponse> setPermissions(@PathVariable UUID roleId,
-                                                    @Valid @RequestBody RolePermissionUpdateRequest req) {
-        ApiResponse<RoleResponse> response = new ApiResponse<>();
-        response.setResult(roleService.setPermissions(roleId, req));
-        response.setMessage("Cập nhật quyền cho vai trò thành công");
         return response;
     }
 
@@ -147,7 +136,7 @@ public class RoleController {
     }
 
     @GetMapping("/search-paged")
-    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<PageResponse<RoleResponse>> searchRolesPaged(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Boolean active,
