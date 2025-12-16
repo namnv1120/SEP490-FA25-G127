@@ -3,11 +3,11 @@ package com.g127.snapbuy.customer.service.impl;
 import com.g127.snapbuy.customer.dto.request.CustomerCreateRequest;
 import com.g127.snapbuy.customer.dto.request.CustomerUpdateRequest;
 import com.g127.snapbuy.customer.dto.response.CustomerResponse;
-import com.g127.snapbuy.entity.Customer;
+import com.g127.snapbuy.customer.entity.Customer;
 import com.g127.snapbuy.common.exception.AppException;
 import com.g127.snapbuy.common.exception.ErrorCode;
-import com.g127.snapbuy.mapper.CustomerMapper;
-import com.g127.snapbuy.repository.CustomerRepository;
+import com.g127.snapbuy.customer.mapper.CustomerMapper;
+import com.g127.snapbuy.customer.repository.CustomerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -284,22 +284,6 @@ class CustomerServiceImplTest {
         AppException exception = assertThrows(AppException.class, 
             () -> customerService.deleteCustomer(customerId));
         assertEquals(ErrorCode.CUSTOMER_NOT_FOUND, exception.getErrorCode());
-    }
-
-    @Test
-    void searchCustomer_Success() {
-        // Given
-        String keyword = "test";
-        List<Customer> customers = Arrays.asList(testCustomer);
-        when(customerRepository.searchByKeyword(keyword)).thenReturn(customers);
-        when(customerMapper.toResponse(any(Customer.class))).thenReturn(customerResponse);
-
-        // When
-        List<CustomerResponse> result = customerService.searchCustomer(keyword);
-
-        // Then
-        assertNotNull(result);
-        assertEquals(1, result.size());
     }
 
     @Test

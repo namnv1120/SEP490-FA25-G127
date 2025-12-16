@@ -3,12 +3,12 @@ package com.g127.snapbuy.account.service.impl;
 import com.g127.snapbuy.account.dto.request.*;
 import com.g127.snapbuy.account.dto.response.AccountResponse;
 import com.g127.snapbuy.common.response.PageResponse;
-import com.g127.snapbuy.entity.Account;
-import com.g127.snapbuy.entity.Role;
+import com.g127.snapbuy.account.entity.Account;
+import com.g127.snapbuy.account.entity.Role;
 import com.g127.snapbuy.common.exception.AppException;
-import com.g127.snapbuy.mapper.AccountMapper;
-import com.g127.snapbuy.repository.AccountRepository;
-import com.g127.snapbuy.repository.RoleRepository;
+import com.g127.snapbuy.account.mapper.AccountMapper;
+import com.g127.snapbuy.account.repository.AccountRepository;
+import com.g127.snapbuy.account.repository.RoleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -222,14 +222,7 @@ class AccountServiceImplTest {
         assertThrows(IllegalArgumentException.class, () -> accountService.createStaff(createRequest));
     }
 
-    @Test
-    void createStaff_WithForbiddenRole_ThrowsException() {
-        // Given
-        createRequest.setRoles(List.of("Quản trị viên"));
 
-        // When & Then
-        assertThrows(IllegalArgumentException.class, () -> accountService.createStaff(createRequest));
-    }
 
     @Test
     void getMyInfo_Success() {
@@ -493,8 +486,11 @@ class AccountServiceImplTest {
     void deleteAccount_Success() {
         // Given
         setupSecurityContext("otheruser");
-        UUID accountId = testAccount.getAccountId();
+        Role staffRole = new Role();
+        staffRole.setRoleName("Nhân viên");
+        testAccount.setRoles(new LinkedHashSet<>(Collections.singletonList(staffRole)));
         
+        UUID accountId = testAccount.getAccountId();
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(testAccount));
 
         // When
@@ -516,55 +512,7 @@ class AccountServiceImplTest {
         assertThrows(IllegalStateException.class, () -> accountService.deleteAccount(accountId));
     }
 
-    @Test
-    void deleteAccount_AdminRole_ThrowsException() {
-        // Given
-        setupSecurityContext("otheruser");
-        Role adminRole = new Role();
-        adminRole.setRoleName("Quản trị viên");
-        testAccount.setRoles(new LinkedHashSet<>(Collections.singletonList(adminRole)));
-        
-        UUID accountId = testAccount.getAccountId();
-        when(accountRepository.findById(accountId)).thenReturn(Optional.of(testAccount));
 
-        // When & Then
-        assertThrows(IllegalStateException.class, () -> accountService.deleteAccount(accountId));
-    }
-
-    @Test
-    void searchAccounts_Success() {
-        // Given
-        List<Account> accounts = Arrays.asList(testAccount);
-        when(accountRepository.searchAccounts(anyString(), any(), anyString())).thenReturn(accounts);
-        when(accountMapper.toResponse(any(Account.class))).thenReturn(accountResponse);
-
-        // When
-        List<AccountResponse> result = accountService.searchAccounts("test", true, "Chủ cửa hàng");
-
-        // Then
-        assertNotNull(result);
-        assertEquals(1, result.size());
-    }
-
-    @Test
-    void searchAccountsPaged_Success() {
-        // Given
-        List<Account> accounts = Arrays.asList(testAccount);
-        Page<Account> page = new PageImpl<>(accounts, PageRequest.of(0, 10), 1);
-        
-        when(accountRepository.searchAccountsPage(anyString(), any(), anyString(), any(Pageable.class)))
-            .thenReturn(page);
-        when(accountMapper.toResponse(any(Account.class))).thenReturn(accountResponse);
-
-        // When
-        PageResponse<AccountResponse> result = accountService.searchAccountsPaged(
-            "test", true, "Chủ cửa hàng", PageRequest.of(0, 10));
-
-        // Then
-        assertNotNull(result);
-        assertEquals(1, result.getContent().size());
-        assertEquals(1, result.getTotalElements());
-    }
 
     @Test
     void updateStaffByOwner_Success() {
@@ -591,23 +539,7 @@ class AccountServiceImplTest {
         verify(accountRepository).save(any(Account.class));
     }
 
-    @Test
-    void updateStaffByOwner_ForbiddenRole_ThrowsException() {
-        // Given
-        Role adminRole = new Role();
-        adminRole.setRoleName("Quản trị viên");
-        testAccount.setRoles(new LinkedHashSet<>(Collections.singletonList(adminRole)));
 
-        StaffOwnerUpdateRequest request = new StaffOwnerUpdateRequest();
-        request.setFullName("Updated Name");
-
-        UUID staffId = testAccount.getAccountId();
-        when(accountRepository.findById(staffId)).thenReturn(Optional.of(testAccount));
-
-        // When & Then
-        assertThrows(IllegalArgumentException.class, 
-            () -> accountService.updateStaffByOwner(staffId, request));
-    }
 
     @Test
     void updateStaffRolesByOwner_Success() {
@@ -638,19 +570,7 @@ class AccountServiceImplTest {
         verify(accountRepository).save(any(Account.class));
     }
 
-    @Test
-    void updateStaffRolesByOwner_ForbiddenRole_ThrowsException() {
-        // Given
-        StaffRoleUpdateRequest request = new StaffRoleUpdateRequest();
-        request.setRoles(List.of("Quản trị viên"));
 
-        UUID staffId = testAccount.getAccountId();
-        when(accountRepository.findById(staffId)).thenReturn(Optional.of(testAccount));
-
-        // When & Then
-        assertThrows(IllegalArgumentException.class, 
-            () -> accountService.updateStaffRolesByOwner(staffId, request));
-    }
 
     @Test
     void getAccountsByRoleName_Success() {

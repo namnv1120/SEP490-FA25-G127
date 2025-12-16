@@ -1,9 +1,9 @@
 package com.g127.snapbuy.account.service.impl;
 
 import com.g127.snapbuy.account.service.impl.AccountDetailsServiceImpl;
-import com.g127.snapbuy.entity.Account;
-import com.g127.snapbuy.entity.Role;
-import com.g127.snapbuy.repository.AccountRepository;
+import com.g127.snapbuy.account.entity.Account;
+import com.g127.snapbuy.account.entity.Role;
+import com.g127.snapbuy.account.repository.AccountRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

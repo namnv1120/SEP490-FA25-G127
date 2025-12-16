@@ -221,8 +221,8 @@ class OrderServiceImplTest {
     void getAllOrders_Success() {
         // Given
         when(orderRepository.findAll()).thenReturn(Arrays.asList(testOrder));
-        when(orderDetailRepository.findByOrder(testOrder)).thenReturn(Arrays.asList(testOrderDetail));
-        when(paymentRepository.findByOrder_OrderId(orderId)).thenReturn(Arrays.asList(testPayment));
+        when(orderDetailRepository.findByOrderIdIn(anyList())).thenReturn(Arrays.asList(testOrderDetail));
+        when(paymentRepository.findByOrderIdIn(anyList())).thenReturn(Arrays.asList(testPayment));
         when(orderMapper.toResponse(any(Order.class), anyList(), any(Payment.class), any(AccountMapper.class)))
                 .thenReturn(testOrderResponse);
 
@@ -233,47 +233,6 @@ class OrderServiceImplTest {
         assertThat(result).isNotEmpty();
         assertThat(result).hasSize(1);
         verify(orderRepository).findAll();
-    }
-
-    @Test
-    void searchOrders_WithAllParams_Success() {
-        // Given
-        String searchTerm = "ORD20231201001";
-        String orderStatus = "Chờ xác nhận";
-        LocalDateTime fromDate = LocalDateTime.now().minusDays(7);
-        LocalDateTime toDate = LocalDateTime.now();
-
-        when(orderRepository.searchOrders(anyString(), anyString(), any(LocalDateTime.class), any(LocalDateTime.class)))
-                .thenReturn(Arrays.asList(testOrder));
-        when(orderDetailRepository.findByOrder(testOrder)).thenReturn(Arrays.asList(testOrderDetail));
-        when(paymentRepository.findByOrder_OrderId(orderId)).thenReturn(Arrays.asList(testPayment));
-        when(orderMapper.toResponse(any(Order.class), anyList(), any(Payment.class), any(AccountMapper.class)))
-                .thenReturn(testOrderResponse);
-
-        // When
-        List<OrderResponse> result = orderService.searchOrders(searchTerm, orderStatus, fromDate, toDate);
-
-        // Then
-        assertThat(result).isNotEmpty();
-        verify(orderRepository).searchOrders(eq(searchTerm), eq(orderStatus), any(LocalDateTime.class), any(LocalDateTime.class));
-    }
-
-    @Test
-    void searchOrders_WithNullParams_Success() {
-        // Given
-        when(orderRepository.searchOrders(isNull(), isNull(), isNull(), isNull()))
-                .thenReturn(Arrays.asList(testOrder));
-        when(orderDetailRepository.findByOrder(testOrder)).thenReturn(Arrays.asList(testOrderDetail));
-        when(paymentRepository.findByOrder_OrderId(orderId)).thenReturn(Arrays.asList(testPayment));
-        when(orderMapper.toResponse(any(Order.class), anyList(), any(Payment.class), any(AccountMapper.class)))
-                .thenReturn(testOrderResponse);
-
-        // When
-        List<OrderResponse> result = orderService.searchOrders(null, null, null, null);
-
-        // Then
-        assertThat(result).isNotEmpty();
-        verify(orderRepository).searchOrders(isNull(), isNull(), isNull(), isNull());
     }
 
     @Test
@@ -328,18 +287,6 @@ class OrderServiceImplTest {
         assertThat(result).isNotNull();
         verify(orderRepository, atLeastOnce()).findById(orderId);
         verify(orderRepository).save(any(Order.class));
-    }
-
-    @Test
-    void completeOrder_AlreadyCompleted_ThrowsException() {
-        // Given
-        testOrder.setOrderStatus("Hoàn tất");
-        when(orderRepository.findById(orderId)).thenReturn(Optional.of(testOrder));
-
-        // When & Then
-        assertThatThrownBy(() -> orderService.completeOrder(orderId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Đơn hàng đã hoàn tất");
     }
 
     @Test

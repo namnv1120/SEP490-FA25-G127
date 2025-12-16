@@ -1,13 +1,15 @@
 package com.g127.snapbuy.product.service.impl;
 
 import com.g127.snapbuy.product.dto.response.ProductResponse;
-import com.g127.snapbuy.entity.Category;
-import com.g127.snapbuy.entity.Product;
-import com.g127.snapbuy.entity.ProductPrice;
+import com.g127.snapbuy.product.entity.Category;
+import com.g127.snapbuy.product.entity.Product;
+import com.g127.snapbuy.product.entity.ProductPrice;
 import com.g127.snapbuy.common.exception.AppException;
 import com.g127.snapbuy.common.exception.ErrorCode;
-import com.g127.snapbuy.mapper.ProductMapper;
-import com.g127.snapbuy.repository.*;
+import com.g127.snapbuy.product.mapper.ProductMapper;
+import com.g127.snapbuy.product.repository.*;
+import com.g127.snapbuy.inventory.repository.InventoryRepository;
+import com.g127.snapbuy.supplier.repository.SupplierRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -274,10 +276,8 @@ class ProductServiceImplTest {
         List<Product> products = Arrays.asList(testProduct);
         when(productRepository.findAllActiveWithActiveCategory()).thenReturn(products);
         when(productMapper.toResponse(any(Product.class))).thenReturn(productResponse);
-        when(productPriceRepository.findTopByProduct_ProductIdOrderByValidFromDesc(any()))
-            .thenReturn(Optional.of(testPrice));
-        when(inventoryRepository.findByProduct_ProductId(any()))
-            .thenReturn(Optional.empty());
+        
+        
 
         // When
         List<ProductResponse> result = productService.getAllProducts();

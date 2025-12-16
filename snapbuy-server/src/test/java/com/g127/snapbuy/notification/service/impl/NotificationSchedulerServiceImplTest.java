@@ -1,15 +1,15 @@
 package com.g127.snapbuy.notification.service.impl;
 
-import com.g127.snapbuy.entity.Account;
-import com.g127.snapbuy.entity.Inventory;
-import com.g127.snapbuy.entity.Product;
-import com.g127.snapbuy.entity.Promotion;
+import com.g127.snapbuy.account.entity.Account;
+import com.g127.snapbuy.inventory.entity.Inventory;
+import com.g127.snapbuy.product.entity.Product;
+import com.g127.snapbuy.promotion.entity.Promotion;
 import com.g127.snapbuy.notification.service.NotificationService;
 import com.g127.snapbuy.notification.service.NotificationSettingsService;
-import com.g127.snapbuy.repository.AccountRepository;
-import com.g127.snapbuy.repository.InventoryRepository;
-import com.g127.snapbuy.repository.NotificationRepository;
-import com.g127.snapbuy.repository.PromotionRepository;
+import com.g127.snapbuy.account.repository.AccountRepository;
+import com.g127.snapbuy.inventory.repository.InventoryRepository;
+import com.g127.snapbuy.notification.repository.NotificationRepository;
+import com.g127.snapbuy.promotion.repository.PromotionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
