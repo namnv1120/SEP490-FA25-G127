@@ -8,6 +8,7 @@ import com.g127.snapbuy.tenant.service.DemoDataService;
 import com.g127.snapbuy.tenant.service.TenantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +23,18 @@ public class TenantController {
 
     private final TenantService tenantService;
     private final DemoDataService demoDataService;
+    
+    @Value("${tenant.db.host:localhost}")
+    private String tenantDbHost;
+    
+    @Value("${tenant.db.port:1433}")
+    private Integer tenantDbPort;
+    
+    @Value("${tenant.db.username:sa}")
+    private String tenantDbUsername;
+    
+    @Value("${tenant.db.password:}")
+    private String tenantDbPassword;
     
     // ========== PUBLIC ENDPOINTS (không cần auth) ==========
     
@@ -70,6 +83,21 @@ public class TenantController {
     @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<TenantResponse> createTenant(@Valid @RequestBody TenantCreateRequest request) {
         try {
+            // Inject tenant database configuration from environment variables
+            // This allows using 'db' in Docker and 'localhost' in local development
+            if (request.getDbHost() == null || request.getDbHost().equals("localhost")) {
+                request.setDbHost(tenantDbHost);
+            }
+            if (request.getDbPort() == null) {
+                request.setDbPort(tenantDbPort);
+            }
+            if (request.getDbUsername() == null || request.getDbUsername().isEmpty()) {
+                request.setDbUsername(tenantDbUsername);
+            }
+            if (request.getDbPassword() == null || request.getDbPassword().isEmpty()) {
+                request.setDbPassword(tenantDbPassword);
+            }
+            
             ApiResponse<TenantResponse> response = new ApiResponse<>();
             response.setResult(tenantService.createTenant(request));
             response.setMessage("Tạo cửa hàng '" + request.getTenantCode() + "' thành công. Tài khoản chủ cửa hàng đã được tạo.");
