@@ -325,8 +325,7 @@ public class TenantServiceImpl implements TenantService {
             
             // Step 3: Delete tenant record from master DB (cascade will delete owner)
             tenantRepository.deleteById(tenantId);
-            log.info("Tenant deleted from master DB: {}", tenantId);
-            
+
         } catch (Exception e) {
             log.error("Error deleting tenant {}: {}", tenantId, e.getMessage(), e);
             throw new RuntimeException("Không thể xóa cửa hàng: " + e.getMessage(), e);

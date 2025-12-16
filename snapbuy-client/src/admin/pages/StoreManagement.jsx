@@ -6,11 +6,13 @@ import {
   FaTrash,
   FaStore,
   FaGlobe,
+  FaDatabase,
 } from "react-icons/fa";
-import { message, Modal } from "antd";
+import { message } from "antd";
 import TenantService from "../../services/TenantService";
 import DeleteConfirmModal from "../components/modals/DeleteConfirmModal";
 import ToggleStatusModal from "../components/modals/ToggleStatusModal";
+import ConfirmModal from "../components/modals/ConfirmModal";
 import AddStoreModal from "../components/modals/AddStoreModal";
 import EditStoreModal from "../components/modals/EditStoreModal";
 import "../styles/admin.css";
@@ -23,9 +25,11 @@ const StoreManagement = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showToggleModal, setShowToggleModal] = useState(false);
+  const [showDemoDataModal, setShowDemoDataModal] = useState(false);
   const [deletingStore, setDeletingStore] = useState(null);
   const [editingStore, setEditingStore] = useState(null);
   const [togglingStore, setTogglingStore] = useState(null);
+  const [demoDataStore, setDemoDataStore] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -38,23 +42,39 @@ const StoreManagement = () => {
       const response = await TenantService.getAllTenants();
 
       // Map backend data to frontend format
-      const mappedStores = (response.result || []).map((tenant) => ({
-        id: tenant.tenantId,
-        name: tenant.storeName || tenant.tenantCode,
-        domain: `${tenant.tenantCode}.snapbuy.com.vn`,
-        owner: tenant.ownerName || "N/A",
-        email: tenant.ownerEmail || "N/A",
-        phone: tenant.ownerPhone || "N/A",
-        status: tenant.isActive ? "Hoạt Động" : "Ngừng Hoạt Động",
-        users: tenant.userCount || 0,
-        products: tenant.productCount || 0,
-        revenue: tenant.revenue || 0,
-        createdAt: tenant.createdDate
-          ? new Date(tenant.createdDate).toLocaleDateString("vi-VN")
-          : "N/A",
-        tenantCode: tenant.tenantCode,
-        isActive: tenant.isActive,
-      }));
+      const mappedStores = await Promise.all(
+        (response.result || []).map(async (tenant) => {
+          // Check if store has demo data
+          let hasDemoData = false;
+          try {
+            const demoDataResponse = await TenantService.checkDemoData(
+              tenant.tenantId
+            );
+            hasDemoData = demoDataResponse.result || false;
+          } catch (error) {
+            console.error("Error checking demo data:", error);
+          }
+
+          return {
+            id: tenant.tenantId,
+            name: tenant.storeName || tenant.tenantCode,
+            domain: `${tenant.tenantCode}.snapbuy.com.vn`,
+            owner: tenant.ownerName || "N/A",
+            email: tenant.ownerEmail || "N/A",
+            phone: tenant.ownerPhone || "N/A",
+            status: tenant.isActive ? "Hoạt Động" : "Ngừng Hoạt Động",
+            users: tenant.userCount || 0,
+            products: tenant.productCount || 0,
+            revenue: tenant.revenue || 0,
+            createdAt: tenant.createdDate
+              ? new Date(tenant.createdDate).toLocaleDateString("vi-VN")
+              : "N/A",
+            tenantCode: tenant.tenantCode,
+            isActive: tenant.isActive,
+            hasDemoData: hasDemoData,
+          };
+        })
+      );
 
       setStores(mappedStores);
     } catch (error) {
@@ -131,13 +151,24 @@ const StoreManagement = () => {
   const handleAddStore = async (formData) => {
     try {
       setLoading(true);
-      await TenantService.createTenant(formData);
-      message.success("Tạo cửa hàng thành công");
-      fetchStores();
-      setShowAddModal(false);
+      const response = await TenantService.createTenant(formData);
+
+      if (response.code === 1000 || !response.code) {
+        message.success("Tạo cửa hàng thành công");
+        fetchStores();
+        setShowAddModal(false);
+      } else {
+        const errorMessage = response.message || "Không thể tạo cửa hàng";
+        message.error(errorMessage, 5);
+      }
     } catch (error) {
-      console.error("Error creating store:", error);
-      message.error(error.response?.data?.message || "Không thể tạo cửa hàng");
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Không thể tạo cửa hàng";
+
+      message.error(errorMessage, 5);
     } finally {
       setLoading(false);
     }
@@ -156,6 +187,39 @@ const StoreManagement = () => {
       message.error(
         error.response?.data?.message || "Không thể cập nhật cửa hàng"
       );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemoDataClick = (store) => {
+    setDemoDataStore(store);
+    setShowDemoDataModal(true);
+  };
+
+  const handleInsertDemoData = async () => {
+    if (!demoDataStore) return;
+
+    try {
+      setLoading(true);
+      const response = await TenantService.insertDemoData(demoDataStore.id);
+
+      if (response.code === 1000 || !response.code) {
+        message.success("Thêm dữ liệu mẫu thành công");
+        fetchStores(); // Refresh to update hasDemoData status
+        setShowDemoDataModal(false);
+        setDemoDataStore(null);
+      } else {
+        message.error(response.message || "Không thể thêm dữ liệu mẫu");
+      }
+    } catch (error) {
+      console.error("Error inserting demo data:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Không thể thêm dữ liệu mẫu";
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -379,6 +443,15 @@ const StoreManagement = () => {
                       >
                         <FaEdit />
                       </button>
+                      {!store.hasDemoData && (
+                        <button
+                          className="admin-btn-icon info"
+                          title="Thêm Dữ Liệu Mẫu"
+                          onClick={() => handleDemoDataClick(store)}
+                        >
+                          <FaDatabase />
+                        </button>
+                      )}
                       <button
                         className="admin-btn-icon delete"
                         title="Xóa Cửa Hàng"
@@ -445,6 +518,23 @@ const StoreManagement = () => {
         itemName={togglingStore?.name}
         isActive={togglingStore?.isActive}
         loading={loading}
+      />
+
+      {/* Demo Data Confirmation Modal */}
+      <ConfirmModal
+        show={showDemoDataModal}
+        onClose={() => {
+          setShowDemoDataModal(false);
+          setDemoDataStore(null);
+        }}
+        onConfirm={handleInsertDemoData}
+        title="Xác nhận thêm dữ liệu mẫu"
+        message={`Bạn có chắc chắn muốn thêm dữ liệu mẫu cho cửa hàng "${demoDataStore?.name}"?`}
+        description="Dữ liệu mẫu bao gồm sản phẩm, danh mục và các thông tin demo khác."
+        confirmText="Xác nhận"
+        cancelText="Hủy"
+        loading={loading}
+        type="info"
       />
     </div>
   );

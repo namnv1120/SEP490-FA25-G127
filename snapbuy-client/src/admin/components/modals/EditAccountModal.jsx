@@ -98,15 +98,15 @@ const EditAccountModal = ({
         zIndex: 10000,
         padding: "1rem",
       }}
-      onClick={handleClose}
     >
       <div
         className="admin-card"
         style={{
-          maxWidth: "600px",
+          maxWidth: "500px",
           width: "100%",
           maxHeight: "90vh",
           overflow: "auto",
+          padding: "1.25rem",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -116,8 +116,8 @@ const EditAccountModal = ({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: "1.5rem",
-            paddingBottom: "1rem",
+            marginBottom: "1rem",
+            paddingBottom: "0.75rem",
             borderBottom: "1px solid var(--admin-border-color)",
           }}
         >
@@ -187,7 +187,7 @@ const EditAccountModal = ({
         {/* Form */}
         <form onSubmit={handleSubmit}>
           <div
-            style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+            style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
           >
             {/* Full Name */}
             <div>

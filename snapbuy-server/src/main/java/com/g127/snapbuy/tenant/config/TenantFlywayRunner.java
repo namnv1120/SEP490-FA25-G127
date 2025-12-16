@@ -39,7 +39,6 @@ public class TenantFlywayRunner {
                     .load();
 
             var result = flyway.migrate();
-            log.info("Flyway migrations completed for tenant: {} ({} migrations)", tenantId, result.migrationsExecuted);
 
             // Restore previous tenant context
             if (previousTenant != null) {

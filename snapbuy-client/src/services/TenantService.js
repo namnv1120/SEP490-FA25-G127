@@ -154,6 +154,43 @@ class TenantService {
       throw error;
     }
   }
+
+  /**
+   * Thêm dữ liệu mẫu cho tenant (Admin only)
+   */
+  static async insertDemoData(tenantId) {
+    try {
+      const response = await axios.post(
+        `/api/tenants/admin/${tenantId}/demo-data`,
+        {},
+        {
+          headers: this.getAuthHeader(),
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("TenantService.insertDemoData error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Kiểm tra tenant đã có dữ liệu mẫu chưa (Admin only)
+   */
+  static async checkDemoData(tenantId) {
+    try {
+      const response = await axios.get(
+        `/api/tenants/admin/${tenantId}/demo-data/check`,
+        {
+          headers: this.getAuthHeader(),
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("TenantService.checkDemoData error:", error);
+      throw error;
+    }
+  }
 }
 
 export default TenantService;

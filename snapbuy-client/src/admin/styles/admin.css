@@ -226,6 +226,54 @@
   transform: translateY(0);
 }
 
+.admin-btn-warning {
+  background: var(--admin-accent-warning);
+  color: white;
+  box-shadow: var(--admin-shadow-md);
+}
+
+.admin-btn-warning:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--admin-shadow-lg);
+  opacity: 0.9;
+}
+
+.admin-btn-danger {
+  background: var(--admin-accent-danger);
+  color: white;
+  box-shadow: var(--admin-shadow-md);
+}
+
+.admin-btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--admin-shadow-lg);
+  opacity: 0.9;
+}
+
+.admin-btn-success {
+  background: var(--admin-accent-success);
+  color: white;
+  box-shadow: var(--admin-shadow-md);
+}
+
+.admin-btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--admin-shadow-lg);
+  opacity: 0.9;
+}
+
+.admin-btn-info {
+  background: var(--admin-accent-info);
+  color: white;
+  box-shadow: var(--admin-shadow-md);
+}
+
+.admin-btn-info:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--admin-shadow-lg);
+  opacity: 0.9;
+}
+
 /* ============================================
    ADMIN LAYOUT
    ============================================ */
@@ -850,6 +898,16 @@
   color: white;
 }
 
+.admin-btn-icon.info {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--admin-accent-info);
+}
+
+.admin-btn-icon.info:hover {
+  background: var(--admin-accent-info);
+  color: white;
+}
+
 /* ============================================
    RESPONSIVE
    ============================================ */
@@ -994,4 +1052,13 @@
 
 .admin-gap-3 {
   gap: var(--admin-spacing-md);
+}
+
+/* ============================================
+   ANT DESIGN OVERRIDES
+   ============================================ */
+
+/* Fix message notification z-index to appear above modals */
+.ant-message {
+  z-index: 10001 !important;
 }

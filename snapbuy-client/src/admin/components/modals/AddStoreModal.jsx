@@ -19,6 +19,27 @@ const AddStoreModal = ({ show, onClose, onSubmit, loading }) => {
 
   const [errors, setErrors] = useState({});
 
+  // Reset form when modal opens
+  useEffect(() => {
+    if (show) {
+      setFormData({
+        tenantCode: "",
+        tenantName: "",
+        dbName: "",
+        dbHost: "localhost",
+        dbPort: 1433,
+        dbUsername: "sa",
+        dbPassword: "123456",
+        ownerUsername: "",
+        ownerPassword: "",
+        ownerFullName: "",
+        ownerEmail: "",
+        ownerPhone: "",
+      });
+      setErrors({});
+    }
+  }, [show]);
+
   if (!show) return null;
 
   const handleChange = (e) => {
@@ -146,15 +167,15 @@ const AddStoreModal = ({ show, onClose, onSubmit, loading }) => {
         zIndex: 10000,
         padding: "1rem",
       }}
-      onClick={handleClose}
     >
       <div
         className="admin-card"
         style={{
-          maxWidth: "700px",
+          maxWidth: "550px",
           width: "100%",
           maxHeight: "90vh",
           overflow: "auto",
+          padding: "1.25rem",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -164,15 +185,15 @@ const AddStoreModal = ({ show, onClose, onSubmit, loading }) => {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: "1.5rem",
-            paddingBottom: "1rem",
+            marginBottom: "1rem",
+            paddingBottom: "0.75rem",
             borderBottom: "1px solid var(--admin-border-color)",
           }}
         >
           <h2
             style={{
               margin: 0,
-              fontSize: "1.5rem",
+              fontSize: "1.25rem",
               fontWeight: "700",
               color: "var(--admin-text-primary)",
             }}
@@ -198,7 +219,7 @@ const AddStoreModal = ({ show, onClose, onSubmit, loading }) => {
         {/* Form */}
         <form onSubmit={handleSubmit}>
           <div
-            style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+            style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
           >
             {/* Tenant Code */}
             <div>
