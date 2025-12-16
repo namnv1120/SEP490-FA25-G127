@@ -10,10 +10,18 @@ const LOCATION_API_BASE_URL = '/provinces-api/api/v2';
 export const getProvinces = async () => {
     try {
         const response = await axios.get(`${LOCATION_API_BASE_URL}/`);
-        return response.data;
+        const data = response.data;
+
+        // Đảm bảo trả về array
+        if (!Array.isArray(data)) {
+            console.error('Provinces API response is not an array:', data);
+            return [];
+        }
+
+        return data;
     } catch (error) {
         console.error('Error fetching provinces:', error);
-        throw error;
+        return []; // Trả về empty array thay vì throw
     }
 };
 
@@ -24,9 +32,17 @@ export const getProvinces = async () => {
 export const getWardsByProvince = async (provinceCode) => {
     try {
         const response = await axios.get(`${LOCATION_API_BASE_URL}/p/${provinceCode}?depth=2`);
-        return response.data.wards || [];
+        const wards = response.data?.wards;
+
+        // Đảm bảo trả về array
+        if (!Array.isArray(wards)) {
+            console.error('Wards API response is not an array:', response.data);
+            return [];
+        }
+
+        return wards;
     } catch (error) {
         console.error('Error fetching wards:', error);
-        throw error;
+        return []; // Trả về empty array thay vì throw
     }
 };
