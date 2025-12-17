@@ -371,10 +371,14 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
                     .toLowerCase()
                     .includes(input.toLowerCase())
                 }
-                options={wards.map((ward) => ({
-                  value: ward.ward_name || ward.name,
-                  label: ward.ward_name || ward.name,
-                }))}
+                options={wards.map((ward, index) => {
+                  const uniqueKey = `${ward.ward_code || ward.code || index}_${index}`;
+                  return {
+                    value: uniqueKey,
+                    label: ward.ward_name || ward.name,
+                    wardName: ward.ward_name || ward.name, // Store actual name for saving
+                  };
+                })}
                 allowClear
                 onClear={() => {
                   setFormData((prev) => ({ ...prev, ward: "" }));
