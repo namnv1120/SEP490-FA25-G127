@@ -96,8 +96,6 @@ const CashDenominationInput = forwardRef(
     const total = calculateTotal();
     const difference = expectedTotal ? total - expectedTotal : 0;
 
-    console.log("CashDenominationInput:", { expectedTotal, total, difference });
-
     const columns = [
       {
         title: "Mệnh giá",

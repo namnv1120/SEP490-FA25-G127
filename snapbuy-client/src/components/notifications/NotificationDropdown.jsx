@@ -290,9 +290,19 @@ const NotificationDropdown = () => {
         <div className="position-relative">
           <i className="ti ti-bell"></i>
           {unreadCount > 0 && (
-            <Badge bg="danger" pill className="notification-badge">
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </Badge>
+            <span
+              className="notification-dot"
+              style={{
+                position: "absolute",
+                top: "-2px",
+                right: "-2px",
+                width: "10px",
+                height: "10px",
+                backgroundColor: "#dc3545",
+                borderRadius: "50%",
+                border: "2px solid white",
+              }}
+            />
           )}
         </div>
       }

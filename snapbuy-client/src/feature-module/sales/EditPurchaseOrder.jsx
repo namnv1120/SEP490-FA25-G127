@@ -11,6 +11,7 @@ import {
 } from "../../services/PurchaseOrderService";
 import RefreshIcon from "../../components/tooltip-content/refresh";
 import CollapesIcon from "../../components/tooltip-content/collapes";
+import CommonFooter from "../../components/footer/CommonFooter";
 
 const EditPurchaseOrder = () => {
   const navigate = useNavigate();
@@ -74,17 +75,17 @@ const EditPurchaseOrder = () => {
 
           const total =
             (isApproved || isWaitingConfirmation || isReceived) &&
-              receiveQty > 0
+            receiveQty > 0
               ? receiveQty * unitPrice
               : quantity * unitPrice;
 
           return {
             product: item.productId
               ? {
-                value: item.productId,
-                label: item.productName,
-                unitPrice: unitPrice,
-              }
+                  value: item.productId,
+                  label: item.productName,
+                  unitPrice: unitPrice,
+                }
               : null,
             quantity: quantity,
             unitPrice: unitPrice,
@@ -96,14 +97,14 @@ const EditPurchaseOrder = () => {
           formattedItems.length > 0
             ? formattedItems
             : [
-              {
-                product: null,
-                quantity: 1,
-                unitPrice: 0,
-                total: 0,
-                receiveQuantity: 0,
-              },
-            ]
+                {
+                  product: null,
+                  quantity: 1,
+                  unitPrice: 0,
+                  total: 0,
+                  receiveQuantity: 0,
+                },
+              ]
         );
       } else {
         setItems([
@@ -123,7 +124,8 @@ const EditPurchaseOrder = () => {
       let taxPercent = 0;
       if (data.details && data.details.length > 0) {
         const isApproved = data.status?.toLowerCase() === "đã duyệt";
-        const isWaitingConfirmation = data.status?.toLowerCase() === "chờ xác nhận";
+        const isWaitingConfirmation =
+          data.status?.toLowerCase() === "chờ xác nhận";
         const isReceived = data.status?.toLowerCase() === "đã nhận hàng";
 
         // Tính subtotal dựa trên trạng thái đơn
@@ -132,9 +134,11 @@ const EditPurchaseOrder = () => {
           const quantity = item.quantity || 1;
           const unitPrice = item.unitPrice || 0;
 
-          const itemTotal = (isApproved || isWaitingConfirmation || isReceived) && receiveQty > 0
-            ? receiveQty * unitPrice
-            : quantity * unitPrice;
+          const itemTotal =
+            (isApproved || isWaitingConfirmation || isReceived) &&
+            receiveQty > 0
+              ? receiveQty * unitPrice
+              : quantity * unitPrice;
 
           return sum + itemTotal;
         }, 0);
@@ -200,7 +204,7 @@ const EditPurchaseOrder = () => {
 
             const total =
               (isApproved || isWaitingConfirmation || isReceived) &&
-                receiveQty > 0
+              receiveQty > 0
                 ? receiveQty * unitPrice
                 : quantity * unitPrice;
 
@@ -221,14 +225,14 @@ const EditPurchaseOrder = () => {
             mappedItems.length > 0
               ? mappedItems
               : [
-                {
-                  product: null,
-                  quantity: 1,
-                  unitPrice: 0,
-                  total: 0,
-                  receiveQuantity: 0,
-                },
-              ]
+                  {
+                    product: null,
+                    quantity: 1,
+                    unitPrice: 0,
+                    total: 0,
+                    receiveQuantity: 0,
+                  },
+                ]
           );
         }
       } catch {
@@ -250,6 +254,21 @@ const EditPurchaseOrder = () => {
       setItems([{ product: null, quantity: 1, unitPrice: 0, total: 0 }]);
     }
   }, [selectedSupplier, orderData]);
+
+  // Format số thành tiền Việt (với dấu chấm phân cách hàng nghìn)
+  const formatCurrency = (value) => {
+    if (value === "" || value === null || value === undefined) return "";
+    const num = parseFloat(String(value).replace(/\./g, "").replace(/,/g, ""));
+    if (isNaN(num)) return "";
+    return num.toLocaleString("vi-VN");
+  };
+
+  // Parse chuỗi tiền Việt thành số
+  const parseCurrency = (value) => {
+    if (value === "" || value === null || value === undefined) return 0;
+    const num = parseFloat(String(value).replace(/\./g, "").replace(/,/g, ""));
+    return isNaN(num) ? 0 : num;
+  };
 
   const updateItem = (index, field, value) => {
     const newItems = [...items];
@@ -306,10 +325,26 @@ const EditPurchaseOrder = () => {
         } else {
           newItems[index].total = qty * priceToUse;
         }
+      } else if (field === "unitPrice") {
+        // Xử lý đặc biệt cho unitPrice - parse từ chuỗi format
+        const rawValue = parseCurrency(value);
+        newItems[index] = { ...newItems[index], unitPrice: rawValue };
+        const qty = parseFloat(newItems[index].quantity || 0);
+
+        // Nếu đơn đã duyệt hoặc chờ xác nhận, tính theo số lượng thực nhận
+        if (
+          orderStatus?.toLowerCase() === "đã duyệt" ||
+          orderStatus?.toLowerCase() === "chờ xác nhận"
+        ) {
+          const receiveQty = parseFloat(newItems[index].receiveQuantity || 0);
+          newItems[index].total = receiveQty * rawValue;
+        } else {
+          newItems[index].total = qty * rawValue;
+        }
       } else {
         newItems[index] = { ...newItems[index], [field]: value };
 
-        if (field === "quantity" || field === "unitPrice") {
+        if (field === "quantity") {
           const qty = parseFloat(newItems[index].quantity || 0);
           const price = parseFloat(newItems[index].unitPrice || 0);
 
@@ -319,7 +354,6 @@ const EditPurchaseOrder = () => {
             orderStatus?.toLowerCase() === "chờ xác nhận"
           ) {
             const receiveQty = parseFloat(newItems[index].receiveQuantity || 0);
-            // Cho phép receiveQuantity = 0, tính tổng tiền theo receiveQuantity
             newItems[index].total = receiveQty * price;
           } else {
             newItems[index].total = qty * price;
@@ -386,14 +420,14 @@ const EditPurchaseOrder = () => {
       newItems.length
         ? newItems
         : [
-          {
-            product: null,
-            quantity: 1,
-            unitPrice: 0,
-            total: 0,
-            receiveQuantity: 0,
-          },
-        ]
+            {
+              product: null,
+              quantity: 1,
+              unitPrice: 0,
+              total: 0,
+              receiveQuantity: 0,
+            },
+          ]
     );
   };
 
@@ -434,7 +468,9 @@ const EditPurchaseOrder = () => {
 
     // Validate notes length
     if (notes && notes.length > 500) {
-      message.error("Ghi chú không được vượt quá 500 ký tự. Vui lòng rút ngắn ghi chú.");
+      message.error(
+        "Ghi chú không được vượt quá 500 ký tự. Vui lòng rút ngắn ghi chú."
+      );
       return;
     }
 
@@ -524,6 +560,7 @@ const EditPurchaseOrder = () => {
                 }}
                 placeholder="Chọn nhà cung cấp"
                 disabled={!!orderData}
+                width={400}
               />
               {orderData && (
                 <small className="text-muted d-block mt-1">
@@ -540,7 +577,7 @@ const EditPurchaseOrder = () => {
                       style={{
                         width:
                           orderStatus?.toLowerCase() === "đã duyệt" ||
-                            orderStatus?.toLowerCase() === "chờ xác nhận"
+                          orderStatus?.toLowerCase() === "chờ xác nhận"
                             ? "30%"
                             : "35%",
                       }}
@@ -550,46 +587,60 @@ const EditPurchaseOrder = () => {
                     <th style={{ width: "15%" }}>Số lượng</th>
                     {(orderStatus?.toLowerCase() === "đã duyệt" ||
                       orderStatus?.toLowerCase() === "chờ xác nhận") && (
-                        <th style={{ width: "15%" }}>Số lượng thực nhận</th>
-                      )}
+                      <th style={{ width: "15%" }}>Số lượng thực nhận</th>
+                    )}
                     <th style={{ width: "20%" }}>Đơn giá</th>
                     <th style={{ width: "20%" }}>Thành tiền</th>
                     <th style={{ width: "10%" }}>#</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item, index) => (
-                    <tr key={index}>
-                      <td>
-                        <CommonSelect
-                          options={products}
-                          value={item.product}
-                          onChange={(opt) => updateItem(index, "product", opt)}
-                          placeholder="Chọn sản phẩm"
-                          disabled={orderStatus?.toLowerCase() === "đã duyệt"}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={item.quantity}
-                          onChange={(e) =>
-                            updateItem(index, "quantity", e.target.value)
-                          }
-                          onBlur={() => handleItemBlur(index, "quantity")}
-                          disabled={
-                            orderStatus?.toLowerCase() === "đã duyệt" ||
-                            orderStatus?.toLowerCase() === "chờ xác nhận"
-                          }
-                          readOnly={
-                            orderStatus?.toLowerCase() === "đã duyệt" ||
-                            orderStatus?.toLowerCase() === "chờ xác nhận"
-                          }
-                        />
-                      </td>
-                      {(orderStatus?.toLowerCase() === "đã duyệt" ||
-                        orderStatus?.toLowerCase() === "chờ xác nhận") && (
+                  {items.map((item, index) => {
+                    // Lọc bỏ những sản phẩm đã được chọn ở các dòng khác
+                    const selectedProductIds = items
+                      .filter((_, i) => i !== index) // Loại trừ dòng hiện tại
+                      .filter((i) => i.product?.value) // Lọc những dòng đã chọn sản phẩm
+                      .map((i) => i.product.value);
+
+                    const availableProducts = products.filter(
+                      (p) => !selectedProductIds.includes(p.value)
+                    );
+
+                    return (
+                      <tr key={index}>
+                        <td>
+                          <CommonSelect
+                            options={availableProducts}
+                            value={item.product}
+                            onChange={(opt) =>
+                              updateItem(index, "product", opt)
+                            }
+                            placeholder="Chọn sản phẩm"
+                            disabled={orderStatus?.toLowerCase() === "đã duyệt"}
+                            width={400}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={item.quantity}
+                            onChange={(e) =>
+                              updateItem(index, "quantity", e.target.value)
+                            }
+                            onBlur={() => handleItemBlur(index, "quantity")}
+                            disabled={
+                              orderStatus?.toLowerCase() === "đã duyệt" ||
+                              orderStatus?.toLowerCase() === "chờ xác nhận"
+                            }
+                            readOnly={
+                              orderStatus?.toLowerCase() === "đã duyệt" ||
+                              orderStatus?.toLowerCase() === "chờ xác nhận"
+                            }
+                          />
+                        </td>
+                        {(orderStatus?.toLowerCase() === "đã duyệt" ||
+                          orderStatus?.toLowerCase() === "chờ xác nhận") && (
                           <td>
                             <input
                               type="text"
@@ -609,7 +660,9 @@ const EditPurchaseOrder = () => {
                                   e.target.value
                                 );
                               }}
-                              onBlur={() => handleItemBlur(index, "receiveQuantity")}
+                              onBlur={() =>
+                                handleItemBlur(index, "receiveQuantity")
+                              }
                               placeholder={`Tối đa: ${item.quantity}`}
                               title={`Số lượng thực nhận (tối đa ${item.quantity})`}
                               disabled={
@@ -621,43 +674,50 @@ const EditPurchaseOrder = () => {
                             />
                           </td>
                         )}
-                      <td>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={item.unitPrice || 0}
-                          onChange={(e) => {
-                            updateItem(index, "unitPrice", e.target.value);
-                          }}
-                          onBlur={() => handleItemBlur(index, "unitPrice")}
-                          disabled={
-                            orderStatus?.toLowerCase() === "đã duyệt" ||
-                            orderStatus?.toLowerCase() === "chờ xác nhận" ||
-                            orderStatus?.toLowerCase() === "đã nhận hàng"
-                          }
-                          readOnly={
-                            orderStatus?.toLowerCase() === "đã duyệt" ||
-                            orderStatus?.toLowerCase() === "chờ xác nhận" ||
-                            orderStatus?.toLowerCase() === "đã nhận hàng"
-                          }
-                        />
-                      </td>
-                      <td>{item.total.toLocaleString("vi-VN")} ₫</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn btn-outline-danger btn-sm"
-                          onClick={() => removeItem(index)}
-                          disabled={
-                            orderStatus?.toLowerCase() === "đã duyệt" ||
-                            orderStatus?.toLowerCase() === "chờ xác nhận"
-                          }
-                        >
-                          <i className="feather icon-x" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        <td>
+                          <input
+                            type="text"
+                            className="form-control text-end"
+                            value={formatCurrency(item.unitPrice)}
+                            onChange={(e) => {
+                              // Chỉ cho phép nhập số
+                              const rawInput = e.target.value.replace(
+                                /[^0-9]/g,
+                                ""
+                              );
+                              updateItem(index, "unitPrice", rawInput);
+                            }}
+                            onBlur={() => handleItemBlur(index, "unitPrice")}
+                            placeholder="0"
+                            disabled={
+                              orderStatus?.toLowerCase() === "đã duyệt" ||
+                              orderStatus?.toLowerCase() === "chờ xác nhận" ||
+                              orderStatus?.toLowerCase() === "đã nhận hàng"
+                            }
+                            readOnly={
+                              orderStatus?.toLowerCase() === "đã duyệt" ||
+                              orderStatus?.toLowerCase() === "chờ xác nhận" ||
+                              orderStatus?.toLowerCase() === "đã nhận hàng"
+                            }
+                          />
+                        </td>
+                        <td>{item.total.toLocaleString("vi-VN")} ₫</td>
+                        <td>
+                          <button
+                            type="button"
+                            className="btn btn-outline-danger btn-sm"
+                            onClick={() => removeItem(index)}
+                            disabled={
+                              orderStatus?.toLowerCase() === "đã duyệt" ||
+                              orderStatus?.toLowerCase() === "chờ xác nhận"
+                            }
+                          >
+                            <i className="feather icon-x" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
 
@@ -679,7 +739,8 @@ const EditPurchaseOrder = () => {
             <div className="row mb-4">
               <div className="col-md-6">
                 <label className="form-label">
-                  Ghi chú <small className="text-muted">(tối đa 500 ký tự)</small>
+                  Ghi chú{" "}
+                  <small className="text-muted">(tối đa 500 ký tự)</small>
                 </label>
                 <textarea
                   className="form-control"
@@ -705,9 +766,7 @@ const EditPurchaseOrder = () => {
                     orderStatus?.toLowerCase() === "chờ xác nhận"
                   }
                 />
-                <small className="text-muted">
-                  {notes.length}/500 ký tự
-                </small>
+                <small className="text-muted">{notes.length}/500 ký tự</small>
               </div>
               <div className="col-md-6">
                 <div className="d-flex flex-column align-items-end">
@@ -756,7 +815,7 @@ const EditPurchaseOrder = () => {
                 onClick={() => navigate(route.purchaseorders)}
               >
                 {orderStatus?.toLowerCase() === "đã hủy" ||
-                  orderStatus?.toLowerCase() === "đã nhận hàng"
+                orderStatus?.toLowerCase() === "đã nhận hàng"
                   ? "Quay lại"
                   : "Huỷ"}
               </button>
@@ -775,6 +834,7 @@ const EditPurchaseOrder = () => {
           </div>
         </form>
       </div>
+      <CommonFooter />
     </div>
   );
 };

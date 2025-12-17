@@ -355,6 +355,9 @@ const ImportExcelModal = ({
           "Đơn vị": 10,
           "Kích thước": 15,
           Barcode: 20,
+          "Tồn kho tối thiểu": 18,
+          "Tồn kho tối đa": 16,
+          "Điểm đặt hàng lại": 20,
         };
         const columnConfig = {
           width: widths[header] || 20,

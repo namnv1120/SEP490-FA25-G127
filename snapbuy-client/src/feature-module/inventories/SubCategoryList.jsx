@@ -173,60 +173,30 @@ const SubCategoryList = () => {
     }
   };
 
-  // Reset select-all checkbox và tất cả checkbox khi chuyển trang
-  useEffect(() => {
-    const selectAllCheckbox = document.getElementById("select-all");
-    if (selectAllCheckbox) {
-      selectAllCheckbox.checked = false;
-    }
-    const checkboxes = document.querySelectorAll(
-      '.table-list-card input[type="checkbox"][data-id]'
-    );
-    checkboxes.forEach((cb) => {
-      cb.checked = false;
-    });
-  }, [currentPage]);
-
-  // Handle select-all checkbox
-  useEffect(() => {
-    const selectAllCheckbox = document.getElementById("select-all");
-
-    const handleSelectAll = (e) => {
-      const checkboxes = document.querySelectorAll(
-        '.table-list-card input[type="checkbox"][data-id]'
-      );
-      checkboxes.forEach((cb) => {
-        cb.checked = e.target.checked;
-      });
-    };
-
-    if (selectAllCheckbox) {
-      selectAllCheckbox.addEventListener("change", handleSelectAll);
-    }
-
-    return () => {
-      if (selectAllCheckbox) {
-        selectAllCheckbox.removeEventListener("change", handleSelectAll);
-      }
-    };
-  }, [subCategories, currentPage]);
-
   const columns = [
     {
-      header: (
-        <label className="checkboxs">
-          <input type="checkbox" id="select-all" />
-          <span className="checkmarks" />
-        </label>
-      ),
+      header: "",
       body: (data) => (
-        <label className="checkboxs">
-          <input type="checkbox" data-id={data.categoryId} />
-          <span className="checkmarks" />
-        </label>
+        <div
+          className="d-flex align-items-center justify-content-center"
+          title={data.active ? "Đang hoạt động" : "Không hoạt động"}
+        >
+          {data.active ? (
+            <i
+              className="ti ti-circle-check-filled"
+              style={{ fontSize: "18px", color: "#28a745" }}
+            />
+          ) : (
+            <i
+              className="ti ti-circle-x-filled"
+              style={{ fontSize: "18px", color: "#dc3545" }}
+            />
+          )}
+        </div>
       ),
       sortable: false,
-      key: "checked",
+      key: "statusIcon",
+      style: { width: "50px", textAlign: "center" },
     },
     {
       header: "Tên danh mục con",

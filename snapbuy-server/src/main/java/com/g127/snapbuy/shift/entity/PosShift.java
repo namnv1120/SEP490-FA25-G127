@@ -24,11 +24,11 @@ public class PosShift {
     @Column(name = "shift_id", columnDefinition = "uniqueidentifier")
     private UUID shiftId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "opened_by_account_id")
     private Account openedBy;
 

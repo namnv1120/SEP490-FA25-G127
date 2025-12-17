@@ -5,7 +5,11 @@ import TableTopHead from "../../components/table-top-head";
 import CommonFooter from "../../components/footer/CommonFooter";
 import CommonSelect from "../../components/select/common-select";
 import CommonDateRangePicker from "../../components/date-range-picker/common-date-range-picker";
-import { getAllPromotions, togglePromotionStatus, deletePromotion } from "../../services/PromotionService";
+import {
+  getAllPromotions,
+  togglePromotionStatus,
+  deletePromotion,
+} from "../../services/PromotionService";
 import AddPromotionModal from "../../core/modals/promotions/AddPromotionModal";
 import EditPromotionModal from "../../core/modals/promotions/EditPromotionModal";
 import DeleteModal from "../../components/delete-modal";
@@ -71,8 +75,8 @@ const PromotionList = () => {
           status: isActive
             ? "Hoạt động"
             : isExpired
-              ? "Hết hạn"
-              : "Không hoạt động",
+            ? "Hết hạn"
+            : "Không hoạt động",
           active: isActive,
           isExpired: isExpired,
           originalActive: promo.active, // Lưu giá trị active gốc từ backend
@@ -121,7 +125,12 @@ const PromotionList = () => {
     }
 
     // Filter theo thời gian bắt đầu
-    if (startDateRange && Array.isArray(startDateRange) && startDateRange[0] && startDateRange[1]) {
+    if (
+      startDateRange &&
+      Array.isArray(startDateRange) &&
+      startDateRange[0] &&
+      startDateRange[1]
+    ) {
       const fromDate = new Date(startDateRange[0]);
       fromDate.setHours(0, 0, 0, 0);
       const fromTimestamp = fromDate.getTime();
@@ -139,7 +148,10 @@ const PromotionList = () => {
           promoStartDate.setHours(0, 0, 0, 0);
           const promoStartTimestamp = promoStartDate.getTime();
 
-          return promoStartTimestamp >= fromTimestamp && promoStartTimestamp <= toTimestamp;
+          return (
+            promoStartTimestamp >= fromTimestamp &&
+            promoStartTimestamp <= toTimestamp
+          );
         } catch (error) {
           console.error("Error filtering by start date range:", error, promo);
           return false;
@@ -148,7 +160,12 @@ const PromotionList = () => {
     }
 
     // Filter theo thời gian kết thúc
-    if (endDateRange && Array.isArray(endDateRange) && endDateRange[0] && endDateRange[1]) {
+    if (
+      endDateRange &&
+      Array.isArray(endDateRange) &&
+      endDateRange[0] &&
+      endDateRange[1]
+    ) {
       const fromDate = new Date(endDateRange[0]);
       fromDate.setHours(0, 0, 0, 0);
       const fromTimestamp = fromDate.getTime();
@@ -166,7 +183,10 @@ const PromotionList = () => {
           promoEndDate.setHours(0, 0, 0, 0);
           const promoEndTimestamp = promoEndDate.getTime();
 
-          return promoEndTimestamp >= fromTimestamp && promoEndTimestamp <= toTimestamp;
+          return (
+            promoEndTimestamp >= fromTimestamp &&
+            promoEndTimestamp <= toTimestamp
+          );
         } catch (error) {
           console.error("Error filtering by end date range:", error, promo);
           return false;
@@ -181,12 +201,25 @@ const PromotionList = () => {
 
     setFilteredPromotions(filtered);
     setTotalRecords(filtered.length);
-  }, [searchTerm, discountTypeFilter, startDateRange, endDateRange, statusFilter, promotions]);
+  }, [
+    searchTerm,
+    discountTypeFilter,
+    startDateRange,
+    endDateRange,
+    statusFilter,
+    promotions,
+  ]);
 
   // Reset page khi filter thay đổi
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, discountTypeFilter, startDateRange, endDateRange, statusFilter]);
+  }, [
+    searchTerm,
+    discountTypeFilter,
+    startDateRange,
+    endDateRange,
+    statusFilter,
+  ]);
 
   const handleRefresh = () => {
     setSearchTerm("");
@@ -243,7 +276,9 @@ const PromotionList = () => {
       setSelectedPromotion(null);
     } catch (err) {
       console.error("❌ Lỗi khi xoá khuyến mãi:", err);
-      const errorMsg = err.response?.data?.message || "Lỗi khi xoá khuyến mãi. Vui lòng thử lại.";
+      const errorMsg =
+        err.response?.data?.message ||
+        "Lỗi khi xoá khuyến mãi. Vui lòng thử lại.";
       message.error(errorMsg);
     }
   };
@@ -264,44 +299,6 @@ const PromotionList = () => {
     }
   };
 
-  // Reset select-all checkbox và tất cả checkbox khi chuyển trang
-  useEffect(() => {
-    const selectAllCheckbox = document.getElementById("select-all");
-    if (selectAllCheckbox) {
-      selectAllCheckbox.checked = false;
-    }
-    const checkboxes = document.querySelectorAll(
-      '.table-list-card input[type="checkbox"][data-id]'
-    );
-    checkboxes.forEach((cb) => {
-      cb.checked = false;
-    });
-  }, [currentPage]);
-
-  // Handle select-all checkbox
-  useEffect(() => {
-    const selectAllCheckbox = document.getElementById("select-all");
-
-    const handleSelectAll = (e) => {
-      const checkboxes = document.querySelectorAll(
-        '.table-list-card input[type="checkbox"][data-id]'
-      );
-      checkboxes.forEach((cb) => {
-        cb.checked = e.target.checked;
-      });
-    };
-
-    if (selectAllCheckbox) {
-      selectAllCheckbox.addEventListener("change", handleSelectAll);
-    }
-
-    return () => {
-      if (selectAllCheckbox) {
-        selectAllCheckbox.removeEventListener("change", handleSelectAll);
-      }
-    };
-  }, [filteredPromotions, currentPage]);
-
   const DiscountTypeOptions = [
     { value: null, label: "Tất cả" },
     { value: "Giảm theo phần trăm", label: "Giảm theo phần trăm" },
@@ -317,20 +314,34 @@ const PromotionList = () => {
 
   const columns = [
     {
-      header: (
-        <label className="checkboxs">
-          <input type="checkbox" id="select-all" />
-          <span className="checkmarks" />
-        </label>
-      ),
-      body: (data) => (
-        <label className="checkboxs">
-          <input type="checkbox" data-id={data.promotionId} />
-          <span className="checkmarks" />
-        </label>
-      ),
+      header: "",
+      body: (data) => {
+        let icon, color, title;
+        if (data.isExpired) {
+          icon = "ti-clock-off";
+          color = "#ffc107";
+          title = "Hết hạn";
+        } else if (data.active) {
+          icon = "ti-circle-check-filled";
+          color = "#28a745";
+          title = "Đang hoạt động";
+        } else {
+          icon = "ti-circle-x-filled";
+          color = "#dc3545";
+          title = "Không hoạt động";
+        }
+        return (
+          <div
+            className="d-flex align-items-center justify-content-center"
+            title={title}
+          >
+            <i className={`ti ${icon}`} style={{ fontSize: "18px", color }} />
+          </div>
+        );
+      },
       sortable: false,
-      key: "checked",
+      key: "statusIcon",
+      style: { width: "50px", textAlign: "center" },
     },
     {
       header: "Tên khuyến mãi",
@@ -375,12 +386,13 @@ const PromotionList = () => {
       body: (rowData) => (
         <div className="d-flex align-items-center gap-2">
           <span
-            className={`badge fw-medium fs-10 ${rowData.active
-              ? "bg-success"
-              : rowData.isExpired
+            className={`badge fw-medium fs-10 ${
+              rowData.active
+                ? "bg-success"
+                : rowData.isExpired
                 ? "bg-warning"
                 : "bg-danger"
-              }`}
+            }`}
           >
             {rowData.status}
           </span>
@@ -436,10 +448,7 @@ const PromotionList = () => {
                 <h6>Quản lý danh sách khuyến mãi</h6>
               </div>
             </div>
-            <TableTopHead
-              showExcel={false}
-              onRefresh={handleRefresh}
-            />
+            <TableTopHead showExcel={false} onRefresh={handleRefresh} />
             <div className="page-btn">
               <button
                 type="button"
@@ -543,9 +552,8 @@ const PromotionList = () => {
                   <CommonSelect
                     options={StatusOptions}
                     value={
-                      StatusOptions.find(
-                        (o) => o.value === statusFilter
-                      ) || StatusOptions[0]
+                      StatusOptions.find((o) => o.value === statusFilter) ||
+                      StatusOptions[0]
                     }
                     onChange={(s) => {
                       const v = s?.value;

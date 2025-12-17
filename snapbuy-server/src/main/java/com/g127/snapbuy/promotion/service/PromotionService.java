@@ -8,6 +8,7 @@ import com.g127.snapbuy.promotion.dto.response.PromotionResponse;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface PromotionService {
@@ -21,6 +22,7 @@ public interface PromotionService {
 
     BigDecimal computeBestDiscountPercent(UUID productId, BigDecimal unitPrice, LocalDateTime at);
     DiscountInfoResponse computeBestDiscountInfo(UUID productId, BigDecimal unitPrice, LocalDateTime at);
+    Map<UUID, DiscountInfoResponse> computeBatchDiscountInfo(List<UUID> productIds, Map<UUID, BigDecimal> priceMap, LocalDateTime at);
 }
 
 

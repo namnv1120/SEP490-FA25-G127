@@ -73,6 +73,24 @@ export const getBestDiscountInfoForProduct = async (productId, unitPrice) => {
   }
 };
 
+// Lấy thông tin giảm giá cho nhiều sản phẩm cùng lúc (batch)
+export const getBatchDiscountInfo = async (products) => {
+  try {
+    if (!products || products.length === 0) {
+      return {};
+    }
+    const response = await axios.post(
+      `${REST_API_BASE_URL}/batch-discount-info`,
+      { products },
+      getAuthHeaders()
+    );
+    return response.data?.result || {};
+  } catch (error) {
+    console.error("Error getting batch discount info:", error);
+    return {};
+  }
+};
+
 // Xóa khuyến mãi (nếu backend có API này)
 export const deletePromotion = async (id) => {
   const response = await axios.delete(

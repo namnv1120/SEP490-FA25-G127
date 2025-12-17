@@ -34,18 +34,10 @@ public class LocationController {
     @GetMapping("/provinces")
     public ResponseEntity<?> getProvinces() {
         try {
-            log.info("Fetching 34 provinces from 34tinhthanh.com API");
             String url = LOCATION_API_BASE_URL + "/provinces";
-            log.info("Calling URL: {}", url);
-            
             Object response = restTemplate.getForObject(url, Object.class);
-            
-            log.info("Successfully received response from API");
             return ResponseEntity.ok(response);
         } catch (RestClientException e) {
-            log.error("RestClientException when fetching provinces: {}", e.getMessage());
-            log.error("Exception type: {}", e.getClass().getName());
-            log.error("Full stack trace:", e);
             return ResponseEntity.status(502).body("Failed to fetch provinces: " + e.getMessage());
         } catch (Exception e) {
             log.error("Unexpected error fetching provinces: {}", e.getMessage(), e);
@@ -61,7 +53,6 @@ public class LocationController {
     @GetMapping("/wards/{provinceCode}")
     public ResponseEntity<?> getWardsByProvince(@PathVariable String provinceCode) {
         try {
-            log.info("Fetching wards for province code: {}", provinceCode);
             String url = LOCATION_API_BASE_URL + "/wards?province_code=" + provinceCode;
             Object response = restTemplate.getForObject(url, Object.class);
             return ResponseEntity.ok(response);

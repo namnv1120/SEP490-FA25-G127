@@ -32,6 +32,7 @@ const AdminSidebar = () => {
           icon: <FaChartLine />,
           label: "Phân Tích",
           badge: null,
+          disabled: true,
         },
       ],
     },

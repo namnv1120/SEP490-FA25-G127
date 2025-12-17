@@ -2,6 +2,7 @@ package com.g127.snapbuy.promotion.controller;
 
 import com.g127.snapbuy.order.dto.response.DiscountInfoResponse;
 import com.g127.snapbuy.common.response.ApiResponse;
+import com.g127.snapbuy.promotion.dto.request.BatchDiscountInfoRequest;
 import com.g127.snapbuy.promotion.dto.request.PromotionCreateRequest;
 import com.g127.snapbuy.promotion.dto.request.PromotionUpdateRequest;
 import com.g127.snapbuy.promotion.dto.response.PromotionResponse;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -77,6 +79,32 @@ public class PromotionController {
     public ApiResponse<DiscountInfoResponse> getBestDiscountInfo(@PathVariable UUID productId, @RequestParam BigDecimal unitPrice) {
         ApiResponse<DiscountInfoResponse> response = new ApiResponse<>();
         response.setResult(promotionService.computeBestDiscountInfo(productId, unitPrice, LocalDateTime.now()));
+        return response;
+    }
+
+    @PostMapping("/batch-discount-info")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng','Nhân viên bán hàng')")
+    public ApiResponse<Map<String, DiscountInfoResponse>> getBatchDiscountInfo(
+            @RequestBody BatchDiscountInfoRequest request) {
+        List<UUID> productIds = request.getProducts().stream()
+                .map(BatchDiscountInfoRequest.ProductPriceItem::getProductId)
+                .toList();
+        Map<UUID, BigDecimal> priceMap = request.getProducts().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        BatchDiscountInfoRequest.ProductPriceItem::getProductId,
+                        BatchDiscountInfoRequest.ProductPriceItem::getUnitPrice,
+                        (existing, replacement) -> existing
+                ));
+        Map<UUID, DiscountInfoResponse> resultMap = promotionService.computeBatchDiscountInfo(
+                productIds, priceMap, LocalDateTime.now());
+        // Convert UUID keys to String for JSON serialization
+        Map<String, DiscountInfoResponse> stringKeyMap = resultMap.entrySet().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        e -> e.getKey().toString(),
+                        Map.Entry::getValue
+                ));
+        ApiResponse<Map<String, DiscountInfoResponse>> response = new ApiResponse<>();
+        response.setResult(stringKeyMap);
         return response;
     }
 

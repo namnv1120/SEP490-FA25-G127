@@ -24,7 +24,7 @@ public class ShiftCashDenomination {
     @Column(name = "id", columnDefinition = "uniqueidentifier")
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "shift_id", nullable = false)
     private PosShift shift;
 

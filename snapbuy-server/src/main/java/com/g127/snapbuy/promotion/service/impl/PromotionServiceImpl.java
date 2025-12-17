@@ -170,8 +170,7 @@ public class PromotionServiceImpl implements PromotionService {
 
     @Scheduled(cron = "0 0 * * * *")
     public void scheduledDeactivateExpired() {
-        log.info("Starting scheduled deactivation of expired promotions for all tenants");
-        
+
         // Lấy danh sách tất cả các tenant active
         List<Tenant> tenants = tenantRepository.findAll().stream()
                 .filter(Tenant::getIsActive)
@@ -181,9 +180,6 @@ public class PromotionServiceImpl implements PromotionService {
             try {
                 // Set tenant context cho mỗi tenant (sử dụng tenantId UUID thay vì tenantCode)
                 TenantContext.setCurrentTenant(tenant.getTenantId().toString());
-                log.info("Processing expired promotions for tenant: {} (ID: {})", 
-                        tenant.getTenantCode(), tenant.getTenantId());
-                
                 // Thực hiện deactivate expired promotions
                 deactivateExpired();
                 
@@ -194,8 +190,7 @@ public class PromotionServiceImpl implements PromotionService {
                 TenantContext.clear();
             }
         }
-        
-        log.info("Completed scheduled deactivation of expired promotions for all tenants");
+
     }
 
     @Override
@@ -283,6 +278,93 @@ public class PromotionServiceImpl implements PromotionService {
                 .discountValue(totalDiscountAmount) // Tổng số tiền giảm
                 .discountPercent(discountPercent.setScale(2, RoundingMode.HALF_UP))
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<UUID, DiscountInfoResponse> computeBatchDiscountInfo(List<UUID> productIds, Map<UUID, BigDecimal> priceMap, LocalDateTime at) {
+        if (productIds == null || productIds.isEmpty()) {
+            return Map.of();
+        }
+
+        // Fetch ALL active promotions with their products in ONE query
+        List<Promotion> allActivePromotions = promotionRepository.findAllWithProducts().stream()
+                .filter(p -> p.getActive() != null && p.getActive())
+                .filter(p -> p.getStartDate() != null && !at.isBefore(p.getStartDate()))
+                .filter(p -> p.getEndDate() != null && !at.isAfter(p.getEndDate()))
+                .toList();
+
+        // Build a map: productId -> List<Promotion> applicable to that product
+        Map<UUID, List<Promotion>> promotionsByProduct = new HashMap<>();
+        for (Promotion promo : allActivePromotions) {
+            if (promo.getProducts() != null) {
+                for (var product : promo.getProducts()) {
+                    UUID prodId = product.getProductId();
+                    if (productIds.contains(prodId)) {
+                        promotionsByProduct.computeIfAbsent(prodId, k -> new ArrayList<>()).add(promo);
+                    }
+                }
+            }
+        }
+
+        // Calculate discount for each product
+        Map<UUID, DiscountInfoResponse> result = new HashMap<>();
+        for (UUID productId : productIds) {
+            BigDecimal unitPrice = priceMap.getOrDefault(productId, BigDecimal.ZERO);
+            List<Promotion> promos = promotionsByProduct.getOrDefault(productId, List.of());
+            
+            if (promos.isEmpty()) {
+                result.put(productId, DiscountInfoResponse.builder()
+                        .discountType(null)
+                        .discountValue(BigDecimal.ZERO)
+                        .discountPercent(BigDecimal.ZERO)
+                        .build());
+                continue;
+            }
+
+            // Calculate total discount (same logic as computeBestDiscountInfo)
+            BigDecimal totalDiscountAmount = BigDecimal.ZERO;
+            for (Promotion p : promos) {
+                BigDecimal discountAmount = BigDecimal.ZERO;
+                switch (p.getDiscountType()) {
+                    case PERCENT -> {
+                        if (p.getDiscountValue() != null && unitPrice != null) {
+                            discountAmount = unitPrice.multiply(p.getDiscountValue())
+                                    .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+                        }
+                    }
+                    case FIXED -> {
+                        if (p.getDiscountValue() != null) {
+                            discountAmount = p.getDiscountValue();
+                        }
+                    }
+                }
+                totalDiscountAmount = totalDiscountAmount.add(discountAmount);
+            }
+
+            // Cap at unit price
+            if (unitPrice != null && totalDiscountAmount.compareTo(unitPrice) > 0) {
+                totalDiscountAmount = unitPrice;
+            }
+
+            // Calculate equivalent percent
+            BigDecimal discountPercent = BigDecimal.ZERO;
+            if (unitPrice != null && unitPrice.compareTo(BigDecimal.ZERO) > 0) {
+                discountPercent = totalDiscountAmount.divide(unitPrice, 4, RoundingMode.HALF_UP)
+                        .multiply(BigDecimal.valueOf(100));
+                if (discountPercent.compareTo(BigDecimal.valueOf(100)) > 0) {
+                    discountPercent = BigDecimal.valueOf(100);
+                }
+            }
+
+            result.put(productId, DiscountInfoResponse.builder()
+                    .discountType(null)
+                    .discountValue(totalDiscountAmount)
+                    .discountPercent(discountPercent.setScale(2, RoundingMode.HALF_UP))
+                    .build());
+        }
+
+        return result;
     }
 
     private Set<Product> resolveProducts(List<UUID> productIds) {

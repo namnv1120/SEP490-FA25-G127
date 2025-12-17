@@ -17,35 +17,26 @@ const TenantValidator = ({ children }) => {
 
   useEffect(() => {
     const validateTenant = async () => {
-      console.log("🔍 TenantValidator - Tenant Info:", tenantInfo);
-
       // Nếu là admin hoặc đang ở localhost (không có subdomain), skip validation
       if (tenantInfo.isAdmin || !tenantInfo.tenantSlug) {
-        console.log("✅ Skipping validation (admin or no subdomain)");
         setIsValid(true);
         setIsValidating(false);
         return;
       }
-
-      console.log("🌐 Validating tenant:", tenantInfo.tenantSlug);
 
       try {
         const result = await TenantService.validateTenant(
           tenantInfo.tenantSlug
         );
 
-        console.log("📡 Validation result:", result);
-
         if (result.success) {
           // Tenant hợp lệ, lưu thông tin vào localStorage
-          console.log("✅ Tenant valid:", result.data);
           localStorage.setItem("tenantId", result.data.tenantId);
           localStorage.setItem("tenantCode", result.data.tenantCode);
           localStorage.setItem("tenantName", result.data.tenantName);
           setIsValid(true);
         } else {
           // Tenant không tồn tại
-          console.log("❌ Tenant invalid:", result.error);
           setIsValid(false);
           setErrorMessage(
             result.error || "Cửa hàng không tồn tại hoặc đã bị vô hiệu hóa"

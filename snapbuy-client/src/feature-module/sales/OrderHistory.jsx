@@ -23,6 +23,7 @@ const OrderHistory = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [_actionLoading, setActionLoading] = useState(false);
+  const [selectedCount, setSelectedCount] = useState(0); // Track selected checkboxes
 
   const OrderStatuses = [
     { value: "", label: "Tất cả" },
@@ -268,6 +269,14 @@ const OrderHistory = () => {
     return map[key] || { class: "bg-secondary", text: status || "Không rõ" };
   };
 
+  // Update selected count when checkbox changes
+  const updateSelectedCount = () => {
+    const checkedCount = document.querySelectorAll(
+      '.table-list-card input[type="checkbox"][data-id]:checked'
+    ).length;
+    setSelectedCount(checkedCount);
+  };
+
   // Reset select-all checkbox và tất cả checkbox khi chuyển trang
   useEffect(() => {
     const selectAllCheckbox = document.getElementById("select-all");
@@ -281,6 +290,7 @@ const OrderHistory = () => {
     checkboxes.forEach((cb) => {
       cb.checked = false;
     });
+    setSelectedCount(0); // Reset count when page changes
   }, [currentPage]);
 
   // Handle select-all checkbox (giống PurchaseOrder.jsx)
@@ -294,17 +304,29 @@ const OrderHistory = () => {
       checkboxes.forEach((cb) => {
         cb.checked = e.target.checked;
       });
+      updateSelectedCount(); // Update count after select all
     };
 
     if (selectAllCheckbox) {
       selectAllCheckbox.addEventListener("change", handleSelectAll);
     }
 
+    // Add change listener to individual checkboxes
+    const checkboxes = document.querySelectorAll(
+      '.table-list-card input[type="checkbox"][data-id]'
+    );
+    checkboxes.forEach((cb) => {
+      cb.addEventListener("change", updateSelectedCount);
+    });
+
     // Cleanup function to remove event listener
     return () => {
       if (selectAllCheckbox) {
         selectAllCheckbox.removeEventListener("change", handleSelectAll);
       }
+      checkboxes.forEach((cb) => {
+        cb.removeEventListener("change", updateSelectedCount);
+      });
     };
   }, [filteredData, currentPage]);
 
@@ -607,6 +629,18 @@ const OrderHistory = () => {
             showExcel={false}
             showMail={false}
           />
+          {selectedCount > 0 && (
+            <div className="page-btn">
+              <button
+                type="button"
+                className="btn btn-danger d-flex align-items-center gap-1"
+                onClick={_handleCancelOrders}
+              >
+                <i className="ti ti-x" />
+                Hủy ({selectedCount})
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Bộ lọc */}

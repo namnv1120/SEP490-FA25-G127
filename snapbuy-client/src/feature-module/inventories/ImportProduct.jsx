@@ -228,6 +228,61 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
         }
       }
 
+      // Validate Inventory Settings
+      const minimumStockStr = String(row.minimumStock || "").trim();
+      const maximumStockStr = String(row.maximumStock || "").trim();
+      const reorderPointStr = String(row.reorderPoint || "").trim();
+
+      let minimumStock = 0;
+      let maximumStock = 0;
+      let reorderPoint = 0;
+
+      if (minimumStockStr) {
+        minimumStock = Number(minimumStockStr);
+        if (isNaN(minimumStock) || minimumStock < 0) {
+          rowErrors.push("Tồn kho tối thiểu phải là số >= 0");
+        }
+      }
+
+      if (maximumStockStr) {
+        maximumStock = Number(maximumStockStr);
+        if (isNaN(maximumStock) || maximumStock < 0) {
+          rowErrors.push("Tồn kho tối đa phải là số >= 0");
+        }
+      }
+
+      if (reorderPointStr) {
+        reorderPoint = Number(reorderPointStr);
+        if (isNaN(reorderPoint) || reorderPoint < 0) {
+          rowErrors.push("Điểm đặt hàng lại phải là số >= 0");
+        }
+      }
+
+      // Validate relationships between inventory values
+      if (
+        minimumStock > 0 &&
+        maximumStock > 0 &&
+        minimumStock >= maximumStock
+      ) {
+        rowErrors.push("Tồn kho tối thiểu phải nhỏ hơn tồn kho tối đa");
+      }
+
+      if (
+        reorderPoint > 0 &&
+        minimumStock > 0 &&
+        reorderPoint <= minimumStock
+      ) {
+        rowErrors.push("Điểm đặt hàng lại phải lớn hơn tồn kho tối thiểu");
+      }
+
+      if (
+        reorderPoint > 0 &&
+        maximumStock > 0 &&
+        reorderPoint >= maximumStock
+      ) {
+        rowErrors.push("Điểm đặt hàng lại phải nhỏ hơn tồn kho tối đa");
+      }
+
       // Validate Supplier matching
       if (supplierCode && supplierName) {
         const supplierByCode = suppliersData.find(
@@ -372,6 +427,24 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       width: 150,
     },
     {
+      title: "Tồn kho tối thiểu",
+      dataIndex: "minimumStock",
+      key: "minimumStock",
+      width: 130,
+    },
+    {
+      title: "Tồn kho tối đa",
+      dataIndex: "maximumStock",
+      key: "maximumStock",
+      width: 130,
+    },
+    {
+      title: "Điểm đặt hàng lại",
+      dataIndex: "reorderPoint",
+      key: "reorderPoint",
+      width: 140,
+    },
+    {
       title: "Lỗi",
       dataIndex: "error",
       key: "error",
@@ -398,6 +471,9 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       unit: row["Đơn vị"] || "",
       dimensions: row["Kích thước"] || "",
       barcode: row["Barcode"] || "",
+      minimumStock: row["Tồn kho tối thiểu"] ?? 0,
+      maximumStock: row["Tồn kho tối đa"] ?? 0,
+      reorderPoint: row["Điểm đặt hàng lại"] ?? 0,
     };
   };
 
@@ -413,6 +489,9 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       "Đơn vị": "Cái",
       "Kích thước": "15x7x0.8",
       Barcode: "1234567890123",
+      "Tồn kho tối thiểu": 10,
+      "Tồn kho tối đa": 100,
+      "Điểm đặt hàng lại": 20,
     },
     {
       "Mã sản phẩm": "PRD002",
@@ -425,6 +504,9 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       "Đơn vị": "Cái",
       "Kích thước": "15x7x0.8",
       Barcode: "9876543210987",
+      "Tồn kho tối thiểu": 5,
+      "Tồn kho tối đa": 50,
+      "Điểm đặt hàng lại": 15,
     },
   ];
 
@@ -472,6 +554,21 @@ const ImportProduct = ({ visible, onClose, onImport }) => {
       Cột: "Barcode",
       "Quy tắc":
         "Tùy chọn. Tối đa 50 ký tự. Chỉ chứa chữ và số. Không được trùng với barcode đã có trong hệ thống.",
+    },
+    {
+      Cột: "Tồn kho tối thiểu",
+      "Quy tắc":
+        "Tùy chọn. Số >= 0. Mặc định là 0. Phải nhỏ hơn tồn kho tối đa.",
+    },
+    {
+      Cột: "Tồn kho tối đa",
+      "Quy tắc":
+        "Tùy chọn. Số >= 0. Mặc định là 0. Phải lớn hơn tồn kho tối thiểu.",
+    },
+    {
+      Cột: "Điểm đặt hàng lại",
+      "Quy tắc":
+        "Tùy chọn. Số >= 0. Mặc định là 0. Phải lớn hơn tồn kho tối thiểu và nhỏ hơn tồn kho tối đa.",
     },
     { Cột: "", "Quy tắc": "" },
     {

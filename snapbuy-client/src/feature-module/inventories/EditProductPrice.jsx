@@ -33,6 +33,21 @@ const EditProductPrice = () => {
 
   const [errors, setErrors] = useState({});
 
+  // Format số thành tiền Việt (với dấu chấm phân cách hàng nghìn)
+  const formatCurrency = (value) => {
+    if (value === "" || value === null || value === undefined) return "";
+    const num = parseFloat(String(value).replace(/\./g, "").replace(/,/g, ""));
+    if (isNaN(num)) return "";
+    return num.toLocaleString("vi-VN");
+  };
+
+  // Parse chuỗi tiền Việt thành số
+  const parseCurrency = (value) => {
+    if (value === "" || value === null || value === undefined) return 0;
+    const num = parseFloat(String(value).replace(/\./g, "").replace(/,/g, ""));
+    return isNaN(num) ? 0 : num;
+  };
+
   const fetchProducts = useCallback(async () => {
     try {
       setLoadingProducts(true);
@@ -63,8 +78,8 @@ const EditProductPrice = () => {
         costPrice: data.costPrice || "",
       });
       setInputValues({
-        unitPrice: (data.unitPrice || "").toString(),
-        costPrice: (data.costPrice || "").toString(),
+        unitPrice: formatCurrency(data.unitPrice || 0),
+        costPrice: formatCurrency(data.costPrice || 0),
       });
     } catch (error) {
       console.error("❌ Lỗi khi tải thông tin giá sản phẩm:", error);
@@ -84,22 +99,18 @@ const EditProductPrice = () => {
     const { name, value } = e.target;
 
     if (name === "unitPrice" || name === "costPrice") {
-      // Cho phép xóa hết hoặc nhập số
-      if (value === "" || value === "-") {
-        setInputValues((prev) => ({
-          ...prev,
-          [name]: value,
-        }));
-        return;
-      }
+      // Chỉ cho phép nhập số
+      const rawInput = value.replace(/[^0-9]/g, "");
+      const numValue = parseCurrency(rawInput);
 
-      const numValue = parseFloat(value);
-      if (!isNaN(numValue) && numValue >= 0) {
-        setInputValues((prev) => ({
-          ...prev,
-          [name]: value,
-        }));
-      }
+      setInputValues((prev) => ({
+        ...prev,
+        [name]: formatCurrency(numValue),
+      }));
+      setFormData((prev) => ({
+        ...prev,
+        [name]: numValue,
+      }));
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -119,7 +130,8 @@ const EditProductPrice = () => {
     const value = inputValues[name];
 
     // Nếu trống hoặc không hợp lệ, set về 0
-    if (value === "" || value === "-" || isNaN(parseFloat(value))) {
+    const numValue = parseCurrency(value);
+    if (numValue === 0 || isNaN(numValue)) {
       setFormData((prev) => ({
         ...prev,
         [name]: 0,
@@ -131,7 +143,6 @@ const EditProductPrice = () => {
       return;
     }
 
-    const numValue = parseFloat(value);
     const finalValue = Math.max(0, numValue);
 
     setFormData((prev) => ({
@@ -140,7 +151,7 @@ const EditProductPrice = () => {
     }));
     setInputValues((prev) => ({
       ...prev,
-      [name]: finalValue.toString(),
+      [name]: formatCurrency(finalValue),
     }));
   };
 
@@ -189,7 +200,7 @@ const EditProductPrice = () => {
     } catch (error) {
       message.error(
         error.response?.data?.message ||
-        "Lỗi khi cập nhật giá sản phẩm. Vui lòng thử lại."
+          "Lỗi khi cập nhật giá sản phẩm. Vui lòng thử lại."
       );
     } finally {
       setLoading(false);
@@ -246,8 +257,9 @@ const EditProductPrice = () => {
                           Sản phẩm <span className="text-danger">*</span>
                         </label>
                         <select
-                          className={`form-control ${errors.productId ? "is-invalid" : ""
-                            }`}
+                          className={`form-control ${
+                            errors.productId ? "is-invalid" : ""
+                          }`}
                           name="productId"
                           value={formData.productId}
                           onChange={handleChange}
@@ -259,7 +271,10 @@ const EditProductPrice = () => {
                               : "Chọn sản phẩm"}
                           </option>
                           {products.map((product) => (
-                            <option key={product.productId} value={product.productId}>
+                            <option
+                              key={product.productId}
+                              value={product.productId}
+                            >
                               {product.productName}
                             </option>
                           ))}
@@ -282,13 +297,14 @@ const EditProductPrice = () => {
                         </label>
                         <input
                           type="text"
-                          className={`form-control ${errors.unitPrice ? "is-invalid" : ""
-                            }`}
+                          className={`form-control text-end ${
+                            errors.unitPrice ? "is-invalid" : ""
+                          }`}
                           name="unitPrice"
                           value={inputValues.unitPrice}
                           onChange={handleChange}
                           onBlur={() => handlePriceBlur("unitPrice")}
-                          placeholder="Nhập giá bán"
+                          placeholder="0"
                         />
                         {errors.unitPrice && (
                           <div className="invalid-feedback">
@@ -305,13 +321,14 @@ const EditProductPrice = () => {
                         </label>
                         <input
                           type="text"
-                          className={`form-control ${errors.costPrice ? "is-invalid" : ""
-                            }`}
+                          className={`form-control text-end ${
+                            errors.costPrice ? "is-invalid" : ""
+                          }`}
                           name="costPrice"
                           value={inputValues.costPrice}
                           onChange={handleChange}
                           onBlur={() => handlePriceBlur("costPrice")}
-                          placeholder="Nhập giá nhập"
+                          placeholder="0"
                         />
                         {errors.costPrice && (
                           <div className="invalid-feedback">

@@ -8,6 +8,7 @@ import { getProductsBySupplierId } from "../../services/ProductService";
 import { createPurchaseOrder } from "../../services/PurchaseOrderService";
 import RefreshIcon from "../../components/tooltip-content/refresh";
 import CollapesIcon from "../../components/tooltip-content/collapes";
+import CommonFooter from "../../components/footer/CommonFooter";
 
 const AddPurchaseOrder = () => {
   const navigate = useNavigate();
@@ -66,33 +67,65 @@ const AddPurchaseOrder = () => {
     fetchProducts();
   }, [selectedSupplier]);
 
+  // Format số thành tiền Việt (với dấu chấm phân cách hàng nghìn)
+  const formatCurrency = (value) => {
+    if (value === "" || value === null || value === undefined) return "";
+    const num = parseFloat(String(value).replace(/\./g, "").replace(/,/g, ""));
+    if (isNaN(num)) return "";
+    return num.toLocaleString("vi-VN");
+  };
+
+  // Parse chuỗi tiền Việt thành số
+  const parseCurrency = (value) => {
+    if (value === "" || value === null || value === undefined) return 0;
+    const num = parseFloat(String(value).replace(/\./g, "").replace(/,/g, ""));
+    return isNaN(num) ? 0 : num;
+  };
+
   const updateItem = (index, field, value) => {
     const newItems = [...items];
     const currentItem = newItems[index];
 
     if (field === "product" && value) {
       // Kiểm tra xem có phải chọn lại cùng một sản phẩm không
-      const isSameProduct = currentItem.product && currentItem.product.value === value.value;
+      const isSameProduct =
+        currentItem.product && currentItem.product.value === value.value;
 
       // Nếu chọn lại cùng sản phẩm và đơn giá đã được chỉnh sửa (khác 0 và khác giá mặc định), giữ lại giá đó
       // Nếu chọn sản phẩm khác hoặc đơn giá là 0, map giá mới
-      if (isSameProduct && currentItem.unitPrice > 0 && currentItem.unitPrice !== value.unitPrice) {
+      if (
+        isSameProduct &&
+        currentItem.unitPrice > 0 &&
+        currentItem.unitPrice !== value.unitPrice
+      ) {
         // Giữ lại giá đã chỉnh sửa
         newItems[index] = { ...currentItem, product: value };
       } else {
         // Map giá mới
-        newItems[index] = { ...currentItem, product: value, unitPrice: value.unitPrice };
+        newItems[index] = {
+          ...currentItem,
+          product: value,
+          unitPrice: value.unitPrice,
+        };
       }
       // Tính lại tổng tiền
       const priceToUse = newItems[index].unitPrice;
       newItems[index].total = newItems[index].quantity * priceToUse;
     } else {
-      newItems[index] = { ...currentItem, [field]: value };
-
-      if (field === "quantity" || field === "unitPrice") {
+      if (field === "unitPrice") {
+        // Xử lý đặc biệt cho unitPrice - parse từ chuỗi format
+        const rawValue = parseCurrency(value);
+        newItems[index] = { ...currentItem, unitPrice: rawValue };
         const qty = parseFloat(newItems[index].quantity || 0);
-        const price = parseFloat(newItems[index].unitPrice || 0);
-        newItems[index].total = qty * price;
+        newItems[index].total = qty * rawValue;
+      } else {
+        newItems[index] = { ...currentItem, [field]: value };
+
+        if (field === "quantity") {
+          const qty = parseFloat(newItems[index].quantity || 0);
+          const price = parseFloat(newItems[index].unitPrice || 0);
+          newItems[index].total = qty * price;
+        }
       }
     }
 
@@ -119,7 +152,10 @@ const AddPurchaseOrder = () => {
   };
 
   const addItem = () => {
-    setItems([...items, { product: null, quantity: 1, unitPrice: 0, total: 0 }]);
+    setItems([
+      ...items,
+      { product: null, quantity: 1, unitPrice: 0, total: 0 },
+    ]);
   };
 
   const removeItem = (index) => {
@@ -133,7 +169,6 @@ const AddPurchaseOrder = () => {
 
   const subtotal = items.reduce((sum, i) => sum + (i.total || 0), 0);
   const totalAmount = subtotal + subtotal * (parseFloat(taxAmount || 0) / 100);
-
 
   // ✅ Submit form
   const handleSubmit = async (e) => {
@@ -164,7 +199,9 @@ const AddPurchaseOrder = () => {
 
     // Validate notes length
     if (notes && notes.length > 500) {
-      message.error("Ghi chú không được vượt quá 500 ký tự. Vui lòng rút ngắn ghi chú.");
+      message.error(
+        "Ghi chú không được vượt quá 500 ký tự. Vui lòng rút ngắn ghi chú."
+      );
       return;
     }
 
@@ -239,7 +276,7 @@ const AddPurchaseOrder = () => {
                   ]);
                 }}
                 placeholder="Chọn nhà cung cấp"
-                width={350}
+                width={400}
               />
             </div>
 
@@ -256,51 +293,71 @@ const AddPurchaseOrder = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item, index) => (
-                    <tr key={index}>
-                      <td>
-                        <CommonSelect
-                          options={products}
-                          value={item.product}
-                          onChange={(opt) => updateItem(index, "product", opt)}
-                          placeholder="Chọn sản phẩm"
-                          width={350}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={item.quantity}
-                          onChange={(e) =>
-                            updateItem(index, "quantity", e.target.value)
-                          }
-                          onBlur={() => handleItemBlur(index, "quantity")}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={item.unitPrice}
-                          onChange={(e) =>
-                            updateItem(index, "unitPrice", e.target.value)
-                          }
-                          onBlur={() => handleItemBlur(index, "unitPrice")}
-                        />
-                      </td>
-                      <td>{item.total.toLocaleString("vi-VN")} ₫</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn btn-outline-danger btn-sm"
-                          onClick={() => removeItem(index)}
-                        >
-                          <i className="feather icon-x" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {items.map((item, index) => {
+                    // Lọc bỏ những sản phẩm đã được chọn ở các dòng khác
+                    const selectedProductIds = items
+                      .filter((_, i) => i !== index) // Loại trừ dòng hiện tại
+                      .filter((i) => i.product?.value) // Lọc những dòng đã chọn sản phẩm
+                      .map((i) => i.product.value);
+
+                    const availableProducts = products.filter(
+                      (p) => !selectedProductIds.includes(p.value)
+                    );
+
+                    return (
+                      <tr key={index}>
+                        <td>
+                          <CommonSelect
+                            options={availableProducts}
+                            value={item.product}
+                            onChange={(opt) =>
+                              updateItem(index, "product", opt)
+                            }
+                            placeholder="Chọn sản phẩm"
+                            width={400}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={item.quantity}
+                            onChange={(e) =>
+                              updateItem(index, "quantity", e.target.value)
+                            }
+                            onBlur={() => handleItemBlur(index, "quantity")}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            className="form-control text-end"
+                            value={formatCurrency(item.unitPrice)}
+                            onChange={(e) => {
+                              // Chỉ cho phép nhập số và dấu chấm
+                              const rawInput = e.target.value.replace(
+                                /[^0-9]/g,
+                                ""
+                              );
+                              updateItem(index, "unitPrice", rawInput);
+                            }}
+                            onBlur={() => handleItemBlur(index, "unitPrice")}
+                            placeholder="0"
+                          />
+                        </td>
+                        <td>{item.total.toLocaleString("vi-VN")} ₫</td>
+                        <td>
+                          <button
+                            type="button"
+                            className="btn btn-outline-danger btn-sm"
+                            onClick={() => removeItem(index)}
+                          >
+                            <i className="feather icon-x" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
 
@@ -317,7 +374,8 @@ const AddPurchaseOrder = () => {
             <div className="row mb-4">
               <div className="col-md-6">
                 <label className="form-label">
-                  Ghi chú <small className="text-muted">(tối đa 500 ký tự)</small>
+                  Ghi chú{" "}
+                  <small className="text-muted">(tối đa 500 ký tự)</small>
                 </label>
                 <textarea
                   className="form-control"
@@ -333,9 +391,7 @@ const AddPurchaseOrder = () => {
                   }}
                   placeholder="Nhập ghi chú (tối đa 500 ký tự)"
                 />
-                <small className="text-muted">
-                  {notes.length}/500 ký tự
-                </small>
+                <small className="text-muted">{notes.length}/500 ký tự</small>
               </div>
               <div className="col-md-6">
                 <div className="d-flex flex-column align-items-end">
@@ -360,7 +416,6 @@ const AddPurchaseOrder = () => {
                     <span>Tổng cộng:</span>
                     <strong>{totalAmount.toLocaleString("vi-VN")} ₫</strong>
                   </div>
-
                 </div>
               </div>
             </div>
@@ -385,6 +440,7 @@ const AddPurchaseOrder = () => {
           </div>
         </form>
       </div>
+      <CommonFooter />
     </div>
   );
 };

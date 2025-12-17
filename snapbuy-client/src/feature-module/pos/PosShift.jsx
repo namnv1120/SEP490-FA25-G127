@@ -77,23 +77,10 @@ const PosShift = () => {
 
           const allOrders = resp?.content || resp?.result || resp || [];
 
-          console.log("📊 Fetching orders for shift:", {
-            fromDate,
-            toDate,
-            totalOrders: allOrders.length,
-            shiftId: shiftData?.shiftId,
-          });
-
           const myAccountId =
             userInfo?.result?.accountId || userInfo?.accountId || userInfo?.id;
           const fromTime = new Date(fromISO).getTime();
           const toTime = new Date(toISO).getTime();
-
-          console.log("🔍 Filter criteria:", {
-            myAccountId,
-            fromTime: new Date(fromTime).toLocaleString("vi-VN"),
-            toTime: new Date(toTime).toLocaleString("vi-VN"),
-          });
 
           const shiftOrders = allOrders.filter((o) => {
             const orderAccountId =
@@ -105,17 +92,6 @@ const PosShift = () => {
               o.orderDate || o.createdDate || o.createdAt
             ).getTime();
             const isTimeMatch = orderTime >= fromTime && orderTime <= toTime;
-
-            if (!isAccountMatch && !isTimeMatch) {
-              console.log("❌ Order filtered out:", {
-                orderId: o.orderId,
-                orderAccountId,
-                myAccountId,
-                isAccountMatch,
-                orderTime: new Date(orderTime).toLocaleString("vi-VN"),
-                isTimeMatch,
-              });
-            }
 
             return isAccountMatch && isTimeMatch;
           });
@@ -528,7 +504,7 @@ const PosShift = () => {
                                         <Text>
                                           {formatCurrency(
                                             total ||
-                                            detail.quantity * detail.unitPrice
+                                              detail.quantity * detail.unitPrice
                                           )}
                                         </Text>
                                       ),
@@ -714,7 +690,7 @@ const PosShift = () => {
           width={480}
         >
           {currentShift?.initialCashDenominations &&
-            currentShift.initialCashDenominations.length > 0 ? (
+          currentShift.initialCashDenominations.length > 0 ? (
             <div>
               <Table
                 dataSource={[...currentShift.initialCashDenominations].sort(

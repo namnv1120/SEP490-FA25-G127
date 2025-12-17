@@ -30,8 +30,6 @@ public class InventoryReportController {
     public ApiResponse<InventoryReportFullResponse> getInventoryReport(
             @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         
-        log.info("Received request for inventory report on date: {}", date);
-        
         InventoryReportFullResponse report = inventoryReportService.getInventoryReportByDate(date);
         
         ApiResponse<InventoryReportFullResponse> response = new ApiResponse<>();

@@ -38,6 +38,7 @@ const PosModals = ({
   currentShift,
   shiftLoading,
   onCloseShift,
+  userRole,
 }) => {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
@@ -60,6 +61,21 @@ const PosModals = ({
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
   const cashReceivedInputRef = useRef(null);
 
+  // Format số thành tiền Việt (với dấu chấm phân cách hàng nghìn)
+  const formatCashCurrency = (value) => {
+    if (value === "" || value === null || value === undefined) return "";
+    const num = parseFloat(String(value).replace(/\./g, "").replace(/,/g, ""));
+    if (isNaN(num)) return "";
+    return num.toLocaleString("vi-VN");
+  };
+
+  // Parse chuỗi tiền Việt thành số
+  const parseCashCurrency = (value) => {
+    if (value === "" || value === null || value === undefined) return 0;
+    const num = parseFloat(String(value).replace(/\./g, "").replace(/,/g, ""));
+    return isNaN(num) ? 0 : num;
+  };
+
   useEffect(() => {
     setShiftAmount("");
     setShiftNote("");
@@ -70,13 +86,16 @@ const PosModals = ({
       try {
         const info = await getMyInfo();
         const u = info.result || info;
-        setMyAccountId(u?.id || null);
+        const accountId = u?.id || null;
+        console.log("🔑 Loaded myAccountId:", accountId);
+        setMyAccountId(accountId);
       } catch {
         void 0;
       }
     };
-    if (showShiftModal) loadUser();
-  }, [showShiftModal]);
+    // Load user immediately on mount
+    loadUser();
+  }, []);
 
   const expectedPollingRef = useRef(null);
   const computeExpectedDrawer = useCallback(async () => {
@@ -223,7 +242,7 @@ const PosModals = ({
   // Calculate change amount
   const calculateChange = () => {
     if (!cashReceived) return 0;
-    const received = parseFloat(cashReceived) || 0;
+    const received = parseCashCurrency(cashReceived);
     const total = parseFloat(totalAmount || createdOrder?.totalAmount || 0);
     return received - total;
   };
@@ -286,31 +305,119 @@ const PosModals = ({
     }
   }, [showCashPaymentModal]);
 
-  // Function to fetch orders
-  const fetchOrders = async (showLoading = true) => {
-    try {
-      if (showLoading) {
-        setOrdersLoading(true);
-      }
-      const data = await getAllOrders();
-      setOrders(data || []);
-    } catch {
-      message.error("Không thể tải danh sách đơn hàng");
-      setOrders([]);
-    } finally {
-      if (showLoading) {
-        setOrdersLoading(false);
-      }
-    }
-  };
+  // Function to fetch orders - filter by shift for SALESMAN role
+  const fetchOrders = useCallback(
+    async (showLoading = true) => {
+      try {
+        if (showLoading) {
+          setOrdersLoading(true);
+        }
 
-  // Fetch orders when modal opens - always fetch but hide loading after first time
+        console.log("📋 fetchOrders called with:", {
+          userRole,
+          shiftStatus: currentShift?.status,
+          shiftOpenedAt: currentShift?.openedAt,
+          myAccountId,
+        });
+
+        // If user is Nhân viên bán hàng (SALESMAN) and has an open shift, only fetch orders from current shift
+        const isSalesman =
+          userRole === "Nhân viên bán hàng" || userRole === "SALESMAN";
+        if (
+          isSalesman &&
+          currentShift?.status === "Mở" &&
+          currentShift?.openedAt &&
+          myAccountId
+        ) {
+          const startISO = currentShift.openedAt;
+          const nowISO = new Date().toISOString();
+          const fromDate = new Date(startISO);
+          const toDate = new Date(nowISO);
+          const fromTs = fromDate.getTime();
+          const toTs = toDate.getTime();
+
+          // Try getMyOrdersByDateTimeRange first
+          let shiftOrders = [];
+          try {
+            shiftOrders =
+              (await getMyOrdersByDateTimeRange(startISO, nowISO)) || [];
+          } catch {
+            shiftOrders = [];
+          }
+
+          // If empty, try getAllOrders with date filter
+          if (!Array.isArray(shiftOrders) || shiftOrders.length === 0) {
+            try {
+              const formatDate = (d) =>
+                `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+                  2,
+                  "0"
+                )}-${String(d.getDate()).padStart(2, "0")}`;
+              const resp = await getAllOrders({
+                from: formatDate(fromDate),
+                to: formatDate(toDate),
+              });
+              shiftOrders = resp?.content || resp || [];
+            } catch {
+              shiftOrders = [];
+            }
+          }
+
+          // ALWAYS filter by myAccountId and time range to ensure only current user's orders are shown
+          const filteredOrders = (
+            Array.isArray(shiftOrders) ? shiftOrders : []
+          ).filter((o) => {
+            const uid =
+              o.accountId || (o.account && o.account.accountId) || null;
+            const dt = new Date(
+              o.orderDate || o.createdDate || o.createdAt || Date.now()
+            ).getTime();
+            const isMyOrder = uid && String(uid) === String(myAccountId);
+            const isInTimeRange = dt >= fromTs && dt <= toTs;
+            return isMyOrder && isInTimeRange;
+          });
+
+          console.log("🔍 SALESMAN orders filter:", {
+            myAccountId,
+            shiftStart: startISO,
+            totalFetched: shiftOrders.length,
+            afterFilter: filteredOrders.length,
+          });
+
+          setOrders(filteredOrders);
+        } else if (
+          isSalesman &&
+          (!currentShift || currentShift?.status !== "Mở")
+        ) {
+          // Nhân viên bán hàng without open shift - show empty
+          console.log(
+            "🔍 Nhân viên bán hàng no open shift - showing empty orders"
+          );
+          setOrders([]);
+        } else {
+          // STORE_OWNER - show all orders
+          const data = await getAllOrders();
+          setOrders(data || []);
+        }
+      } catch {
+        message.error("Không thể tải danh sách đơn hàng");
+        setOrders([]);
+      } finally {
+        if (showLoading) {
+          setOrdersLoading(false);
+        }
+      }
+    },
+    [userRole, currentShift, myAccountId]
+  );
+
+  // Fetch orders when modal opens or when shift changes
   useEffect(() => {
     const handleModalShown = async () => {
       const ordersModal = document.getElementById("orders");
       if (ordersModal && ordersModal.classList.contains("show")) {
-        // Show loading only if no data yet
-        await fetchOrders(orders.length === 0);
+        // Always refetch when modal opens to get latest orders
+        await fetchOrders(true);
       }
     };
 
@@ -322,7 +429,17 @@ const PosModals = ({
         ordersModal.removeEventListener("shown.bs.modal", handleModalShown);
       };
     }
-  }, [orders.length]);
+  }, [fetchOrders]);
+
+  // Reset orders when shift changes (for Nhân viên bán hàng)
+  useEffect(() => {
+    const isSalesman =
+      userRole === "Nhân viên bán hàng" || userRole === "SALESMAN";
+    if (isSalesman) {
+      // When shift opens/closes, reset orders
+      setOrders([]);
+    }
+  }, [currentShift?.shiftId, currentShift?.status, userRole]);
 
   // Helper function to get order status
   const getOrderStatus = (order) => {
@@ -770,39 +887,39 @@ const PosModals = ({
               <label className="form-label fw-bold">
                 Tiền khách đưa <span className="text-danger">*</span>
               </label>
-              <div className="input-icon-start position-relative">
+              <div className="position-relative">
                 <input
                   ref={cashReceivedInputRef}
-                  type="number"
-                  className="form-control"
+                  type="text"
+                  className="form-control text-end"
                   placeholder="Nhập số tiền khách đưa"
                   value={cashReceived}
                   onChange={(e) => {
-                    const value = e.target.value;
-                    // Chỉ cho phép số dương hoặc rỗng
-                    if (value === "") {
+                    // Chỉ cho phép nhập số
+                    const rawInput = e.target.value.replace(/[^0-9]/g, "");
+                    if (rawInput === "") {
                       setCashReceived("");
                       return;
                     }
-                    // Kiểm tra nếu là số hợp lệ
-                    const numValue = value.replace(/[^\d]/g, "");
-                    if (
-                      numValue === value &&
-                      !isNaN(parseFloat(value)) &&
-                      parseFloat(value) >= 0
-                    ) {
-                      setCashReceived(value);
-                    } else {
-                      message.warning("Vui lòng chỉ nhập số dương!");
-                      // Giữ giá trị cũ nếu nhập ký tự không hợp lệ
-                      return;
-                    }
+                    const numValue = parseCashCurrency(rawInput);
+                    setCashReceived(formatCashCurrency(numValue));
                   }}
-                  min="0"
-                  step="1000"
-                  style={{ fontSize: "16px", paddingLeft: "40px" }}
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: "bold",
+                    paddingRight: "50px",
+                  }}
                   autoFocus
                   onKeyDown={(e) => {
+                    // Cho phép Enter để xác nhận thanh toán
+                    if (
+                      e.key === "Enter" &&
+                      parseCashCurrency(cashReceived) >=
+                        (totalAmount || createdOrder?.totalAmount || 0)
+                    ) {
+                      handleCashPaymentConfirm();
+                      return;
+                    }
                     // Chặn các ký tự không phải số, phím điều hướng, và phím điều khiển
                     const allowedKeys = [
                       "Backspace",
@@ -816,7 +933,6 @@ const PosModals = ({
                       "ArrowDown",
                       "Home",
                       "End",
-                      ".",
                     ];
                     const isNumber = /[0-9]/.test(e.key);
                     const isAllowedKey = allowedKeys.includes(e.key);
@@ -825,15 +941,15 @@ const PosModals = ({
                     const isCtrlV = e.ctrlKey && e.key === "v";
                     const isCtrlX = e.ctrlKey && e.key === "x";
 
-                    // Chặn dấu trừ, dấu cộng, và ký tự e/E
+                    // Chặn dấu trừ, dấu cộng, dấu chấm và ký tự e/E
                     if (
                       e.key === "-" ||
                       e.key === "+" ||
                       e.key === "e" ||
-                      e.key === "E"
+                      e.key === "E" ||
+                      e.key === "."
                     ) {
                       e.preventDefault();
-                      message.warning("Vui lòng chỉ nhập số dương!");
                       return;
                     }
 
@@ -846,38 +962,34 @@ const PosModals = ({
                       !isCtrlX
                     ) {
                       e.preventDefault();
-                      message.warning("Vui lòng chỉ nhập số!");
                     }
                   }}
                   onPaste={(e) => {
                     e.preventDefault();
                     const pastedText = e.clipboardData.getData("text");
-                    const numericValue = pastedText.replace(/[^\d.]/g, "");
+                    const numericValue = pastedText.replace(/[^0-9]/g, "");
                     if (numericValue) {
-                      const num = parseFloat(numericValue);
+                      const num = parseInt(numericValue, 10);
                       if (!isNaN(num) && num >= 0) {
-                        setCashReceived(numericValue);
-                        message.success("Đã dán số tiền");
-                      } else {
-                        message.warning(
-                          "Dữ liệu dán không hợp lệ! Vui lòng chỉ dán số."
-                        );
+                        setCashReceived(formatCashCurrency(num));
                       }
                     }
                   }}
                 />
                 <span
-                  className="input-icon-addon"
                   style={{
                     position: "absolute",
-                    left: "12px",
+                    right: "12px",
                     top: "50%",
                     transform: "translateY(-50%)",
                     zIndex: 1,
                     pointerEvents: "none",
+                    fontWeight: "bold",
+                    color: "#6c757d",
+                    fontSize: "16px",
                   }}
                 >
-                  <i className="ti ti-currency-dollar text-gray-9" />
+                  ₫
                 </span>
               </div>
             </div>

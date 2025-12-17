@@ -44,4 +44,13 @@ public class ProductImportRequest {
     @Pattern(regexp = "^$|^[a-zA-Z0-9]*$", message = "Barcode chỉ được chứa chữ và số")
     private String barcode;
 
+    @Min(value = 0, message = "Tồn kho tối thiểu phải lớn hơn hoặc bằng 0")
+    private Integer minimumStock;
+
+    @Min(value = 0, message = "Tồn kho tối đa phải lớn hơn hoặc bằng 0")
+    private Integer maximumStock;
+
+    @Min(value = 0, message = "Điểm đặt hàng lại phải lớn hơn hoặc bằng 0")
+    private Integer reorderPoint;
+
 }

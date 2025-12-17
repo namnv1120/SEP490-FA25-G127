@@ -631,9 +631,9 @@ public class ProductServiceImpl implements ProductService {
                 Inventory inventory = new Inventory();
                 inventory.setProduct(savedProduct);
                 inventory.setQuantityInStock(0);
-                inventory.setMinimumStock(0);
-                inventory.setMaximumStock(0);
-                inventory.setReorderPoint(0);
+                inventory.setMinimumStock(request.getMinimumStock() != null ? request.getMinimumStock() : 0);
+                inventory.setMaximumStock(request.getMaximumStock() != null ? request.getMaximumStock() : 0);
+                inventory.setReorderPoint(request.getReorderPoint() != null ? request.getReorderPoint() : 0);
                 inventory.setLastUpdated(LocalDateTime.now());
                 inventoryRepository.save(inventory);
 

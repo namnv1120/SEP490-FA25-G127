@@ -24,7 +24,10 @@ import {
   getOrderById,
 } from "../../services/OrderService";
 import { getPosSettings } from "../../services/PosSettingsService";
-import { getBestDiscountInfoForProduct } from "../../services/PromotionService";
+import {
+  getBestDiscountInfoForProduct,
+  getBatchDiscountInfo,
+} from "../../services/PromotionService";
 import { getImageUrl } from "../../utils/imageUtils";
 import usePermission from "../../hooks/usePermission";
 import {
@@ -83,6 +86,9 @@ const Pos = () => {
   const [closeShiftDenominations, setCloseShiftDenominations] = useState([]);
   const momoPollingIntervalRef = useRef(null);
   const closeShiftModalRef = useRef(null);
+
+  // Get user role for permission-based features
+  const { userRole } = usePermission();
 
   const handleBarcodeScanRef = useRef(null);
   const lastMessageRef = useRef({ type: null, content: null, timestamp: 0 });
@@ -314,7 +320,6 @@ const Pos = () => {
     loadShift();
   }, []);
 
-  const { userRole } = usePermission();
   const checkedRef = useRef(false);
   useEffect(() => {
     const gate = async () => {
@@ -398,44 +403,52 @@ const Pos = () => {
       setLoading(true);
       const data = await getAllProducts();
 
-      // Map products data và load khuyến mãi
-      const mappedProductsPromises = data
-        .filter((product) => product.active)
-        .map(async (product) => {
-          const originalPrice = product.unitPrice || 0;
-          // Lấy thông tin giảm giá chi tiết (tổng hợp tất cả promotion)
-          const discountInfo = await getBestDiscountInfoForProduct(
-            product.productId,
-            originalPrice
-          );
+      // Filter active products first
+      const activeProducts = data.filter((product) => product.active);
 
-          // Tính giá sau giảm: Trừ thẳng tổng số tiền giảm
-          const discountedPrice = Math.max(
-            0,
-            originalPrice - discountInfo.discountValue
-          );
+      // Prepare batch request with all products
+      const productsForBatch = activeProducts.map((product) => ({
+        productId: product.productId,
+        unitPrice: product.unitPrice || 0,
+      }));
 
-          return {
-            id: product.productId,
-            productId: product.productId,
-            name: product.productName,
-            productName: product.productName,
-            code: product.productCode,
-            productCode: product.productCode,
-            barcode: product.barcode || null,
-            price: discountedPrice, // Giá sau khuyến mãi
-            originalPrice: originalPrice, // Giá gốc
-            discountPercent: discountInfo.discountPercent, // % giảm giá (để hiển thị)
-            discountValue: discountInfo.discountValue, // Tổng số tiền giảm
-            stock: product.quantityInStock,
-            quantityInStock: product.quantityInStock,
-            categoryId: product.categoryId,
-            categoryName: product.categoryName || "",
-            image: getImageUrl(product.imageUrl || product.image || null),
-          };
-        });
+      // Get discount info for ALL products in ONE API call
+      const discountInfoMap = await getBatchDiscountInfo(productsForBatch);
 
-      const mappedProducts = await Promise.all(mappedProductsPromises);
+      // Map products with discount info from batch response
+      const mappedProducts = activeProducts.map((product) => {
+        const originalPrice = product.unitPrice || 0;
+        const discountInfo = discountInfoMap[product.productId] || {
+          discountValue: 0,
+          discountPercent: 0,
+        };
+
+        // Tính giá sau giảm: Trừ thẳng tổng số tiền giảm
+        const discountedPrice = Math.max(
+          0,
+          originalPrice - (discountInfo.discountValue || 0)
+        );
+
+        return {
+          id: product.productId,
+          productId: product.productId,
+          name: product.productName,
+          productName: product.productName,
+          code: product.productCode,
+          productCode: product.productCode,
+          barcode: product.barcode || null,
+          price: discountedPrice, // Giá sau khuyến mãi
+          originalPrice: originalPrice, // Giá gốc
+          discountPercent: discountInfo.discountPercent || 0, // % giảm giá (để hiển thị)
+          discountValue: discountInfo.discountValue || 0, // Tổng số tiền giảm
+          stock: product.quantityInStock,
+          quantityInStock: product.quantityInStock,
+          categoryId: product.categoryId,
+          categoryName: product.categoryName || "",
+          image: getImageUrl(product.imageUrl || product.image || null),
+        };
+      });
+
       setProducts(mappedProducts);
 
       // Cập nhật cartItems với stock mới
@@ -2543,6 +2556,7 @@ const Pos = () => {
         onCloseShiftModal={() => setShowShiftModal(false)}
         currentShift={currentShift}
         shiftLoading={shiftLoading}
+        userRole={userRole}
         onOpenShift={async (amount, cashDenominations = []) => {
           if (!amount || Number(amount) < 0) {
             message.error("Nhập số tiền mặt hợp lệ");

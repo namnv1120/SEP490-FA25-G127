@@ -137,46 +137,49 @@ const TransactionHistory = () => {
     message.success("Đã làm mới lịch sử giao dịch kho thành công!");
   };
 
-  // Handle select-all checkbox
-  useEffect(() => {
-    const selectAllCheckbox = document.getElementById("select-all");
-
-    const handleSelectAll = (e) => {
-      const checkboxes = document.querySelectorAll(
-        '.table-list-card input[type="checkbox"][data-id]'
-      );
-      checkboxes.forEach((cb) => {
-        cb.checked = e.target.checked;
-      });
-    };
-
-    if (selectAllCheckbox) {
-      selectAllCheckbox.addEventListener("change", handleSelectAll);
-    }
-
-    return () => {
-      if (selectAllCheckbox) {
-        selectAllCheckbox.removeEventListener("change", handleSelectAll);
-      }
-    };
-  }, [listData]);
-
   const columns = [
     {
-      header: (
-        <label className="checkboxs">
-          <input type="checkbox" id="select-all" />
-          <span className="checkmarks" />
-        </label>
-      ),
-      body: (data) => (
-        <label className="checkboxs">
-          <input type="checkbox" data-id={data.key} />
-          <span className="checkmarks" />
-        </label>
-      ),
+      header: "",
+      body: (data) => {
+        let icon, color, title;
+        switch (data.transactionType) {
+          case "Nhập kho":
+            icon = "ti-arrow-down-circle";
+            color = "#28a745";
+            title = "Nhập kho";
+            break;
+          case "Bán ra":
+            icon = "ti-arrow-up-circle";
+            color = "#dc3545";
+            title = "Bán ra";
+            break;
+          case "Trả hàng":
+            icon = "ti-refresh";
+            color = "#17a2b8";
+            title = "Trả hàng";
+            break;
+          case "Hủy đơn":
+            icon = "ti-x";
+            color = "#ffc107";
+            title = "Hủy đơn";
+            break;
+          default:
+            icon = "ti-circle";
+            color = "#6c757d";
+            title = "Khác";
+        }
+        return (
+          <div
+            className="d-flex align-items-center justify-content-center"
+            title={title}
+          >
+            <i className={`ti ${icon}`} style={{ fontSize: "18px", color }} />
+          </div>
+        );
+      },
       sortable: false,
-      key: "checked",
+      key: "statusIcon",
+      style: { width: "50px", textAlign: "center" },
     },
     {
       header: "Loại",
@@ -250,12 +253,12 @@ const TransactionHistory = () => {
       body: (data) =>
         data.transactionDate && !isNaN(new Date(data.transactionDate).getTime())
           ? new Date(data.transactionDate).toLocaleString("vi-VN", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
           : "-",
     },
     {

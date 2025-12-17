@@ -33,7 +33,8 @@ public class MasterRoleServiceImpl implements MasterRoleService {
     private final RoleRepository roleRepository; // Tenant DB repository
     private final TenantRepository tenantRepository;
     private final AccountRepository accountRepository;
-    private final com.g127.snapbuy.tenant.repository.TenantOwnerRepository tenantOwnerRepository;
+    private final TenantOwnerRepository tenantOwnerRepository;
+    private final com.g127.snapbuy.admin.repository.AdminAccountRepository adminAccountRepository;
 
     @Override
     public List<MasterRoleResponse> getAllRoles() {
@@ -175,8 +176,15 @@ public class MasterRoleServiceImpl implements MasterRoleService {
      */
     private int countUsersWithRole(String roleName) {
         try {
-            // Nếu là role "Quản trị viên", đếm từ TenantOwner trong master DB
+            // Nếu là role "Quản trị viên", đếm từ AdminAccount trong master DB
             if ("Quản trị viên".equalsIgnoreCase(roleName)) {
+                TenantContext.setCurrentTenant(null);
+                long count = adminAccountRepository.count();
+                return (int) count;
+            }
+            
+            // Nếu là role "Chủ cửa hàng", đếm từ TenantOwner trong master DB
+            if ("Chủ cửa hàng".equalsIgnoreCase(roleName)) {
                 TenantContext.setCurrentTenant(null);
                 long count = tenantOwnerRepository.count();
                 return (int) count;

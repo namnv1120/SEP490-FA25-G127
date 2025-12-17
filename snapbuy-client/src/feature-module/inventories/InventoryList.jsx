@@ -116,60 +116,45 @@ const InventoryList = () => {
     return true;
   });
 
-  // Reset select-all checkbox và tất cả checkbox khi chuyển trang
-  useEffect(() => {
-    const selectAllCheckbox = document.getElementById("select-all");
-    if (selectAllCheckbox) {
-      selectAllCheckbox.checked = false;
-    }
-    const checkboxes = document.querySelectorAll(
-      '.table-list-card input[type="checkbox"][data-id]'
-    );
-    checkboxes.forEach((cb) => {
-      cb.checked = false;
-    });
-  }, [currentPage]);
-
-  // Handle select-all checkbox
-  useEffect(() => {
-    const selectAllCheckbox = document.getElementById("select-all");
-
-    const handleSelectAll = (e) => {
-      const checkboxes = document.querySelectorAll(
-        '.table-list-card input[type="checkbox"][data-id]'
-      );
-      checkboxes.forEach((cb) => {
-        cb.checked = e.target.checked;
-      });
-    };
-
-    if (selectAllCheckbox) {
-      selectAllCheckbox.addEventListener("change", handleSelectAll);
-    }
-
-    return () => {
-      if (selectAllCheckbox) {
-        selectAllCheckbox.removeEventListener("change", handleSelectAll);
-      }
-    };
-  }, [inventoryList, currentPage]);
-
   const columns = [
     {
-      header: (
-        <label className="checkboxs">
-          <input type="checkbox" id="select-all" />
-          <span className="checkmarks" />
-        </label>
-      ),
-      body: (data) => (
-        <label className="checkboxs">
-          <input type="checkbox" data-id={data.inventoryId} />
-          <span className="checkmarks" />
-        </label>
-      ),
+      header: "",
+      body: (data) => {
+        const status = getItemStatus(data);
+        let icon, color, title;
+        switch (status) {
+          case "Thiếu hàng":
+            icon = "ti-alert-circle-filled";
+            color = "#dc3545";
+            title = "Thiếu hàng";
+            break;
+          case "Cần đặt hàng":
+            icon = "ti-alert-triangle-filled";
+            color = "#ffc107";
+            title = "Cần đặt hàng";
+            break;
+          case "Quá tồn":
+            icon = "ti-arrow-up-circle";
+            color = "#ffc107";
+            title = "Quá tồn";
+            break;
+          default:
+            icon = "ti-circle-check-filled";
+            color = "#28a745";
+            title = "Ổn định";
+        }
+        return (
+          <div
+            className="d-flex align-items-center justify-content-center"
+            title={title}
+          >
+            <i className={`ti ${icon}`} style={{ fontSize: "18px", color }} />
+          </div>
+        );
+      },
       sortable: false,
-      key: "checked",
+      key: "statusIcon",
+      style: { width: "50px", textAlign: "center" },
     },
     {
       header: "Mã sản phẩm",

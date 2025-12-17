@@ -89,11 +89,6 @@ const InventoryReport = () => {
       sortable: true,
     },
     {
-      header: "Danh mục",
-      field: "categoryName",
-      sortable: true,
-    },
-    {
       header: "Tồn hiện tại",
       field: "currentStock",
       body: (rowData) => {
