@@ -35,12 +35,30 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
       setLoading(true);
       const supplier = await getSupplierById(supplierId);
 
+      // Hàm kiểm tra xem address có phải là tên tỉnh/thành không
+      const isAddressActuallyCity = (address, city) => {
+        if (!address || !city) return false;
+        const normalize = (str) => (str || "").trim().toLowerCase();
+        const normalizedAddress = normalize(address);
+        const normalizedCity = normalize(city);
+
+        // Nếu address trùng với city hoặc chứa tên city thì đây là dữ liệu cũ bị sai
+        return normalizedAddress === normalizedCity ||
+          normalizedAddress.includes(normalizedCity) ||
+          normalizedCity.includes(normalizedAddress);
+      };
+
+      // Nếu phát hiện address là tên tỉnh, xóa nó đi
+      const cleanAddress = isAddressActuallyCity(supplier.address, supplier.city)
+        ? ""
+        : (supplier.address || "");
+
       setFormData({
         supplierCode: supplier.supplierCode || "",
         supplierName: supplier.supplierName || "",
         email: supplier.email || "",
         phone: supplier.phone || "",
-        address: supplier.address || "",
+        address: cleanAddress,
         ward: supplier.ward || "",
         city: supplier.city || "",
         active: supplier.active === 1 || supplier.active === true,
@@ -110,8 +128,9 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
         );
 
       if (province) {
-        setSelectedProvinceCode(province.code);
-        const wardsData = await getWardsByProvince(province.code);
+        const provinceCode = province.province_code || province.code;
+        setSelectedProvinceCode(provinceCode);
+        const wardsData = await getWardsByProvince(provinceCode);
         setWards(wardsData || []);
       } else {
         // Không tìm thấy province tương ứng: giữ nguyên city/ward text nhưng không disable select
@@ -290,9 +309,8 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                 <input
                   type="text"
                   name="supplierCode"
-                  className={`form-control ${
-                    errors.supplierCode ? "is-invalid" : ""
-                  }`}
+                  className={`form-control ${errors.supplierCode ? "is-invalid" : ""
+                    }`}
                   value={formData.supplierCode}
                   onChange={handleInputChange}
                   disabled={loading}
@@ -311,9 +329,8 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                 <input
                   type="text"
                   name="supplierName"
-                  className={`form-control ${
-                    errors.supplierName ? "is-invalid" : ""
-                  }`}
+                  className={`form-control ${errors.supplierName ? "is-invalid" : ""
+                    }`}
                   value={formData.supplierName}
                   onChange={handleInputChange}
                   disabled={loading}
@@ -380,7 +397,7 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                       .includes(input.toLowerCase())
                   }
                   options={provinces.map((province) => ({
-                    value: province.code,
+                    value: province.province_code || province.code,
                     label: province.name,
                   }))}
                   allowClear
@@ -419,8 +436,8 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                       .includes(input.toLowerCase())
                   }
                   options={wards.map((ward) => ({
-                    value: ward.name,
-                    label: ward.name,
+                    value: ward.ward_name || ward.name,
+                    label: ward.ward_name || ward.name,
                   }))}
                   allowClear
                   onClear={() => {
@@ -446,9 +463,8 @@ const EditSupplier = ({ isOpen, supplierId, onSuccess, onClose }) => {
                 <input
                   type="text"
                   name="address"
-                  className={`form-control ${
-                    errors.address ? "is-invalid" : ""
-                  }`}
+                  className={`form-control ${errors.address ? "is-invalid" : ""
+                    }`}
                   value={formData.address}
                   onChange={handleInputChange}
                   disabled={loading}

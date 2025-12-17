@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test 34tinhthanh.com API Trực Tiếp</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .status {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .info-box strong {
+            color: #1976D2;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+
+        .result h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+
+        .result pre {
+            background: #fff;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            max-height: 400px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🧪 Test 34tinhthanh.com API Trực Tiếp</h1>
+        <div class="subtitle">Kiểm tra API 34 tỉnh thành sau sáp nhập 7/2025</div>
+
+        <div class="info-box">
+            <strong>📌 Lưu ý:</strong> Đây là test trực tiếp đến API <code>https://34tinhthanh.com/api</code> để kiểm
+            tra xem API có hoạt động không.
+        </div>
+
+        <div>
+            <button onclick="testProvinces()">Test Lấy 34 Tỉnh/Thành</button>
+            <button onclick="testWards('01')">Test Lấy Xã của Hà Nội (code: 01)</button>
+            <button onclick="testWards('79')">Test Lấy Xã của TP.HCM (code: 79)</button>
+        </div>
+
+        <div id="status"></div>
+
+        <div class="result" id="result" style="display: none;">
+            <h3 id="resultTitle">Kết quả:</h3>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        const resultEl = document.getElementById('result');
+        const resultTitleEl = document.getElementById('resultTitle');
+        const resultContentEl = document.getElementById('resultContent');
+
+        function showStatus(message, type) {
+            statusEl.className = `status ${type}`;
+            statusEl.textContent = message;
+            statusEl.style.display = 'block';
+        }
+
+        function hideStatus() {
+            statusEl.style.display = 'none';
+        }
+
+        function showResult(title, content) {
+            resultTitleEl.textContent = title;
+            resultContentEl.innerHTML = content;
+            resultEl.style.display = 'block';
+        }
+
+        async function testProvinces() {
+            try {
+                showStatus('Đang gọi API lấy 34 tỉnh/thành...', 'loading');
+
+                const response = await fetch('https://34tinhthanh.com/api/provinces');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const provinces = await response.json();
+
+                if (!Array.isArray(provinces)) {
+                    throw new Error('Response is not an array');
+                }
+
+                showStatus(`✅ Thành công! Nhận được ${provinces.length} tỉnh/thành`, 'success');
+
+                // Tạo bảng hiển thị
+                let tableHTML = `
+                    <p><strong>Tổng số:</strong> ${provinces.length} tỉnh/thành</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Mã</th>
+                                <th>Tên</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                provinces.forEach((province, index) => {
+                    tableHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${province.province_code}</td>
+                            <td>${province.name}</td>
+                        </tr>
+                    `;
+                });
+
+                tableHTML += `
+                        </tbody>
+                    </table>
+                    <h4>Raw JSON:</h4>
+                    <pre>${JSON.stringify(provinces, null, 2)}</pre>
+                `;
+
+                showResult('Danh sách 34 Tỉnh/Thành:', tableHTML);
+
+            } catch (error) {
+                showStatus(`❌ Lỗi: ${error.message}`, 'error');
+                console.error('Error:', error);
+                showResult('Chi tiết lỗi:', `<pre>${error.stack || error.message}</pre>`);
+            }
+        }
+
+        async function testWards(provinceCode) {
+            try {
+                showStatus(`Đang gọi API lấy xã của tỉnh ${provinceCode}...`, 'loading');
+
+                const response = await fetch(`https://34tinhthanh.com/api/wards?province_code=${provinceCode}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const wards = await response.json();
+
+                if (!Array.isArray(wards)) {
+                    throw new Error('Response is not an array');
+                }
+
+                showStatus(`✅ Thành công! Nhận được ${wards.length} xã/phường`, 'success');
+
+                // Tạo bảng hiển thị (chỉ hiển thị 20 đầu tiên)
+                let tableHTML = `
+                    <p><strong>Tổng số:</strong> ${wards.length} xã/phường</p>
+                    <p><strong>Hiển thị:</strong> ${Math.min(20, wards.length)} đầu tiên</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Mã Xã</th>
+                                <th>Tên Xã</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                wards.slice(0, 20).forEach((ward, index) => {
+                    tableHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${ward.ward_code}</td>
+                            <td>${ward.ward_name}</td>
+                        </tr>
+                    `;
+                });
+
+                tableHTML += `
+                        </tbody>
+                    </table>
+                    <h4>Raw JSON (20 đầu tiên):</h4>
+                    <pre>${JSON.stringify(wards.slice(0, 20), null, 2)}</pre>
+                `;
+
+                showResult(`Danh sách Xã/Phường (Mã tỉnh: ${provinceCode}):`, tableHTML);
+
+            } catch (error) {
+                showStatus(`❌ Lỗi: ${error.message}`, 'error');
+                console.error('Error:', error);
+                showResult('Chi tiết lỗi:', `<pre>${error.stack || error.message}</pre>`);
+            }
+        }
+
+        // Auto test khi load trang
+        window.addEventListener('load', () => {
+            testProvinces();
+        });
+    </script>
+</body>
+
+</html>

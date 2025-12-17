@@ -1,18 +1,16 @@
 import axios from 'axios';
 
-// API v2: Đơn vị hành chính sau sáp nhập tháng 7/2025 (34 tỉnh/thành)
-// Dev: dùng proxy để bypass CORS
-// Production: gọi trực tiếp API (CORS đã được enable từ server)
-const LOCATION_API_BASE_URL = import.meta.env.DEV
-    ? '/provinces-api/api/v2'  // Dev mode: dùng Vite proxy
-    : 'https://provinces.open-api.vn/api/v2';  // Production: gọi trực tiếp
+// Sử dụng backend proxy cho cả dev và production để tránh CORS
+// Backend sẽ forward request đến 34tinhthanh.com (dữ liệu 34 tỉnh sau sáp nhập 7/2025)
+const LOCATION_API_BASE_URL = '/api/locations';
 
 /**
  * Lấy danh sách tất cả tỉnh/thành phố (34 tỉnh sau sáp nhập 7/2025)
+ * Dữ liệu từ 34tinhthanh.com
  */
 export const getProvinces = async () => {
     try {
-        const response = await axios.get(`${LOCATION_API_BASE_URL}/`);
+        const response = await axios.get(`${LOCATION_API_BASE_URL}/provinces`);
         const data = response.data;
 
         // Đảm bảo trả về array
@@ -29,13 +27,14 @@ export const getProvinces = async () => {
 };
 
 /**
- * Lấy danh sách phường/xã theo mã tỉnh (sau sáp nhập không còn cấp quận/huyện)
- * @param {number} provinceCode - Mã tỉnh/thành phố
+ * Lấy danh sách phường/xã theo mã tỉnh
+ * Sau sáp nhập 7/2025, không còn cấp huyện, chỉ còn Tỉnh → Xã
+ * @param {string} provinceCode - Mã tỉnh/thành phố (ví dụ: "01" cho Hà Nội)
  */
 export const getWardsByProvince = async (provinceCode) => {
     try {
-        const response = await axios.get(`${LOCATION_API_BASE_URL}/p/${provinceCode}?depth=2`);
-        const wards = response.data?.wards;
+        const response = await axios.get(`${LOCATION_API_BASE_URL}/wards/${provinceCode}`);
+        const wards = response.data;
 
         // Đảm bảo trả về array
         if (!Array.isArray(wards)) {

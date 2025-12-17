@@ -64,6 +64,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/payments/momo/notify").permitAll()
                         .requestMatchers("/api/payments/momo/return-notify").permitAll()
                         .requestMatchers("/api/payments/momo/return").permitAll()
+                        .requestMatchers("/api/locations/**").permitAll() // Location proxy endpoints
                         .requestMatchers("/uploads/**").permitAll()
                         .anyRequest().authenticated()
                 )

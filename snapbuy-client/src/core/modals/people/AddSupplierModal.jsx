@@ -241,9 +241,8 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
               <input
                 type="text"
                 name="supplierCode"
-                className={`form-control ${
-                  errors.supplierCode ? "is-invalid" : ""
-                }`}
+                className={`form-control ${errors.supplierCode ? "is-invalid" : ""
+                  }`}
                 value={formData.supplierCode}
                 onChange={handleInputChange}
                 placeholder="Nhập mã nhà cung cấp"
@@ -263,9 +262,8 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
               <input
                 type="text"
                 name="supplierName"
-                className={`form-control ${
-                  errors.supplierName ? "is-invalid" : ""
-                }`}
+                className={`form-control ${errors.supplierName ? "is-invalid" : ""
+                  }`}
                 value={formData.supplierName}
                 onChange={handleInputChange}
                 placeholder="Nhập tên nhà cung cấp"
@@ -335,7 +333,7 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
                     .includes(input.toLowerCase())
                 }
                 options={provinces.map((province) => ({
-                  value: province.code,
+                  value: province.province_code || province.code,
                   label: province.name,
                 }))}
                 allowClear
@@ -374,8 +372,8 @@ const AddSupplier = ({ isOpen, onClose, onSuccess }) => {
                     .includes(input.toLowerCase())
                 }
                 options={wards.map((ward) => ({
-                  value: ward.name,
-                  label: ward.name,
+                  value: ward.ward_name || ward.name,
+                  label: ward.ward_name || ward.name,
                 }))}
                 allowClear
                 onClear={() => {

@@ -17,12 +17,6 @@ export default defineConfig({
         target: "http://localhost:8080",
         changeOrigin: true,
       },
-      "/provinces-api": {
-        target: "https://provinces.open-api.vn",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/provinces-api/, ""),
-        secure: false,
-      },
     },
   },
   build: {
