@@ -11,8 +11,6 @@ import com.g127.snapbuy.payment.entity.Payment;
 import com.g127.snapbuy.account.mapper.AccountMapper;
 import com.g127.snapbuy.order.mapper.OrderMapper;
 import com.g127.snapbuy.notification.service.NotificationSchedulerService;
-import com.g127.snapbuy.order.dto.request.OrderCreateRequest;
-import com.g127.snapbuy.order.dto.request.OrderDetailRequest;
 import com.g127.snapbuy.order.dto.response.OrderResponse;
 import com.g127.snapbuy.order.repository.OrderDetailRepository;
 import com.g127.snapbuy.order.repository.OrderRepository;

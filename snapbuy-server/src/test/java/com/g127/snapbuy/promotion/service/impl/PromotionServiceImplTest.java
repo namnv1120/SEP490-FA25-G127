@@ -1,7 +1,6 @@
 package com.g127.snapbuy.promotion.service.impl;
 
 import com.g127.snapbuy.notification.service.NotificationSchedulerService;
-import com.g127.snapbuy.order.dto.response.DiscountInfoResponse;
 import com.g127.snapbuy.promotion.dto.request.PromotionCreateRequest;
 import com.g127.snapbuy.promotion.dto.request.PromotionUpdateRequest;
 import com.g127.snapbuy.promotion.dto.response.PromotionResponse;
@@ -222,7 +221,7 @@ class PromotionServiceImplTest {
     void getAll_Success() {
         // Given
         List<Promotion> promotions = Arrays.asList(testPromotion);
-        when(promotionRepository.findAll()).thenReturn(promotions);
+        when(promotionRepository.findAllWithProducts()).thenReturn(promotions);
         when(promotionMapper.toResponse(any(Promotion.class))).thenReturn(promotionResponse);
 
         // When

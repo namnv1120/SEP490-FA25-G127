@@ -1,6 +1,5 @@
 package com.g127.snapbuy.payment.service.impl;
 
-import com.g127.snapbuy.payment.dto.response.MomoPaymentResponse;
 import com.g127.snapbuy.order.entity.Order;
 import com.g127.snapbuy.order.repository.OrderRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,14 +9,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)

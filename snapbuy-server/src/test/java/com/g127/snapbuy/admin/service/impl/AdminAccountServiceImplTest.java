@@ -4,6 +4,7 @@ import com.g127.snapbuy.admin.dto.response.AdminAccountResponse;
 import com.g127.snapbuy.tenant.context.TenantContext;
 import com.g127.snapbuy.tenant.entity.Tenant;
 import com.g127.snapbuy.tenant.repository.TenantRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,9 @@ class AdminAccountServiceImplTest {
 
     @Mock
     private ResultSet resultSet;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private AdminAccountServiceImpl adminAccountService;
@@ -94,6 +98,7 @@ class AdminAccountServiceImplTest {
                 UUID.randomUUID().toString(),
                 UUID.randomUUID().toString()
         );
+        when(resultSet.getString("username")).thenReturn("user1", "user2");
         when(resultSet.getString("full_name")).thenReturn("User 1", "User 2");
         when(resultSet.getString("email")).thenReturn("user1@test.com", "user2@test.com");
         when(resultSet.getString("phone")).thenReturn("0123456789", "0987654321");
@@ -142,6 +147,7 @@ class AdminAccountServiceImplTest {
         when(preparedStatement.executeQuery()).thenReturn(resultSet);
         when(resultSet.next()).thenReturn(true, false);
         when(resultSet.getString("account_id")).thenReturn(UUID.randomUUID().toString());
+        when(resultSet.getString("username")).thenReturn("user2");
         when(resultSet.getString("full_name")).thenReturn("User 2");
         when(resultSet.getString("email")).thenReturn("user2@test.com");
         when(resultSet.getString("phone")).thenReturn("0987654321");
@@ -167,6 +173,7 @@ class AdminAccountServiceImplTest {
         when(preparedStatement.executeQuery()).thenReturn(resultSet);
         when(resultSet.next()).thenReturn(true, false);
         when(resultSet.getString("account_id")).thenReturn(UUID.randomUUID().toString());
+        when(resultSet.getString("username")).thenReturn("johndoe");
         when(resultSet.getString("full_name")).thenReturn("John Doe");
         when(resultSet.getString("email")).thenReturn("john@test.com");
         when(resultSet.getString("phone")).thenReturn("0123456789");
@@ -193,6 +200,7 @@ class AdminAccountServiceImplTest {
         when(preparedStatement.executeQuery()).thenReturn(resultSet);
         when(resultSet.next()).thenReturn(true, false);
         when(resultSet.getString("account_id")).thenReturn(UUID.randomUUID().toString());
+        when(resultSet.getString("username")).thenReturn("activeuser");
         when(resultSet.getString("full_name")).thenReturn("Active User");
         when(resultSet.getString("email")).thenReturn("active@test.com");
         when(resultSet.getString("phone")).thenReturn("0123456789");
@@ -220,6 +228,7 @@ class AdminAccountServiceImplTest {
         when(preparedStatement.executeQuery()).thenReturn(resultSet);
         when(resultSet.next()).thenReturn(true, false);
         when(resultSet.getString("account_id")).thenReturn(UUID.randomUUID().toString());
+        when(resultSet.getString("username")).thenReturn("adminuser");
         when(resultSet.getString("full_name")).thenReturn("Admin User");
         when(resultSet.getString("email")).thenReturn("admin@test.com");
         when(resultSet.getString("phone")).thenReturn("0123456789");
@@ -400,6 +409,7 @@ class AdminAccountServiceImplTest {
         UUID[] accountIds = {UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()};
         when(resultSet.getString("account_id"))
                 .thenReturn(accountIds[0].toString(), accountIds[1].toString(), accountIds[2].toString());
+        when(resultSet.getString("username")).thenReturn("user1", "user2", "user3");
         when(resultSet.getString("full_name")).thenReturn("User 1", "User 2", "User 3");
         when(resultSet.getString("email")).thenReturn("user1@test.com", "user2@test.com", "user3@test.com");
         when(resultSet.getString("phone")).thenReturn("0123456789", "0123456788", "0123456787");
@@ -431,6 +441,7 @@ class AdminAccountServiceImplTest {
         when(preparedStatement.executeQuery()).thenReturn(resultSet);
         when(resultSet.next()).thenReturn(true, false);
         when(resultSet.getString("account_id")).thenReturn(UUID.randomUUID().toString());
+        when(resultSet.getString("username")).thenReturn("testuser");
         when(resultSet.getString("full_name")).thenReturn("Test User");
         when(resultSet.getString("email")).thenReturn("test@test.com");
         when(resultSet.getString("phone")).thenReturn("0123456789");

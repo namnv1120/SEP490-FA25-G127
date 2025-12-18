@@ -5,7 +5,6 @@ import com.g127.snapbuy.account.dto.response.AccountResponse;
 import com.g127.snapbuy.common.response.PageResponse;
 import com.g127.snapbuy.account.entity.Account;
 import com.g127.snapbuy.account.entity.Role;
-import com.g127.snapbuy.common.exception.AppException;
 import com.g127.snapbuy.account.mapper.AccountMapper;
 import com.g127.snapbuy.account.repository.AccountRepository;
 import com.g127.snapbuy.account.repository.RoleRepository;
@@ -15,11 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -96,99 +90,6 @@ class AccountServiceImplTest {
                 .build();
     }
 
-    // Disabled - createAccount() method removed for multi-tenancy (accounts managed in Master DB)
-    // @Test
-    // void createAccount_Success() {
-    //     // Given
-    //     createRequest.setRoles(List.of("Chủ cửa hàng"));
-    //     when(roleRepository.findByRoleNameIgnoreCase("Chủ cửa hàng")).thenReturn(Optional.of(testRole));
-    //     when(accountRepository.existsByUsernameIgnoreCase(anyString())).thenReturn(false);
-    //     when(accountMapper.toEntity(any(AccountCreateRequest.class))).thenReturn(testAccount);
-    //     when(passwordEncoder.encode(anyString())).thenReturn("hashedPassword");
-    //     when(accountRepository.save(any(Account.class))).thenReturn(testAccount);
-    //     when(accountMapper.toResponse(any(Account.class))).thenReturn(accountResponse);
-    //
-    //     // When
-    //     AccountResponse result = accountService.createAccount(createRequest);
-    //
-    //     // Then
-    //     assertNotNull(result);
-    //     assertEquals(accountResponse.getUsername(), result.getUsername());
-    //     verify(accountRepository, times(2)).save(any(Account.class));
-    //     verify(passwordEncoder).encode("password123");
-    // }
-    //
-    // @Test
-    // void createAccount_WithoutRoles_DefaultsToShopOwner() {
-    //     // Given
-    //     createRequest.setRoles(null);
-    //     when(roleRepository.findByRoleNameIgnoreCase("Chủ cửa hàng")).thenReturn(Optional.of(testRole));
-    //     when(accountRepository.existsByUsernameIgnoreCase(anyString())).thenReturn(false);
-    //     when(accountMapper.toEntity(any(AccountCreateRequest.class))).thenReturn(testAccount);
-    //     when(passwordEncoder.encode(anyString())).thenReturn("hashedPassword");
-    //     when(accountRepository.save(any(Account.class))).thenReturn(testAccount);
-    //     when(accountMapper.toResponse(any(Account.class))).thenReturn(accountResponse);
-    //
-    //     // When
-    //     AccountResponse result = accountService.createAccount(createRequest);
-    //
-    //     // Then
-    //     assertNotNull(result);
-    //     verify(roleRepository).findByRoleNameIgnoreCase("Chủ cửa hàng");
-    // }
-    //
-    // @Test
-    // void createAccount_PasswordMismatch_ThrowsException() {
-    //     // Given
-    //     createRequest.setConfirmPassword("differentPassword");
-    //
-    //     // When & Then
-    //     assertThrows(IllegalArgumentException.class, () -> accountService.createAccount(createRequest));
-    //     verify(accountRepository, never()).save(any(Account.class));
-    // }
-    //
-    // @Test
-    // void createAccount_UsernameExists_ThrowsException() {
-    //     // Given
-    //     when(accountRepository.existsByUsernameIgnoreCase(anyString())).thenReturn(true);
-    //
-    //     // When & Then
-    //     assertThrows(IllegalArgumentException.class, () -> accountService.createAccount(createRequest));
-    //     verify(accountRepository, never()).save(any(Account.class));
-    // }
-    //
-    // @Test
-    // void createAccount_UsernameWithSpaces_ThrowsException() {
-    //     // Given
-    //     createRequest.setUsername("user name");
-    //
-    //     // When & Then
-    //     assertThrows(IllegalArgumentException.class, () -> accountService.createAccount(createRequest));
-    // }
-    //
-    // @Test
-    // void createAccount_RoleNotFound_ThrowsException() {
-    //     // Given
-    //     createRequest.setRoles(List.of("NonExistentRole"));
-    //     when(roleRepository.findByRoleNameIgnoreCase(anyString())).thenReturn(Optional.empty());
-    //     when(accountRepository.existsByUsernameIgnoreCase(anyString())).thenReturn(false);
-    //
-    //     // When & Then
-    //     assertThrows(NoSuchElementException.class, () -> accountService.createAccount(createRequest));
-    // }
-    //
-    // @Test
-    // void createAccount_InactiveRole_ThrowsException() {
-    //     // Given
-    //     testRole.setActive(false);
-    //     createRequest.setRoles(List.of("Chủ cửa hàng"));
-    //     when(roleRepository.findByRoleNameIgnoreCase("Chủ cửa hàng")).thenReturn(Optional.of(testRole));
-    //     when(accountRepository.existsByUsernameIgnoreCase(anyString())).thenReturn(false);
-    //
-    //     // When & Then
-    //     assertThrows(IllegalStateException.class, () -> accountService.createAccount(createRequest));
-    // }
-
     @Test
     void createStaff_Success() {
         // Given
@@ -221,8 +122,6 @@ class AccountServiceImplTest {
         // When & Then
         assertThrows(IllegalArgumentException.class, () -> accountService.createStaff(createRequest));
     }
-
-
 
     @Test
     void getMyInfo_Success() {

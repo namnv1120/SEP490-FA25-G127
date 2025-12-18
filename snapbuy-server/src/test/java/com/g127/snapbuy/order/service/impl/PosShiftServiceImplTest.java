@@ -2,7 +2,6 @@ package com.g127.snapbuy.order.service.impl;
 
 import com.g127.snapbuy.account.entity.Account;
 import com.g127.snapbuy.shift.entity.PosShift;
-import com.g127.snapbuy.shift.entity.ShiftCashDenomination;
 import com.g127.snapbuy.order.dto.request.CashDenominationRequest;
 import com.g127.snapbuy.order.dto.response.PosShiftResponse;
 import com.g127.snapbuy.account.repository.AccountRepository;

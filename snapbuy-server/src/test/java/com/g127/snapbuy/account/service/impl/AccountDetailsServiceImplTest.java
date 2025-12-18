@@ -1,6 +1,5 @@
 package com.g127.snapbuy.account.service.impl;
 
-import com.g127.snapbuy.account.service.impl.AccountDetailsServiceImpl;
 import com.g127.snapbuy.account.entity.Account;
 import com.g127.snapbuy.account.entity.Role;
 import com.g127.snapbuy.account.repository.AccountRepository;
@@ -16,7 +15,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)

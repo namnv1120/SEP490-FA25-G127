@@ -3,7 +3,6 @@ package com.g127.snapbuy.product.service.impl;
 import com.g127.snapbuy.product.dto.request.CategoryCreateRequest;
 import com.g127.snapbuy.product.dto.request.CategoryUpdateRequest;
 import com.g127.snapbuy.product.dto.response.CategoryResponse;
-import com.g127.snapbuy.common.response.PageResponse;
 import com.g127.snapbuy.product.entity.Category;
 import com.g127.snapbuy.common.exception.AppException;
 import com.g127.snapbuy.common.exception.ErrorCode;
@@ -15,10 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
 import java.util.*;
 
