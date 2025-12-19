@@ -101,17 +101,17 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
       return sum + qty * unitPrice;
     }, 0) || 0;
 
+  // taxAmount từ server là SỐ TIỀN THUẾ, không phải tỷ lệ %
   const taxAmount = orderData?.taxAmount || 0;
-  // Nếu đã nhận hàng, sử dụng totalAmount và taxAmount từ server (đã tính theo giá mới)
-  // Ngược lại tính theo công thức cũ
-  const calculatedTax =
-    isReceived && orderData?.taxAmount != null
-      ? orderData.taxAmount
-      : subtotal * (parseFloat(taxAmount || 0) / 100);
-  const totalAmount =
-    isReceived && orderData?.totalAmount
-      ? orderData.totalAmount
-      : subtotal + calculatedTax;
+
+  // Tính tỷ lệ thuế % từ số tiền thuế và subtotal
+  const taxRate = subtotal > 0 ? ((taxAmount / subtotal) * 100).toFixed(1) : 0;
+
+  // Sử dụng taxAmount trực tiếp vì nó đã là số tiền thuế
+  const calculatedTax = taxAmount;
+
+  // Tổng cộng
+  const totalAmount = orderData?.totalAmount || subtotal + calculatedTax;
 
   return (
     <Modal
@@ -297,7 +297,7 @@ const PurchaseOrderDetailModal = ({ isOpen, onClose, purchaseOrderId }) => {
                   </div>
                   {calculatedTax > 0 && (
                     <div className="d-flex justify-content-between mb-2">
-                      <span>Thuế {isReceived ? "" : `(${taxAmount}%)`}:</span>
+                      <span>Thuế ({taxRate}%):</span>
                       <strong>{formatCurrency(calculatedTax)}</strong>
                     </div>
                   )}

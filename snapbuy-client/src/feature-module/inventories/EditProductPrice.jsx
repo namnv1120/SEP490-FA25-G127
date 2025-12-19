@@ -297,7 +297,7 @@ const EditProductPrice = () => {
                         </label>
                         <input
                           type="text"
-                          className={`form-control text-end ${
+                          className={`form-control text-start ${
                             errors.unitPrice ? "is-invalid" : ""
                           }`}
                           name="unitPrice"
@@ -321,7 +321,7 @@ const EditProductPrice = () => {
                         </label>
                         <input
                           type="text"
-                          className={`form-control text-end ${
+                          className={`form-control text-start ${
                             errors.costPrice ? "is-invalid" : ""
                           }`}
                           name="costPrice"

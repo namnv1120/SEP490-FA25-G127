@@ -871,7 +871,7 @@ const PosModals = ({
                 <input
                   ref={cashReceivedInputRef}
                   type="text"
-                  className="form-control text-end"
+                  className="form-control text-center"
                   placeholder="Nhập số tiền khách đưa"
                   value={cashReceived}
                   onChange={(e) => {
@@ -887,7 +887,6 @@ const PosModals = ({
                   style={{
                     fontSize: "18px",
                     fontWeight: "bold",
-                    paddingRight: "50px",
                   }}
                   autoFocus
                   onKeyDown={(e) => {
