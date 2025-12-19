@@ -33,7 +33,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public CustomerResponse createCustomer(CustomerCreateRequest request) {
-        // Check if phone already exists (regardless of active status)
+        // Kiểm tra xem số điện thoại đã tồn tại chưa (bất kể trạng thái active)
         if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
             String phone = request.getPhone().trim();
             Customer existingCustomer = customerRepository.getCustomerByPhone(phone);
@@ -86,7 +86,7 @@ public class CustomerServiceImpl implements CustomerService {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
         
-        // Check if phone is being updated and if it already exists for another customer
+        // Kiểm tra xem số điện thoại đang được cập nhật và nó đã tồn tại cho khách hàng khác chưa
         if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
             String newPhone = request.getPhone().trim();
             Customer existingCustomer = customerRepository.getCustomerByPhone(newPhone);
@@ -108,10 +108,10 @@ public class CustomerServiceImpl implements CustomerService {
     }
     @Override
     public List<CustomerResponse> searchCustomer(String keyword) {
-        // Fetch all active customers
+        // Lấy tất cả khách hàng đang hoạt động
         var customers = customerRepository.findByActiveTrue();
         
-        // Filter by keyword in Java using VietnameseUtils
+        // Lọc theo keyword trong Java sử dụng VietnameseUtils
         String trimmedKeyword = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
         if (trimmedKeyword != null) {
             customers = customers.stream()
@@ -130,7 +130,7 @@ public class CustomerServiceImpl implements CustomerService {
         return customerMapper.toResponse(customer);
     }
 
-    // ================= User Points Management =================
+    // ================= Quản lý điểm tích lũy khách hàng =================
 
     @Override
     public int normalizeRedeem(int requestedUsePoints, int currentPoints, BigDecimal payableBeforeRedeem) {
@@ -184,7 +184,7 @@ public class CustomerServiceImpl implements CustomerService {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
         
-        // Toggle status (default to true if null)
+        // Chuyển đổi trạng thái (mặc định là true nếu null)
         boolean currentStatus = customer.getActive() != null ? customer.getActive() : true;
         customer.setActive(!currentStatus);
         customer.setUpdatedDate(LocalDateTime.now());

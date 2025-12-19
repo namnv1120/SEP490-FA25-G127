@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 import javax.sql.DataSource;
 
 /**
- * Manual Flyway runner for tenant databases
- * Run this after creating tenant and setting tenant context
+ * Flyway runner thủ công cho các database tenant
+ * Chạy sau khi tạo tenant và thiết lập tenant context
  */
 @Slf4j
 @Component
@@ -23,12 +23,12 @@ public class TenantFlywayRunner {
     }
 
     /**
-     * Run Flyway migrations for current tenant
-     * Call this after setting TenantContext
+     * Chạy Flyway migrations cho tenant hiện tại
+     * Gọi sau khi thiết lập TenantContext
      */
     public void runMigrations(String tenantId) {
         try {
-            // Set tenant context temporarily
+            // Thiết lập tenant context tạm thời
             String previousTenant = TenantContext.getCurrentTenant();
             TenantContext.setCurrentTenant(tenantId);
 
@@ -40,7 +40,7 @@ public class TenantFlywayRunner {
 
             var result = flyway.migrate();
 
-            // Restore previous tenant context
+            // Khôi phục tenant context trước đó
             if (previousTenant != null) {
                 TenantContext.setCurrentTenant(previousTenant);
             } else {

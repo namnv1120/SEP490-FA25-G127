@@ -261,12 +261,12 @@ const Suppliers = () => {
           >
             <i className="feather icon-edit"></i>
           </button>
-          <button
+          {/* <button
             className="p-2 border-0 bg-transparent"
             onClick={() => handleDeleteClick(row)}
           >
             <i className="feather icon-trash-2"></i>
-          </button>
+          </button> */}
         </div>
       ),
     },

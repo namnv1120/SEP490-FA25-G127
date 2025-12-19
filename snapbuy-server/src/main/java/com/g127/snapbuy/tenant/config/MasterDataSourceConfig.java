@@ -39,7 +39,7 @@ public class MasterDataSourceConfig {
             @Qualifier("masterDataSource") DataSource dataSource) {
         
         java.util.Map<String, Object> properties = new java.util.HashMap<>();
-        // Disable schema validation at startup - Flyway will manage schema
+        // Tắt kiểm tra schema khi khởi động - Flyway sẽ quản lý schema
         properties.put("hibernate.hbm2ddl.auto", "none");
         properties.put("hibernate.temp.use_jdbc_metadata_defaults", false);
         properties.put("hibernate.jdbc.lob.non_contextual_creation", true);

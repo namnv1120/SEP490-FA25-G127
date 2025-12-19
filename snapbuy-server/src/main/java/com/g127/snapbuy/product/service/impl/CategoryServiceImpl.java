@@ -175,10 +175,10 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public PageResponse<CategoryResponse> searchParentCategoriesByKeyword(String keyword, Pageable pageable) {
-        // Fetch all parent categories from DB
+        // Lấy tất cả danh mục cha từ DB
         List<Category> allCategories = categoryRepository.findAllParentCategories();
         
-        // Filter by keyword in Java using VietnameseUtils
+        // Lọc theo keyword trong Java sử dụng VietnameseUtils
         String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
         List<Category> filteredCategories = allCategories;
         
@@ -188,7 +188,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .toList();
         }
         
-        // Manual pagination
+        // Phân trang thủ công
         int pageNumber = pageable.getPageNumber();
         int pageSize = pageable.getPageSize();
         int totalElements = filteredCategories.size();
@@ -218,21 +218,21 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public PageResponse<CategoryResponse> searchSubCategoriesByKeyword(String keyword, Pageable pageable) {
-        // Fetch all sub categories from DB
+        // Lấy tất cả danh mục con từ DB
         List<Category> allCategories = categoryRepository.findAllSubCategories();
         
-        // Filter by keyword in Java using VietnameseUtils (search in both category name and parent name)
+        // Lọc theo keyword trong Java sử dụng VietnameseUtils (tìm kiếm trong cả tên danh mục và tên danh mục cha)
         String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
         List<Category> filteredCategories = allCategories;
         
         if (trimmedKeyword != null) {
             filteredCategories = allCategories.stream()
                 .filter(c -> {
-                    // Search in category name
+                    // Tìm trong tên danh mục
                     if (VietnameseUtils.containsIgnoreDiacritics(c.getCategoryName(), trimmedKeyword)) {
                         return true;
                     }
-                    // Also search in parent category name
+                    // Cũng tìm trong tên danh mục cha
                     if (c.getParentCategoryId() != null) {
                         Category parent = categoryRepository.findById(c.getParentCategoryId()).orElse(null);
                         if (parent != null && VietnameseUtils.containsIgnoreDiacritics(parent.getCategoryName(), trimmedKeyword)) {
@@ -244,7 +244,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .toList();
         }
         
-        // Manual pagination
+        // Phân trang thủ công
         int pageNumber = pageable.getPageNumber();
         int pageSize = pageable.getPageSize();
         int totalElements = filteredCategories.size();

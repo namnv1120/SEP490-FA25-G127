@@ -1,5 +1,6 @@
 package com.g127.snapbuy.report.service.impl;
 
+import com.g127.snapbuy.report.dto.response.DailyRevenueItem;
 import com.g127.snapbuy.report.dto.response.RevenueResponse;
 import com.g127.snapbuy.order.repository.OrderRepository;
 import com.g127.snapbuy.report.service.RevenueService;
@@ -12,6 +13,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -106,5 +109,32 @@ public class RevenueServiceImpl implements RevenueService {
                 .endDate(end)
                 .period("TUỲ CHỈNH")
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DailyRevenueItem> getMonthlyDailyRevenue(int year, int month) {
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        int daysInMonth = startDate.lengthOfMonth();
+        List<DailyRevenueItem> dailyRevenues = new ArrayList<>();
+
+        for (int day = 1; day <= daysInMonth; day++) {
+            LocalDate date = LocalDate.of(year, month, day);
+            LocalDateTime startOfDay = date.atStartOfDay();
+            LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
+
+            BigDecimal totalRevenue = orderRepository.sumRevenueByDateRangeAndPaymentStatus(
+                    startOfDay, endOfDay, PAID_VN);
+            Long orderCount = orderRepository.countOrdersByDateRangeAndPaymentStatus(
+                    startOfDay, endOfDay, PAID_VN);
+
+            dailyRevenues.add(DailyRevenueItem.builder()
+                    .date(date)
+                    .totalRevenue(totalRevenue != null ? totalRevenue : BigDecimal.ZERO)
+                    .orderCount(orderCount != null ? orderCount : 0L)
+                    .build());
+        }
+
+        return dailyRevenues;
     }
 }

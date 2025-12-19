@@ -202,10 +202,10 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public PageResponse<RoleResponse> searchRolesPaged(String keyword, Boolean active, Pageable pageable) {
-        // Fetch from DB without keyword filter
+        // Lấy từ DB không có bộ lọc keyword
         List<Role> roles = roleRepository.findRolesForSearch(active);
         
-        // Filter by keyword in Java using VietnameseUtils
+        // Lọc theo keyword trong Java sử dụng VietnameseUtils
         String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
         if (trimmedKeyword != null) {
             roles = roles.stream()
@@ -213,7 +213,7 @@ public class RoleServiceImpl implements RoleService {
                 .toList();
         }
         
-        // Manual pagination
+        // Phân trang thủ công
         int pageNumber = pageable.getPageNumber();
         int pageSize = pageable.getPageSize();
         int totalElements = roles.size();

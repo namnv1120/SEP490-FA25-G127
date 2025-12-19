@@ -1101,7 +1101,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         }
     }
 
-    // ================== NOTIFICATION HELPERS ==================
+    // ================== CÁC HÀM HỖ TRỢ THÔNG BÁO ==================
 
     /**
      * Thông báo cho Chủ cửa hàng khi có đơn đặt hàng mới cần duyệt

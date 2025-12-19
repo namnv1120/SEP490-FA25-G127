@@ -65,7 +65,7 @@ public class TenantServiceImpl implements TenantService {
 
     @PostConstruct
     public void loadAllTenantDataSources() {
-        // Cast DataSource to TenantRoutingDataSource
+        // Chuyển đổi DataSource thành TenantRoutingDataSource
         this.tenantRoutingDataSource = (TenantRoutingDataSource) tenantDataSource;
         
         List<Tenant> tenants = tenantRepository.findAll();
@@ -110,29 +110,29 @@ public class TenantServiceImpl implements TenantService {
     @Transactional("masterTransactionManager")
     public TenantResponse createTenant(TenantCreateRequest request) {
 
-        // Validate tenant code uniqueness
+        // Kiểm tra mã cửa hàng có bị trùng không
         if (tenantRepository.existsByTenantCode(request.getTenantCode())) {
             throw new IllegalArgumentException("Mã cửa hàng '" + request.getTenantCode() + "' đã được sử dụng. Vui lòng chọn mã khác.");
         }
         
-        // Validate owner username uniqueness
+        // Kiểm tra tên đăng nhập chủ cửa hàng có bị trùng không
         if (tenantOwnerRepository.existsByUsername(request.getOwnerUsername())) {
             throw new IllegalArgumentException("Tên đăng nhập '" + request.getOwnerUsername() + "' đã tồn tại. Vui lòng chọn tên khác.");
         }
         
-        // Validate owner email uniqueness
+        // Kiểm tra email chủ cửa hàng có bị trùng không
         if (tenantOwnerRepository.existsByEmail(request.getOwnerEmail())) {
             throw new IllegalArgumentException("Email '" + request.getOwnerEmail() + "' đã được đăng ký. Vui lòng sử dụng email khác.");
         }
         
-        // Validate owner phone uniqueness (if provided)
+        // Kiểm tra số điện thoại chủ cửa hàng có bị trùng không (nếu có)
         if (request.getOwnerPhone() != null && !request.getOwnerPhone().isEmpty()) {
             if (tenantOwnerRepository.existsByPhone(request.getOwnerPhone())) {
                 throw new IllegalArgumentException("Số điện thoại '" + request.getOwnerPhone() + "' đã được đăng ký. Vui lòng sử dụng số khác.");
             }
         }
 
-        // Create tenant with auto-generated dbName if not provided
+        // Tạo tenant với dbName tự động nếu không được cung cấp
         String dbName = (request.getDbName() != null && !request.getDbName().isBlank()) 
             ? request.getDbName() 
             : null; // Will be set after save when we have tenantId
@@ -160,32 +160,32 @@ public class TenantServiceImpl implements TenantService {
             tenant = tenantRepository.save(tenant);
         }
 
-        // Create tenant database and setup datasource
+        // Tạo database cho tenant và thiết lập datasource
         try {
             createTenantDatabase(tenant);
             setupTenantDataSource(tenant);
             
-            // Run Flyway migrations for tenant database
+            // Chạy Flyway migrations cho database tenant
             flywayRunner.runMigrations(tenant.getTenantId().toString());
             log.debug("Tenant database setup completed with migrations");
             
-            // Sync master roles to tenant database
+            // Đồng bộ vai trò từ master sang database tenant
             masterRoleService.syncRolesToTenant(tenant.getTenantId().toString());
             log.debug("Master roles synced to tenant database");
         } catch (IllegalArgumentException e) {
-            // Re-throw validation errors (database already exists, etc.)
+            // Ném lại lỗi validation (database đã tồn tại, v.v.)
             log.error("Validation error during tenant setup: {}", e.getMessage());
-            // Rollback: Delete tenant from master DB
+            // Rollback: Xóa tenant khỏi Master DB
             tenantRepository.delete(tenant);
             throw e;
         } catch (Exception e) {
             log.error("Failed to setup tenant database: {}", e.getMessage(), e);
-            // Rollback: Delete tenant from master DB
+            // Rollback: Xóa tenant khỏi Master DB
             tenantRepository.delete(tenant);
             throw new RuntimeException("Không thể tạo cơ sở dữ liệu cho cửa hàng: " + e.getMessage());
         }
 
-        // Create owner account in Master DB
+        // Tạo tài khoản chủ cửa hàng trong Master DB
         TenantOwner owner = TenantOwner.builder()
                 .tenantId(tenant.getTenantId())
                 .username(request.getOwnerUsername())
@@ -199,7 +199,7 @@ public class TenantServiceImpl implements TenantService {
         owner = tenantOwnerRepository.save(owner);
         log.debug("Tenant owner created in Master DB with ID: {}", owner.getAccountId());
 
-        // Insert owner account into Tenant DB
+        // Chèn tài khoản chủ cửa hàng vào Tenant DB
         try {
             insertOwnerIntoTenantDB(tenant, request);
             log.debug("Owner account inserted into Tenant DB");
@@ -256,15 +256,15 @@ public class TenantServiceImpl implements TenantService {
     @Override
     @Transactional("masterTransactionManager")
     public TenantResponse updateTenant(UUID tenantId, TenantUpdateRequest request) {
-        // Get tenant from master database
+        // Lấy tenant từ master database
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy cửa hàng"));
         
-        // Update tenant name
+        // Cập nhật tên tenant
         tenant.setTenantName(request.getTenantName());
         tenant = tenantRepository.save(tenant);
         
-        // Get and update owner in master database
+        // Lấy và cập nhật thông tin chủ cửa hàng trong master database
         TenantOwner owner = tenantOwnerRepository.findByTenantId(tenantId).stream()
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy thông tin chủ cửa hàng"));
@@ -274,7 +274,7 @@ public class TenantServiceImpl implements TenantService {
         owner.setPhone(request.getOwnerPhone());
         tenantOwnerRepository.save(owner);
         
-        // Update owner info in tenant database
+        // Cập nhật thông tin chủ cửa hàng trong tenant database
         try {
             String tenantIdStr = tenant.getTenantId().toString();
             TenantContext.setCurrentTenant(tenantIdStr);
@@ -294,7 +294,7 @@ public class TenantServiceImpl implements TenantService {
             }
         } catch (SQLException e) {
             log.error("Failed to update owner in tenant database: {}", e.getMessage());
-            // Continue even if tenant DB update fails
+            // Tiếp tục ngay cả khi cập nhật tenant DB thất bại
         } finally {
             TenantContext.clear();
         }
@@ -313,17 +313,17 @@ public class TenantServiceImpl implements TenantService {
         String tenantIdStr = tenantId.toString();
         
         try {
-            // Step 1: Remove datasource from routing pool
+            // Bước 1: Xóa datasource khỏi routing pool
             if (tenantRoutingDataSource != null) {
                 tenantRoutingDataSource.removeTenantDataSource(tenantIdStr);
                 log.info("Removed datasource for tenant: {}", tenantIdStr);
             }
             
-            // Step 2: Drop the tenant database
+            // Bước 2: Xóa database tenant
             dropTenantDatabase(tenant);
             log.info("Dropped database: {}", dbName);
             
-            // Step 3: Delete tenant record from master DB (cascade will delete owner)
+            // Bước 3: Xóa bản ghi tenant khỏi master DB (cascade sẽ xóa owner)
             tenantRepository.deleteById(tenantId);
 
         } catch (Exception e) {
@@ -333,7 +333,7 @@ public class TenantServiceImpl implements TenantService {
     }
     
     /**
-     * Drop tenant database
+     * Xóa database tenant
      */
     private void dropTenantDatabase(Tenant tenant) throws Exception {
         String masterUrl = String.format(
@@ -345,7 +345,7 @@ public class TenantServiceImpl implements TenantService {
                 masterUrl, tenant.getDbUsername(), tenant.getDbPassword());
              Statement stmt = conn.createStatement()) {
 
-            // Terminate all connections to the database before dropping
+            // Ngắt tất cả kết nối đến database trước khi xóa
             String killConnectionsQuery = String.format(
                     "ALTER DATABASE [%s] SET SINGLE_USER WITH ROLLBACK IMMEDIATE",
                     tenant.getDbName()
@@ -356,10 +356,10 @@ public class TenantServiceImpl implements TenantService {
                 log.debug("Terminated all connections to database: {}", tenant.getDbName());
             } catch (Exception e) {
                 log.warn("Could not set database to single user mode: {}", e.getMessage());
-                // Continue anyway - database might not exist
+                // Tiếp tục dù sao - database có thể không tồn tại
             }
             
-            // Drop the database
+            // Xóa database
             String dropQuery = String.format("DROP DATABASE IF EXISTS [%s]", tenant.getDbName());
             stmt.executeUpdate(dropQuery);
             log.debug("Database '{}' dropped successfully", tenant.getDbName());
@@ -396,7 +396,7 @@ public class TenantServiceImpl implements TenantService {
                 masterUrl, tenant.getDbUsername(), tenant.getDbPassword());
              Statement stmt = conn.createStatement()) {
 
-            // Check if database exists
+            // Kiểm tra xem database đã tồn tại chưa
             String checkQuery = String.format(
                     "SELECT database_id FROM sys.databases WHERE name = '%s'",
                     tenant.getDbName()
@@ -417,7 +417,7 @@ public class TenantServiceImpl implements TenantService {
             // Re-throw validation errors
             throw e;
         } catch (Exception e) {
-            // Catch SQL errors
+            // Bắt lỗi SQL
             String errorMsg = e.getMessage();
             if (errorMsg != null && errorMsg.toLowerCase().contains("already exists")) {
                 throw new IllegalArgumentException("Cơ sở dữ liệu '" + tenant.getDbName() + "' đã tồn tại. Vui lòng sử dụng tên khác.");
@@ -427,7 +427,7 @@ public class TenantServiceImpl implements TenantService {
     }
 
     /**
-     * Setup datasource for tenant and add to routing datasource
+     * Thiết lập datasource cho tenant và thêm vào routing datasource
      */
     private void setupTenantDataSource(Tenant tenant) {
         HikariDataSource dataSource = createDataSource(tenant);
@@ -435,25 +435,25 @@ public class TenantServiceImpl implements TenantService {
     }
 
     /**
-     * Insert owner account into Tenant database
+     * Chèn tài khoản chủ cửa hàng vào database tenant
      */
     private void insertOwnerIntoTenantDB(Tenant tenant, TenantCreateRequest request) throws Exception {
         String previousTenant = TenantContext.getCurrentTenant();
         
         try {
-            // Set tenant context
+            // Thiết lập tenant context
             TenantContext.setCurrentTenant(tenant.getTenantId().toString());
             
-            // Get tenant datasource
+            // Lấy datasource của tenant
             javax.sql.DataSource dataSource = tenantRoutingDataSource.getCurrentDataSource();
             
             try (Connection connection = dataSource.getConnection();
                  Statement statement = connection.createStatement()) {
                 
-                // Hash password
+                // Mã hóa mật khẩu
                 String hashedPassword = passwordEncoder.encode(request.getOwnerPassword());
                 
-                // Get "Chủ cửa hàng" role ID
+                // Lấy ID của vai trò "Chủ cửa hàng"
                 String getRoleIdQuery = "SELECT role_id FROM roles WHERE role_name = N'Chủ cửa hàng'";
                 ResultSet rs = statement.executeQuery(getRoleIdQuery);
                 
@@ -463,7 +463,7 @@ public class TenantServiceImpl implements TenantService {
                 String roleId = rs.getString("role_id");
                 rs.close();
                 
-                // Insert owner account
+                // Chèn tài khoản chủ cửa hàng
                 String insertAccountSql = String.format(
                     "INSERT INTO accounts (full_name, username, password_hash, email, phone, active) " +
                     "VALUES (N'%s', '%s', '%s', '%s', '%s', 1)",
@@ -488,7 +488,7 @@ public class TenantServiceImpl implements TenantService {
                     throw e;
                 }
                 
-                // Get the account_id that was just inserted
+                // Lấy account_id vừa được tạo
                 String getAccountIdQuery = String.format(
                     "SELECT account_id FROM accounts WHERE username = '%s'",
                     request.getOwnerUsername()
@@ -501,7 +501,7 @@ public class TenantServiceImpl implements TenantService {
                 String accountId = rs.getString("account_id");
                 rs.close();
                 
-                // Assign "Chủ cửa hàng" role to owner
+                // Gán vai trò "Chủ cửa hàng" cho chủ cửa hàng
                 String insertRoleSql = String.format(
                     "INSERT INTO account_roles (account_id, role_id) VALUES ('%s', '%s')",
                     accountId, roleId
@@ -510,7 +510,7 @@ public class TenantServiceImpl implements TenantService {
                 log.debug("Role 'Chủ cửa hàng' assigned to owner account");
             }
         } finally {
-            // Restore previous tenant context
+            // Khôi phục tenant context trước đó
             if (previousTenant != null) {
                 TenantContext.setCurrentTenant(previousTenant);
             } else {
@@ -520,7 +520,7 @@ public class TenantServiceImpl implements TenantService {
     }
 
     private TenantResponse toResponse(Tenant tenant, TenantOwner owner) {
-        // Calculate statistics from tenant database
+        // Tính toán thống kê từ database tenant
         int userCount = countUsersInTenant(tenant.getTenantId().toString());
         int productCount = countProductsInTenant(tenant.getTenantId().toString());
         long revenue = calculateRevenueInTenant(tenant.getTenantId().toString());
@@ -548,7 +548,7 @@ public class TenantServiceImpl implements TenantService {
     }
     
     /**
-     * Count number of users in tenant database
+     * Đếm số lượng người dùng trong database tenant
      */
     private int countUsersInTenant(String tenantId) {
         String previousTenant = TenantContext.getCurrentTenant();
@@ -581,7 +581,7 @@ public class TenantServiceImpl implements TenantService {
     }
     
     /**
-     * Count number of products in tenant database
+     * Đếm số lượng sản phẩm trong database tenant
      */
     private int countProductsInTenant(String tenantId) {
         String previousTenant = TenantContext.getCurrentTenant();
@@ -614,7 +614,7 @@ public class TenantServiceImpl implements TenantService {
     }
     
     /**
-     * Calculate total revenue in tenant database
+     * Tính tổng doanh thu trong database tenant
      */
     private long calculateRevenueInTenant(String tenantId) {
         String previousTenant = TenantContext.getCurrentTenant();
@@ -625,7 +625,7 @@ public class TenantServiceImpl implements TenantService {
             try (Connection conn = dataSource.getConnection();
                  Statement stmt = conn.createStatement()) {
                 
-                // Calculate total from all orders (use order_status column)
+                // Tính tổng từ tất cả đơn hàng (sử dụng cột order_status)
                 String query = "SELECT ISNULL(SUM(total_amount), 0) as total FROM orders";
                 ResultSet rs = stmt.executeQuery(query);
                 

@@ -46,11 +46,11 @@ public class PromotionServiceImpl implements PromotionService {
             throw new AppException(ErrorCode.INVALID_DATE_RANGE);
         }
 
-        // Trim leading/trailing whitespace from promotion name
+        // Bỏ khoảng trắng đầu và cuối của tên khuyến mãi
         String trimmedName = request.getPromotionName().trim();
         request.setPromotionName(trimmedName);
 
-        // Check duplicate promotion name
+        // Kiểm tra tên khuyến mãi có bị trùng không
         if (promotionRepository.existsByPromotionNameIgnoreCase(request.getPromotionName())) {
             throw new AppException(ErrorCode.NAME_EXISTED);
         }
@@ -64,7 +64,7 @@ public class PromotionServiceImpl implements PromotionService {
 
         Promotion saved = promotionRepository.save(entity);
 
-        // Schedule notifications for this promotion (real-time)
+        // Lên lịch thông báo cho khuyến mãi này (thời gian thực)
         notificationSchedulerService.schedulePromotionNotifications(saved.getPromotionId());
 
         return promotionMapper.toResponse(saved);
@@ -81,9 +81,9 @@ public class PromotionServiceImpl implements PromotionService {
             throw new AppException(ErrorCode.INVALID_DATE_RANGE);
         }
 
-        // Check duplicate promotion name if name is being updated
+        // Kiểm tra tên khuyến mãi có bị trùng không nếu tên đang được cập nhật
         if (request.getPromotionName() != null && !request.getPromotionName().trim().isEmpty()) {
-            // Trim leading/trailing whitespace from promotion name
+            // Bỏ khoảng trắng đầu và cuối của tên khuyến mãi
             String trimmedName = request.getPromotionName().trim();
             request.setPromotionName(trimmedName);
             
@@ -102,7 +102,7 @@ public class PromotionServiceImpl implements PromotionService {
 
         Promotion saved = promotionRepository.save(p);
 
-        // Reschedule notifications after update
+        // Lên lịch lại thông báo sau khi cập nhật
         notificationSchedulerService.schedulePromotionNotifications(saved.getPromotionId());
 
         return promotionMapper.toResponse(saved);
@@ -146,7 +146,7 @@ public class PromotionServiceImpl implements PromotionService {
         promotion.setActive(newActive);
         Promotion saved = promotionRepository.save(promotion);
 
-        // Schedule or cancel notifications based on new status
+        // Lên lịch hoặc hủy thông báo dựa trên trạng thái mới
         if (newActive) {
             notificationSchedulerService.schedulePromotionNotifications(saved.getPromotionId());
         } else {
@@ -162,7 +162,7 @@ public class PromotionServiceImpl implements PromotionService {
         Promotion promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
 
-        // Cancel scheduled notifications before deleting
+        // Hủy các thông báo đã lên lịch trước khi xóa
         notificationSchedulerService.cancelPromotionNotifications(id);
 
         promotionRepository.delete(promotion);
@@ -287,14 +287,14 @@ public class PromotionServiceImpl implements PromotionService {
             return Map.of();
         }
 
-        // Fetch ALL active promotions with their products in ONE query
+        // Lấy TẤT CẢ khuyến mãi đang hoạt động với sản phẩm trong MỘT lần query
         List<Promotion> allActivePromotions = promotionRepository.findAllWithProducts().stream()
                 .filter(p -> p.getActive() != null && p.getActive())
                 .filter(p -> p.getStartDate() != null && !at.isBefore(p.getStartDate()))
                 .filter(p -> p.getEndDate() != null && !at.isAfter(p.getEndDate()))
                 .toList();
 
-        // Build a map: productId -> List<Promotion> applicable to that product
+        // Xây dựng map: productId -> List<Promotion> áp dụng cho sản phẩm đó
         Map<UUID, List<Promotion>> promotionsByProduct = new HashMap<>();
         for (Promotion promo : allActivePromotions) {
             if (promo.getProducts() != null) {
@@ -307,7 +307,7 @@ public class PromotionServiceImpl implements PromotionService {
             }
         }
 
-        // Calculate discount for each product
+        // Tính giảm giá cho mỗi sản phẩm
         Map<UUID, DiscountInfoResponse> result = new HashMap<>();
         for (UUID productId : productIds) {
             BigDecimal unitPrice = priceMap.getOrDefault(productId, BigDecimal.ZERO);
@@ -322,7 +322,7 @@ public class PromotionServiceImpl implements PromotionService {
                 continue;
             }
 
-            // Calculate total discount (same logic as computeBestDiscountInfo)
+            // Tính tổng giảm giá (cùng logic với computeBestDiscountInfo)
             BigDecimal totalDiscountAmount = BigDecimal.ZERO;
             for (Promotion p : promos) {
                 BigDecimal discountAmount = BigDecimal.ZERO;
@@ -342,12 +342,12 @@ public class PromotionServiceImpl implements PromotionService {
                 totalDiscountAmount = totalDiscountAmount.add(discountAmount);
             }
 
-            // Cap at unit price
+            // Giới hạn không vượt quá giá đơn vị
             if (unitPrice != null && totalDiscountAmount.compareTo(unitPrice) > 0) {
                 totalDiscountAmount = unitPrice;
             }
 
-            // Calculate equivalent percent
+            // Tính phần trăm tương đương
             BigDecimal discountPercent = BigDecimal.ZERO;
             if (unitPrice != null && unitPrice.compareTo(BigDecimal.ZERO) > 0) {
                 discountPercent = totalDiscountAmount.divide(unitPrice, 4, RoundingMode.HALF_UP)

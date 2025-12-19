@@ -42,7 +42,7 @@ public class DatabaseInitializer {
     }
 
     private void createMasterDatabaseIfNotExists() {
-        // Connect to SQL Server master database (not our application database)
+        // Kết nối đến SQL Server master database (không phải database ứng dụng của chúng ta)
         String sqlServerMasterUrl = String.format(
                 "jdbc:sqlserver://%s:%s;databaseName=master;encrypt=false;trustServerCertificate=true",
                 masterHost, masterPort
@@ -51,7 +51,7 @@ public class DatabaseInitializer {
         try (Connection conn = DriverManager.getConnection(sqlServerMasterUrl, masterUsername, masterPassword);
              Statement stmt = conn.createStatement()) {
 
-            // Check if database exists
+            // Kiểm tra xem database đã tồn tại chưa
             String checkDbQuery = String.format(
                     "SELECT database_id FROM sys.databases WHERE name = '%s'",
                     masterDbName
@@ -62,7 +62,7 @@ public class DatabaseInitializer {
             if (rs.next()) {
                 log.info("Master database '{}' already exists", masterDbName);
             } else {
-                // Create database
+                // Tạo database
                 log.info("Creating master database '{}'...", masterDbName);
                 String createDbQuery = String.format("CREATE DATABASE %s", masterDbName);
                 stmt.executeUpdate(createDbQuery);

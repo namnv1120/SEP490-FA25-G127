@@ -2569,14 +2569,7 @@ const Pos = () => {
               totalValue: d.denomination * d.quantity,
             }));
 
-            console.log("🟢 Opening shift with:", {
-              amount: Number(amount),
-              denominationsCount: denominationsData.length,
-              denominations: denominationsData,
-            });
-
             const res = await openShift(Number(amount), denominationsData);
-            console.log("✅ Shift opened successfully:", res);
             setCurrentShift(res);
             setShowShiftModal(false);
             window.dispatchEvent(
@@ -2600,19 +2593,11 @@ const Pos = () => {
               totalValue: d.denomination * d.quantity,
             }));
 
-            console.log("🔵 Closing shift with:", {
-              amount: Number(amount),
-              note,
-              denominationsCount: denominationsData.length,
-              denominations: denominationsData,
-            });
-
             const res = await closeShift(
               Number(amount),
               note,
               denominationsData
             );
-            console.log("✅ Shift closed successfully:", res);
             setCurrentShift(res);
             setShowShiftModal(false);
             window.dispatchEvent(

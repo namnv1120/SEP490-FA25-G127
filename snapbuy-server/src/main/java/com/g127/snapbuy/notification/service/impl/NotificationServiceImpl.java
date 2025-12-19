@@ -214,14 +214,14 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     /**
-     * Get shop ID from authenticated user
-     * In this single-tenant system, we use the shop owner's account ID as the shop ID
-     * All users in the system belong to the same shop (single-tenant)
+     * Lấy shop ID từ người dùng đã xác thực
+     * Trong hệ thống single-tenant này, chúng ta sử dụng account ID của chủ cửa hàng làm shop ID
+     * Tất cả người dùng trong hệ thống đều thuộc cùng một cửa hàng (single-tenant)
      */
     private UUID getShopIdFromAuth() {
         try {
-            // In single-tenant system, all users belong to the same shop
-            // Get the first shop owner's ID as the shop ID
+            // Trong hệ thống single-tenant, tất cả người dùng thuộc cùng một cửa hàng
+            // Lấy ID của chủ cửa hàng đầu tiên làm shop ID
             List<Account> shopOwners = accountRepository.findByRoleName("Chủ cửa hàng");
             if (shopOwners != null && !shopOwners.isEmpty()) {
                 UUID shopId = shopOwners.get(0).getAccountId();
@@ -229,7 +229,7 @@ public class NotificationServiceImpl implements NotificationService {
                 return shopId;
             }
 
-            // Fallback: use current user's account ID
+            // Dự phòng: sử dụng account ID của người dùng hiện tại
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null && auth.getName() != null) {
                 String username = auth.getName();
@@ -250,7 +250,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     /**
-     * Get current user's account ID from authentication
+     * Lấy account ID của người dùng hiện tại từ xác thực
      */
     private UUID getCurrentAccountId() {
         try {

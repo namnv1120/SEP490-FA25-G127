@@ -8,6 +8,7 @@ import CommonDatePicker from "../../components/date-picker/common-date-picker";
 import {
   getDailyRevenue,
   getMonthlyRevenue,
+  getMonthlyDailyRevenue,
   getYearlyRevenue,
   getCustomRevenue,
   getProductRevenue,
@@ -73,7 +74,7 @@ const RevenueReport = () => {
         );
         message.error(
           productError.response?.data?.message ||
-          "Lỗi khi tải dữ liệu doanh thu sản phẩm. Vui lòng thử lại."
+            "Lỗi khi tải dữ liệu doanh thu sản phẩm. Vui lòng thử lại."
         );
         setProductRevenueData([]);
       }
@@ -131,22 +132,11 @@ const RevenueReport = () => {
           ).getDate();
           endDateTime = new Date(selectedYear, selectedMonth - 1, daysInMonth);
           endDateTime.setHours(23, 59, 59, 999);
-          const dailyPromises = [];
-          for (let day = 1; day <= daysInMonth; day++) {
-            const date = new Date(selectedYear, selectedMonth - 1, day);
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, "0");
-            const dStr = String(date.getDate()).padStart(2, "0");
-            const ds = `${y}-${m}-${dStr}`;
-            dailyPromises.push(
-              getDailyRevenue(ds).catch(() => ({
-                totalRevenue: 0,
-                orderCount: 0,
-                startDate: date.toISOString(),
-              }))
-            );
-          }
-          const dailyResults = await Promise.all(dailyPromises);
+          // Sử dụng API mới để lấy doanh thu tất cả các ngày trong 1 request
+          const dailyResults = await getMonthlyDailyRevenue(
+            selectedYear,
+            selectedMonth
+          );
           detailed = dailyResults.map((result, index) => ({
             date: new Date(selectedYear, selectedMonth - 1, index + 1),
             revenue: result.totalRevenue || 0,
@@ -270,7 +260,7 @@ const RevenueReport = () => {
       console.error("Lỗi khi tải dữ liệu doanh thu:", error);
       message.error(
         error.response?.data?.message ||
-        "Lỗi khi tải dữ liệu doanh thu. Vui lòng thử lại."
+          "Lỗi khi tải dữ liệu doanh thu. Vui lòng thử lại."
       );
       setRevenueData(null);
       setDetailedData([]);
@@ -348,7 +338,7 @@ const RevenueReport = () => {
       // Thêm dòng tổng tiền
       const accountName = selectedAccountId
         ? salesAccounts.find((acc) => acc.id === selectedAccountId)?.fullName ||
-        ""
+          ""
         : "Tất cả nhân viên";
 
       const totalRow = worksheet.addRow([
@@ -571,8 +561,8 @@ const RevenueReport = () => {
               periodType === "monthly"
                 ? "Biểu đồ doanh thu và số đơn hàng theo ngày trong tháng"
                 : periodType === "yearly"
-                  ? "Biểu đồ doanh thu và số đơn hàng theo tháng trong năm"
-                  : "Biểu đồ doanh thu và số đơn hàng theo ngày",
+                ? "Biểu đồ doanh thu và số đơn hàng theo tháng trong năm"
+                : "Biểu đồ doanh thu và số đơn hàng theo ngày",
             align: "center",
             style: {
               fontSize: "16px",
@@ -592,6 +582,7 @@ const RevenueReport = () => {
             show: true,
             position: "top",
             horizontalAlign: "center",
+            offsetY: -20,
           },
         },
       };
@@ -730,10 +721,13 @@ const RevenueReport = () => {
               {/* Header Section */}
               <div className="mb-4">
                 <div className="d-flex align-items-center gap-2 mb-2">
-                  <i className="fas fa-filter text-secondary" style={{ fontSize: '20px' }}></i>
+                  <i
+                    className="fas fa-filter text-secondary"
+                    style={{ fontSize: "20px" }}
+                  ></i>
                   <h5 className="mb-0 fw-bold">Bộ lọc báo cáo</h5>
                 </div>
-                <p className="text-muted mb-0" style={{ fontSize: '14px' }}>
+                <p className="text-muted mb-0" style={{ fontSize: "14px" }}>
                   Chọn khoảng thời gian để xem báo cáo
                 </p>
               </div>
@@ -741,31 +735,44 @@ const RevenueReport = () => {
               {/* Report Type Filter Label */}
               <div className="mb-3">
                 <div className="d-flex align-items-center gap-2">
-                  <i className="fas fa-chart-line text-muted" style={{ fontSize: '14px' }}></i>
-                  <label className="mb-0 fw-semibold" style={{ fontSize: '14px' }}>Loại báo cáo</label>
+                  <i
+                    className="fas fa-chart-line text-muted"
+                    style={{ fontSize: "14px" }}
+                  ></i>
+                  <label
+                    className="mb-0 fw-semibold"
+                    style={{ fontSize: "14px" }}
+                  >
+                    Loại báo cáo
+                  </label>
                 </div>
               </div>
 
               {/* Tabs for Report Type */}
               <div className="mb-4">
-                <div className="btn-group w-100" role="group" style={{ display: 'flex', gap: '8px' }}>
+                <div
+                  className="btn-group w-100"
+                  role="group"
+                  style={{ display: "flex", gap: "8px" }}
+                >
                   <button
                     type="button"
                     className="btn"
                     style={{
                       flex: 1,
-                      borderRadius: '8px',
-                      padding: '10px',
-                      fontSize: '14px',
-                      fontWeight: periodType === 'daily' ? '600' : '500',
-                      backgroundColor: periodType === 'daily' ? '#6c757d' : '#fff',
-                      border: '1px solid #6c757d',
-                      color: periodType === 'daily' ? '#fff' : '#6c757d',
-                      transition: 'all 0.3s ease',
-                      cursor: 'pointer'
+                      borderRadius: "8px",
+                      padding: "10px",
+                      fontSize: "14px",
+                      fontWeight: periodType === "daily" ? "600" : "500",
+                      backgroundColor:
+                        periodType === "daily" ? "#6c757d" : "#fff",
+                      border: "1px solid #6c757d",
+                      color: periodType === "daily" ? "#fff" : "#6c757d",
+                      transition: "all 0.3s ease",
+                      cursor: "pointer",
                     }}
                     onClick={() => {
-                      setPeriodType('daily');
+                      setPeriodType("daily");
                       setRevenueData(null);
                       setDetailedData([]);
                       setProductRevenueData([]);
@@ -779,18 +786,19 @@ const RevenueReport = () => {
                     className="btn"
                     style={{
                       flex: 1,
-                      borderRadius: '8px',
-                      padding: '10px',
-                      fontSize: '14px',
-                      fontWeight: periodType === 'monthly' ? '600' : '500',
-                      backgroundColor: periodType === 'monthly' ? '#6c757d' : '#fff',
-                      border: '1px solid #6c757d',
-                      color: periodType === 'monthly' ? '#fff' : '#6c757d',
-                      transition: 'all 0.3s ease',
-                      cursor: 'pointer'
+                      borderRadius: "8px",
+                      padding: "10px",
+                      fontSize: "14px",
+                      fontWeight: periodType === "monthly" ? "600" : "500",
+                      backgroundColor:
+                        periodType === "monthly" ? "#6c757d" : "#fff",
+                      border: "1px solid #6c757d",
+                      color: periodType === "monthly" ? "#fff" : "#6c757d",
+                      transition: "all 0.3s ease",
+                      cursor: "pointer",
                     }}
                     onClick={() => {
-                      setPeriodType('monthly');
+                      setPeriodType("monthly");
                       setRevenueData(null);
                       setDetailedData([]);
                       setProductRevenueData([]);
@@ -804,18 +812,19 @@ const RevenueReport = () => {
                     className="btn"
                     style={{
                       flex: 1,
-                      borderRadius: '8px',
-                      padding: '10px',
-                      fontSize: '14px',
-                      fontWeight: periodType === 'yearly' ? '600' : '500',
-                      backgroundColor: periodType === 'yearly' ? '#6c757d' : '#fff',
-                      border: '1px solid #6c757d',
-                      color: periodType === 'yearly' ? '#fff' : '#6c757d',
-                      transition: 'all 0.3s ease',
-                      cursor: 'pointer'
+                      borderRadius: "8px",
+                      padding: "10px",
+                      fontSize: "14px",
+                      fontWeight: periodType === "yearly" ? "600" : "500",
+                      backgroundColor:
+                        periodType === "yearly" ? "#6c757d" : "#fff",
+                      border: "1px solid #6c757d",
+                      color: periodType === "yearly" ? "#fff" : "#6c757d",
+                      transition: "all 0.3s ease",
+                      cursor: "pointer",
                     }}
                     onClick={() => {
-                      setPeriodType('yearly');
+                      setPeriodType("yearly");
                       setRevenueData(null);
                       setDetailedData([]);
                       setProductRevenueData([]);
@@ -829,18 +838,19 @@ const RevenueReport = () => {
                     className="btn"
                     style={{
                       flex: 1,
-                      borderRadius: '8px',
-                      padding: '10px',
-                      fontSize: '14px',
-                      fontWeight: periodType === 'custom' ? '600' : '500',
-                      backgroundColor: periodType === 'custom' ? '#6c757d' : '#fff',
-                      border: '1px solid #6c757d',
-                      color: periodType === 'custom' ? '#fff' : '#6c757d',
-                      transition: 'all 0.3s ease',
-                      cursor: 'pointer'
+                      borderRadius: "8px",
+                      padding: "10px",
+                      fontSize: "14px",
+                      fontWeight: periodType === "custom" ? "600" : "500",
+                      backgroundColor:
+                        periodType === "custom" ? "#6c757d" : "#fff",
+                      border: "1px solid #6c757d",
+                      color: periodType === "custom" ? "#fff" : "#6c757d",
+                      transition: "all 0.3s ease",
+                      cursor: "pointer",
                     }}
                     onClick={() => {
-                      setPeriodType('custom');
+                      setPeriodType("custom");
                       setRevenueData(null);
                       setDetailedData([]);
                       setProductRevenueData([]);
@@ -855,8 +865,16 @@ const RevenueReport = () => {
               {/* Date Selection Section */}
               <div className="mb-3">
                 <div className="d-flex align-items-center gap-2 mb-3">
-                  <i className="fas fa-calendar text-muted" style={{ fontSize: '14px' }}></i>
-                  <label className="mb-0 fw-semibold" style={{ fontSize: '14px' }}>Chọn ngày</label>
+                  <i
+                    className="fas fa-calendar text-muted"
+                    style={{ fontSize: "14px" }}
+                  ></i>
+                  <label
+                    className="mb-0 fw-semibold"
+                    style={{ fontSize: "14px" }}
+                  >
+                    Chọn ngày
+                  </label>
                 </div>
 
                 {periodType === "daily" && (
@@ -886,7 +904,7 @@ const RevenueReport = () => {
                           setDetailedData([]);
                           setProductRevenueData([]);
                         }}
-                        style={{ borderRadius: '8px', padding: '10px' }}
+                        style={{ borderRadius: "8px", padding: "10px" }}
                       >
                         {Array.from({ length: 12 }, (_, i) => i + 1).map(
                           (month) => (
@@ -907,7 +925,7 @@ const RevenueReport = () => {
                           setDetailedData([]);
                           setProductRevenueData([]);
                         }}
-                        style={{ borderRadius: '8px', padding: '10px' }}
+                        style={{ borderRadius: "8px", padding: "10px" }}
                       >
                         {Array.from(
                           { length: 10 },
@@ -932,7 +950,7 @@ const RevenueReport = () => {
                         setRevenueData(null);
                         setProductRevenueData([]);
                       }}
-                      style={{ borderRadius: '8px', padding: '10px' }}
+                      style={{ borderRadius: "8px", padding: "10px" }}
                     >
                       {Array.from(
                         { length: 10 },
@@ -957,7 +975,11 @@ const RevenueReport = () => {
                         setProductRevenueData([]);
                       }}
                       format="DD/MM/YYYY"
-                      style={{ width: "100%", borderRadius: '8px', padding: '10px' }}
+                      style={{
+                        width: "100%",
+                        borderRadius: "8px",
+                        padding: "10px",
+                      }}
                       placeholder={["Từ ngày", "Đến ngày"]}
                     />
                   </div>
@@ -971,15 +993,15 @@ const RevenueReport = () => {
                   onClick={fetchRevenueData}
                   disabled={loading}
                   style={{
-                    borderRadius: '8px',
-                    padding: '12px',
-                    fontSize: '15px',
-                    fontWeight: '600',
-                    backgroundColor: '#6c757d',
-                    border: '1px solid #6c757d',
-                    color: '#fff',
-                    transition: 'all 0.3s ease',
-                    cursor: 'pointer'
+                    borderRadius: "8px",
+                    padding: "12px",
+                    fontSize: "15px",
+                    fontWeight: "600",
+                    backgroundColor: "#6c757d",
+                    border: "1px solid #6c757d",
+                    color: "#fff",
+                    transition: "all 0.3s ease",
+                    cursor: "pointer",
                   }}
                 >
                   <i className="fas fa-chart-line me-2"></i>
@@ -1109,9 +1131,9 @@ const RevenueReport = () => {
                                 <h3 className="text-white mb-0">
                                   {revenueData.orderCount > 0
                                     ? formatCurrency(
-                                      revenueData.totalRevenue /
-                                      revenueData.orderCount
-                                    )
+                                        revenueData.totalRevenue /
+                                          revenueData.orderCount
+                                      )
                                     : "0 đ"}
                                 </h3>
                               </div>
@@ -1178,8 +1200,8 @@ const RevenueReport = () => {
                                           {periodType === "monthly"
                                             ? "Doanh thu từng ngày trong tháng (cột)"
                                             : periodType === "yearly"
-                                              ? "Doanh thu từng tháng trong năm (cột)"
-                                              : "Doanh thu từng ngày trong khoảng thời gian (cột)"}
+                                            ? "Doanh thu từng tháng trong năm (cột)"
+                                            : "Doanh thu từng ngày trong khoảng thời gian (cột)"}
                                         </span>
                                       </div>
                                     </div>
@@ -1199,8 +1221,8 @@ const RevenueReport = () => {
                                           {periodType === "monthly"
                                             ? "Số đơn hàng từng ngày trong tháng (đường)"
                                             : periodType === "yearly"
-                                              ? "Số đơn hàng từng tháng trong năm (đường)"
-                                              : "Số đơn hàng từng ngày trong khoảng thời gian (đường)"}
+                                            ? "Số đơn hàng từng tháng trong năm (đường)"
+                                            : "Số đơn hàng từng ngày trong khoảng thời gian (đường)"}
                                         </span>
                                       </div>
                                     </div>
@@ -1297,8 +1319,8 @@ const RevenueReport = () => {
                           </div>
                           <div className="card-body">
                             {productRevenueData &&
-                              Array.isArray(productRevenueData) &&
-                              productRevenueData.length > 0 ? (
+                            Array.isArray(productRevenueData) &&
+                            productRevenueData.length > 0 ? (
                               <PrimeDataTable
                                 column={[
                                   {
@@ -1336,7 +1358,7 @@ const RevenueReport = () => {
                                       const sellingPrice =
                                         rowData.totalSold > 0
                                           ? rowData.totalRevenue /
-                                          rowData.totalSold
+                                            rowData.totalSold
                                           : 0;
                                       return formatCurrency(sellingPrice);
                                     },

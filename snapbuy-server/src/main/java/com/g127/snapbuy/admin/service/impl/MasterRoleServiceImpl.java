@@ -46,7 +46,7 @@ public class MasterRoleServiceImpl implements MasterRoleService {
     @Override
     @Transactional
     public MasterRoleResponse createRole(MasterRoleRequest request) {
-        // Check duplicate
+        // Kiểm tra trùng lặp
         if (masterRoleRepository.existsByRoleNameIgnoreCase(request.getRoleName())) {
             throw new AppException(ErrorCode.ROLE_EXISTED);
         }
@@ -77,7 +77,7 @@ public class MasterRoleServiceImpl implements MasterRoleService {
             throw new AppException(ErrorCode.CANNOT_MODIFY_SYSTEM_ROLE);
         }
 
-        // Check duplicate name (nếu đổi tên)
+        // Kiểm tra tên trùng lặp (nếu đổi tên)
         if (!role.getRoleName().equalsIgnoreCase(request.getRoleName())) {
             if (masterRoleRepository.existsByRoleNameIgnoreCase(request.getRoleName())) {
                 throw new AppException(ErrorCode.ROLE_EXISTED);
@@ -129,7 +129,7 @@ public class MasterRoleServiceImpl implements MasterRoleService {
     @Transactional
     public void syncRolesToTenant(String tenantId) {
         try {
-            // Set tenant context
+            // Thiết lập tenant context
             TenantContext.setCurrentTenant(tenantId);
             
             // Lấy tất cả master roles (trừ Admin)
@@ -139,7 +139,7 @@ public class MasterRoleServiceImpl implements MasterRoleService {
 
             // Sync vào tenant database
             for (MasterRole masterRole : masterRoles) {
-                // Check if role already exists
+                // Kiểm tra xem role đã tồn tại chưa
                 if (!roleRepository.existsByRoleNameIgnoreCase(masterRole.getRoleName())) {
                     Role tenantRole = new Role();
                     tenantRole.setRoleName(masterRole.getRoleName());

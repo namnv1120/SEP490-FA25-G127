@@ -41,13 +41,13 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
 
     @Override
     public PageResponse<InventoryTransactionResponse> list(int page, int size, String sort, Sort.Direction dir, UUID productId, String productName, String transactionType, String referenceType, UUID referenceId, LocalDateTime from, LocalDateTime to) {
-        // Build specification for database filtering (excludes productName which needs Vietnamese diacritics handling)
+        // Xây dựng specification cho bộ lọc database (không bao gồm productName cần xử lý dấu tiếng Việt)
         Specification<InventoryTransaction> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (productId != null) {
                 predicates.add(cb.equal(root.get("product").get("productId"), productId));
             }
-            // ProductName filtering moved to Java layer for Vietnamese diacritics support
+            // Lọc ProductName chuyển sang Java layer để hỗ trợ dấu tiếng Việt
             if (transactionType != null && !transactionType.isBlank()) {
                 predicates.add(cb.equal(root.get("transactionType"), transactionType));
             }
@@ -66,16 +66,16 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        // If productName is provided, we need to fetch all matching records and filter in Java
+        // Nếu có productName, chúng ta cần lấy tất cả bản ghi phù hợp và lọc trong Java
         String trimmedProductName = (productName != null && !productName.isBlank()) ? productName.trim() : null;
         
         if (trimmedProductName != null) {
-            // Fetch all matching other criteria, then filter by productName in Java
+            // Lấy tất cả phù hợp với các tiêu chí khác, sau đó lọc theo productName trong Java
             List<InventoryTransaction> allData = transactionRepository.findAll(
                     spec, Sort.by(dir, sort)
             );
             
-            // Filter by productName using VietnameseUtils
+            // Lọc theo productName sử dụng VietnameseUtils
             List<InventoryTransaction> filteredData = allData.stream()
                 .filter(t -> t.getProduct() != null && 
                     VietnameseUtils.matchesAny(trimmedProductName, 
@@ -83,7 +83,7 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
                         t.getProduct().getProductCode()))
                 .toList();
             
-            // Manual pagination
+            // Phân trang thủ công
             int totalElements = filteredData.size();
             int totalPages = (int) Math.ceil((double) totalElements / Math.max(1, size));
             int fromIndex = page * size;
@@ -109,7 +109,7 @@ public class InventoryTransactionServiceImpl implements InventoryTransactionServ
                     .build();
         }
         
-        // No productName filter - use normal database pagination
+        // Không có bộ lọc productName - sử dụng phân trang database bình thường
         Page<InventoryTransaction> pageData = transactionRepository.findAll(
                 spec, PageRequest.of(page, Math.max(1, size), dir, sort)
         );

@@ -15,26 +15,26 @@ import java.util.UUID;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
 
-    // Get all notifications for a shop with pagination
+    // Lấy tất cả thông báo cho cửa hàng với phân trang
     Page<Notification> findByShopIdOrderByCreatedAtDesc(UUID shopId, Pageable pageable);
 
-    // Get unread notifications
+    // Lấy thông báo chưa đọc
     Page<Notification> findByShopIdAndIsReadOrderByCreatedAtDesc(UUID shopId, Boolean isRead, Pageable pageable);
 
-    // Get notifications by type
+    // Lấy thông báo theo loại
     Page<Notification> findByShopIdAndTypeOrderByCreatedAtDesc(UUID shopId, NotificationType type, Pageable pageable);
 
-    // Get notifications by type and read status
+    // Lấy thông báo theo loại và trạng thái đọc
     Page<Notification> findByShopIdAndTypeAndIsReadOrderByCreatedAtDesc(
             UUID shopId, NotificationType type, Boolean isRead, Pageable pageable);
 
-    // Count unread notifications
+    // Đếm thông báo chưa đọc
     Long countByShopIdAndIsRead(UUID shopId, Boolean isRead);
 
-    // Delete all notifications for a shop
+    // Xóa tất cả thông báo cho một cửa hàng
     void deleteByShopId(UUID shopId);
 
-    // Check if notification exists for a reference ID within time range (both read and unread)
+    // Kiểm tra xem thông báo có tồn tại cho một referenceId trong khoảng thời gian không (cả đã đọc và chưa đọc)
     @Query("""
         select count(n) > 0 from Notification n
         where n.shopId = :shopId
@@ -48,7 +48,7 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
             @Param("referenceId") UUID referenceId,
             @Param("since") LocalDateTime since);
 
-    // Check if unread notification exists for a reference ID
+    // Kiểm tra xem thông báo chưa đọc có tồn tại cho một referenceId không
     @Query("""
         select count(n) > 0 from Notification n
         where n.shopId = :shopId
@@ -62,28 +62,28 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
             @Param("referenceId") UUID referenceId,
             @Param("isRead") Boolean isRead);
 
-    // Find notifications by referenceId and type
+    // Tìm thông báo theo referenceId và loại
     java.util.List<Notification> findByReferenceIdAndType(UUID referenceId, NotificationType type);
 
-    // ============ Account-based notifications ============
+    // ============ Thông báo dựa trên tài khoản ============
 
-    // Get all notifications for an account with pagination
+    // Lấy tất cả thông báo cho một tài khoản với phân trang
     Page<Notification> findByAccountIdOrderByCreatedAtDesc(UUID accountId, Pageable pageable);
 
-    // Get unread notifications for an account
+    // Lấy thông báo chưa đọc cho một tài khoản
     Page<Notification> findByAccountIdAndIsReadOrderByCreatedAtDesc(UUID accountId, Boolean isRead, Pageable pageable);
 
-    // Get notifications by type for an account
+    // Lấy thông báo theo loại cho một tài khoản
     Page<Notification> findByAccountIdAndTypeOrderByCreatedAtDesc(UUID accountId, NotificationType type, Pageable pageable);
 
-    // Get notifications by type and read status for an account
+    // Lấy thông báo theo loại và trạng thái đọc cho một tài khoản
     Page<Notification> findByAccountIdAndTypeAndIsReadOrderByCreatedAtDesc(
             UUID accountId, NotificationType type, Boolean isRead, Pageable pageable);
 
-    // Count unread notifications for an account
+    // Đếm thông báo chưa đọc cho một tài khoản
     Long countByAccountIdAndIsRead(UUID accountId, Boolean isRead);
 
-    // Get all notifications for shop OR account (combined)
+    // Lấy tất cả thông báo cho cửa hàng HOẶC tài khoản (kết hợp)
     @Query("""
         select n from Notification n
         where (n.shopId = :shopId or n.accountId = :accountId)
@@ -92,7 +92,7 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     Page<Notification> findByShopIdOrAccountIdOrderByCreatedAtDesc(
             @Param("shopId") UUID shopId, @Param("accountId") UUID accountId, Pageable pageable);
 
-    // Get unread notifications for shop OR account
+    // Lấy thông báo chưa đọc cho cửa hàng HOẶC tài khoản
     @Query("""
         select n from Notification n
         where (n.shopId = :shopId or n.accountId = :accountId)
@@ -103,7 +103,7 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
             @Param("shopId") UUID shopId, @Param("accountId") UUID accountId,
             @Param("isRead") Boolean isRead, Pageable pageable);
 
-    // Get notifications by type for shop OR account
+    // Lấy thông báo theo loại cho cửa hàng HOẶC tài khoản
     @Query("""
         select n from Notification n
         where (n.shopId = :shopId or n.accountId = :accountId)
@@ -114,7 +114,7 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
             @Param("shopId") UUID shopId, @Param("accountId") UUID accountId,
             @Param("type") NotificationType type, Pageable pageable);
 
-    // Get notifications by type and read status for shop OR account
+    // Lấy thông báo theo loại và trạng thái đọc cho cửa hàng HOẶC tài khoản
     @Query("""
         select n from Notification n
         where (n.shopId = :shopId or n.accountId = :accountId)
@@ -126,7 +126,7 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
             @Param("shopId") UUID shopId, @Param("accountId") UUID accountId,
             @Param("type") NotificationType type, @Param("isRead") Boolean isRead, Pageable pageable);
 
-    // Count unread notifications for shop OR account
+    // Đếm thông báo chưa đọc cho cửa hàng HOẶC tài khoản
     @Query("""
         select count(n) from Notification n
         where (n.shopId = :shopId or n.accountId = :accountId)

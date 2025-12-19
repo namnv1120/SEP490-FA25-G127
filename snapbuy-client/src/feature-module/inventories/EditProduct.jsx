@@ -754,7 +754,7 @@ const EditProduct = () => {
               </div>
             </div>
 
-            <div className="col-lg-12">
+            <div className="col-lg-12 mt-4">
               <div className="btn-addproduct mb-4">
                 <button
                   type="button"

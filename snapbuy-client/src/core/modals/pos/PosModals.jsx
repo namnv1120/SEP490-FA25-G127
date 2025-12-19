@@ -87,7 +87,6 @@ const PosModals = ({
         const info = await getMyInfo();
         const u = info.result || info;
         const accountId = u?.id || null;
-        console.log("🔑 Loaded myAccountId:", accountId);
         setMyAccountId(accountId);
       } catch {
         void 0;
@@ -313,13 +312,6 @@ const PosModals = ({
           setOrdersLoading(true);
         }
 
-        console.log("📋 fetchOrders called with:", {
-          userRole,
-          shiftStatus: currentShift?.status,
-          shiftOpenedAt: currentShift?.openedAt,
-          myAccountId,
-        });
-
         // If user is Nhân viên bán hàng (SALESMAN) and has an open shift, only fetch orders from current shift
         const isSalesman =
           userRole === "Nhân viên bán hàng" || userRole === "SALESMAN";
@@ -377,25 +369,13 @@ const PosModals = ({
             return isMyOrder && isInTimeRange;
           });
 
-          console.log("🔍 SALESMAN orders filter:", {
-            myAccountId,
-            shiftStart: startISO,
-            totalFetched: shiftOrders.length,
-            afterFilter: filteredOrders.length,
-          });
-
           setOrders(filteredOrders);
         } else if (
           isSalesman &&
           (!currentShift || currentShift?.status !== "Mở")
         ) {
-          // Nhân viên bán hàng without open shift - show empty
-          console.log(
-            "🔍 Nhân viên bán hàng no open shift - showing empty orders"
-          );
           setOrders([]);
         } else {
-          // STORE_OWNER - show all orders
           const data = await getAllOrders();
           setOrders(data || []);
         }

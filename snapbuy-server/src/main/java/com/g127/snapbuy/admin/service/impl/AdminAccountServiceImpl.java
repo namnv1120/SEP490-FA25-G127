@@ -95,7 +95,7 @@ public class AdminAccountServiceImpl implements AdminAccountService {
         try {
             TenantContext.setCurrentTenant(tenantId);
             
-            // Build SQL dynamically based on whether password is being updated
+            // Xây dựng SQL động dựa trên việc có cập nhật mật khẩu hay không
             StringBuilder sql = new StringBuilder("UPDATE accounts SET full_name = ?, email = ?, phone = ?");
             boolean updatePassword = request.getNewPassword() != null && !request.getNewPassword().trim().isEmpty();
             

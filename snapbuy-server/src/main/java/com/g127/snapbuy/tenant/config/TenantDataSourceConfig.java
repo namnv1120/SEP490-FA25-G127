@@ -40,8 +40,8 @@ public class TenantDataSourceConfig {
     @Bean(name = "tenantDataSource")
     public DataSource tenantDataSource() {
         TenantRoutingDataSource routingDataSource = new TenantRoutingDataSource();
-        // Set a dummy default datasource to avoid initialization error
-        // Actual tenant datasources will be added dynamically when accessing tenant data
+        // Thiết lập datasource mặc định để tránh lỗi khởi tạo
+        // Các datasource tenant thực tế sẽ được thêm động khi truy cập dữ liệu tenant
         routingDataSource.setLenientFallback(false); // Changed to false to detect routing issues
         routingDataSource.afterPropertiesSet();
         return routingDataSource;
@@ -53,7 +53,7 @@ public class TenantDataSourceConfig {
             @Qualifier("tenantDataSource") DataSource dataSource) {
         
         Map<String, Object> properties = new HashMap<>();
-        // Disable schema validation at startup for multi-tenancy
+        // Tắt kiểm tra schema khi khởi động cho multi-tenancy
         properties.put("hibernate.hbm2ddl.auto", "none");
         properties.put("hibernate.temp.use_jdbc_metadata_defaults", false);
         properties.put("hibernate.jdbc.lob.non_contextual_creation", true);

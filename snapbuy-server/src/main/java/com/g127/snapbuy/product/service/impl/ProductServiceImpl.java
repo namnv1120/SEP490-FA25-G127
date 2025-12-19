@@ -76,7 +76,7 @@ public class ProductServiceImpl implements ProductService {
             product.setSupplier(supplier);
         }
 
-        // Validate barcode uniqueness nếu có
+        // Kiểm tra mã vạch không bị trùng nếu có
         if (request.getBarcode() != null && !request.getBarcode().trim().isEmpty()) {
             String barcode = request.getBarcode().trim();
             if (productRepository.existsByBarcode(barcode)) {
@@ -218,12 +218,12 @@ public class ProductServiceImpl implements ProductService {
 
         ProductResponse response = productMapper.toResponse(product);
 
-        // Set parent category name and sub category name
+        // Thiết lập tên danh mục cha và tên danh mục con
         if (product.getCategory() != null) {
             if (product.getCategory().getParentCategoryId() != null) {
                 // Category có parent -> đây là subcategory
                 response.setSubCategoryName(product.getCategory().getCategoryName());
-                // Fetch parent category để lấy tên
+                // Lấy danh mục cha để lấy tên
                 categoryRepository.findById(product.getCategory().getParentCategoryId())
                     .ifPresent(parent -> response.setParentCategoryName(parent.getCategoryName()));
             } else {
@@ -293,12 +293,12 @@ public class ProductServiceImpl implements ProductService {
             return List.of();
         }
         
-        // Batch fetch all product IDs
+        // Lấy tất cả ID sản phẩm
         List<UUID> productIds = products.stream()
                 .map(Product::getProductId)
                 .toList();
         
-        // Batch fetch only relevant prices using IN clause (1 query, only needed data)
+        // Lấy chỉ các giá liên quan bằng IN clause (1 query, chỉ lấy dữ liệu cần thiết)
         Map<UUID, ProductPrice> latestPrices = productPriceRepository.findByProductIdIn(productIds).stream()
                 .collect(Collectors.groupingBy(
                         p -> p.getProduct().getProductId(),
@@ -308,7 +308,7 @@ public class ProductServiceImpl implements ProductService {
                         )
                 ));
         
-        // Batch fetch only relevant inventories using IN clause (1 query, only needed data)
+        // Lấy chỉ các tồn kho liên quan bằng IN clause (1 query, chỉ lấy dữ liệu cần thiết)
         Map<UUID, Inventory> inventoriesMap = inventoryRepository.findByProductIdIn(productIds).stream()
                 .collect(Collectors.toMap(
                         inv -> inv.getProduct().getProductId(),
@@ -316,7 +316,7 @@ public class ProductServiceImpl implements ProductService {
                         (existing, replacement) -> existing
                 ));
         
-        // Map to responses using pre-fetched data
+        // Chuyển đổi sang response sử dụng dữ liệu đã lấy trước
         return products.stream()
                 .map(product -> {
                     ProductResponse response = productMapper.toResponse(product);
@@ -360,7 +360,7 @@ public class ProductServiceImpl implements ProductService {
             int rowNumber = i + 1;
 
             try {
-                // Validate Product Code
+                // Kiểm tra mã sản phẩm
                 String productCode = request.getProductCode() != null ? request.getProductCode().trim() : "";
                 if (productCode.isEmpty()) {
                     String error = String.format("Row %d: Mã sản phẩm không được để trống", rowNumber);
@@ -383,7 +383,7 @@ public class ProductServiceImpl implements ProductService {
                     continue;
                 }
 
-                // Validate Product Name
+                // Kiểm tra tên sản phẩm
                 String productName = request.getProductName() != null ? request.getProductName().trim() : "";
                 if (productName.isEmpty()) {
                     String error = String.format("Row %d: Tên sản phẩm không được để trống", rowNumber);
@@ -396,7 +396,7 @@ public class ProductServiceImpl implements ProductService {
                     continue;
                 }
 
-                // Validate Category Name
+                // Kiểm tra tên danh mục
                 String categoryName = request.getCategoryName() != null ? request.getCategoryName().trim() : "";
                 if (categoryName.isEmpty()) {
                     String error = String.format("Row %d: Tên danh mục không được để trống", rowNumber);
@@ -404,7 +404,7 @@ public class ProductServiceImpl implements ProductService {
                     continue;
                 }
 
-                // Validate Supplier Code
+                // Kiểm tra mã nhà cung cấp
                 String supplierCode = request.getSupplierCode() != null ? request.getSupplierCode().trim() : "";
                 if (supplierCode.isEmpty()) {
                     String error = String.format("Row %d: Mã nhà cung cấp không được để trống", rowNumber);
@@ -422,7 +422,7 @@ public class ProductServiceImpl implements ProductService {
                     continue;
                 }
 
-                // Validate Supplier Name
+                // Kiểm tra tên nhà cung cấp
                 String supplierName = request.getSupplierName() != null ? request.getSupplierName().trim() : "";
                 if (supplierName.isEmpty()) {
                     String error = String.format("Row %d: Tên nhà cung cấp không được để trống", rowNumber);
@@ -435,21 +435,21 @@ public class ProductServiceImpl implements ProductService {
                     continue;
                 }
 
-                // Validate Unit
+                // Kiểm tra đơn vị
                 if (request.getUnit() != null && request.getUnit().trim().length() > 10) {
                     String error = String.format("Row %d: Đơn vị không được quá 10 ký tự", rowNumber);
                     errors.add(error);
                     continue;
                 }
 
-                // Validate Dimensions
+                // Kiểm tra kích thước
                 if (request.getDimensions() != null && request.getDimensions().trim().length() > 30) {
                     String error = String.format("Row %d: Kích thước không được quá 30 ký tự", rowNumber);
                     errors.add(error);
                     continue;
                 }
 
-                // Validate Barcode
+                // Kiểm tra mã vạch
                 if (request.getBarcode() != null && !request.getBarcode().trim().isEmpty()) {
                     String barcode = request.getBarcode().trim();
                     if (barcode.length() > 50) {
@@ -697,10 +697,10 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public PageResponse<ProductResponse> searchProductsPaged(String keyword, Boolean active, UUID categoryId, UUID subCategoryId, Pageable pageable) {
         try {
-            // Fetch all products matching filters (except keyword) from DB
+            // Lấy tất cả sản phẩm theo bộ lọc (ngoại trừ keyword) từ DB
             List<Product> allProducts = productRepository.findProductsForSearch(active, categoryId, subCategoryId);
             
-            // Filter by keyword in Java using VietnameseUtils
+            // Lọc theo keyword trong Java sử dụng VietnameseUtils
             String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
             List<Product> filteredProducts = allProducts;
             
@@ -712,7 +712,7 @@ public class ProductServiceImpl implements ProductService {
                     .toList();
             }
             
-            // Manual pagination
+            // Phân trang thủ công
             int pageNumber = pageable.getPageNumber();
             int pageSize = pageable.getPageSize();
             int totalElements = filteredProducts.size();
@@ -755,12 +755,12 @@ public class ProductServiceImpl implements ProductService {
                     
                     ProductResponse response = productMapper.toResponse(fullProduct);
                     
-                    // Set parent category name and sub category name
+                    // Thiết lập tên danh mục cha và tên danh mục con
                     if (fullProduct.getCategory() != null) {
                         if (fullProduct.getCategory().getParentCategoryId() != null) {
                             // Category có parent -> đây là subcategory
                             response.setSubCategoryName(fullProduct.getCategory().getCategoryName());
-                            // Fetch parent category để lấy tên
+                            // Lấy danh mục cha để lấy tên
                             categoryRepository.findById(fullProduct.getCategory().getParentCategoryId())
                                 .ifPresent(parent -> response.setParentCategoryName(parent.getCategoryName()));
                         } else {

@@ -21,6 +21,15 @@ export const getMonthlyRevenue = async (year, month) => {
   return response.data?.result || response.data;
 };
 
+// Lấy doanh thu chi tiết theo từng ngày trong tháng (1 request duy nhất)
+export const getMonthlyDailyRevenue = async (year, month) => {
+  const response = await axios.get(
+    `${REST_API_BASE_URL}/monthly-daily?year=${year}&month=${month}`,
+    getAuthHeaders()
+  );
+  return response.data?.result || response.data;
+};
+
 // Lấy doanh thu theo năm
 export const getYearlyRevenue = async (year) => {
   const response = await axios.get(

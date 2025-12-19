@@ -41,11 +41,11 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
     private final NotificationSettingsService notificationSettingsService;
     private final TaskScheduler taskScheduler;
 
-    // Track last notified quantity per product (productId -> quantity)
-    // Key format: "productId_date" to auto-reset daily
+    // Theo dõi số lượng đã thông báo lần cuối mỗi sản phẩm (productId -> quantity)
+    // Định dạng key: "productId_date" để tự động reset hàng ngày
     private final ConcurrentHashMap<String, Integer> lastNotifiedQuantityMap = new ConcurrentHashMap<>();
 
-    // Store scheduled tasks: promotionId -> [expiringTask, expiredTask]
+    // Lưu trữ các task đã lên lịch: promotionId -> [expiringTask, expiredTask]
     private final Map<UUID, ScheduledFuture<?>[]> scheduledTasks = new ConcurrentHashMap<>();
 
     public NotificationSchedulerServiceImpl(
@@ -62,7 +62,7 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
         this.accountRepository = accountRepository;
         this.notificationSettingsService = notificationSettingsService;
 
-        // Create TaskScheduler
+        // Tạo TaskScheduler
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         scheduler.setPoolSize(5);
         scheduler.setThreadNamePrefix("promo-notif-");
@@ -76,7 +76,7 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
     // }
 
     /**
-     * Reschedule all promotion notifications (call manually when needed per tenant)
+     * Lên lịch lại tất cả thông báo khuyến mãi (gọi thủ công khi cần cho mỗi tenant)
      */
     public void rescheduleAllPromotionNotifications() {
         List<Promotion> activePromotions = promotionRepository.findAll().stream()
@@ -90,8 +90,8 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
     }
 
     /**
-     * Check for low stock items and create notifications
-     * Runs once daily at 8:00 AM
+     * Kiểm tra các mặt hàng tồn kho thấp và tạo thông báo
+     * Chạy một lần mỗi ngày lúc 8:00 sáng
      *
      * Logic:
      * - Thông báo khi tồn kho <= điểm đặt hàng lại (reorderPoint)
@@ -113,7 +113,7 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
             int checkedCount = 0;
             int skippedCount = 0;
 
-            // Get today's date for tracking key
+            // Lấy ngày hôm nay cho tracking key
             String today = LocalDate.now().toString();
 
             for (Inventory inventory : inventories) {
@@ -146,7 +146,7 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
                     continue;
                 }
 
-                // Build notification message
+                // Xây dựng nội dung thông báo
                 String message;
                 String description;
                 if (quantity <= 0) {
@@ -159,10 +159,10 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
                             inventory.getProduct().getProductName(), quantity, reorderPoint);
                 }
 
-                // Create notification for all shop owners (only if enabled in their settings)
+                // Tạo thông báo cho tất cả chủ cửa hàng (chỉ nếu đã bật trong cài đặt)
                 for (UUID shopId : shopIds) {
                     try {
-                        // Check if low stock notifications are enabled for this shop owner
+                        // Kiểm tra xem thông báo tồn kho thấp có được bật cho chủ cửa hàng này không
                         if (!notificationSettingsService.isNotificationEnabledForAccount(shopId, "low_stock")) {
                             continue;
                         }
@@ -185,7 +185,7 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
                 lastNotifiedQuantityMap.put(trackingKey, quantity);
             }
 
-            // Clean up old tracking keys (from previous days)
+            // Dọn dẹp các tracking key cũ (từ các ngày trước)
             cleanupOldTrackingKeys(today);
         } catch (Exception e) {
             log.error("Lỗi khi kiểm tra tồn kho thấp: {}", e.getMessage(), e);
@@ -193,15 +193,15 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
     }
 
     /**
-     * Remove tracking keys from previous days to prevent memory leak
+     * Xóa các tracking key từ các ngày trước để tránh rò rỉ bộ nhớn
      */
     private void cleanupOldTrackingKeys(String today) {
         lastNotifiedQuantityMap.keySet().removeIf(key -> !key.endsWith("_" + today));
     }
 
     /**
-     * DEPRECATED: Now using real-time scheduling via schedulePromotionNotifications()
-     * This method is kept for interface compatibility but does nothing
+     * KHÔNG DÙNG: Đã chuyển sang lên lịch thời gian thực qua schedulePromotionNotifications()
+     * Phương thức này được giữ lại để tương thích interface nhưng không làm gì
      */
     @Override
     public void checkExpiringPromotions() {
@@ -210,8 +210,8 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
     }
 
     /**
-     * DEPRECATED: Now using real-time scheduling via schedulePromotionNotifications()
-     * This method is kept for interface compatibility but does nothing
+     * KHÔNG DÙNG: Đã chuyển sang lên lịch thời gian thực qua schedulePromotionNotifications()
+     * Phương thức này được giữ lại để tương thích interface nhưng không làm gì
      */
     @Override
     public void checkExpiredPromotions() {
@@ -220,9 +220,9 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
     }
 
     /**
-     * Schedule real-time notifications for a promotion
-     * - 1 day before expiry: "Khuyến mãi sắp hết hạn"
-     * - At exact expiry time: "Khuyến mãi đã hết hạn"
+     * Lên lịch thông báo thời gian thực cho một khuyến mãi
+     * - 1 ngày trước khi hết hạn: "Khuyến mãi sắp hết hạn"
+     * - Tại thời điểm hết hạn: "Khuyến mãi đã hết hạn"
      */
     @Override
     public void schedulePromotionNotifications(UUID promotionId) {
@@ -231,13 +231,13 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
             return;
         }
 
-        // Cancel existing schedules first
+        // Hủy các lịch đã tồn tại trước
         cancelPromotionNotifications(promotionId);
 
-        // Mark old notifications as read so new ones can be created when expiry time changes
+        // Đánh dấu các thông báo cũ là đã đọc để có thể tạo thông báo mới khi thời gian hết hạn thay đổi
         markOldPromotionNotificationsAsRead(promotionId);
 
-        // Don't schedule if promotion is inactive
+        // Không lên lịch nếu khuyến mãi không hoạt động
         if (!Boolean.TRUE.equals(promotion.getActive())) {
             return;
         }
@@ -248,7 +248,7 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
 
         ScheduledFuture<?>[] tasks = new ScheduledFuture<?>[2];
 
-        // Schedule "sắp hết hạn" notification (1 day before)
+        // Lên lịch thông báo "sắp hết hạn" (1 ngày trước)
         if (oneDayBefore.isAfter(now)) {
             Instant expiringTime = oneDayBefore.atZone(ZoneId.systemDefault()).toInstant();
             tasks[0] = taskScheduler.schedule(
@@ -257,7 +257,7 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
             );
         }
 
-        // Schedule "đã hết hạn" notification (at exact expiry time)
+        // Lên lịch thông báo "đã hết hạn" (tại thời điểm hết hạn)
         if (endDate.isAfter(now)) {
             Instant expiredTime = endDate.atZone(ZoneId.systemDefault()).toInstant();
             tasks[1] = taskScheduler.schedule(
@@ -270,7 +270,7 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
     }
 
     /**
-     * Mark old promotion notifications as read to allow new ones to be created
+     * Đánh dấu các thông báo khuyến mãi cũ là đã đọc để cho phép tạo thông báo mới
      */
     private void markOldPromotionNotificationsAsRead(UUID promotionId) {
         try {
@@ -300,7 +300,7 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
     }
 
     /**
-     * Cancel scheduled notifications for a promotion
+     * Hủy các thông báo đã lên lịch cho một khuyến mãi
      */
     @Override
     public void cancelPromotionNotifications(UUID promotionId) {
@@ -315,7 +315,7 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
     }
 
     /**
-     * Create "sắp hết hạn" notification (1 day before)
+     * Tạo thông báo "sắp hết hạn" (1 ngày trước)
      */
     private void createExpiringNotification(UUID promotionId) {
         try {
@@ -330,7 +330,7 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
                     promotion.getPromotionName(), promotion.getEndDate().toLocalDate());
 
             for (UUID shopId : shopIds) {
-                // Check if promotion notifications are enabled for this shop owner
+                // Kiểm tra xem thông báo khuyến mãi có được bật cho chủ cửa hàng này không
                 if (!notificationSettingsService.isNotificationEnabledForAccount(shopId, "promotion")) {
                     continue;
                 }
@@ -348,7 +348,7 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
     }
 
     /**
-     * Create "đã hết hạn" notification (at exact expiry time)
+     * Tạo thông báo "đã hết hạn" (tại thời điểm hết hạn)
      */
     private void createExpiredNotification(UUID promotionId) {
         try {
@@ -363,7 +363,7 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
                     promotion.getPromotionName());
 
             for (UUID shopId : shopIds) {
-                // Check if promotion notifications are enabled for this shop owner
+                // Kiểm tra xem thông báo khuyến mãi có được bật cho chủ cửa hàng này không
                 if (!notificationSettingsService.isNotificationEnabledForAccount(shopId, "promotion")) {
                     continue;
                 }
@@ -381,7 +381,7 @@ public class NotificationSchedulerServiceImpl implements NotificationSchedulerSe
     }
 
     /**
-     * Get all shop owner IDs
+     * Lấy tất cả ID của chủ cửa hàng
      */
     private List<UUID> getAllShopIds() {
         try {

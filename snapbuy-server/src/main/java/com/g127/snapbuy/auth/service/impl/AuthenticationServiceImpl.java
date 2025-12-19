@@ -38,10 +38,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         UserDetails user = userDetailsService.loadUserByUsername(uname);
         Integer ver = accountRepository.findByUsername(uname).map(a -> a.getTokenVersion()).orElse(0);
         
-        // Get current tenant ID from context (set by AuthenticationController)
+        // Lấy tenant ID hiện tại từ context (thiết lập bởi AuthenticationController)
         String tenantId = com.g127.snapbuy.tenant.context.TenantContext.getCurrentTenant();
         
-        // Add both ver and tenantId to token claims
+        // Thêm cả ver và tenantId vào token claims
         java.util.Map<String, Object> claims = new java.util.HashMap<>();
         claims.put("ver", ver);
         if (tenantId != null) {

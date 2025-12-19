@@ -32,23 +32,23 @@ public class SystemMetricsController {
     @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<SystemMetrics> getSystemMetrics() {
         try {
-            // Use OSHI for accurate system metrics
+            // Sử dụng OSHI để lấy thông số hệ thống chính xác
             SystemInfo systemInfo = new SystemInfo();
             HardwareAbstractionLayer hal = systemInfo.getHardware();
             CentralProcessor processor = hal.getProcessor();
             GlobalMemory memory = hal.getMemory();
             
-            // CPU metrics
+            // Thông số CPU
             int cpuCores = processor.getLogicalProcessorCount();
             
-            // Get current CPU frequency (like Task Manager shows) - changes based on load
+            // Lấy tần số CPU hiện tại (như Task Manager hiển thị) - thay đổi theo tải
             double cpuSpeed = 0.0;
             
-            // Try method 1: Current frequency per core
+            // Thử phương pháp 1: Tần số hiện tại mỗi lõi
             try {
                 long[] currentFreqs = processor.getCurrentFreq();
                 if (currentFreqs != null && currentFreqs.length > 0) {
-                    // Calculate average current frequency across all cores
+                    // Tính tần số trung bình hiện tại trên tất cả các lõi
                     long totalFreq = 0;
                     int validCores = 0;
                     for (long freq : currentFreqs) {
@@ -65,7 +65,7 @@ public class SystemMetricsController {
                 System.out.println("Error getting current freq: " + e.getMessage());
             }
             
-            // Try method 2: Vendor frequency from processor identifier
+            // Thử phương pháp 2: Tần số nhà sản xuất từ thông tin bộ vi xử lý
             if (cpuSpeed < 0.5) {
                 try {
                     long vendorFreq = processor.getProcessorIdentifier().getVendorFreq();
@@ -77,7 +77,7 @@ public class SystemMetricsController {
                 }
             }
             
-            // Try method 3: Max frequency as fallback
+            // Thử phương pháp 3: Tần số tối đa làm dự phòng
             if (cpuSpeed < 0.5) {
                 try {
                     long maxFreq = processor.getMaxFreq();
@@ -89,17 +89,17 @@ public class SystemMetricsController {
                 }
             }
             
-            // Final fallback: Use base frequency from processor name if available
+            // Dự phòng cuối: Sử dụng tần số cơ bản từ tên bộ vi xử lý nếu có
             if (cpuSpeed < 0.5) {
                 cpuSpeed = 2.5; // Default for modern CPUs
             }
             
-            // Get CPU usage - use system CPU load which is more accurate
+            // Lấy mức sử dụng CPU - sử dụng tải CPU hệ thống chính xác hơn
             double cpuUsage = processor.getSystemCpuLoad(1000) * 100; // Wait 1 second for measurement
             
-            // Fallback if CPU usage is 0 or negative
+            // Dự phòng nếu mức sử dụng CPU là 0 hoặc âm
             if (cpuUsage <= 0) {
-                // Try alternative method
+                // Thử phương pháp thay thế
                 long[] prevTicks = processor.getSystemCpuLoadTicks();
                 try {
                     Thread.sleep(500);
@@ -109,19 +109,19 @@ public class SystemMetricsController {
                 cpuUsage = processor.getSystemCpuLoadBetweenTicks(prevTicks) * 100;
             }
             
-            // If still 0, use a small value to show it's working
+            // Nếu vẫn là 0, sử dụng giá trị nhỏ để hiển thị rằng nó đang hoạt động
             if (cpuUsage < 0.1 && cpuUsage >= 0) {
                 cpuUsage = 0.1; // Minimum display value
             }
 
-            // Memory metrics using OSHI
+            // Thông số bộ nhớ sử dụng OSHI
             long totalSystemMemory = memory.getTotal();
             long availableMemory = memory.getAvailable();
             long usedSystemMemory = totalSystemMemory - availableMemory;
             long freeSystemMemory = availableMemory;
             double memoryUsage = totalSystemMemory > 0 ? (double) usedSystemMemory / totalSystemMemory * 100 : 0;
 
-            // Disk metrics - sum all available drives
+            // Thông số ổ đĩa - tính tổng tất cả các ổ đĩa có sẵn
             long totalDisk = 0;
             long freeDisk = 0;
             long usedDisk = 0;
@@ -134,7 +134,7 @@ public class SystemMetricsController {
             usedDisk = totalDisk - freeDisk;
             double diskUsage = totalDisk > 0 ? (double) usedDisk / totalDisk * 100 : 0;
 
-            // System Uptime - calculated from first tenant creation (when system was initialized)
+            // Thời gian hoạt động hệ thống - tính từ lần tạo tenant đầu tiên (khi hệ thống được khởi tạo)
             long uptime = 0;
             try {
                 List<Tenant> allTenants = tenantRepository.findAll();
@@ -145,11 +145,11 @@ public class SystemMetricsController {
                     LocalDateTime systemStartTime = firstTenant.get().getCreatedAt();
                     uptime = Duration.between(systemStartTime, LocalDateTime.now()).toMillis();
                 } else {
-                    // Fallback to JVM uptime if no tenants exist
+                    // Dự phòng sử dụng thời gian chạy JVM nếu không có tenant
                     uptime = ManagementFactory.getRuntimeMXBean().getUptime();
                 }
             } catch (Exception e) {
-                // Fallback to JVM uptime on error
+                // Dự phòng sử dụng thời gian chạy JVM khi có lỗi
                 uptime = ManagementFactory.getRuntimeMXBean().getUptime();
             }
 

@@ -382,12 +382,12 @@ const ProductList = () => {
           >
             <i className="feather icon-edit"></i>
           </Link>
-          <button
+          {/* <button
             className="p-2 d-flex align-items-center border rounded bg-transparent"
             onClick={() => handleDeleteClick(row)}
           >
             <i className="feather icon-trash-2"></i>
-          </button>
+          </button> */}
         </div>
       ),
     },

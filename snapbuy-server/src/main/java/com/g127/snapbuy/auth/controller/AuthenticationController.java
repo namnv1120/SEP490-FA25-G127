@@ -27,15 +27,15 @@ public class AuthenticationController {
             @RequestBody @Valid AuthenticationRequest req,
             jakarta.servlet.http.HttpServletRequest request) {
         
-        // Priority 1: Get from X-Tenant-Slug header (frontend sends this from subdomain detection)
+        // Ưu tiên 1: Lấy từ header X-Tenant-Slug (frontend gửi từ phát hiện subdomain)
         String tenantCode = request.getHeader("X-Tenant-Slug");
         
-        // Priority 2: Auto-detect from subdomain (e.g., shop1.snapbuy.com)
+        // Ưu tiên 2: Tự động phát hiện từ subdomain (ví dụ: shop1.snapbuy.com)
         if (tenantCode == null || tenantCode.isEmpty()) {
             tenantCode = com.g127.snapbuy.tenant.util.TenantResolver.resolveFromSubdomain(request);
         }
         
-        // Priority 3: Fallback to tenantCode in request body (for backward compatibility)
+        // Ưu tiên 3: Dự phòng từ tenantCode trong request body (để tương thích ngược)
         if (tenantCode == null || tenantCode.isEmpty()) {
             tenantCode = req.getTenantCode();
         }
@@ -47,7 +47,7 @@ public class AuthenticationController {
             return response;
         }
         
-        // Set tenant context before authentication
+        // Thiết lập tenant context trước khi xác thực
         try {
             var tenant = tenantService.getTenantByCode(tenantCode);
             

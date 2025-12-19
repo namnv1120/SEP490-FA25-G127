@@ -24,16 +24,16 @@ public class TenantResolver {
             return null;
         }
         
-        // Remove port if present
+        // Xóa port nếu có
         host = host.split(":")[0];
         
-        // Check if it's localhost or IP address
+        // Kiểm tra nếu là localhost hoặc địa chỉ IP
         if (host.equals("localhost") || host.matches("^\\d+\\.\\d+\\.\\d+\\.\\d+$")) {
             log.debug("Request from localhost or IP address, cannot extract subdomain");
             return null;
         }
         
-        // Extract subdomain
+        // Trích xuất subdomain
         String[] parts = host.split("\\.");
         if (parts.length >= 3) {
             // shop1.snapbuy.com -> shop1

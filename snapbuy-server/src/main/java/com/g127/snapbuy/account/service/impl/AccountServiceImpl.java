@@ -56,7 +56,7 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
-    // Admin methods removed - now managed in Master DB
+    // Các phương thức Admin đã được chuyển - hiện được quản lý trong Master DB
 
     @Override
     @PreAuthorize("hasRole('Chủ cửa hàng')")
@@ -275,7 +275,7 @@ public class AccountServiceImpl implements AccountService {
         Account staff = accountRepository.findById(staffId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tài khoản"));
 
-        // Prevent accessing admin or owner accounts
+        // Ngăn truy cập tài khoản admin hoặc owner
         boolean forbidden = staff.getRoles().stream()
                 .anyMatch(r -> FORBIDDEN_STAFF_ROLES.stream()
                         .anyMatch(f -> f.equalsIgnoreCase(r.getRoleName())));
@@ -407,7 +407,7 @@ public class AccountServiceImpl implements AccountService {
             acc.setTokenVersion((acc.getTokenVersion() == null ? 0 : acc.getTokenVersion()) + 1);
         }
 
-        // Role updates removed - owner manages this through separate endpoint
+        // Cập nhật vai trò đã được loại bỏ - owner quản lý qua endpoint riêng
 
         return accountMapper.toResponse(accountRepository.save(acc));
     }
@@ -458,13 +458,13 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @PreAuthorize("hasRole('Chủ cửa hàng')")
     public List<AccountResponse> searchAccounts(String keyword, Boolean active, String roleName) {
-        // Fetch from DB without keyword filter
+        // Lấy từ DB không có bộ lọc keyword
         List<Account> accounts = accountRepository.findAccountsForSearch(
                 active,
                 roleName == null || roleName.isBlank() ? null : roleName.trim()
         );
         
-        // Filter by keyword in Java using VietnameseUtils
+        // Lọc theo keyword trong Java sử dụng VietnameseUtils
         String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
         if (trimmedKeyword != null) {
             accounts = accounts.stream()
@@ -479,13 +479,13 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @PreAuthorize("hasRole('Chủ cửa hàng')")
     public PageResponse<AccountResponse> searchAccountsPaged(String keyword, Boolean active, String roleName, Pageable pageable) {
-        // Fetch from DB without keyword filter
+        // Lấy từ DB không có bộ lọc keyword
         List<Account> accounts = accountRepository.findAccountsForSearch(
                 active,
                 roleName == null || roleName.isBlank() ? null : roleName.trim()
         );
         
-        // Filter by keyword in Java using VietnameseUtils
+        // Lọc theo keyword trong Java sử dụng VietnameseUtils
         String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
         if (trimmedKeyword != null) {
             accounts = accounts.stream()
@@ -494,7 +494,7 @@ public class AccountServiceImpl implements AccountService {
                 .toList();
         }
         
-        // Manual pagination
+        // Phân trang thủ công
         int pageNumber = pageable.getPageNumber();
         int pageSize = pageable.getPageSize();
         int totalElements = accounts.size();
@@ -531,10 +531,10 @@ public class AccountServiceImpl implements AccountService {
             roleFilterList = allowedRoles;
         }
         
-        // Fetch from DB without keyword filter
+        // Lấy từ DB không có bộ lọc keyword
         List<Account> accounts = accountRepository.findStaffAccountsForSearch(active, roleFilterList);
         
-        // Filter by keyword in Java using VietnameseUtils
+        // Lọc theo keyword trong Java sử dụng VietnameseUtils
         String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
         if (trimmedKeyword != null) {
             accounts = accounts.stream()
@@ -543,7 +543,7 @@ public class AccountServiceImpl implements AccountService {
                 .toList();
         }
         
-        // Manual pagination
+        // Phân trang thủ công
         int pageNumber = pageable.getPageNumber();
         int pageSize = pageable.getPageSize();
         int totalElements = accounts.size();

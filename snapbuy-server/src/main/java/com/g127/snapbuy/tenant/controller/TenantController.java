@@ -36,7 +36,7 @@ public class TenantController {
     @Value("${tenant.db.password:}")
     private String tenantDbPassword;
     
-    // ========== PUBLIC ENDPOINTS (không cần auth) ==========
+    // ========== ENDPOINT CÔNG KHAI (không cần xác thực) ==========
     
     /**
      * Validate tenant từ subdomain (frontend check khi load trang)
@@ -77,14 +77,14 @@ public class TenantController {
         return response;
     }
     
-    // ========== ADMIN ENDPOINTS (cần ADMIN role) ==========
+    // ========== ENDPOINT ADMIN (cần quyền quản trị viên) ==========
 
     @PostMapping("/admin")
     @PreAuthorize("hasRole('Quản trị viên')")
     public ApiResponse<TenantResponse> createTenant(@Valid @RequestBody TenantCreateRequest request) {
         try {
-            // Inject tenant database configuration from environment variables
-            // This allows using 'db' in Docker and 'localhost' in local development
+            // Inject cấu hình database tenant từ biến môi trường
+            // Cho phép sử dụng 'db' trong Docker và 'localhost' ở local development
             if (request.getDbHost() == null || request.getDbHost().isEmpty() || request.getDbHost().equals("localhost")) {
                 request.setDbHost(tenantDbHost);
             }
@@ -191,7 +191,7 @@ public class TenantController {
     public ApiResponse<Void> insertDemoData(@PathVariable UUID tenantId) {
         String tenantIdStr = tenantId.toString();
         
-        // Check if demo data already exists
+        // Kiểm tra xem dữ liệu mẫu đã tồn tại chưa
         if (demoDataService.hasDemoData(tenantIdStr)) {
             ApiResponse<Void> response = new ApiResponse<>();
             response.setMessage("Cửa hàng đã có dữ liệu mẫu");
@@ -199,7 +199,7 @@ public class TenantController {
             return response;
         }
         
-        // Insert demo data
+        // Thêm dữ liệu mẫu
         demoDataService.insertDemoData(tenantIdStr);
         
         ApiResponse<Void> response = new ApiResponse<>();

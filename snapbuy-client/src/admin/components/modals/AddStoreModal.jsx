@@ -325,8 +325,6 @@ const AddStoreModal = ({ show, onClose, onSubmit, loading }) => {
               )}
             </div>
 
-
-
             {/* Owner Full Name */}
             <div>
               <label

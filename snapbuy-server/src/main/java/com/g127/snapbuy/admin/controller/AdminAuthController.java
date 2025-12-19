@@ -29,27 +29,27 @@ public class AdminAuthController {
     @PostMapping("/login")
     public ApiResponse<AuthenticationResponse> login(@Valid @RequestBody AdminLoginRequest request) {
         try {
-            // Get admin account
+            // Lấy tài khoản admin
             var admin = adminAccountRepository.findByUsername(request.getUsername())
                     .orElseThrow(() -> new BadCredentialsException("Sai tên đăng nhập hoặc mật khẩu"));
             
-            // Verify password manually
+            // Xác minh mật khẩu thủ công
             if (!passwordEncoder.matches(request.getPassword(), admin.getPasswordHash())) {
                 throw new BadCredentialsException("Sai tên đăng nhập hoặc mật khẩu");
             }
             
-            // Check if account is active
+            // Kiểm tra xem tài khoản có đang hoạt động không
             if (!admin.getIsActive()) {
                 throw new BadCredentialsException("Tài khoản đã bị khóa");
             }
             
-            // Load user details
+            // Tải thông tin người dùng
             UserDetails userDetails = adminUserDetailsService.loadUserByUsername(request.getUsername());
             
-            // Generate token with admin role
+            // Tạo token với vai trò admin
             Map<String, Object> claims = new HashMap<>();
             claims.put("role", "ADMIN");
-            claims.put("type", "admin"); // Distinguish from tenant users
+            claims.put("type", "admin"); // Phân biệt với tenant users
             
             String token = jwtUtil.generateToken(userDetails, claims);
             

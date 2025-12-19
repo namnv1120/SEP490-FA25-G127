@@ -305,24 +305,24 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * Helper method to batch convert orders to responses
-     * Reduces N+1 queries to 3 queries (orders + details + payments)
+     * Phương thức hỗ trợ chuyển đổi hàng loạt đơn hàng thành response
+     * Giảm query N+1 xuống 3 query (đơn hàng + chi tiết + thanh toán)
      */
     private List<OrderResponse> batchConvertToResponses(List<Order> orders) {
         if (orders.isEmpty()) {
             return List.of();
         }
         
-        // Batch fetch all order IDs
+        // Lấy tất cả ID đơn hàng
         List<UUID> orderIds = orders.stream()
                 .map(Order::getOrderId)
                 .toList();
         
-        // Batch fetch only relevant order details using IN clause (1 query, only needed data)
+        // Lấy chỉ các chi tiết đơn hàng liên quan bằng IN clause (1 query, chỉ lấy dữ liệu cần thiết)
         Map<UUID, List<OrderDetail>> detailsMap = orderDetailRepository.findByOrderIdIn(orderIds).stream()
                 .collect(Collectors.groupingBy(d -> d.getOrder().getOrderId()));
         
-        // Batch fetch only relevant payments using IN clause (1 query, only needed data)
+        // Lấy chỉ các thanh toán liên quan bằng IN clause (1 query, chỉ lấy dữ liệu cần thiết)
         Map<UUID, Payment> paymentsMap = paymentRepository.findByOrderIdIn(orderIds).stream()
                 .filter(p -> p.getOrder() != null)
                 .collect(Collectors.toMap(
@@ -331,7 +331,7 @@ public class OrderServiceImpl implements OrderService {
                         (existing, replacement) -> existing
                 ));
         
-        // Map to responses using pre-fetched data
+        // Chuyển đổi sang response sử dụng dữ liệu đã lấy trước
         return orders.stream()
                 .map(order -> {
                     List<OrderDetail> details = detailsMap.getOrDefault(order.getOrderId(), List.of());
@@ -368,14 +368,14 @@ public class OrderServiceImpl implements OrderService {
             normalizedToDate = toDate.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
         }
         
-        // Fetch from DB without keyword filter
+        // Lấy từ DB không có bộ lọc keyword
         List<Order> orders = orderRepository.findOrdersForSearch(
                 normalizedOrderStatus,
                 normalizedFromDate,
                 normalizedToDate
         );
         
-        // Filter by keyword in Java using VietnameseUtils
+        // Lọc theo keyword trong Java sử dụng VietnameseUtils
         String trimmedKeyword = (searchTerm != null && !searchTerm.trim().isEmpty()) ? searchTerm.trim() : null;
         if (trimmedKeyword != null) {
             orders = orders.stream()
@@ -406,14 +406,14 @@ public class OrderServiceImpl implements OrderService {
             normalizedToDate = toDate.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
         }
         
-        // Fetch from DB without keyword filter
+        // Lấy từ DB không có bộ lọc keyword
         List<Order> orders = orderRepository.findReturnOrdersForSearch(
                 normalizedOrderStatus,
                 normalizedFromDate,
                 normalizedToDate
         );
         
-        // Filter by keyword in Java using VietnameseUtils
+        // Lọc theo keyword trong Java sử dụng VietnameseUtils
         String trimmedKeyword = (searchTerm != null && !searchTerm.trim().isEmpty()) ? searchTerm.trim() : null;
         if (trimmedKeyword != null) {
             orders = orders.stream()
@@ -579,7 +579,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
 
-        // If already completed, return current state instead of throwing error
+        // Nếu đã hoàn tất, trả về trạng thái hiện tại thay vì ném lỗi
         if ("Hoàn tất".equalsIgnoreCase(order.getOrderStatus())) {
             log.info("Order {} already completed, returning current state", order.getOrderNumber());
             List<OrderDetail> details = orderDetailRepository.findByOrder(order);

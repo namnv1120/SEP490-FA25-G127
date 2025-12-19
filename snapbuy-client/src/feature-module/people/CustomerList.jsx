@@ -323,7 +323,7 @@ const Customers = () => {
           >
             <i className="feather icon-edit"></i>
           </button>
-          <button
+          {/* <button
             className="p-2 border rounded bg-transparent"
             onClick={() => {
               setCustomerToDelete(row);
@@ -331,7 +331,7 @@ const Customers = () => {
             }}
           >
             <i className="feather icon-trash-2"></i>
-          </button>
+          </button> */}
         </div>
       ),
     },

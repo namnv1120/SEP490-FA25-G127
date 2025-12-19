@@ -335,13 +335,13 @@ const RoleManagement = () => {
                 >
                   <FaEdit />
                 </button>
-                <button
+                {/* <button
                   className="admin-btn-icon delete"
                   title="Xóa Vai Trò"
                   onClick={() => handleDelete(role)}
                 >
                   <FaTrash />
-                </button>
+                </button> */}
               </div>
             </div>
 

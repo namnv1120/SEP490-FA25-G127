@@ -1,6 +1,7 @@
 package com.g127.snapbuy.report.controller;
 
 import com.g127.snapbuy.common.response.ApiResponse;
+import com.g127.snapbuy.report.dto.response.DailyRevenueItem;
 import com.g127.snapbuy.report.dto.response.RevenueResponse;
 import com.g127.snapbuy.report.service.RevenueService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/revenue")
@@ -35,6 +37,17 @@ public class RevenueController {
         ApiResponse<RevenueResponse> response = new ApiResponse<>();
         response.setResult(revenueService.getMonthlyRevenue(year, month));
         response.setMessage("Lấy doanh thu theo tháng thành công.");
+        return response;
+    }
+
+    @GetMapping("/monthly-daily")
+    @PreAuthorize("hasAnyRole('Quản trị viên','Chủ cửa hàng')")
+    public ApiResponse<List<DailyRevenueItem>> getMonthlyDailyRevenue(
+            @RequestParam int year,
+            @RequestParam int month) {
+        ApiResponse<List<DailyRevenueItem>> response = new ApiResponse<>();
+        response.setResult(revenueService.getMonthlyDailyRevenue(year, month));
+        response.setMessage("Lấy doanh thu chi tiết theo ngày trong tháng thành công.");
         return response;
     }
 

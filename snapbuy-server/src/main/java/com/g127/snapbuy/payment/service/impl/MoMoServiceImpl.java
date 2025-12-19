@@ -62,7 +62,7 @@ public class MoMoServiceImpl implements MoMoService {
             String requestId = UUID.randomUUID().toString();
             String momoOrderId = order.getOrderNumber() + "-" + System.currentTimeMillis();
 
-            // Get current tenantId from TenantContext
+            // Lấy tenantId hiện tại từ TenantContext
             String tenantId = com.g127.snapbuy.tenant.context.TenantContext.getCurrentTenant();
             String extraDataRaw = "tenantId=" + (tenantId != null ? tenantId : "");
             String extraData = java.util.Base64.getEncoder().encodeToString(extraDataRaw.getBytes());

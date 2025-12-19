@@ -1,3 +1,4 @@
+2509170124
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import CommonFooter from "../../components/footer/CommonFooter";
 import PrimeDataTable from "../../components/data-table";
@@ -255,12 +256,12 @@ const SubCategoryList = () => {
           >
             <i className="feather icon-edit"></i>
           </button>
-          <button
+          {/* <button
             className="p-2 border rounded bg-transparent"
             onClick={() => handleDeleteClick(row)}
           >
             <i className="feather icon-trash-2"></i>
-          </button>
+          </button> */}
         </div>
       ),
     },
@@ -373,7 +374,7 @@ const SubCategoryList = () => {
         <CommonFooter />
       </div>
 
-      {/* ✅ Add Sub Category Component */}
+      {/*Add Sub Category Component */}
       <AddSubCategory
         isOpen={addModalOpen}
         onClose={() => setAddModalOpen(false)}
@@ -381,7 +382,7 @@ const SubCategoryList = () => {
         onSuccess={fetchSubCategories}
       />
 
-      {/* ✅ Edit Sub Category Component */}
+      {/* Edit Sub Category Component */}
       {editSubCategoryId && (
         <EditSubCategory
           isOpen={editModalOpen}
@@ -399,7 +400,7 @@ const SubCategoryList = () => {
         />
       )}
 
-      {/* ✅ Delete Modal */}
+      {/* Delete Modal */}
       <DeleteModal
         open={deleteModalOpen}
         itemId={selectedSubCategory?.categoryId}
