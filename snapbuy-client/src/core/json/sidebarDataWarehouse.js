@@ -73,13 +73,6 @@ export const SidebarDataWarehouse = [
         subRoutes: [],
       },
       {
-        tittle: "Đơn hoàn hàng",
-        hasSubRoute: false,
-        showSubRoute: false,
-        route: "/return-orders",
-        subRoutes: [],
-      },
-      {
         tittle: "Lịch sử giao dịch",
         hasSubRoute: false,
         showSubRoute: false,
